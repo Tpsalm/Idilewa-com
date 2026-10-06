@@ -424,7 +424,7 @@
       { title: 'Learn languages', desc: 'Speak, listen, read and practice.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'yoruba-kids-culture.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
       { title: 'Code in your language', desc: 'Explore technology, side by side.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Create', image: 'code-kids.jpg' },
-      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'ikenga-sculpture.jpg', imageAlt: 'A photorealistic depiction of an Igbo Ikenga sculpture, a symbol of strength and destiny' },
+      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
       { title: 'Connect with Students', desc: 'A respectful space for educators to meet learners.', icon: 'people', route: 'connect_students', tone: 'peach', tag: 'For educators', image: 'african-kids-friends.jpg' },
       { title: 'Connect with Teachers', desc: 'Browse educator profiles, learning hours and experience.', icon: 'school', route: 'connect_teachers', tone: 'lilac', tag: 'For learners', image: 'yoruba-educator-man.jpg' }
     ];
@@ -1374,7 +1374,7 @@
   }
 
   const IMAGE_READY = new Set([
-    'ikenga-sculpture.jpg',
+    'stories-culture.jpg',
     'page-index-1.jpg', 'page-index-2.jpg', 'page-index-3.jpg', 'page-index-4.jpg',
     'page-index-5.jpg', 'page-index-6.jpg', 'page-index-7.jpg',
     'page-about-1.jpg', 'page-base-1.jpg', 'page-coding-1.jpg',
@@ -1481,7 +1481,7 @@
     const source = String(markup || '');
     let output = source.replace(/<img\b[^>]*>/gi, (tag) => {
       const sourceMatch = tag.match(/\bsrc=("|')([^"']*)(?:\1)/i);
-      if (page === 'index' && sourceMatch && sourceMatch[2].includes('ikenga-sculpture.jpg')) return tag.replace(/\bsrc=("|')[^"']*(?:\1)/i, `src="${imageUrl('ikenga-sculpture.jpg')}"`);
+      if (page === 'index' && sourceMatch && sourceMatch[2].includes('stories-culture.jpg')) return tag.replace(/\bsrc=("|')[^"']*(?:\1)/i, `src="${imageUrl('stories-culture.jpg')}"`);
       slot += 1;
       const filename = ROUTE_IMAGE_OVERRIDES[`${page}-${slot}`] || `page-${page}-${slot}.jpg`;
       const alt = routeImageAlt(page, slot, tag);
