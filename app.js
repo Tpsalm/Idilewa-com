@@ -1374,6 +1374,7 @@
   }
 
   const IMAGE_READY = new Set([
+    'how-it-works-journey.jpg',
     'stories-culture.jpg',
     'page-index-1.jpg', 'page-index-2.jpg', 'page-index-3.jpg', 'page-index-4.jpg',
     'page-index-5.jpg', 'page-index-6.jpg', 'page-index-7.jpg',
@@ -1724,10 +1725,13 @@
   }
 
   function renderPageInformationLayers(page) {
-    const items = getPageInformationLayers(page);
-    const title = PAGE_META[page]?.eyebrow || LABELS[page] || 'Idilewa learning space';
-    const sectionId = `page-information-layers-${page}`;
-    return `<section class="page-information-layers" aria-labelledby="${esc(sectionId)}" data-page-layer-count="${items.length}"><div class="container page-information-layers-inner"><div class="page-information-layers-heading"><span class="section-kicker">Six information layers · ${esc(title)}</span><h2 id="${esc(sectionId)}">From purpose to practice and next steps.</h2><p>Each layer identifies a relevant information object and explains how it supports this page’s learning or decision.</p></div><ol class="page-information-layer-grid" aria-label="Six page-specific information layers">${items.map(([layerTitle, description, object], index) => `<li class="page-information-layer-card" data-page-layer="${index + 1}"><div class="page-information-layer-top"><span class="page-information-layer-number">0${index + 1}</span><span class="page-information-layer-category">${PAGE_LAYER_CATEGORIES[index] || 'Learning layer'}</span></div><h3>${esc(layerTitle)}</h3><p>${esc(description)}</p><div class="page-information-object"><small>Information object</small><strong>${esc(object)}</strong></div></li>`).join('')}</ol></div></section>`;
+    return `<section class="page-information-layers how-it-works-section" aria-label="How it works · A simple journey to deeper understanding">
+      <div class="container how-it-works-container">
+        <div class="how-it-works-banner">
+          <img src="${imageUrl('how-it-works-journey.jpg')}" alt="How it works: A simple journey to deeper understanding. 01 Orient - Understand oral knowledge; 02 Understand - Choose a genre; 03 Information Object - Read a proverb; 04 Context / Example - Listen to a voice; 05 Practice / Decision - Ask for context; 06 Reflect / Continue - Share respectfully." class="how-it-works-image" loading="lazy" />
+        </div>
+      </div>
+    </section>`;
   }
 
   function render() {

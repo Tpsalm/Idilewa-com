@@ -2165,3 +2165,28 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 .page-information-layer-card:nth-child(3n) .page-information-layer-number{color:#48677c;background:#eaf3f8;}
 @media(max-width:980px){.page-information-layer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}.page-information-layer-card{min-height:190px;padding:15px;}}
 @media(max-width:420px){.page-information-layers{padding:32px 0;}.page-information-layer-grid{grid-template-columns:1fr;gap:9px;}.page-information-layer-card{min-height:0;padding:14px;}.page-information-layers-heading p{font-size:12px;}}
+.how-it-works-section {
+  padding: clamp(32px, 4vw, 56px) 0;
+  background: linear-gradient(135deg, #f7f9f3 0%, #fffefa 58%, #f6f9f2 100%);
+  border-top: 1px solid #e7ece5;
+  border-bottom: 1px solid #e7ece5;
+}
+.how-it-works-container {
+  max-width: var(--container, 1200px);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 32px);
+}
+.how-it-works-banner {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(25, 57, 38, 0.08);
+  border: 1px solid #e4eae1;
+  background: #ffffff;
+}
+.how-it-works-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
