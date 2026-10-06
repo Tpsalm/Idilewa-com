@@ -1385,6 +1385,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
   }
 
   const IMAGE_READY = new Set([
+    'how-it-works-journey.png',
     'how-it-works-journey.jpg',
     'stories-culture.jpg',
     'page-index-1.jpg', 'page-index-2.jpg', 'page-index-3.jpg', 'page-index-4.jpg',
@@ -1736,10 +1737,11 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
   }
 
   function renderPageInformationLayers(page) {
-    return `<section class="page-information-layers how-it-works-section" aria-label="How it works · A simple journey to deeper understanding">
+    if (page !== 'index') return '';
+    return `<section class="page-information-layers how-it-works-section" aria-label="How it works – A simple journey to deeper understanding">
       <div class="container how-it-works-container">
         <div class="how-it-works-banner">
-          <img src="${imageUrl('how-it-works-journey.jpg')}" alt="How it works: A simple journey to deeper understanding. 01 Orient - Understand oral knowledge; 02 Understand - Choose a genre; 03 Information Object - Read a proverb; 04 Context / Example - Listen to a voice; 05 Practice / Decision - Ask for context; 06 Reflect / Continue - Share respectfully." class="how-it-works-image" loading="lazy" />
+          <img src="${imageUrl('how-it-works-journey.png')}" alt="How it works: A simple journey to deeper understanding. 01 Orient - Understand oral knowledge; 02 Understand - Choose a genre; 03 Information Object - Read a proverb; 04 Context / Example - Listen to a voice; 05 Practice / Decision - Ask for context; 06 Reflect / Continue - Share respectfully." class="how-it-works-image" loading="eager" />
         </div>
       </div>
     </section>`;

@@ -2185,11 +2185,13 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   background: #ffffff;
 }
 .how-it-works-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+  }
 
 /* ==========================================================================
    ROBUST RESPONSIVE & OVERLAP FIXES (MOBILE & DESKTOP)
