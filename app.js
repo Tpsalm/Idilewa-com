@@ -424,7 +424,7 @@
 
   function renderHome() {
     const featureCards = [
-      { title: 'Learn languages', desc: 'Speak, listen, read and practice.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'yoruba-kids-culture.jpg' },
+      { title: 'Learn languages', desc: 'Speak, listen, read and practice.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'page-languages-1.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
       { title: 'Code in your language', desc: 'Explore technology, side by side.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Create', image: 'code-kids.jpg' },
       { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
@@ -452,7 +452,7 @@
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
           <div class="hero-visual">
-            <div class="hero-photo-wrap"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in Yorùbá attire learning together" class="hero-photo" /></div>
+            <div class="hero-photo-wrap"><img src="./assets/quantity.jpeg" alt="African learners discovering culture and technology" class="hero-photo" /></div>
             <div class="floating-chip chip-blue"><span class="chip-icon">${icon('volume', 17)}</span><span>Listen & speak</span></div>
             <div class="floating-chip chip-green"><span>Ẹ káàárọ̀</span><span class="chip-small">Good morning</span></div>
             <div class="floating-chip chip-coral">${icon('book', 16)} Stories that stay</div>
