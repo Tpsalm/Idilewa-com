@@ -6,7 +6,7 @@ const routes = [
   'ere', 'ere_game', 'families', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
   'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
   'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'profile', 'schools',
-  'tutor', 'voices'
+  'trainer', 'tutor', 'voices'
 ];
 
 const input = Object.fromEntries(routes.map((r) => [r, resolve(__dirname, `${r}.html`)]));
