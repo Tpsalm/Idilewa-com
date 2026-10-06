@@ -12,6 +12,7 @@ const routes = [
 const input = Object.fromEntries(routes.map((r) => [r, resolve(__dirname, `${r}.html`)]));
 
 export default defineConfig({
+  base: './',
   build: {
     rollupOptions: {
       input,
