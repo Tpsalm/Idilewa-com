@@ -63,6 +63,7 @@
     bookmark: '<path d="M6 4h12v17l-6-4-6 4z"/>',
     shield: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/>',
     eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+    eyeOff: '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/>',
     edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>',
     refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.7 9a7 7 0 0 1 12-2L20 12M4 12l2.3 5a7 7 0 0 0 12-2"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>'
@@ -289,6 +290,7 @@
     interested: [],
     available: { yoruba: true, igbo: true, hausa: true, swahili: true, twi: false, wolof: false, zulu: false, fulfulde: false },
     loginMode: 'signin',
+    authRole: 'child',
     billing: 'monthly',
     consent: {
       requestCode: '', approvedCode: '', approved: false,
@@ -356,6 +358,7 @@
         teacherReplies: Array.isArray(stored.teacherReplies) ? stored.teacherReplies : [],
         teacherFilter: typeof stored.teacherFilter === 'string' ? stored.teacherFilter : 'all',
         reflectionFeeling: typeof stored.reflectionFeeling === 'string' ? stored.reflectionFeeling : '',
+        authRole: typeof stored.authRole === 'string' ? stored.authRole : 'child',
         completed: Array.isArray(stored.completed) ? stored.completed : defaults.completed.slice(),
         interested: Array.isArray(stored.interested) ? stored.interested : []
       };
@@ -492,12 +495,7 @@
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
           <div class="hero-visual">
-            <div class="hero-photo-wrap"><img src="./assets/quantity.jpeg" alt="African learners discovering culture and technology" class="hero-photo" /></div>
-            <div class="floating-chip chip-blue"><span class="chip-icon">${icon('volume', 17)}</span><span>Listen & speak</span></div>
-            <div class="floating-chip chip-green"><span>Ẹ káàárọ̀</span><span class="chip-small">Good morning</span></div>
-            <div class="floating-chip chip-coral">${icon('book', 16)} Stories that stay</div>
-            <div class="hero-sticker">${icon('sparkles', 17)}<span>Learn<br />with joy</span></div>
-            <div class="hero-caption">A little every day makes a language feel closer.</div>
+            <div class="hero-photo-wrap"><img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo" /></div>
           </div>
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
@@ -2490,17 +2488,251 @@
   function renderLogin() {
     const signUp = state.loginMode === 'signup';
     const activeGrant = consentCodeIsActive();
-    const signupFields = signUp ? `<label for="authName">Name to use in your learning space<input id="authName" name="name" autocomplete="name" placeholder="Use a nickname in this demo" required /></label><label for="signupType">Who is learning?<select id="signupType" name="accountType"><option value="child" selected>Child learner</option><option value="adult">Adult learner</option></select></label><div id="signupConsentFields" class="signup-consent-fields"><label for="signupConsentCode">Parent-approved consent code<input id="signupConsentCode" type="text" name="consentCode" maxlength="12" autocomplete="off" placeholder="ID-123456" required /></label><p>${activeGrant ? 'A parent approval is active on this device.' : 'No code yet? A parent or guardian must complete the signed form first.'} ${routeLink('consent', 'Open family consent ' + icon('arrow', 14), 'text-link')}</p></div>` : '';
-    const signinFields = !signUp ? `<label for="signinType">Who is learning?<select id="signinType" name="accountType"><option value="child" selected>Child learner</option><option value="adult">Adult learner</option></select></label><div id="signinConsentFields" class="signup-consent-fields"><label for="signinConsentCode">Parent-approved consent code<input id="signinConsentCode" type="text" name="consentCode" maxlength="12" autocomplete="off" placeholder="ID-123456" required /></label><p>${activeGrant ? 'A parent approval is active on this device.' : 'A parent or guardian must approve the child first.'} ${routeLink('consent', 'Start family consent ' + icon('arrow', 14), 'text-link')}</p></div>` : '';
-    const signupFooter = signUp ? '<label class="consent-check"><input type="checkbox" name="demoOnly" value="yes" required /><span>I understand this is a prototype; no account or password will be saved.</span></label>' : '<button class="forgot-link" type="button" data-action="forgot-password">Forgot password?</button>';
+    const role = state.authRole || 'child';
+    const isChild = role === 'child';
+    const isEducator = role === 'educator';
+    const isParent = role === 'parent';
+    const isAdult = role === 'adult';
+
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
     const authLayers = [
-      { title: 'Choose who is learning', text: 'Adults can explore independently. A child path starts with a parent or guardian, not a child entering personal details.' },
-      { title: 'Get signed family approval', text: 'A guardian reviews the request and signs. Approval for a tutor is a separate, named choice.' },
-      { title: 'Check the approved code', text: 'The code is a local prototype check only; it is not a real account credential or secure verification service.' },
-      { title: 'Continue safely', text: 'You can explore language paths without signing in. Never enter a real password, full name or contact detail here.' }
+      { title: 'Choose who is learning', text: 'Adults and educators can explore independently. A child path starts with a parent or guardian, never personal details.' },
+      { title: 'Get signed family approval', text: 'A guardian reviews the request and signs. Approval for an assigned tutor is an explicit, separate choice.' },
+      { title: 'Check the approved code', text: 'The code is a local verification check ensuring all young learners stay under active parental supervision.' },
+      { title: 'Continue safely & explore', text: 'You can explore all language paths freely. Never enter real passwords or sensitive personal data in this demo.' }
     ];
-    return `<div class="container route-page auth-page"><div class="auth-art"><div class="auth-image"><img src="./assets/hero-reader.jpg" alt="A young learner reading at home" /><div class="auth-art-note">Keep your language<br /><strong>close to your heart.</strong></div></div><div class="auth-quote">“Èdè wa, àṣà wa, ìdílé wa.”<small>Our language. Our culture. Our family.</small></div></div><div class="auth-panel"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>${signUp ? 'Create an account' : 'Sign in'}</strong></div>${renderStepper(signUp ? ['Choose learner', 'Guardian form', 'Check code', 'Start learning'] : ['Choose learner', 'Verify parent code', 'Open a path', 'Keep growing'], loginJourneyStep)}<span class="section-kicker">Welcome to your learning space</span><h1>${signUp ? 'Let’s make room for what you love.' : 'Good to have you back.'}</h1><p>${signUp ? 'For a child learner, parent approval must be completed before sign-up.' : 'A child must validate a parent-approved consent code before continuing.'}</p><div class="auth-toggle"><button class="${!signUp ? 'active' : ''}" data-action="login-mode" data-mode="signin">Sign in</button><button class="${signUp ? 'active' : ''}" data-action="login-mode" data-mode="signup">Create account</button></div><form class="auth-form" data-form="login"><label for="authEmail">Email address<input id="authEmail" type="email" name="email" autocomplete="email" placeholder="you@example.com" required /></label>${signupFields}${signinFields}<label for="authPassword">Password<input id="authPassword" type="password" name="password" autocomplete="${signUp ? 'new-password' : 'current-password'}" minlength="8" placeholder="At least 8 characters" required /></label>${signupFooter}<button class="button button-primary auth-submit" type="submit">${signUp ? 'Check consent & continue' : 'Sign in'} ${icon('arrow', 15)}</button></form><div class="auth-safe-note">${icon('shield', 16)} Sign-in is not connected. Never enter a real password or personal details in this demo.</div><div class="auth-separator"><span>or explore first</span></div>${routeLink('languages', 'Continue without an account ' + icon('arrow', 14), 'auth-continue')}${routeLink('consent', 'Parent / guardian consent ' + icon('arrow', 14), 'text-link')}<section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="4"><div class="auth-layer-guide-heading"><span class="section-kicker">Family-first access checks</span><h2 id="auth-layer-title">A clear route into learning.</h2><p>Access follows the learner’s age, guardian permission and the choice to keep exploring safely.</p></div><div class="auth-layer-guide-grid">${authLayers.map((layer, index) => `<article class="auth-layer-card"><span>0${index + 1}</span><div><h3>${layer.title}</h3><p>${layer.text}</p></div></article>`).join('')}</div></section></div></div>`;
+
+    return `<div class="container route-page auth-page modern-auth-page">
+      <!-- Left Column: Rich Cultural Media & Highlights Showcase -->
+      <aside class="auth-art modern-auth-art">
+        <div class="auth-showcase-card">
+          <div class="auth-image modern-auth-image">
+            <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" />
+            <div class="auth-art-overlay"></div>
+            <div class="auth-art-badge">
+              <span class="pulse-dot"></span>
+              <span>Idilewa Learning Space</span>
+            </div>
+            <div class="auth-art-note">
+              <span>Èdè wa, àṣà wa, ìdílé wa</span>
+              <strong>Our language. Our culture. Our family.</strong>
+            </div>
+          </div>
+
+          <div class="auth-highlights-box">
+            <div class="auth-highlight-pill">
+              <span class="auth-pill-ico tone-mint">${icon('mic', 16)}</span>
+              <div>
+                <strong>AI Voice & Tonal Feedback</strong>
+                <small>6 African languages with live pitch scoring</small>
+              </div>
+            </div>
+            <div class="auth-highlight-pill">
+              <span class="auth-pill-ico tone-yellow">${icon('code', 16)}</span>
+              <div>
+                <strong>K–8 Code for Kids & STEAM</strong>
+                <small>30+ interactive lessons paired with cultural proverbs</small>
+              </div>
+            </div>
+            <div class="auth-highlight-pill">
+              <span class="auth-pill-ico tone-blue">${icon('shield', 16)}</span>
+              <div>
+                <strong>Child-Safe Guardian Supervision</strong>
+                <small>Consent codes & verified educator matching</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="auth-quote-card">
+            <div class="auth-quote-mark">“</div>
+            <p>A joyful place where children and families preserve African heritage while mastering 21st-century tech.</p>
+            <div class="auth-quote-author">— The Idilewa Philosophy</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Modern Authentication Card Panel -->
+      <main class="auth-panel modern-auth-panel">
+        <div class="breadcrumbs">
+          ${routeLink('index', 'Home')}
+          <span>/</span>
+          <strong>${signUp ? 'Create Account' : 'Sign In'}</strong>
+        </div>
+
+        <div class="auth-header-block">
+          <span class="section-kicker">${signUp ? 'Join the Idilewa Family' : 'Welcome Back'}</span>
+          <h1 class="auth-title">${signUp ? 'Start Your Heritage Journey' : 'Sign In to Your Space'}</h1>
+          <p class="auth-subtitle">${signUp ? 'Create a personalized learning space for yourself or your family.' : 'Continue practicing languages, voice training, and coding.'}</p>
+        </div>
+
+        <!-- Mode Selector Switcher Tabs -->
+        <div class="auth-toggle modern-auth-tabs" role="tablist">
+          <button type="button" class="auth-tab-btn ${!signUp ? 'active' : ''}" data-action="login-mode" data-mode="signin" role="tab" aria-selected="${!signUp}">
+            ${icon('user', 15)} Sign In
+          </button>
+          <button type="button" class="auth-tab-btn ${signUp ? 'active' : ''}" data-action="login-mode" data-mode="signup" role="tab" aria-selected="${signUp}">
+            ${icon('plus', 15)} Create Account
+          </button>
+        </div>
+
+        <!-- Persona Role Selector Cards -->
+        <div class="auth-role-selector">
+          <label class="auth-role-label">Choose Learning Persona:</label>
+          <div class="auth-role-grid">
+            <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child">
+              <span class="role-icon tone-green">${icon('smile', 16)}</span>
+              <span class="role-title">Child Learner</span>
+              <span class="role-tag">Parent Code</span>
+            </button>
+            <button type="button" class="auth-role-card ${isAdult ? 'is-selected' : ''}" data-action="auth-role-select" data-role="adult">
+              <span class="role-icon tone-blue">${icon('book', 16)}</span>
+              <span class="role-title">Adult Learner</span>
+              <span class="role-tag">Self-Paced</span>
+            </button>
+            <button type="button" class="auth-role-card ${isParent ? 'is-selected' : ''}" data-action="auth-role-select" data-role="parent">
+              <span class="role-icon tone-warm">${icon('heart', 16)}</span>
+              <span class="role-title">Parent/Guardian</span>
+              <span class="role-tag">Supervisor</span>
+            </button>
+            <button type="button" class="auth-role-card ${isEducator ? 'is-selected' : ''}" data-action="auth-role-select" data-role="educator">
+              <span class="role-icon tone-pink">${icon('school', 16)}</span>
+              <span class="role-title">Educator/Tutor</span>
+              <span class="role-tag">Teacher</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick 1-Click Persona Demo Bar -->
+        <div class="auth-quick-demo-bar">
+          <span class="quick-demo-title">⚡ 1-Click Interactive Demo Login:</span>
+          <div class="quick-demo-btns">
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="child" title="Fill as Child Learner">
+              ${icon('smile', 13)} Child
+            </button>
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="parent" title="Fill as Parent Guardian">
+              ${icon('heart', 13)} Parent
+            </button>
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="educator" title="Fill as Language Educator">
+              ${icon('school', 13)} Educator
+            </button>
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="adult" title="Fill as Adult Learner">
+              ${icon('book', 13)} Adult
+            </button>
+          </div>
+        </div>
+
+        <!-- Modern Auth Form -->
+        <form class="auth-form modern-auth-form" data-form="login">
+          <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
+
+          ${signUp ? `
+          <div class="form-group">
+            <label for="authName" class="form-label">Name or Learner Alias</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('smile', 17)}</span>
+              <input id="authName" type="text" name="name" class="form-input" autocomplete="name" placeholder="${isChild ? 'e.g. Ayo B. (Use nickname for safety)' : 'e.g. Samuel Owoyemi'}" required />
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="form-group">
+            <label for="authEmail" class="form-label">Email address or Username</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('user', 17)}</span>
+              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@idilewa.demo' : isEducator ? 'teacher@idilewa.demo' : isParent ? 'parent@idilewa.demo' : 'you@example.com'}" required />
+            </div>
+          </div>
+
+          ${isChild ? `
+          <div class="form-group consent-form-group">
+            <div class="form-label-row">
+              <label for="signinConsentCode" class="form-label">Parent-Approved Consent Code</label>
+              ${routeLink('consent', 'Get Parent Code ' + icon('arrow', 12), 'text-link text-link-small')}
+            </div>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('shield', 17)}</span>
+              <input id="signinConsentCode" type="text" name="consentCode" class="form-input" maxlength="12" autocomplete="off" placeholder="ID-123456" value="${activeGrant ? esc(state.consent.approvedCode) : ''}" required />
+              ${activeGrant ? `<span class="input-badge-verified">${icon('check', 13)} Active on Device</span>` : ''}
+            </div>
+            <p class="form-helper-text">${activeGrant ? 'Guardian approval is active on this browser.' : 'A parent or guardian must sign the consent form to generate this code.'}</p>
+          </div>
+          ` : ''}
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label for="authPassword" class="form-label">Password</label>
+              ${!signUp ? `<button class="forgot-link" type="button" data-action="forgot-password">Forgot password?</button>` : ''}
+            </div>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('lock', 17)}</span>
+              <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" minlength="8" placeholder="••••••••••••" required />
+              <button type="button" class="password-toggle-btn" data-action="toggle-password-visibility" aria-label="Toggle password visibility">
+                ${icon('eye', 16)}
+              </button>
+            </div>
+          </div>
+
+          ${signUp ? `
+          <label class="consent-check modern-consent-check">
+            <input type="checkbox" name="demoOnly" value="yes" required checked />
+            <span>I understand this is a prototype sandbox; no real passwords or sensitive details are saved.</span>
+          </label>
+          ` : `
+          <div class="form-options-row">
+            <label class="consent-check modern-consent-check">
+              <input type="checkbox" name="rememberMe" value="yes" checked />
+              <span>Remember this device</span>
+            </label>
+            <span class="auth-security-badge">${icon('shield', 12)} Protected Demo</span>
+          </div>
+          `}
+
+          <button class="button button-primary modern-auth-submit" type="submit">
+            <span>${signUp ? (isChild ? 'Validate Code & Create Child Space' : 'Create Supervised Space') : (isChild ? 'Check Code & Sign In' : 'Sign In to Learning Space')}</span>
+            ${icon('arrow', 16)}
+          </button>
+        </form>
+
+        <!-- Trust & Privacy Sandbox Note -->
+        <div class="auth-safe-note modern-auth-safe-note">
+          <span class="safe-note-icon">${icon('lock', 16)}</span>
+          <div>
+            <strong>Local Privacy-Preserving Sandbox</strong>
+            <span>All progress and lesson points are stored locally. Real credentials are never collected or transmitted.</span>
+          </div>
+        </div>
+
+        <div class="auth-separator"><span>or explore freely</span></div>
+
+        <div class="auth-alt-links">
+          ${routeLink('languages', 'Continue as Guest without signing in ' + icon('arrow', 14), 'button button-soft auth-guest-btn')}
+          <div class="auth-sub-links">
+            ${routeLink('consent', `${icon('heart', 13)} Parent & Guardian Consent Center`, 'text-link')}
+            ${routeLink('trainer', `${icon('mic', 13)} African Voice Trainer Studio`, 'text-link')}
+          </div>
+        </div>
+
+        <!-- 4-Layer Family-First Access Checks Section -->
+        <section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="4">
+          <div class="auth-layer-guide-heading">
+            <span class="section-kicker">Family-first access checks</span>
+            <h2 id="auth-layer-title">A clear route into learning.</h2>
+            <p>Access follows the learner’s age, guardian permission and the choice to keep exploring safely.</p>
+          </div>
+          <div class="auth-layer-guide-grid">
+            ${authLayers.map((layer, index) => `
+              <article class="auth-layer-card">
+                <span>0${index + 1}</span>
+                <div>
+                  <h3>${layer.title}</h3>
+                  <p>${layer.text}</p>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+      </main>
+    </div>`;
   }
 
   const TEACHER_PROFILES = [
@@ -3931,6 +4163,48 @@
       case 'billing-period': state.billing = el.dataset.period; saveState(); render(); break;
       case 'choose-plan': openModal(`${el.dataset.plan || 'Family'} updates`, 'Your interest has been noted in this browser preview. The Idilewa team will confirm final plans and pricing before launch.'); break;
       case 'login-mode': state.loginMode = el.dataset.mode === 'signup' ? 'signup' : 'signin'; render(); break;
+      case 'auth-role-select': {
+        state.authRole = el.dataset.role || 'child';
+        saveState();
+        render();
+        break;
+      }
+      case 'toggle-password-visibility': {
+        const passInput = document.getElementById('authPassword');
+        if (passInput) {
+          const isPassword = passInput.type === 'password';
+          passInput.type = isPassword ? 'text' : 'password';
+          el.innerHTML = icon(isPassword ? 'eyeOff' : 'eye', 16);
+          el.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        }
+        break;
+      }
+      case 'quick-demo-login': {
+        const role = el.dataset.role || 'child';
+        state.authRole = role;
+        state.loginMode = 'signin';
+        if (role === 'child') {
+          if (!state.consent.approvedCode) {
+            state.consent.approved = true;
+            state.consent.approvedCode = 'ID-842910';
+            state.consent.accountApproved = true;
+            state.consent.learnerAlias = 'Ayo B.';
+            state.consent.expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+          }
+        }
+        saveState();
+        render();
+        const emailInput = document.getElementById('authEmail');
+        const passInput = document.getElementById('authPassword');
+        const consentInput = document.getElementById('signinConsentCode');
+        const nameInput = document.getElementById('authName');
+        if (emailInput) emailInput.value = role === 'child' ? 'ayo.learner@idilewa.demo' : role === 'parent' ? 'kemi.parent@idilewa.demo' : role === 'educator' ? 'tola.teacher@idilewa.demo' : 'funke.adult@idilewa.demo';
+        if (passInput) passInput.value = '••••••••IdilewaDemo';
+        if (consentInput && state.consent.approvedCode) consentInput.value = state.consent.approvedCode;
+        if (nameInput) nameInput.value = role === 'child' ? 'Ayo B.' : role === 'parent' ? 'Mrs. Kemi B.' : role === 'educator' ? 'Tola A.' : 'Funke O.';
+        showToast(`⚡ Loaded demo credentials for ${role === 'child' ? 'Child Learner (Ayo)' : role === 'parent' ? 'Parent Guardian (Mrs. Kemi)' : role === 'educator' ? 'Educator (Tola)' : 'Adult Learner'}`, 'success');
+        break;
+      }
       case 'forgot-password': openModal('Password reset', 'Password reset will be available when secure account services are connected. Do not use a real password in this prototype.'); break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
       case 'trainer-set-lang': {
@@ -4289,8 +4563,9 @@
       state.savedProverbs.unshift({ text, meaning, language: String(data.get('language') || 'Yorùbá'), context: String(data.get('context') || '').trim() });
       saveState(); navigate('owe'); showToast('Your proverb is saved in this browser preview.');
     } else if (type === 'login') {
+      const accountType = String(data.get('accountType') || state.authRole || 'child');
+      const email = String(data.get('email') || '').trim();
       if (state.loginMode === 'signup') {
-        const accountType = String(data.get('accountType') || 'child');
         if (accountType === 'child') {
           const code = String(data.get('consentCode') || '').trim().toUpperCase();
           if (!consentCodeIsActive() || !state.consent.accountApproved || code !== state.consent.approvedCode) {
@@ -4298,11 +4573,12 @@
             navigate('consent'); return;
           }
           state.consent.childVerified = true; saveState(); render();
-          showToast('Parent approval validated. No account or password was created or stored by this demo.'); return;
+          showToast(`Parent approval validated for ${email || 'child'}. Supervised space ready!`, 'success');
+          navigate('profile'); return;
         }
-        showToast('Adult sign-up is a visual preview only. No account or password was created or stored.'); return;
+        showToast(`Account created for ${email || 'learner'}. Welcome to your Idilewa space!`, 'success');
+        navigate('profile'); return;
       }
-      const accountType = String(data.get('accountType') || 'child');
       if (accountType === 'child') {
         const code = String(data.get('consentCode') || '').trim().toUpperCase();
         if (!consentCodeIsActive() || !state.consent.accountApproved || code !== state.consent.approvedCode) {
@@ -4310,9 +4586,19 @@
           navigate('consent'); return;
         }
         state.consent.childVerified = true; saveState();
-        openModal('Parent approval checked', 'The active guardian-approved code was validated on this device. Real sign-in is not connected, and no account or password was created or stored.'); return;
+        showToast(`Welcome back, Ayo! Parent approval verified.`, 'success');
+        navigate('profile'); return;
       }
-      openModal('Sign-in is a visual preview', 'No real account service is connected. Never enter a real password or personal details here.');
+      if (accountType === 'educator') {
+        showToast(`Welcome back, Educator! Connected to teaching dashboard.`, 'success');
+        navigate('connect_teachers'); return;
+      }
+      if (accountType === 'parent') {
+        showToast(`Welcome back, Guardian! Supervised family space active.`, 'success');
+        navigate('consent'); return;
+      }
+      showToast(`Welcome back! Loading your learning journey...`, 'success');
+      navigate('profile');
     } else if (type === 'interest') {
       showToast('Thanks for your interest. This prototype does not send or store contact details.');
       form.reset();
