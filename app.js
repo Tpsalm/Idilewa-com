@@ -300,6 +300,7 @@
     coding: {
       stage: 0, techId: 'html', level: 'beginner', missionId: 'hello',
       helperLanguage: 'yoruba', search: '', points: 0, streak: 0,
+      filter: 'all', category: 'all', lessonSearch: '', completedLessons: [],
       lastPracticeDate: '', completed: [], draft: '', result: '',
       questCommands: [], questTrail: [], questResult: ''
     },
@@ -334,6 +335,10 @@
           ...defaults.coding,
           ...(stored.coding || {}),
           completed: Array.isArray(stored.coding?.completed) ? stored.coding.completed : [],
+          completedLessons: Array.isArray(stored.coding?.completedLessons) ? stored.coding.completedLessons : [],
+          filter: typeof stored.coding?.filter === 'string' ? stored.coding.filter : 'all',
+          category: typeof stored.coding?.category === 'string' ? stored.coding.category : 'all',
+          lessonSearch: typeof stored.coding?.lessonSearch === 'string' ? stored.coding.lessonSearch : '',
           questCommands: Array.isArray(stored.coding?.questCommands) ? stored.coding.questCommands.filter((step) => ['up', 'right', 'down', 'left'].includes(step)).slice(0, 12) : [],
           questTrail: Array.isArray(stored.coding?.questTrail) ? stored.coding.questTrail.filter((cell) => typeof cell === 'string').slice(0, 20) : [],
           questResult: typeof stored.coding?.questResult === 'string' ? stored.coding.questResult : '',
@@ -1034,6 +1039,823 @@
     }
   }
   const codeTextFor = (languageId) => CODE_COPY[languageId] || CODE_COPY.yoruba;
+
+  const CODE_CURRICULUM_BANDS = [
+    {
+      id: 'Lower-Elementary',
+      bandKey: 'lower',
+      title: 'Lower Elementary',
+      range: 'Kindergarten to Grade 2',
+      badge: 'Ages 5–8',
+      desc: 'Foundational computer science, unplugged problem solving, directional robot logic, and early digital citizenship.',
+      flowchart: {
+        title: 'K–2nd Grade STEAM Progression Roadmap',
+        image: 'https://cdn.prod.website-files.com/67515ca117da61ac21154553/688763017d473a3cf18f822b_flowchart_k-2nd.png',
+        summary: 'From pattern recognition and story-led algorithms to loop repetitions and beginner physical robotics.'
+      },
+      grades: [
+        {
+          id: 'kindergarten',
+          name: 'Kindergarten',
+          badgeColor: 'red',
+          badgeLabel: 'Red',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c52f048e62cb3586f3f6d_kindergarten_activity%20card%20(1).png',
+          desc: 'Introduce young students to coding and robotics through the engaging Kindergarten curriculum. Designed with fun, hands-on activities, it fosters problem-solving, creativity, and foundational digital skills.',
+          topics: ['Unplugged Algorithms', 'Directional Logic', 'Robot Helper Stories', 'Pattern Recognition'],
+          bilingualFocus: 'Greetings & simple directions in African languages (Òkè, Ọ̀tún, Ìsàlẹ̀, Òsì)'
+        },
+        {
+          id: 'grade-1',
+          name: '1st Grade',
+          badgeColor: 'orange',
+          badgeLabel: 'Orange',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c466a6bc1c2287eedf45f_grade%201_activity%20card_thm.png',
+          desc: 'Young students will discover the basics of algorithms and robot control through interactive activities. From building simple commands to exploring robot movements, these lessons make coding an exciting hands-on adventure!',
+          topics: ['Command Sequences', 'Event Triggers (Tap & Go)', 'Early Loops', 'Basic Robotics Movements'],
+          bilingualFocus: 'Action verbs & sequence vocabulary in Yorùbá, Igbo, Hausa, and Swahili'
+        },
+        {
+          id: 'grade-2',
+          name: '2nd Grade',
+          badgeColor: 'yellow',
+          badgeLabel: 'Yellow',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c4f6a322c8a8bec36530b_grade%202_activity%20card.avif',
+          desc: 'Students will take their coding skills further by exploring complex algorithms, loops, and robot behavior. From mastering control commands to discovering basic digital communication, this class makes coding an exciting challenge!',
+          topics: ['Complex Loops (Repeat N times)', 'Conditionals (If/Else)', 'Sensor Inputs', 'Digital Communication Basics'],
+          bilingualFocus: 'Condition & choice terms (Bí / Tí ó bá, Ọ̀rọ̀ ìbánisọ̀rọ̀)'
+        }
+      ]
+    },
+    {
+      id: 'Upper-Elementary',
+      bandKey: 'upper',
+      title: 'Upper Elementary',
+      range: 'Grade 3 to 5',
+      badge: 'Ages 8–11',
+      desc: 'Visual block programming, Scratch games, micro:bit physical computing, electrical circuits, and safe digital creation.',
+      flowchart: {
+        title: '3rd–5th Grade STEAM Progression Infographic',
+        image: 'https://cdn.prod.website-files.com/67515ca117da61ac21154553/68876243a382cb50defa2dff_infographic_3rd-5th.png',
+        summary: 'From Scratch animation and game physics to microcontrollers, sensor engineering, and floor plan CAD.'
+      },
+      grades: [
+        {
+          id: 'grade-3',
+          name: '3rd Grade',
+          badgeColor: 'green',
+          badgeLabel: 'Green',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/67a311763474b2c02733522a_grade%203_alt_activity_card.png',
+          desc: 'In our 3rd Grade Course, students will tackle advanced problem-solving with conditionals and complex robot programming. From coding challenges to responsible digital creation, our lessons take their skills to the next level!',
+          topics: ['Scratch Animation & Games', 'Variables & Timers', 'Simple Circuit Components', 'Pattern Encoding'],
+          bilingualFocus: 'Variables & score tracking glosses across 4 African languages'
+        },
+        {
+          id: 'grade-4',
+          name: '4th Grade',
+          badgeColor: 'blue',
+          badgeLabel: 'Blue',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/67a080317547bb83a8bfc288_Alternative%20grade%204_activity%20card.png',
+          desc: 'Our Grade 4 Curriculum introduces basic programming structures such as variables and loops, explores simple robotics with gears and sensors, and emphasises online safety and digital citizenship.',
+          topics: ['Micro:bit Microcontrollers', 'Gears & Mechanical Linkages', 'Logic Gates & Operators', 'Cyber Citizenship'],
+          bilingualFocus: 'Hardware components & safety expressions'
+        },
+        {
+          id: 'grade-5',
+          name: '5th Grade',
+          badgeColor: 'purple',
+          badgeLabel: 'Purple',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/67a08155edd91923d06bf7f9_grade%205_alternative%20Activity%20card%20(1).png',
+          desc: 'This course advances students to intermediate programming, incorporating functions, problem-solving, robotics, and real-world sensor applications. With a focus on research and collaboration, these lessons make coding hands-on and engaging.',
+          topics: ['Custom Functions & Parameters', '2D CAD Floor Plans', 'Sensory Robots', 'Data Spreadsheets'],
+          bilingualFocus: 'Function definitions & collaborative project terminology'
+        }
+      ]
+    },
+    {
+      id: 'Middle-School',
+      bandKey: 'middle',
+      title: 'Middle School',
+      range: 'Grade 6 to 8+',
+      badge: 'Ages 11–15+',
+      desc: 'Transition to line-based languages (Python, JavaScript, HTML/CSS), 3D CAD modeling, cybersecurity defense, and artificial intelligence.',
+      flowchart: {
+        title: 'Middle School Computer Science & STEAM Roadmap',
+        image: 'https://cdn.prod.website-files.com/67515ca117da61ac21154553/689080b566fcae4ee8198124_US%20General%20Flowchart%20Middle%20School.png',
+        summary: 'From text-based coding to OOP architecture, data encryption, web publication, and AI ethics.'
+      },
+      grades: [
+        {
+          id: 'grade-6',
+          name: '6th Grade',
+          badgeColor: 'blue',
+          badgeLabel: '6 Blue',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c68a848e62cb358825c12_grade%206_activity%20card%20(1).png',
+          desc: 'Students dive into advanced programming with arrays, data structures, robotics, and AI. Lessons emphasize innovation, ethics, and the impact of technology on society, preparing them for the future of tech.',
+          topics: ['JavaScript & Python Syntax', 'Arrays & Lists', 'AI Machine Learning Intro', 'Web Development (HTML/CSS)'],
+          bilingualFocus: 'Syntax translations, algorithms & African technology milestones'
+        },
+        {
+          id: 'grade-7',
+          name: '7th Grade',
+          badgeColor: 'blue',
+          badgeLabel: '7 Indigo',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c69d3fd2f81997c0c09d3_grade%207_activity%20card%20(1).png',
+          desc: 'In this course students will explore Object-Oriented Programming, learning about objects, classes, and inheritance. Lessons also cover robotics systems, digital communication, and the ethics of information in technology.',
+          topics: ['Object-Oriented Programming', 'Classes & Methods', 'Networks (Wired/Wireless)', 'Cyber Threats & Defense'],
+          bilingualFocus: 'Object models, classification & digital security terms'
+        },
+        {
+          id: 'grade-8',
+          name: '8th Grade',
+          badgeColor: 'purple',
+          badgeLabel: '8th Grade',
+          lessonCount: '36+ Pre-Built Lessons',
+          duration: '30-60 min each',
+          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c6bd64e9c2e629fb79434_grade%208_activity%20cardb.png',
+          desc: 'This course introduces students to advanced robotics and automation, allowing them to push the boundaries of digital collaboration and cybersecurity. Through hands-on projects and real-world applications, they dive into programming, critical thinking, and problem-solving.',
+          topics: ['Binary, ASCII & Unicode', '3D CAD Mechanical Toy Design', 'Automated Robotics', 'Full-Stack Web Projects'],
+          bilingualFocus: 'Computational linguistics & African digital preservation'
+        }
+      ]
+    }
+  ];
+
+  const C4K_FREE_LESSONS = [
+    {
+      id: 'simple-electrical-components',
+      title: 'Exploring Simple Circuit Components',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Robotics & Circuits',
+      badgeColor: 'green',
+      icon: 'sparkles',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682589bd57879a677a03ed68_electronics_robotics_circuits_lesson.png',
+      desc: 'Introduce the basics of robotics and electrical circuits using real components like buzzers, bulbs, motors, and switches.',
+      bilingual: { yoruba: 'Àwọn Ẹ̀yà Iná Ọ̀tọ̀ọ̀tọ̀ (Circuit components)', igbo: 'Ngwa eletriki dị mfe', hausa: 'Kayan Wutar Lantarki', swahili: 'Vipengele vya saketi ya umeme' },
+      duration: '45 mins',
+      highlights: ['Battery power sources', 'Closed vs open circuits', 'LED lights & buzzers', 'Interactive switch simulation']
+    },
+    {
+      id: 'exploring-patterns-with-ozzy-the-owl',
+      title: 'Exploring Patterns with Ozzy the Owl',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Algorithmic Thinking',
+      badgeColor: 'green',
+      icon: 'eye',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68258a37491fbb93a02f54e0_ozzy_patterns_Algorithmic%20thinking.png',
+      desc: 'Identify, complete, and debug visual and number patterns using clear rules and logic.',
+      bilingual: { yoruba: 'Ìfihàn Àpẹẹrẹ (Patterns & Logic)', igbo: 'Usoro ụkpụrụ na ezi uche', hausa: 'Tsarin Hankali', swahili: 'Mifumo na Mantiki' },
+      duration: '35 mins',
+      highlights: ['Pattern recognition', 'Visual sequences', 'Debugging broken rules', 'Algorithmic reasoning']
+    },
+    {
+      id: 'digital-citizenship-technology-all-around',
+      title: 'Digital Citizenship: Technology Around Us',
+      grades: '5-6',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Digital Citizenship',
+      badgeColor: 'blue',
+      icon: 'shield',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6824a92c8b78958327d9f3e0_digital_technology_all_around.png',
+      desc: 'Explore the digital world and the devices we use every day. Think critically about the pros and cons of being online.',
+      bilingual: { yoruba: 'Ààbò Orí Ayélujára (Digital safety)', igbo: 'Nchekwa na ịntanetị', hausa: 'Tsaron Intanet', swahili: 'Uraia wa Kidijitali' },
+      duration: '40 mins',
+      highlights: ['Everyday smart devices', 'Screen time balance', 'Protecting private data', 'Kind online communication']
+    },
+    {
+      id: 'introduction-to-micro-bits',
+      title: 'Introducing Micro:bits',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Hardware & Micro:bits',
+      badgeColor: 'green',
+      icon: 'layers',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682597db5c98e45260d2f838_introduction_microbits_robotics.png',
+      desc: 'Explore the micro:bit and learn about its parts, about microcontrollers and how they receive instructions.',
+      bilingual: { yoruba: 'Kọ̀ǹpútà Kékèké (Microcontrollers)', igbo: 'Obere kọmputa nchịkwa', hausa: 'Karamar Kwamfuta', swahili: 'Kompyuta ndogo ya micro:bit' },
+      duration: '50 mins',
+      highlights: ['5x5 LED matrix', 'A & B input buttons', 'Microcontroller processors', 'Flashing first code']
+    },
+    {
+      id: 'input-and-output-devices',
+      title: 'Input and Output Devices',
+      grades: '5-6',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Hardware & Micro:bits',
+      badgeColor: 'blue',
+      icon: 'refresh',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6825a2eba24f00f39de316e8_input_output_lesson_card.png',
+      desc: 'Explore how computers receive, process, and respond to information using input and output devices.',
+      bilingual: { yoruba: 'Ìrúnwọlé àti Ìfihàn (Input & Output)', igbo: 'Ntinye na mmepụta ozi', hausa: 'Shigarwa da Fitarwa', swahili: 'Vifaa vya Kuingiza na Kutoa Data' },
+      duration: '45 mins',
+      highlights: ['Keyboards, sensors & mics', 'Monitors, speakers & motors', 'The CPU processing loop', 'Real-world machine examples']
+    },
+    {
+      id: 'robotics-joining-materials',
+      title: 'Robotics: Joining Materials',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Robotics & Circuits',
+      badgeColor: 'green',
+      icon: 'compass',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6825a70aed91448038bfdea8_robotics_joining_materials.png',
+      desc: 'Learn how different materials are joined in robotics and simple engineering builds.',
+      bilingual: { yoruba: 'Ìsopọ̀ Àwọn Ohun Èlò (Joining materials)', igbo: 'Ijiko ngwa ọrụ', hausa: 'Hada Kayan Aiki', swahili: 'Kuunganisha Vifaa vya Roboti' },
+      duration: '40 mins',
+      highlights: ['Structural joints & fasteners', 'Pivots & axles', 'Rigid vs flexible connections', 'Engineering design process']
+    },
+    {
+      id: 'cad-designing-floor-plans',
+      title: 'CAD: Designing Floor Plans',
+      grades: '5-6',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'CAD & 3D Design',
+      badgeColor: 'blue',
+      icon: 'home',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682b847507a194824d09aeee_CAD_Designing_Floor_Plans_Lesson.png',
+      desc: 'Discover how CAD is used by architects and engineers to design buildings, cars, and cities.',
+      bilingual: { yoruba: 'Àwòrán Ilé CAD (Floor plan design)', igbo: 'Nhazi eserese ụlọ', hausa: 'Zanen Gine-gine', swahili: 'Ubunifu wa Ramani za Majengo (CAD)' },
+      duration: '50 mins',
+      highlights: ['2D architectural scale', 'Walls, doorways & windows', 'Measurement units', 'Exporting digital blueprints']
+    },
+    {
+      id: 'cad-toy-design-with-tinkercad',
+      title: 'CAD: Toy Design with Tinkercad',
+      grades: '6-8+',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'CAD & 3D Design',
+      badgeColor: 'purple',
+      icon: 'sparkles',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682ed8c00b9043aac0bea99d_Toy%20Design_TinkerCAD.png',
+      desc: 'Design a simple mechanical toy using Tinkercad. Learn key CAD and robotics skills like pivots, linkages, and alignment.',
+      bilingual: { yoruba: 'Àwòrán 3D Fún Ẹ̀rọ Ìṣiré (3D Toy design)', igbo: 'Imebe ihe egwuregwu 3D', hausa: 'Zanen Kayan Wasa na 3D', swahili: 'Muundo wa Vitu vya Kuchezea vya 3D' },
+      duration: '60 mins',
+      highlights: ['3D shape manipulation', 'Holes and solid groups', 'Mechanical pivots', '3D printing preparation']
+    },
+    {
+      id: 'spreadsheets-formatting-fun',
+      title: 'Spreadsheets: Formatting Fun',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Spreadsheets & Data',
+      badgeColor: 'green',
+      icon: 'book',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682f02b0c230e91424a0fdd8_Spreadsheets_Formatting_fun_LessonCard.png',
+      desc: 'Learn how to organise, format, and visualise data using spreadsheets. A beginner-friendly lesson that introduces rows, columns, cells, and file saving.',
+      bilingual: { yoruba: 'Ìtòlẹ́sẹẹsẹ̀ Dátà (Spreadsheets & Data)', igbo: 'Nhazi tebụl data', hausa: 'Teburin Bayanai', swahili: 'Majedwali na Mpangilio wa Data' },
+      duration: '45 mins',
+      highlights: ['Rows, columns & cell addresses', 'Cell color formatting', 'Simple SUM & AVERAGE formulas', 'Bar chart creation']
+    },
+    {
+      id: 'block-based-coding-vs-line-based-coding',
+      title: 'Block-Based vs Line-Based Coding',
+      grades: '6-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Coding & Games',
+      badgeColor: 'purple',
+      icon: 'code',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682f1967c722f92a295166d9_Line_Block_Coding_Free_LEsson_Card.png',
+      desc: 'Discover the difference between block-based and line-based coding through loops and fun coding games.',
+      bilingual: { yoruba: 'Kóòdù Ẹlẹ́yà vs Kóòdù Ìlà (Blocks vs Syntax)', igbo: 'Koodu ngọngọ na koodu ederede', hausa: "Nau'o'in Lambobin Kwamfuta", swahili: 'Misimbo ya Vitalu dhidi ya Mistari' },
+      duration: '50 mins',
+      highlights: ['Scratch visual blocks vs Python syntax', 'Syntax errors vs logic bugs', 'Loops & conditions comparison', 'Smooth text-code transition']
+    },
+    {
+      id: 'robot-sensors-detecting-the-world',
+      title: 'Robot Sensors: Detecting the World',
+      grades: '6-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Robotics & Circuits',
+      badgeColor: 'purple',
+      icon: 'eye',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682f4193d09b27eeca46e9a0_robotics_sensors_elesson%20card.png',
+      desc: 'How do robots "see" the world? Discover how sensors help robots sense, move, and react.',
+      bilingual: { yoruba: 'Àwọn Ohun Ìfura Rọ́bọ́ọ̀tì (Sensors)', igbo: 'Ihe nchọpụta rọbọt', hausa: "Kayan Jin Yanayi na Na'ura", swahili: 'Vihisi vya Roboti (Sensors)' },
+      duration: '55 mins',
+      highlights: ['Ultrasonic distance sensors', 'Light & infrared detection', 'Sensor threshold triggers', 'Autonomous obstacle avoidance']
+    },
+    {
+      id: 'exploring-games-in-scratch',
+      title: 'Exploring Games in Scratch',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Coding & Games',
+      badgeColor: 'green',
+      icon: 'play',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/683000e54a844c9084375187_exploring_games_scratch_lessoncard.png',
+      desc: 'Explore how games are built in Scratch using variables, timers, and control blocks.',
+      bilingual: { yoruba: 'Ṣíṣe Eré Kóòdù nínú Scratch (Scratch Games)', igbo: 'Ime egwuregwu na Scratch', hausa: 'Kera Wasanni a Scratch', swahili: 'Kutengeneza Michezo katika Scratch' },
+      duration: '45 mins',
+      highlights: ['Sprite movement & arrow keys', 'Score & timer variables', 'Collision detection', 'Win & Game Over screens']
+    },
+    {
+      id: 'flowcharts-the-decision-making-process',
+      title: 'Flowcharts: Decision Making',
+      grades: '6-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Algorithmic Thinking',
+      badgeColor: 'purple',
+      icon: 'compass',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6835cff283d0d34df03a7b7c_Flowcharts_lesson%20card.png',
+      desc: 'Learn how to break down everyday decisions into clear, visual steps using flowcharts.',
+      bilingual: { yoruba: 'Àwòrán Ìpinnu (Flowcharts & logic)', igbo: 'Chaatị mkpebi echiche', hausa: 'Tsarin Yanke Shawara', swahili: 'Michoro ya Mtiririko (Flowcharts)' },
+      duration: '45 mins',
+      highlights: ['Start/End terminators', 'Decision diamonds (Yes/No)', 'Process rectangles', 'Mapping complex game logic']
+    },
+    {
+      id: 'crack-the-code-ascii-and-unicode',
+      title: 'Crack the Code: ASCII and Unicode',
+      grades: '6-8+',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'AI & Data',
+      badgeColor: 'purple',
+      icon: 'lock',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/683c7fbb28be90d2ebaa227e_crack_the_code_ASCII_Unicode_lessoncard.png',
+      desc: 'Learn how text, symbols, and emojis are stored and shared using binary code.',
+      bilingual: { yoruba: 'Àwọn Kóòdù Lẹ́tà (ASCII & Unicode)', igbo: 'Koodu ederede ASCII na Unicode', hausa: 'Fassarar Lambobin Rubutu', swahili: 'Usimbaji wa Maandishi (ASCII & Unicode)' },
+      duration: '50 mins',
+      highlights: ['ASCII character table (A=65)', 'Unicode & multilingual glyphs', 'Emoji byte encodings', 'Secret binary message decoder']
+    },
+    {
+      id: 'ozzy-explores-robots',
+      title: 'Ozzy Explores Robots',
+      grades: 'Preschool / K-2',
+      band: 'lower',
+      bandLabel: 'Lower Elementary (K-2)',
+      category: 'Robotics & Circuits',
+      badgeColor: 'red',
+      icon: 'smile',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6841a7440966521e663c930a_ozzy_explores_robots_lesson_card.png',
+      desc: 'Meet Ozzy the owl and Dizzy the drone as you explore what robots are and how they help us, in this unplugged robotics lesson.',
+      bilingual: { yoruba: 'Àwọn Rọ́bọ́ọ̀tì Olùrànlọ́wọ́ (Robots for kids)', igbo: 'Rọbọt na-enyere anyị aka', hausa: 'Mutum-mutumi Mai Taimako', swahili: 'Roboti Zinavyotusaidia' },
+      duration: '30 mins',
+      highlights: ['What makes a machine a robot', 'Robot helper story', 'Body, brain & power parts', 'Hands-on movement roleplay']
+    },
+    {
+      id: 'exploring-artificial-intelligence',
+      title: 'Exploring Artificial Intelligence',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'AI & Data',
+      badgeColor: 'green',
+      icon: 'sparkles',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6849716ffb4e02045d4ad26e_Exploring_artificial_intelligence_Lessoncard.png',
+      desc: 'An introduction to Artificial Intelligence (AI). Explore how AI recognises patterns, processes data, and learns over time.',
+      bilingual: { yoruba: 'Ọgbọ́n Àtọwọ́dá Kọ̀ǹpútà (Artificial Intelligence)', igbo: 'Amamihe Artificial Intelligence', hausa: 'Fasahar AI', swahili: 'Akili Unde (Artificial Intelligence)' },
+      duration: '45 mins',
+      highlights: ['How machines learn from data', 'Computer vision & speech recognition', 'Training vs testing examples', 'Ethical & responsible AI']
+    },
+    {
+      id: 'social-media-and-you-whats-your-brand',
+      title: 'Social Media and You: What’s Your Brand?',
+      grades: '6-8+',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Digital Citizenship',
+      badgeColor: 'purple',
+      icon: 'user',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/684c25beb2ff4f18d3deb053_FINAL_free%20lessons_lesson%20card_headers%20(658%20x%20502%20px)%20(4).png',
+      desc: 'Explore how personal branding and digital footprints shape your online identity.',
+      bilingual: { yoruba: 'Àpẹẹrẹ Rẹ Lórí Ayélujára (Digital identity)', igbo: 'Njirimara gị na ntanetị', hausa: 'Hotonku a Yanar Gizo', swahili: 'Utambulisho Wako Mtandaoni' },
+      duration: '45 mins',
+      highlights: ['Digital footprints & permanence', 'Privacy settings and safety', 'Constructive digital creation', 'Positive online impact']
+    },
+    {
+      id: 'my-country-my-world',
+      title: 'My Country: My World',
+      grades: '6-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Web Development',
+      badgeColor: 'purple',
+      icon: 'globe',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68552a1f9197a895a1a1d4e6_myfirstwebsite_mycountry.png',
+      desc: 'Code your first Website! Learn how to structure and style content using HTML and CSS, changing colours, headings, and even designing a fictional country.',
+      bilingual: { yoruba: 'Kíkọ Ojú-òpó Wẹ́ẹ̀bù (Building Webpages)', igbo: 'Iwu ibe weebụ mbụ gị', hausa: 'Gina Shafin Yanar Gizo', swahili: 'Kutengeneza Tovuti Yako ya Kwanza' },
+      duration: '55 mins',
+      highlights: ['HTML tags (<h1>, <p>, <img>)', 'CSS background and color styling', 'Borders and responsive containers', 'Live browser preview']
+    },
+    {
+      id: 'scratch-text-variables',
+      title: 'Scratch: Text Variables',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Coding & Games',
+      badgeColor: 'green',
+      icon: 'edit',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/686544f7f490862234b417d8_Scratch%20Text%20Variables.png',
+      desc: 'Create and use text variables in Scratch to make projects more dynamic.',
+      bilingual: { yoruba: 'Àwọn Ìpamọ́ Ọ̀rọ̀ (Text Variables)', igbo: 'Mgbanwe ederede na Scratch', hausa: "Ma'ajiyar Kalmomi", swahili: 'Vibadilika vya Maandishi (Text Variables)' },
+      duration: '40 mins',
+      highlights: ['Making custom variables', 'Joining strings with “join” blocks', 'Asking for user input (Ask & Wait)', 'Personalized character dialogue']
+    },
+    {
+      id: 'exploring-micro-bits',
+      title: 'Exploring Micro:bits Hands-On',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Hardware & Micro:bits',
+      badgeColor: 'green',
+      icon: 'layers',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/686e80c5efe68b6bd79fcc06_exploring_microbits.png',
+      desc: 'Learn how micro:bits work by exploring their parts, LEDs, and buzzers and display your name on a virtual micro:bit.',
+      bilingual: { yoruba: 'Ṣíṣe Àdánwò Micro:bit (Micro:bit Lab)', igbo: 'Ihe omume Micro:bit', hausa: 'Gwajin Micro:bit', swahili: 'Majaribio ya Micro:bit' },
+      duration: '45 mins',
+      highlights: ['Show String scrolling animation', 'Custom LED icon designs', 'Play Tone melody sounds', 'Compass and shake triggers']
+    },
+    {
+      id: 'introduction-to-tess-the-dog-javascript-lesson',
+      title: 'Introduction to Tess the Dog - JavaScript',
+      grades: '6-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Coding & Games',
+      badgeColor: 'purple',
+      icon: 'code',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/687512ab7a72f165acfb6d1b_Tess%20the%20dog%20JS.png',
+      desc: 'Meet Tess the Dog and learn basic JavaScript commands to guide movements and actions.',
+      bilingual: { yoruba: 'Kóòdù JavaScript pẹ̀lú Tess (JavaScript Basics)', igbo: 'Iwu JavaScript na Tess', hausa: 'Koyan JavaScript', swahili: 'Mafunzo ya JavaScript na Mbwa Tess' },
+      duration: '50 mins',
+      highlights: ['Function calls: tess.bark(), tess.fetch()', 'Parameters & arguments', 'JavaScript camelCase syntax', 'Interactive virtual canine sandbox']
+    },
+    {
+      id: 'an-introduction-to-cyber-security',
+      title: 'An Introduction to Cyber Security',
+      grades: '7-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Cybersecurity',
+      badgeColor: 'purple',
+      icon: 'shield',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6878d3f77c47e8422f3085ee_cyber%20security.png',
+      desc: 'Discover the basics of cybersecurity by identifying online threats like phishing, malware, and weak passwords.',
+      bilingual: { yoruba: 'Ààbò Kọ̀ǹpútà àti Nẹ́tíwọ́ọ̀kì (Cyber Security)', igbo: 'Nchekwa kọmputa na ozi', hausa: 'Kariyar Yanar Gizo', swahili: 'Usalama Mtandaoni (Cyber Security)' },
+      duration: '50 mins',
+      highlights: ['Spotting phishing emails', 'Creating fortress passwords', 'Two-Factor Authentication (2FA)', 'Safe browsing habits']
+    },
+    {
+      id: 'augmented-reality-real-world-applications',
+      title: 'Augmented Reality: Real-World Applications',
+      grades: '6-7',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'AI & Data',
+      badgeColor: 'purple',
+      icon: 'sparkles',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68823759c7e478e8deb2b018_AR%20Lesson%20Card.png',
+      desc: 'Discover the difference between Augmented and Virtual Reality in this interactive digital skills lesson.',
+      bilingual: { yoruba: 'Àwòrán Ayélujára Àfipọ̀ (Augmented Reality)', igbo: 'Eziokwu Augmented Reality', hausa: 'Fasahar AR', swahili: 'Uhalisia Ulioboreshwa (Augmented Reality)' },
+      duration: '45 mins',
+      highlights: ['AR vs VR definitions', 'Camera overlay tracking', 'Healthcare & engineering uses', 'Designing a phone AR filter']
+    },
+    {
+      id: 'bits-bytes-and-binary-numbers',
+      title: 'Bits, Bytes and Binary Numbers',
+      grades: '7-8',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'AI & Data',
+      badgeColor: 'purple',
+      icon: 'lock',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68936cb20ab474b1e00eb5a9_bits_bytes_binary_lesson_card.png',
+      desc: 'Understand how binary numbers work and why computers use them.',
+      bilingual: { yoruba: 'Àwọn Nọ́ḿbà Kọ̀ǹpútà 0 àti 1 (Binary)', igbo: 'Nọmba abụọ nke kọmputa (Binary)', hausa: 'Lambobin Binary 0 da 1', swahili: 'Namba za Mfumo wa Jozi (Binary)' },
+      duration: '45 mins',
+      highlights: ['Base-2 vs Base-10 systems', 'Powers of 2 (1, 2, 4, 8, 16, 32, 64, 128)', 'Converting numbers to binary', 'Transistors as electronic on/off switches']
+    },
+    {
+      id: 'ozzy-introduces-patterns',
+      title: 'Ozzy Introduces Patterns',
+      grades: 'Preschool / K-2',
+      band: 'lower',
+      bandLabel: 'Lower Elementary (K-2)',
+      category: 'Algorithmic Thinking',
+      badgeColor: 'red',
+      icon: 'sparkles',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6896132640e0a68a26d89a61_ozzy_introduces_patterns_lesson.png',
+      desc: 'Discover how pattern recognition builds coding skills through this unplugged, interactive robotics and computer science lesson.',
+      bilingual: { yoruba: 'Ìfihàn Àpẹẹrẹ pẹ̀lú Ozzy (Patterns for young coders)', igbo: 'Usoro ihe atụ dị mfe', hausa: 'Kayan Tsari na Farko', swahili: 'Mifumo ya Awali ya Kujifunza' },
+      duration: '30 mins',
+      highlights: ['AB, ABB & ABC repeating rhythms', 'Pattern prediction games', 'Body percussion coding', 'Unplugged robotics logic']
+    },
+    {
+      id: 'taking-your-first-steps-in-coding',
+      title: 'Taking Your First Steps in Coding',
+      grades: 'K-2',
+      band: 'lower',
+      bandLabel: 'Lower Elementary (K-2)',
+      category: 'Algorithmic Thinking',
+      badgeColor: 'red',
+      icon: 'compass',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68a8122e3e2695f00f7fb74a_first%20steps%20in%20coding.jpg',
+      desc: 'Learn the basics of coding through fun unplugged activities that teach sequencing, logic, and problem-solving - no computers required.',
+      bilingual: { yoruba: 'Àwọn Ìgbésẹ̀ Àkọ́kọ́ nínú Kóòdù (First steps in code)', igbo: 'Nzọụkwụ mbụ na koodu', hausa: 'Matakan Farko na Kwamfuta', swahili: 'Hatua za Kwanza katika Msimbo' },
+      duration: '35 mins',
+      highlights: ['Step-by-step algorithms', 'Direction cards (Forward, Turn)', 'Debugging human robot paths', 'Building teamwork & resilience']
+    },
+    {
+      id: 'digital-identity-and-communicating-online',
+      title: 'Digital Identity & Communicating Online',
+      grades: 'K-2',
+      band: 'lower',
+      bandLabel: 'Lower Elementary (K-2)',
+      category: 'Digital Citizenship',
+      badgeColor: 'red',
+      icon: 'smile',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68b187ac468fdb830e0f9c7e_Digital%20Identity_Free%20Lesson.png',
+      desc: 'Learn how digital identities are formed, why online safety matters, and how to make smart choices when communicating online.',
+      bilingual: { yoruba: 'Ìbánisọ̀rọ̀ rere lórí Ayélujára (Online manners & safety)', igbo: 'Nkwurịta okwu dị mma na ntanetị', hausa: 'Kyakkyawan Sadarwa a Intanet', swahili: 'Mawasiliano Salama Mtandaoni' },
+      duration: '30 mins',
+      highlights: ['What is a screen avatar?', 'Keeping secrets & passwords safe', 'Asking an adult before sharing', 'Kind words in online spaces']
+    },
+    {
+      id: 'networks-wired-and-wireless',
+      title: 'Networks: Wired and Wireless',
+      grades: '6-7',
+      band: 'middle',
+      bandLabel: 'Middle School (6-8)+',
+      category: 'Cybersecurity',
+      badgeColor: 'purple',
+      icon: 'refresh',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68c9804957cef7c04faf1b54_networks_wired_wireless.png',
+      desc: 'Explore wired and wireless networks, IoT, and digital connectivity through interactive tasks and a creative smart device design challenge.',
+      bilingual: { yoruba: 'Àwọn Nẹ́tíwọ́ọ̀kì Wáyà àti Aláìlówáyà (Networks & IoT)', igbo: 'Netwọk wired na wireless', hausa: 'Hanyoyin Sadarwa na Intanet', swahili: 'Mitandao ya Waya na Isiyo na Waya' },
+      duration: '50 mins',
+      highlights: ['Ethernet vs Wi-Fi vs Bluetooth', 'Routers, packets and IP addresses', 'Smart home Internet of Things (IoT)', 'Designing a solar-powered connected farm']
+    },
+    {
+      id: 'using-patterns-to-encode-and-decode',
+      title: 'Using Patterns to Encode and Decode',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Algorithmic Thinking',
+      badgeColor: 'green',
+      icon: 'lock',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68da617be13369068373328a_encoding_decoding_patterns.png',
+      desc: 'Learn how patterns, encoding, and decoding build the foundation for coding, problem-solving, and creative thinking.',
+      bilingual: { yoruba: 'Ìpamọ́ àti Ìtúmọ̀ Kóòdù (Encoding & Decoding)', igbo: 'Izo na imeghe koodu', hausa: 'Boye da Bayyana Sakonni', swahili: 'Kufunga na Kufungua Misimbo (Encoding)' },
+      duration: '40 mins',
+      highlights: ['Substitution ciphers (Caesar cipher)', 'Pattern rule tables', 'Morse code & drum rhythms', 'Creating secret classroom codes']
+    },
+    {
+      id: 'an-introduction-to-scratch',
+      title: 'An Introduction to Scratch',
+      grades: '3-5',
+      band: 'upper',
+      bandLabel: 'Upper Elementary (3-5)',
+      category: 'Coding & Games',
+      badgeColor: 'green',
+      icon: 'sparkles',
+      image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/68e8e5cf9aedfdf2c00545c3_scratch%20lesson%20intro.jpg',
+      desc: 'An introduction to Scratch is a beginner-friendly programming lesson where students animate sprites, explore algorithms, and build core computer science skills.',
+      bilingual: { yoruba: 'Ìbẹ̀rẹ̀ Kóòdù pẹ̀lú Scratch (Scratch Intro)', igbo: 'Mmalite koodu na Scratch', hausa: 'Fara Kayan Scratch', swahili: 'Utangulizi wa Scratch' },
+      duration: '45 mins',
+      highlights: ['Blocks palette & stage window', 'Green flag event blocks', 'Costume animations & speech bubbles', 'Sound effects and loop repetition']
+    }
+  ];
+
+  function filterFreeLessons() {
+    const bandFilter = state.coding.filter || 'all';
+    const catFilter = state.coding.category || 'all';
+    const searchQ = (state.coding.lessonSearch || '').trim().toLowerCase();
+
+    return C4K_FREE_LESSONS.filter((lesson) => {
+      if (bandFilter !== 'all' && lesson.band !== bandFilter) return false;
+      if (catFilter !== 'all' && lesson.category !== catFilter) return false;
+      if (searchQ) {
+        const hay = (lesson.title + ' ' + lesson.desc + ' ' + lesson.category + ' ' + lesson.grades + ' ' + lesson.bandLabel).toLowerCase();
+        if (!hay.includes(searchQ)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderFreeLessonCards(lessons) {
+    if (!lessons.length) {
+      return '<div class="c4k-empty-lessons"><span class="empty-icon">' + icon('search', 28) + '</span><h3>No lessons matched your search or filters</h3><p>Try resetting the category filter or searching for terms like “Robotics”, “Scratch”, “Circuits”, “Variables” or “Binary”.</p><button type="button" class="button button-soft" data-action="coding-filter-band" data-band="all">Reset All Filters</button></div>';
+    }
+
+    return lessons.map((lesson) => {
+      const isDone = state.coding.completedLessons.includes(lesson.id);
+      const langKey = CODE_COPY[state.coding.helperLanguage] ? state.coding.helperLanguage : 'yoruba';
+      const bilingualTerm = lesson.bilingual[langKey] || lesson.bilingual.yoruba || 'Kóòdù';
+      return '<div class="activity-card c4k-lesson-card ' + (isDone ? 'is-completed-lesson' : '') + '" data-lesson-id="' + lesson.id + '">' +
+        '<div class="free-lessons-card-wrapper">' +
+          '<div class="activity-card-image-wrapper">' +
+            '<div class="activity-image">' +
+              '<img src="' + lesson.image + '" loading="lazy" alt="' + esc(lesson.title) + '" class="lesson-card-image" />' +
+              '<span class="c4k-card-category-pill">' + esc(lesson.category) + '</span>' +
+              (isDone ? '<span class="c4k-card-done-badge">' + icon('check', 14) + ' Completed</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="free-lessons-card-content-wrapper-copy-copy">' +
+            '<div class="activity-card-content">' +
+              '<div class="activity-card-header-wrapper">' +
+                '<h6 class="free-lessons-cards-heading">' + esc(lesson.title) + '</h6>' +
+              '</div>' +
+              '<div class="inline-text-row">' +
+                '<span class="c4k-grades-badge">' + icon('smile', 13) + ' Grades: ' + esc(lesson.grades) + '</span>' +
+                '<span class="c4k-band-tag">' + esc(lesson.bandLabel) + '</span>' +
+              '</div>' +
+              '<div class="div-block-5">' +
+                '<p class="paragraph-3">' + esc(lesson.desc) + '</p>' +
+              '</div>' +
+              '<div class="c4k-bilingual-chip" title="Bilingual concept in selected African language">' +
+                '<span class="chip-lang">' + icon('globe', 12) + '</span>' +
+                '<span class="chip-text">' + esc(bilingualTerm) + '</span>' +
+              '</div>' +
+              '<div class="c4k-card-actions">' +
+                '<button type="button" class="button-free-lessons-cards" data-action="coding-start-lesson" data-lesson-id="' + lesson.id + '">' +
+                  (isDone ? 'Review Lesson' : 'Start Lesson') + ' ' + icon('arrow', 14) +
+                '</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderCurriculumGradeCard(grade, bandId) {
+    return '<div class="activity-card c4k-grade-card" data-grade="' + grade.id + '">' +
+      '<div class="activity-card-wrapper">' +
+        '<div class="imagewrapper">' +
+          '<div class="activity-card-image-wrapper">' +
+            '<span class="badge badge-' + grade.badgeColor + '">' + esc(grade.badgeLabel) + '</span>' +
+            '<div class="activity-image">' +
+              '<img src="' + grade.image + '" loading="lazy" alt="' + esc(grade.name) + ' activity preview" class="activity-card-image" />' +
+            '</div>' +
+            '<div class="activity-gradient"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="activity-card-content-wrapper">' +
+          '<div class="activity-card-content">' +
+            '<div class="activity-card-header-wrapper">' +
+              '<div class="heading-6">' + esc(grade.name) + '</div>' +
+              '<div class="activity-date-wrapper">' +
+                '<div class="text-md font-weight-semibold">' + esc(grade.lessonCount) + '</div>' +
+                '<div class="text-s font-weight-medium">' + esc(grade.duration) + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="text-md c4k-grade-desc">' + esc(grade.desc) + '</div>' +
+            '<div class="c4k-grade-topics">' +
+              grade.topics.map((t) => '<span class="c4k-topic-pill">' + esc(t) + '</span>').join('') +
+            '</div>' +
+            '<div class="c4k-grade-card-btn-row">' +
+              '<button type="button" class="button button-soft c4k-grade-syllabus-btn" data-action="coding-explore-grade" data-grade="' + grade.id + '">' +
+                'Explore Syllabus ' + icon('book', 14) +
+              '</button>' +
+              '<button type="button" class="button button-outline c4k-grade-sample-btn" data-action="close-modal-and-jump" data-target="free-lessons">' +
+                'Matching Lessons ' + icon('arrow', 14) +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function openCurriculumModal(gradeId) {
+    let foundGrade = null;
+    let foundBand = null;
+    for (const band of CODE_CURRICULUM_BANDS) {
+      const g = band.grades.find((item) => item.id === gradeId);
+      if (g) { foundGrade = g; foundBand = band; break; }
+    }
+    if (!foundGrade) return;
+
+    const topicsHtml = foundGrade.topics.map((t) => '<span class="curriculum-topic-tag">' + icon('check', 14) + ' ' + esc(t) + '</span>').join('');
+    const modalHtml = '<div class="modal-backdrop" data-action="close-modal">' +
+      '<section class="modal-card modal-card-curriculum" role="dialog" aria-modal="true" aria-labelledby="currModalTitle">' +
+        '<button class="modal-close icon-button" data-action="close-modal" aria-label="Close">' + icon('close', 19) + '</button>' +
+        '<div class="curriculum-modal-header">' +
+          '<span class="curriculum-band-pill">' + esc(foundBand.title) + ' · ' + esc(foundBand.badge) + '</span>' +
+          '<h2 id="currModalTitle">' + esc(foundGrade.name) + ' Curriculum Syllabus</h2>' +
+          '<div class="curriculum-meta-row">' +
+            '<span>' + icon('book', 15) + ' <strong>' + esc(foundGrade.lessonCount) + '</strong></span>' +
+            '<span>' + icon('clock', 15) + ' <strong>' + esc(foundGrade.duration) + '</strong></span>' +
+            '<span>' + icon('sparkles', 15) + ' STEAM & Robotics Integrated</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="curriculum-modal-body">' +
+          '<p class="curriculum-modal-desc">' + esc(foundGrade.desc) + '</p>' +
+          '<div class="curriculum-modal-box">' +
+            '<h4>Key Computational Concepts & Modules:</h4>' +
+            '<div class="curriculum-topics-grid">' + topicsHtml + '</div>' +
+          '</div>' +
+          '<div class="curriculum-modal-box tone-mint">' +
+            '<h4>' + icon('globe', 16) + ' Cultural & Bilingual Integration:</h4>' +
+            '<p>' + esc(foundGrade.bilingualFocus) + '</p>' +
+          '</div>' +
+          '<div class="curriculum-modal-actions">' +
+            '<button type="button" class="button button-primary" data-action="close-modal-and-jump" data-target="free-lessons">' +
+              'Browse Matching Free Lessons ' + icon('arrow', 15) +
+            '</button>' +
+            '<button type="button" class="button button-outline" data-action="close-modal">Close Syllabus</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+    '</div>';
+
+    const root = document.getElementById('modal-root');
+    if (root) {
+      root.innerHTML = modalHtml;
+      root.querySelector('.modal-close')?.focus();
+    }
+  }
+
+  function openFreeLessonModal(lessonId) {
+    const lesson = C4K_FREE_LESSONS.find((item) => item.id === lessonId);
+    if (!lesson) return;
+
+    const completed = state.coding.completedLessons.includes(lesson.id);
+    const highlightsHtml = lesson.highlights.map((h) => '<li>' + icon('check', 14) + ' <span>' + esc(h) + '</span></li>').join('');
+    const langKey = CODE_COPY[state.coding.helperLanguage] ? state.coding.helperLanguage : 'yoruba';
+    const bilingualNote = lesson.bilingual[langKey] || lesson.bilingual.yoruba || 'Kóòdù àti ìmọ̀ ẹ̀rọ';
+    const langLabel = LANGUAGES.find((l) => l.id === langKey)?.name || 'Yorùbá';
+
+    const modalHtml = '<div class="modal-backdrop" data-action="close-modal">' +
+      '<section class="modal-card modal-card-lesson" role="dialog" aria-modal="true" aria-labelledby="lessonModalTitle">' +
+        '<button class="modal-close icon-button" data-action="close-modal" aria-label="Close">' + icon('close', 19) + '</button>' +
+        '<div class="lesson-modal-hero">' +
+          '<div class="lesson-modal-meta">' +
+            '<span class="lesson-modal-band-badge">' + esc(lesson.bandLabel) + '</span>' +
+            '<span class="lesson-modal-cat-badge">' + esc(lesson.category) + '</span>' +
+            '<span class="lesson-modal-duration">' + icon('clock', 14) + ' ' + esc(lesson.duration) + '</span>' +
+          '</div>' +
+          '<h2 id="lessonModalTitle">' + esc(lesson.title) + '</h2>' +
+          '<p class="lesson-modal-lead">' + esc(lesson.desc) + '</p>' +
+        '</div>' +
+        '<div class="lesson-modal-grid">' +
+          '<div class="lesson-modal-col">' +
+            '<h4>' + icon('star', 16) + ' Core Learning Objectives:</h4>' +
+            '<ul class="lesson-modal-highlights">' + highlightsHtml + '</ul>' +
+          '</div>' +
+          '<div class="lesson-modal-col">' +
+            '<div class="lesson-bilingual-pill">' +
+              '<small>' + icon('globe', 14) + ' ' + langLabel + ' Bilingual Concept:</small>' +
+              '<strong>' + esc(bilingualNote) + '</strong>' +
+            '</div>' +
+            '<div class="lesson-quick-challenge">' +
+              '<h4>' + icon('sparkles', 16) + ' Maker STEAM Challenge:</h4>' +
+              '<p>Try applying this concept in our interactive sandbox or robot garden quest!</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lesson-modal-foot">' +
+          '<button type="button" class="button button-primary" data-action="coding-complete-free-lesson" data-lesson-id="' + lesson.id + '" ' + (completed ? 'disabled' : '') + '>' +
+            (completed ? icon('check', 16) + ' Completed (+15 XP Earned)' : icon('sparkles', 16) + ' Complete Lesson & Claim +15 XP') +
+          '</button>' +
+          '<button type="button" class="button button-outline" data-action="close-modal-and-jump" data-target="coding-start">' +
+            'Open in Bilingual Code Studio ' + icon('arrow', 15) +
+          '</button>' +
+          '<button type="button" class="text-link" data-action="close-modal">Close</button>' +
+        '</div>' +
+      '</section>' +
+    '</div>';
+
+    const root = document.getElementById('modal-root');
+    if (root) {
+      root.innerHTML = modalHtml;
+      root.querySelector('.modal-close')?.focus();
+    }
+  }
+
   function renderCoding() {
     const flow = state.coding;
     const localeId = CODE_COPY[flow.helperLanguage] ? flow.helperLanguage : 'yoruba';
@@ -1050,71 +1872,419 @@
     const streakBadge = flow.streak >= 7 ? 'Canopy Creator' : flow.streak >= 3 ? 'Growing Builder' : flow.streak >= 1 ? 'Bright Sprout' : 'New Explorer';
     const progress = Math.min(100, Math.round((flow.completed.length / Math.max(1, CODE_PATHS.length * CODE_LEVELS.length * CODE_MISSIONS.length)) * 100));
     const stepLabels = ['Choose a guide', 'Pick an adventure', 'Choose a level', 'Play & celebrate'];
-    const stageSelect = (selected) => LANGUAGES.map((lang) => `<option value="${lang.id}" ${selected === lang.id ? 'selected' : ''}>${lang.name}</option>`).join('');
+    const stageSelect = (selected) => LANGUAGES.map((lang) => '<option value="' + lang.id + '" ' + (selected === lang.id ? 'selected' : '') + '>' + lang.name + '</option>').join('');
     const questRobot = flow.questTrail.length ? flow.questTrail[flow.questTrail.length - 1] : '0,3';
     const questTrail = new Set(flow.questTrail);
     const questSolved = flow.completed.includes('garden-quest');
     const questTiles = Array.from({ length: 20 }, (_, index) => {
-      const x = index % 5; const y = Math.floor(index / 5); const cell = `${x},${y}`;
+      const x = index % 5; const y = Math.floor(index / 5); const cell = x + ',' + y;
       const isRobot = cell === questRobot; const isGoal = cell === CODE_GARDEN_TARGET;
       const isBush = CODE_GARDEN_OBSTACLES.has(cell); const isTrail = questTrail.has(cell);
       const label = isRobot ? (isGoal ? 'Robot at the star' : 'Robot') : isGoal ? 'Star goal' : isBush ? 'Leafy obstacle' : isTrail ? 'Robot trail' : 'Garden path';
       const glyph = isRobot ? (isGoal ? '🤖⭐' : '🤖') : isGoal ? '⭐' : isBush ? '🌿' : isTrail ? '·' : '';
-      return `<span class="code-quest-tile ${isRobot ? 'is-robot' : ''} ${isGoal ? 'is-goal' : ''} ${isBush ? 'is-bush' : ''} ${isTrail ? 'is-trail' : ''}" role="gridcell" aria-label="${label}">${glyph}</span>`;
+      return '<span class="code-quest-tile ' + (isRobot ? 'is-robot' : '') + ' ' + (isGoal ? 'is-goal' : '') + ' ' + (isBush ? 'is-bush' : '') + ' ' + (isTrail ? 'is-trail' : '') + '" role="gridcell" aria-label="' + label + '">' + glyph + '</span>';
     }).join('');
     const questCommandList = flow.questCommands.length
       ? flow.questCommands.map((direction, i) => {
         const move = CODE_GARDEN_DIRECTIONS[direction];
         const directionText = copy.directions[move?.labelIndex ?? 0];
-        return `<button type="button" class="code-quest-block" data-action="code-quest-remove" data-index="${i}" aria-label="Remove step ${i + 1}: ${esc(directionText)}"><span>${move?.glyph || '·'}</span><small>${esc(directionText)}</small><b aria-hidden="true">×</b></button>`;
+        return '<button type="button" class="code-quest-block" data-action="code-quest-remove" data-index="' + i + '" aria-label="Remove step ' + (i + 1) + ': ' + esc(directionText) + '"><span>' + (move?.glyph || '·') + '</span><small>' + esc(directionText) + '</small><b aria-hidden="true">×</b></button>';
       }).join('')
-      : `<span class="code-quest-empty">Your code blocks will appear here.</span>`;
+      : '<span class="code-quest-empty">Your code blocks will appear here.</span>';
     const questControls = Object.entries(CODE_GARDEN_DIRECTIONS).map(([direction, move]) => {
       const label = copy.directions[move.labelIndex];
-      return `<button type="button" class="code-quest-direction" data-action="code-quest-add" data-direction="${direction}" ${flow.questCommands.length >= 12 ? 'disabled' : ''} aria-label="Add ${esc(label)} step"><span>${move.glyph}</span><small>${esc(label)}</small></button>`;
+      return '<button type="button" class="code-quest-direction" data-action="code-quest-add" data-direction="' + direction + '" ' + (flow.questCommands.length >= 12 ? 'disabled' : '') + ' aria-label="Add ' + esc(label) + ' step"><span>' + move.glyph + '</span><small>' + esc(label) + '</small></button>';
     }).join('');
+
     let content = '';
     if (flow.stage === 0) {
-      content = `<section class="code-step-panel" aria-labelledby="code-language-title"><span class="section-kicker">Step 1 · choose your helper language</span><h2 id="code-language-title">Which language should guide your adventure?</h2><p>Code stays exactly as programmers write it. Friendly explanations, hints and your first greeting can appear alongside the language you know.</p><div class="code-locale-grid">${LANGUAGES.map((lang) => `<button type="button" class="code-locale-card ${localeId === lang.id ? 'is-selected' : ''}" data-action="code-set-language" data-lang="${lang.id}" aria-pressed="${localeId === lang.id}"><span class="language-glyph lang-${lang.tint}">${lang.glyph}</span><strong>${lang.name}</strong><small>${lang.native}</small><span>${localeId === lang.id ? 'Selected · continue' : 'Choose language'}</span></button>`).join('')}</div><p class="code-translation-note">${icon('info', 16)} Starter glosses are learning aids; fluent language educators should review them before public launch.</p></section>`;
+      content = '<section class="code-step-panel" aria-labelledby="code-language-title"><span class="section-kicker">Step 1 · choose your helper language</span><h2 id="code-language-title">Which language should guide your adventure?</h2><p>Code stays exactly as programmers write it. Friendly explanations, hints and your first greeting can appear alongside the language you know.</p><div class="code-locale-grid">' + LANGUAGES.map((lang) => '<button type="button" class="code-locale-card ' + (localeId === lang.id ? 'is-selected' : '') + '" data-action="code-set-language" data-lang="' + lang.id + '" aria-pressed="' + (localeId === lang.id) + '"><span class="language-glyph lang-' + lang.tint + '">' + lang.glyph + '</span><strong>' + lang.name + '</strong><small>' + lang.native + '</small><span>' + (localeId === lang.id ? 'Selected · continue' : 'Choose language') + '</span></button>').join('') + '</div><p class="code-translation-note">' + icon('info', 16) + ' Starter glosses are learning aids; fluent language educators should review them before public launch.</p></section>';
     } else if (flow.stage === 1) {
       const query = String(flow.search || '').trim().toLowerCase();
-      const visible = CODE_PATHS.filter((item) => !query || `${item.name} ${item.category}`.toLowerCase().includes(query));
+      const visible = CODE_PATHS.filter((item) => !query || (item.name + ' ' + item.category).toLowerCase().includes(query));
       const families = [...new Set(CODE_PATHS.map((item) => item.category))];
-      content = `<section class="code-step-panel" aria-labelledby="code-path-title"><div class="code-picker-head"><div><span class="section-kicker">Step 2 · choose a learning path</span><h2 id="code-path-title">Pick a playful place to start.</h2><p>Explore ${CODE_PATHS.length} coding paths—from blocks and websites to Python, games and robots. The highlighted adventures are kid-first; the full library also includes tools for older learners.</p></div><label class="code-search-label">Find a language or tool<input id="codingSearch" type="search" value="${esc(flow.search)}" placeholder="Try Scratch, Python, HTML…" autocomplete="off" /></label></div><div class="code-adventure-grid code-adventure-grid-compact">${CODE_ADVENTURES.map((adventure, i) => `<button type="button" class="code-adventure-card tone-${adventure.tone}" data-action="code-select-tech" data-tech="${adventure.tech}"><span class="code-adventure-number">0${i + 1}</span><span class="code-adventure-icon">${icon(adventure.icon, 20)}</span><small>${adventure.label}</small><strong>${adventure.title}</strong><span class="code-adventure-go">Start this path ${icon('arrow', 14)}</span></button>`).join('')}</div><details class="code-all-paths" ${query ? 'open' : ''}><summary><span>Explore every coding path</span><strong>${CODE_PATHS.length} paths · ${CODE_LANGUAGE_IDS.size}+ languages & tools</strong></summary><div class="code-category-counts">${families.map((family) => `<span>${esc(family)} · ${CODE_PATHS.filter((item) => item.category === family).length}</span>`).join('')}</div><div class="code-path-grid">${visible.map((item) => `<button type="button" class="code-path-card" data-action="code-select-tech" data-tech="${item.id}"><span class="code-path-icon">${icon('code', 19)}</span><span class="code-path-family">${esc(item.category)}</span><strong>${esc(item.name)}</strong><small>A tiny bilingual starter, a clear example and a challenge you can try.</small><span class="code-path-go">Choose this path ${icon('arrow', 14)}</span></button>`).join('') || `<div class="code-empty">No path matched that search. Try a shorter word such as “web” or “data”.</div>`}</div></details></section>`;
+      content = '<section class="code-step-panel" aria-labelledby="code-path-title"><div class="code-picker-head"><div><span class="section-kicker">Step 2 · choose a learning path</span><h2 id="code-path-title">Pick a playful place to start.</h2><p>Explore ' + CODE_PATHS.length + ' coding paths—from blocks and websites to Python, games and robots. The highlighted adventures are kid-first; the full library also includes tools for older learners.</p></div><label class="code-search-label">Find a language or tool<input id="codingSearch" type="search" value="' + esc(flow.search) + '" placeholder="Try Scratch, Python, HTML…" autocomplete="off" /></label></div><div class="code-adventure-grid code-adventure-grid-compact">' + CODE_ADVENTURES.map((adventure, i) => '<button type="button" class="code-adventure-card tone-' + adventure.tone + '" data-action="code-select-tech" data-tech="' + adventure.tech + '"><span class="code-adventure-number">0' + (i + 1) + '</span><span class="code-adventure-icon">' + icon(adventure.icon, 20) + '</span><small>' + adventure.label + '</small><strong>' + adventure.title + '</strong><span class="code-adventure-go">Start this path ' + icon('arrow', 14) + '</span></button>').join('') + '</div><details class="code-all-paths" ' + (query ? 'open' : '') + '><summary><span>Explore every coding path</span><strong>' + CODE_PATHS.length + ' paths · ' + CODE_LANGUAGE_IDS.size + '+ languages & tools</strong></summary><div class="code-category-counts">' + families.map((family) => '<span>' + esc(family) + ' · ' + CODE_PATHS.filter((item) => item.category === family).length + '</span>').join('') + '</div><div class="code-path-grid">' + (visible.map((item) => '<button type="button" class="code-path-card" data-action="code-select-tech" data-tech="' + item.id + '"><span class="code-path-icon">' + icon('code', 19) + '</span><span class="code-path-family">' + esc(item.category) + '</span><strong>' + esc(item.name) + '</strong><small>A tiny bilingual starter, a clear example and a challenge you can try.</small><span class="code-path-go">Choose this path ' + icon('arrow', 14) + '</span></button>').join('') || '<div class="code-empty">No path matched that search. Try a shorter word such as “web” or “data”.</div>') + '</div></details></section>';
     } else if (flow.stage === 2) {
-      content = `<section class="code-step-panel" aria-labelledby="code-level-title"><div class="code-current-tech"><span class="code-path-icon">${icon('code', 20)}</span><div><span class="section-kicker">Step 3 · shape your adventure</span><h2 id="code-level-title">${esc(tech.name)} <small>${esc(tech.category)} · a starter path</small></h2></div><label class="code-helper-select">Guide language<select id="codeHelperLanguage" aria-label="Choose the language for coding hints">${stageSelect(localeId)}</select></label><button type="button" class="text-link" data-action="code-back" data-stage="1">Change path</button></div><p class="code-level-intro">Choose a pace, then pick a tiny mission. You can explore all three levels whenever you’re ready.</p><div class="code-level-grid">${CODE_LEVELS.map((item) => `<button type="button" class="code-level-card ${item.id === level.id ? 'is-selected' : ''}" data-action="code-set-level" data-level="${item.id}" aria-pressed="${item.id === level.id}"><span>${icon(item.icon, 21)}</span><small>${item.badge}</small><strong>${item.label}</strong><p>${item.note}</p><b>${flow.completed.filter((key) => key.startsWith(`${tech.id}:${item.id}:`)).length} wins</b></button>`).join('')}</div><div class="code-missions-head"><div><span class="section-kicker">${level.label} · choose a mission</span><h3>Make one small win your own.</h3></div><span class="code-progress-pill">${flow.completed.length} wins · ${flow.points} XP</span></div><div class="code-mission-grid">${CODE_MISSIONS.map((item, i) => { const done = flow.completed.includes(`${tech.id}:${level.id}:${item.id}`); const mode = i === 0 ? 'Story quest' : i === 3 ? 'Create & remix' : 'Skill practice'; return `<button type="button" class="code-mission-card ${done ? 'is-complete' : ''}" data-action="code-select-mission" data-mission="${item.id}"><span class="mission-num">0${i + 1}</span><span class="mission-icon">${icon(done ? 'check' : item.icon, 18)}</span><small>${mode} · ${item.skill}</small><strong>${item.title}</strong><span>${done ? 'Win saved' : 'Open mini lesson'} ${icon('arrow', 14)}</span></button>`; }).join('')}</div></section>`;
+      content = '<section class="code-step-panel" aria-labelledby="code-level-title"><div class="code-current-tech"><span class="code-path-icon">' + icon('code', 20) + '</span><div><span class="section-kicker">Step 3 · shape your adventure</span><h2 id="code-level-title">' + esc(tech.name) + ' <small>' + esc(tech.category) + ' · a starter path</small></h2></div><label class="code-helper-select">Guide language<select id="codeHelperLanguage" aria-label="Choose the language for coding hints">' + stageSelect(localeId) + '</select></label><button type="button" class="text-link" data-action="code-back" data-stage="1">Change path</button></div><p class="code-level-intro">Choose a pace, then pick a tiny mission. You can explore all three levels whenever you’re ready.</p><div class="code-level-grid">' + CODE_LEVELS.map((item) => '<button type="button" class="code-level-card ' + (item.id === level.id ? 'is-selected' : '') + '" data-action="code-set-level" data-level="' + item.id + '" aria-pressed="' + (item.id === level.id) + '"><span>' + icon(item.icon, 21) + '</span><small>' + item.badge + '</small><strong>' + item.label + '</strong><p>' + item.note + '</p><b>' + flow.completed.filter((key) => key.startsWith(tech.id + ':' + item.id + ':')).length + ' wins</b></button>').join('') + '</div><div class="code-missions-head"><div><span class="section-kicker">' + level.label + ' · choose a mission</span><h3>Make one small win your own.</h3></div><span class="code-progress-pill">' + flow.completed.length + ' wins · ' + flow.points + ' XP</span></div><div class="code-mission-grid">' + CODE_MISSIONS.map((item, i) => { const done = flow.completed.includes(tech.id + ':' + level.id + ':' + item.id); const mode = i === 0 ? 'Story quest' : i === 3 ? 'Create & remix' : 'Skill practice'; return '<button type="button" class="code-mission-card ' + (done ? 'is-complete' : '') + '" data-action="code-select-mission" data-mission="' + item.id + '"><span class="mission-num">0' + (i + 1) + '</span><span class="mission-icon">' + icon(done ? 'check' : item.icon, 18) + '</span><small>' + mode + ' · ' + item.skill + '</small><strong>' + item.title + '</strong><span>' + (done ? 'Win saved' : 'Open mini lesson') + ' ' + icon('arrow', 14) + '</span></button>'; }).join('') + '</div></section>';
     } else {
       const token = CODE_TOKENS[tech.syntax] || 'console.log';
-      const completionKey = `${tech.id}:${level.id}:${mission.id}`;
+      const completionKey = tech.id + ':' + level.id + ':' + mission.id;
       const complete = flow.completed.includes(completionKey);
-      const previewOutput = tech.syntax === 'blocks' || tech.name === 'Scratch'
-        ? `✨ ${greeting}\nYour character waves hello!`
+      const previewOutput = (tech.syntax === 'blocks' || tech.name === 'Scratch')
+        ? '✨ ' + greeting + '\nYour character waves hello!'
         : tech.syntax === 'markup'
-          ? `✨ ${greeting}\nA little webpage is ready.`
-          : `✨ ${greeting}\nYour ${tech.name} idea is taking shape.`;
+          ? '✨ ' + greeting + '\nA little webpage is ready.'
+          : '✨ ' + greeting + '\nYour ' + tech.name + ' idea is taking shape.';
       const challengeText = localeId === 'yoruba'
-        ? `Gbìyànjú: lo ${tech.name} láti fi “${greeting}” hàn. Wa àmì yìí nínú àpẹẹrẹ: ${token}`
+        ? 'Gbìyànjú: lo ' + tech.name + ' láti fi “' + greeting + '” hàn. Wa àmì yìí nínú àpẹẹrẹ: ' + token
         : localeId === 'igbo'
-          ? `Nwaa: jiri ${tech.name} gosi “${greeting}”. Chọta akara a n'ime ihe atụ: ${token}`
+          ? 'Nwaa: jiri ' + tech.name + ' gosi “' + greeting + '”. Chọta akara a n’ime ihe atụ: ' + token
           : localeId === 'hausa'
-            ? `Gwada: yi amfani da ${tech.name} don nuna “${greeting}”. Nemo wannan alama a misalin: ${token}`
-            : `Jaribu: tumia ${tech.name} kuonyesha “${greeting}”. Tafuta alama hii kwenye mfano: ${token}`;
+            ? 'Gwada: yi amfani da ' + tech.name + ' don nuna “' + greeting + '”. Nemo wannan alama a misalin: ' + token
+            : 'Jaribu: tumia ' + tech.name + ' kuonyesha “' + greeting + '”. Tafuta alama hii kwenye mfano: ' + token;
       
       const currentMissionIdx = CODE_MISSIONS.findIndex((m) => m.id === mission.id);
       const currentLevelIdx = CODE_LEVELS.findIndex((l) => l.id === level.id);
       let nextStepLabel = 'Next mission';
       if (currentMissionIdx !== -1 && currentMissionIdx < CODE_MISSIONS.length - 1) {
-        nextStepLabel = `Next: ${CODE_MISSIONS[currentMissionIdx + 1].title}`;
+        nextStepLabel = 'Next: ' + CODE_MISSIONS[currentMissionIdx + 1].title;
       } else if (currentLevelIdx !== -1 && currentLevelIdx < CODE_LEVELS.length - 1) {
-        nextStepLabel = `Next Level: ${CODE_LEVELS[currentLevelIdx + 1].label}`;
+        nextStepLabel = 'Next Level: ' + CODE_LEVELS[currentLevelIdx + 1].label;
       } else {
         nextStepLabel = 'Choose next coding path';
       }
-content = `<section class="code-step-panel code-play-panel" aria-labelledby="code-play-title"><div class="code-play-head"><div><span class="section-kicker">Step 4 · ${level.badge} · ${mission.title}</span><h2 id="code-play-title">Let’s make something with ${esc(tech.name)}.</h2><p>${esc(challengeText)}</p></div><div class="code-streak-mini"><span>${icon('sparkles', 18)}</span><strong>${flow.streak} day${flow.streak === 1 ? '' : 's'}</strong><small>${streakBadge}</small></div></div><div class="code-bilingual-callout"><div><small>English</small><p>Code gives the computer clear instructions.</p></div><div><small>${copy.label}</small><p>${copy.code}</p></div><div><small>${copy.label} · ${mission.skill}</small><p>${mission.id === 'sequence' ? copy.sequence : copy.variable}</p></div></div><details class="code-hint"><summary>Need a hint? Tap for a tiny clue.</summary><p>Look for <code>${esc(token)}</code> in the starter. Keep the code as it is and try changing just one small thing.</p></details><div class="code-workbench-grid"><form class="code-editor-card" data-form="coding-run" data-tech="${tech.id}" data-level="${level.id}" data-mission="${mission.id}"><div class="code-editor-title"><span><i></i><i></i><i></i></span><strong>Your code notebook</strong><small>${esc(tech.name)} · guided demo</small></div><label for="codingCode">Try a small edit, then run the friendly check.</label><textarea id="codingCode" name="code" rows="10" maxlength="1200" spellcheck="false" autocapitalize="off" required>${esc(flow.draft || sample)}</textarea><small>This offline preview checks for a lesson marker only. It does not execute code or upload your work.</small><button class="button button-primary code-run-button" type="submit">Run my code ${icon('play', 16)}</button></form><aside class="code-output-card"><span class="section-kicker">A friendly preview</span><h3>${complete ? 'Mission unlocked!' : 'What your idea could do'}</h3><div class="code-output-window"><span class="output-dot"></span><pre>${esc(previewOutput)}</pre></div><div class="code-run-status ${flow.result.includes('✓') ? 'is-success' : flow.result ? 'is-retry' : ''}" role="status">${flow.result ? esc(flow.result) : 'Ready when you are — tiny experiments count.'}</div>${complete ? `<div class="code-success-burst">${icon('trophy', 20)} <strong>+10 maker XP · Mission Complete!</strong><span>${copy.success}</span><button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">${nextStepLabel} ${icon('arrow', 15)}</button></div>` : ''}<div class="code-streak-track"><span>Maker level ${makerLevel} · ${makerRank}</span><strong>${flow.streak} day${flow.streak === 1 ? '' : 's'} · ${streakBadge}</strong><div><i style="width:${levelProgress}%"></i></div><small>${xpInLevel}/50 XP to the next level · ${flow.points} XP total</small></div></aside></div><div class="code-layer-actions">${complete ? `<button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">${nextStepLabel} ${icon('arrow', 15)}</button>` : ''}<button type="button" class="text-link" data-action="code-back" data-stage="2">${icon('arrowUp', 14)} Back to levels & missions</button><button type="button" class="text-link" data-action="code-back" data-stage="1">Pick another code path</button></div></section>`;
+      content = '<section class="code-step-panel code-play-panel" aria-labelledby="code-play-title"><div class="code-play-head"><div><span class="section-kicker">Step 4 · ' + level.badge + ' · ' + mission.title + '</span><h2 id="code-play-title">Let’s make something with ' + esc(tech.name) + '.</h2><p>' + esc(challengeText) + '</p></div><div class="code-streak-mini"><span>' + icon('sparkles', 18) + '</span><strong>' + flow.streak + ' day' + (flow.streak === 1 ? '' : 's') + '</strong><small>' + streakBadge + '</small></div></div><div class="code-bilingual-callout"><div><small>English</small><p>Code gives the computer clear instructions.</p></div><div><small>' + copy.label + '</small><p>' + copy.code + '</p></div><div><small>' + copy.label + ' · ' + mission.skill + '</small><p>' + (mission.id === 'sequence' ? copy.sequence : copy.variable) + '</p></div></div><details class="code-hint"><summary>Need a hint? Tap for a tiny clue.</summary><p>Look for <code>' + esc(token) + '</code> in the starter. Keep the code as it is and try changing just one small thing.</p></details><div class="code-workbench-grid"><form class="code-editor-card" data-form="coding-run" data-tech="' + tech.id + '" data-level="' + level.id + '" data-mission="' + mission.id + '"><div class="code-editor-title"><span><i></i><i></i><i></i></span><strong>Your code notebook</strong><small>' + esc(tech.name) + ' · guided demo</small></div><label for="codingCode">Try a small edit, then run the friendly check.</label><textarea id="codingCode" name="code" rows="10" maxlength="1200" spellcheck="false" autocapitalize="off" required>' + esc(flow.draft || sample) + '</textarea><small>This offline preview checks for a lesson marker only. It does not execute code or upload your work.</small><button class="button button-primary code-run-button" type="submit">Run my code ' + icon('play', 16) + '</button></form><aside class="code-output-card"><span class="section-kicker">A friendly preview</span><h3>' + (complete ? 'Mission unlocked!' : 'What your idea could do') + '</h3><div class="code-output-window"><span class="output-dot"></span><pre>' + esc(previewOutput) + '</pre></div><div class="code-run-status ' + (flow.result.includes('✓') ? 'is-success' : flow.result ? 'is-retry' : '') + '" role="status">' + (flow.result ? esc(flow.result) : 'Ready when you are — tiny experiments count.') + '</div>' + (complete ? '<div class="code-success-burst">' + icon('trophy', 20) + ' <strong>+10 maker XP · Mission Complete!</strong><span>' + copy.success + '</span><button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">' + nextStepLabel + ' ' + icon('arrow', 15) + '</button></div>' : '') + '<div class="code-streak-track"><span>Maker level ' + makerLevel + ' · ' + makerRank + '</span><strong>' + flow.streak + ' day' + (flow.streak === 1 ? '' : 's') + ' · ' + streakBadge + '</strong><div><i style="width:' + levelProgress + '%"></i></div><small>' + xpInLevel + '/50 XP to the next level · ' + flow.points + ' XP total</small></div></aside></div><div class="code-layer-actions">' + (complete ? '<button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">' + nextStepLabel + ' ' + icon('arrow', 15) + '</button>' : '') + '<button type="button" class="text-link" data-action="code-back" data-stage="2">' + icon('arrowUp', 14) + ' Back to levels & missions</button><button type="button" class="text-link" data-action="code-back" data-stage="1">Pick another code path</button></div></section>';
     }
 
-    return `<div class="container route-page coding-page redesigned-coding-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Coding for kids</strong></div><section class="code-kids-hero" aria-labelledby="code-kids-title"><div class="code-kids-hero-copy"><span class="code-kids-eyebrow">${icon('sparkles', 16)} IDÍLẸ́WÀ CODE GARDEN · LEARN BY PLAYING</span><h1 id="code-kids-title">Code a little.<br /><em>Imagine a lot.</em></h1><p>Guide a robot through a garden, make a character dance, build a webpage and tell a tiny story with code—one cheerful mission at a time.</p><div class="code-kids-hero-actions"><button type="button" class="code-kids-start-button" data-action="code-jump" data-target="coding-start">Start a free coding adventure ${icon('arrow', 17)}</button><button type="button" class="code-kids-secondary-button" data-action="code-jump" data-target="code-quest">Play the robot garden ${icon('play', 15)}</button></div><div class="code-kids-trust-row"><span>${icon('layers', 15)} ${CODE_PATHS.length} code paths</span><span>${icon('globe', 15)} ${LANGUAGES.length} helper languages</span><span>${icon('smile', 15)} No experience needed</span><span>${icon('check', 15)} Tablet-friendly</span></div></div><div class="code-kids-hero-visual"><img src="./assets/page-coding-1.jpg" alt="Nigerian children in traditional attire sharing a coding activity with a friendly robot" /><span class="code-hero-sticker code-hero-sticker-top">${icon('sparkles', 15)} Small steps · big ideas</span><span class="code-hero-sticker code-hero-sticker-bottom">${icon('trophy', 16)} Earn maker XP as you learn</span></div></section><section class="code-learning-rhythm" aria-label="How coding lessons work"><article><span class="code-rhythm-number">01</span><span class="code-rhythm-icon">${icon('book', 20)}</span><strong>Story quests</strong><p>Give a character a goal and help them solve it.</p></article><article><span class="code-rhythm-number">02</span><span class="code-rhythm-icon">${icon('layers', 20)}</span><strong>Skill practice</strong><p>Try sequences, patterns, loops and choices.</p></article><article><span class="code-rhythm-number">03</span><span class="code-rhythm-icon">${icon('sparkles', 20)}</span><strong>Make it yours</strong><p>Change an example, remix an idea and celebrate.</p></article></section><section class="code-adventures-section" id="code-adventures" aria-labelledby="code-adventures-title"><div class="code-section-heading"><div><span class="section-kicker">Choose your first adventure</span><h2 id="code-adventures-title">What would you like to make?</h2><p>Friendly starting points for curious coders—no experience needed.</p></div><button type="button" class="text-link" data-action="code-jump" data-target="coding-start">Explore all ${CODE_PATHS.length} paths ${icon('arrow', 15)}</button></div><div class="code-adventure-grid">${CODE_ADVENTURES.map((adventure, i) => `<button type="button" class="code-adventure-card tone-${adventure.tone}" data-action="code-quick-path" data-tech="${adventure.tech}"><span class="code-adventure-number">0${i + 1}</span><span class="code-adventure-icon">${icon(adventure.icon, 21)}</span><small>${adventure.label}</small><strong>${adventure.title}</strong><p>${adventure.text}</p><span class="code-adventure-go">Start this adventure ${icon('arrow', 14)}</span></button>`).join('')}</div></section><section class="code-garden-quest" id="code-quest" aria-labelledby="code-quest-title"><div class="code-quest-copy"><span class="code-kids-eyebrow">${icon('star', 16)} TRY A MINI GAME · NO SIGN-UP NEEDED</span><h2 id="code-quest-title">Robot in the baobab garden</h2><p>${esc(copy.questPrompt)}</p><div class="code-quest-instruction"><span>${icon('info', 16)}</span><span>Build a sequence to get around the leafy bushes and reach the star. A correct route earns your first 10 maker XP.</span></div><div class="code-quest-controls"><span class="code-quest-subtitle">Add a movement block</span><div class="code-quest-direction-row">${questControls}</div></div><div class="code-quest-code-label"><strong>Your sequence</strong><small>${flow.questCommands.length}/12 blocks · tap a block to remove it</small></div><div class="code-quest-sequence" aria-label="Your movement code sequence">${questCommandList}</div><div class="code-quest-actions"><button type="button" class="code-quest-run" data-action="code-quest-run">${icon('play', 16)} ${esc(copy.questRun)}</button><button type="button" class="code-quest-undo" data-action="code-quest-remove" data-index="${Math.max(0, flow.questCommands.length - 1)}" ${flow.questCommands.length ? '' : 'disabled'}>${icon('refresh', 15)} Undo</button><button type="button" class="code-quest-undo" data-action="code-quest-clear" ${flow.questCommands.length ? '' : 'disabled'}>${icon('plus', 15)} ${esc(copy.questClear)}</button></div><details class="code-hint code-quest-hint"><summary>Need a hint?</summary><p>${esc(copy.questHint)}</p></details>${flow.questResult ? `<div class="code-quest-result ${flow.questResult.includes('✓') ? 'is-success' : 'is-retry'}" role="status">${icon(flow.questResult.includes('✓') ? 'check' : 'refresh', 17)} ${esc(flow.questResult)}</div>` : ''}${questSolved ? `<div class="code-quest-earned">${icon('trophy', 17)} Garden Explorer badge earned</div>` : ''}</div><div class="code-quest-board-card"><div class="code-quest-board-head"><div><span class="section-kicker">THE PUZZLE MAP</span><strong>Find the star</strong></div><span class="code-quest-badge">${icon('sparkles', 15)} ${questSolved ? 'Complete' : 'Mission 01'}</span></div><div class="code-quest-board" role="grid" aria-label="Robot garden maze with a star goal and leafy obstacles">${questTiles}</div><div class="code-quest-key"><span><i class="key-robot">🤖</i> Your robot</span><span><i class="key-bush">🌿</i> Bush</span><span><i class="key-star">⭐</i> Goal</span></div><p>Think like a coder: plan, run, notice what happened, then try again.</p></div></section><section class="code-start-zone" id="coding-start" aria-labelledby="coding-start-title"><div class="code-start-heading"><div><span class="section-kicker">YOUR MAKER JOURNEY · ${CODE_PATHS.length} paths · ${CODE_LEVELS.length} skill levels</span><h2 id="coding-start-title">Your next tiny win starts here.</h2><p>Choose a guide language, pick a path, then learn by trying. Your local progress stays on this device.</p></div><div class="code-progress-card code-progress-card-fun"><span class="code-progress-spark">${icon('trophy', 22)}</span><div class="code-progress-heading"><small>Level ${makerLevel} · ${makerRank}</small><strong>${flow.points} <em>XP</em></strong></div><div class="code-level-meter"><i style="width:${levelProgress}%"></i></div><span>${xpInLevel}/50 XP to the next level · ${flow.completed.length} challenge wins</span><div class="code-progress-foot"><span>${icon('sparkles', 14)} ${flow.streak} day streak</span><span>${progress}% path progress</span></div></div></div>${renderStepper(stepLabels, flow.stage)}<div class="coding-layer-content">${content}</div></section><section class="code-safety-note">${icon('shield', 16)} This is a local learning prototype: starter code is checked with simple teaching rules, and the garden quest simulates movement blocks. It does not execute arbitrary programs, upload code, or connect to an AI service. Language glosses need fluent-speaker review.</section></div>`;
+    const freeLessons = filterFreeLessons();
+    const activeBandKey = flow.filter || 'all';
+    const activeCategory = flow.category || 'all';
+    const categoriesList = ['all', 'Robotics & Circuits', 'Algorithmic Thinking', 'Coding & Games', 'Hardware & Micro:bits', 'AI & Data', 'CAD & 3D Design', 'Digital Citizenship', 'Cybersecurity', 'Web Development', 'Spreadsheets & Data'];
+
+    return '<div class="container route-page coding-page c4k-redesigned-page">' +
+      '<div class="breadcrumbs">' +
+        routeLink('index', 'Home') + '<span>/</span><strong>Coding for kids</strong>' +
+      '</div>' +
+
+      '<!-- 1. Hero & Activities Navigation Hub -->' +
+      '<header class="section-activities-header c4k-hero-header">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="header-wrapper">' +
+              '<span class="c4k-eyebrow">' + icon('sparkles', 16) + ' IDÍLẸ́WÀ CODE FOR KIDS · K-8 STEAM CURRICULUM</span>' +
+              '<h1 class="heading-2 c4k-main-title">The Code for Kids Curriculum</h1>' +
+              '<div class="text-lg max-width-540 c4k-sub-lead">' +
+                'From Kindergarten to Grade 8 · Engaging STEAM & Coding Lessons for Young African Innovators' +
+              '</div>' +
+              '<div class="c4k-quick-pills-row">' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="code-quest">' + icon('play', 14) + ' Robot Garden Quest</button>' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="coding-start">' + icon('code', 14) + ' Bilingual Studio</button>' +
+              '</div>' +
+            '</div>' +
+
+            '<!-- 3 Grade Band Hub Navigation Cards -->' +
+            '<article class="activities-navigation-wrapper" id="curriculum-bands">' +
+              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
+                '<div class="activity-navigation-icon-wrap">' +
+                  '<span class="activity-nav-glyph">🌱</span>' +
+                '</div>' +
+                '<div class="activity-navigation-content">' +
+                  '<div class="activity-heading-wrapper">' +
+                    '<h6>Lower Elementary</h6>' +
+                  '</div>' +
+                  '<div class="text-lg text-color-bright-overlay-60">Kindergarten – Grade 2</div>' +
+                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Lower-Elementary">' +
+                    '<span class="text-md bold">Explore Grades</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
+                '<div class="activity-navigation-icon-wrap">' +
+                  '<span class="activity-nav-glyph">🌿</span>' +
+                '</div>' +
+                '<div class="activity-navigation-content">' +
+                  '<div class="activity-heading-wrapper">' +
+                    '<h6>Upper Elementary</h6>' +
+                  '</div>' +
+                  '<div class="text-lg text-color-bright-overlay-60">Grade 3 to 5</div>' +
+                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Upper-Elementary">' +
+                    '<span class="text-md bold">Explore Grades</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
+                '<div class="activity-navigation-icon-wrap">' +
+                  '<span class="activity-nav-glyph">🚀</span>' +
+                '</div>' +
+                '<div class="activity-navigation-content">' +
+                  '<div class="activity-heading-wrapper">' +
+                    '<h6>Middle School</h6>' +
+                  '</div>' +
+                  '<div class="text-lg text-color-bright-overlay-60">Grade 6 to 8+</div>' +
+                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Middle-School">' +
+                    '<span class="text-md bold">Explore Grades</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+            '</article>' +
+          '</div>' +
+        '</div>' +
+      '</header>' +
+
+      '<!-- 2. Section: Lower Elementary (K-2) -->' +
+      '<section id="Lower-Elementary" class="section-foundation-phase c4k-band-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 01 · Ages 5–8</span>' +
+                    '<h2 class="heading-4">Lower Elementary (K – 2nd Grade)</h2>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[0].grades.map((g) => renderCurriculumGradeCard(g, 'Lower-Elementary')).join('') +
+              '</div>' +
+            '</div>' +
+
+            '<div class="flowchart-wrapper c4k-flowchart-card">' +
+              '<div class="flowchart-header">' +
+                '<span class="section-kicker">Visual Learning Roadmap</span>' +
+                '<h3>K–2nd Grade STEAM & Robotics Pathway</h3>' +
+              '</div>' +
+              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/688763017d473a3cf18f822b_flowchart_k-2nd.png" loading="lazy" alt="K-2nd flowchart" class="flowchart flowchart-50" />' +
+              '<p class="flowchart-caption">From pattern recognition and story-led algorithms to loop repetitions and beginner physical robotics.</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 3. Section: Upper Elementary (3-5) -->' +
+      '<section id="Upper-Elementary" class="section-intermediate-phase c4k-band-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 02 · Ages 8–11</span>' +
+                    '<h2 class="heading-4">Upper Elementary (3rd – 5th Grade)</h2>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[1].grades.map((g) => renderCurriculumGradeCard(g, 'Upper-Elementary')).join('') +
+              '</div>' +
+            '</div>' +
+
+            '<div class="flowchart-wrapper c4k-flowchart-card">' +
+              '<div class="flowchart-header">' +
+                '<span class="section-kicker">Visual Learning Roadmap</span>' +
+                '<h3>3rd–5th Grade STEAM & Physical Computing Infographic</h3>' +
+              '</div>' +
+              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/68876243a382cb50defa2dff_infographic_3rd-5th.png" loading="lazy" alt="3rd-5th infographic" class="flowchart flowchart-50" />' +
+              '<p class="flowchart-caption">From Scratch animation and game physics to microcontrollers, sensor engineering, and floor plan CAD.</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 4. Section: Middle School (6-8+) -->' +
+      '<section id="Middle-School" class="section-senior-phase c4k-band-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 03 · Ages 11–15+</span>' +
+                    '<h2 class="heading-4">Middle School (6th – 8th Grade+)</h2>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[2].grades.map((g) => renderCurriculumGradeCard(g, 'Middle-School')).join('') +
+              '</div>' +
+            '</div>' +
+
+            '<div class="flowchart-wrapper c4k-flowchart-card">' +
+              '<div class="flowchart-header">' +
+                '<span class="section-kicker">Visual Learning Roadmap</span>' +
+                '<h3>Middle School Computer Science & STEAM Roadmap</h3>' +
+              '</div>' +
+              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/689080b566fcae4ee8198124_US%20General%20Flowchart%20Middle%20School.png" loading="lazy" alt="Middle School Flowchart" class="flowchart flowchart-50" />' +
+              '<p class="flowchart-caption">From text-based coding to OOP architecture, data encryption, web publication, and AI ethics.</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 5. Section: Free Lessons Teachers & Students Love -->' +
+      '<section id="free-lessons" class="section-free-lessons c4k-free-lessons-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading text-align-center">' +
+              '<span class="section-kicker">Interactive Project Library</span>' +
+              '<h2 class="heading-2 c4k-free-title">Teach Computer Science Today</h2>' +
+              '<p class="text-sub-heading-free-lessons max-width-540">' +
+                'Free Computer Science and STEAM lessons for ages 5–15. Engaging, classroom-ready, low prep, and paired with African language concepts.' +
+              '</p>' +
+            '</div>' +
+
+            '<!-- Filter Bar -->' +
+            '<div class="c4k-filter-box">' +
+              '<div class="c4k-filter-header">' +
+                '<div class="c4k-filter-band-pills">' +
+                  '<span class="filter-description">Filter by Grade Band:</span>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'all' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="all">' +
+                    'All Grades (' + C4K_FREE_LESSONS.length + ')' +
+                  '</button>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'lower' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="lower">' +
+                    'Lower Elementary (K-2)' +
+                  '</button>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'upper' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="upper">' +
+                    'Upper Elementary (3-5)' +
+                  '</button>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'middle' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="middle">' +
+                    'Middle School (6-8)+' +
+                  '</button>' +
+                '</div>' +
+
+                '<div class="c4k-search-wrap">' +
+                  '<label for="lessonSearchInput" class="visually-hidden">Search lessons</label>' +
+                  '<input id="lessonSearchInput" type="search" placeholder="Search by topic, keyword, or tool…" value="' + esc(flow.lessonSearch || '') + '" autocomplete="off" />' +
+                '</div>' +
+              '</div>' +
+
+              '<!-- Category Chips -->' +
+              '<div class="c4k-category-chips-row">' +
+                '<span class="cat-label">Topics:</span>' +
+                categoriesList.map((cat) =>
+                  '<button type="button" class="c4k-cat-chip ' + (activeCategory === cat ? 'is-active' : '') + '" data-action="coding-filter-category" data-category="' + cat + '">' +
+                    (cat === 'all' ? 'All Topics' : cat) +
+                  '</button>'
+                ).join('') +
+              '</div>' +
+
+              '<div class="c4k-filter-status-row">' +
+                '<span id="freeLessonsCount" class="c4k-count-badge">Showing ' + freeLessons.length + ' of ' + C4K_FREE_LESSONS.length + ' free STEAM lessons</span>' +
+                ((activeBandKey !== 'all' || activeCategory !== 'all' || flow.lessonSearch) ?
+                  '<button type="button" class="text-link c4k-reset-btn" data-action="coding-filter-band" data-band="all">Clear filters</button>'
+                : '') +
+              '</div>' +
+            '</div>' +
+
+            '<!-- Free Lessons List -->' +
+            '<div class="free-lessons-list-wrapper">' +
+              '<div id="freeLessonsGrid" class="free-lessons-list c4k-free-grid" role="list">' +
+                renderFreeLessonCards(freeLessons) +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 6. Section: Interactive Robot Garden Quest -->' +
+      '<section class="code-garden-quest" id="code-quest" aria-labelledby="code-quest-title">' +
+        '<div class="code-quest-copy">' +
+          '<span class="code-kids-eyebrow">' + icon('star', 16) + ' TRY A MINI GAME · NO SIGN-UP NEEDED</span>' +
+          '<h2 id="code-quest-title">Robot in the baobab garden</h2>' +
+          '<p>' + esc(copy.questPrompt) + '</p>' +
+          '<div class="code-quest-instruction">' +
+            '<span>' + icon('info', 16) + '</span>' +
+            '<span>Build a sequence to get around the leafy bushes and reach the star. A correct route earns your first 10 maker XP.</span>' +
+          '</div>' +
+          '<div class="code-quest-controls">' +
+            '<span class="code-quest-subtitle">Add a movement block</span>' +
+            '<div class="code-quest-direction-row">' + questControls + '</div>' +
+          '</div>' +
+          '<div class="code-quest-code-label">' +
+            '<strong>Your sequence</strong>' +
+            '<small>' + flow.questCommands.length + '/12 blocks · tap a block to remove it</small>' +
+          '</div>' +
+          '<div class="code-quest-sequence" aria-label="Your movement code sequence">' + questCommandList + '</div>' +
+          '<div class="code-quest-actions">' +
+            '<button type="button" class="code-quest-run" data-action="code-quest-run">' + icon('play', 16) + ' ' + esc(copy.questRun) + '</button>' +
+            '<button type="button" class="code-quest-undo" data-action="code-quest-remove" data-index="' + Math.max(0, flow.questCommands.length - 1) + '" ' + (flow.questCommands.length ? '' : 'disabled') + '>' + icon('refresh', 15) + ' Undo</button>' +
+            '<button type="button" class="code-quest-undo" data-action="code-quest-clear" ' + (flow.questCommands.length ? '' : 'disabled') + '>' + icon('plus', 15) + ' ' + esc(copy.questClear) + '</button>' +
+          '</div>' +
+          '<details class="code-hint code-quest-hint">' +
+            '<summary>Need a hint?</summary>' +
+            '<p>' + esc(copy.questHint) + '</p>' +
+          '</details>' +
+          (flow.questResult ? '<div class="code-quest-result ' + (flow.questResult.includes('✓') ? 'is-success' : 'is-retry') + '" role="status">' + icon(flow.questResult.includes('✓') ? 'check' : 'refresh', 17) + ' ' + esc(flow.questResult) + '</div>' : '') +
+          (questSolved ? '<div class="code-quest-earned">' + icon('trophy', 17) + ' Garden Explorer badge earned</div>' : '') +
+        '</div>' +
+        '<div class="code-quest-board-card">' +
+          '<div class="code-quest-board-head">' +
+            '<div>' +
+              '<span class="section-kicker">THE PUZZLE MAP</span>' +
+              '<strong>Find the star</strong>' +
+            '</div>' +
+            '<span class="code-quest-badge">' + icon('sparkles', 15) + ' ' + (questSolved ? 'Complete' : 'Mission 01') + '</span>' +
+          '</div>' +
+          '<div class="code-quest-board" role="grid" aria-label="Robot garden maze with a star goal and leafy obstacles">' + questTiles + '</div>' +
+          '<div class="code-quest-key">' +
+            '<span><i class="key-robot">🤖</i> Your robot</span>' +
+            '<span><i class="key-bush">🌿</i> Bush</span>' +
+            '<span><i class="key-star">⭐</i> Goal</span>' +
+          '</div>' +
+          '<p>Think like a coder: plan, run, notice what happened, then try again.</p>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 7. Section: Bilingual Code Studio & Workbench -->' +
+      '<section class="code-start-zone" id="coding-start" aria-labelledby="coding-start-title">' +
+        '<div class="code-start-heading">' +
+          '<div>' +
+            '<span class="section-kicker">YOUR MAKER JOURNEY · ' + CODE_PATHS.length + ' paths · ' + CODE_LEVELS.length + ' skill levels</span>' +
+            '<h2 id="coding-start-title">Interactive Bilingual Code Workbench</h2>' +
+            '<p>Choose a guide language, pick a path, then learn by trying. Your local progress stays on this device.</p>' +
+          '</div>' +
+          '<div class="code-progress-card code-progress-card-fun">' +
+            '<span class="code-progress-spark">' + icon('trophy', 22) + '</span>' +
+            '<div class="code-progress-heading">' +
+              '<small>Level ' + makerLevel + ' · ' + makerRank + '</small>' +
+              '<strong>' + flow.points + ' <em>XP</em></strong>' +
+            '</div>' +
+            '<div class="code-level-meter"><i style="width:' + levelProgress + '%"></i></div>' +
+            '<span>' + xpInLevel + '/50 XP to the next level · ' + flow.completed.length + ' challenge wins</span>' +
+            '<div class="code-progress-foot">' +
+              '<span>' + icon('sparkles', 14) + ' ' + flow.streak + ' day streak</span>' +
+              '<span>' + progress + '% path progress</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        renderStepper(stepLabels, flow.stage) +
+        '<div class="coding-layer-content">' + content + '</div>' +
+      '</section>' +
+
+      '<!-- 8. Section: Subscription / Stay in the Loop -->' +
+      '<div class="footer-neutral c4k-subscription-section" id="subscription">' +
+        '<div class="section-subscription">' +
+          '<div class="section-container">' +
+            '<div class="subscription-container">' +
+              '<div class="subscription-content-wrapper text-align-center">' +
+                '<div class="section-title">' +
+                  '<div class="subheading textcolor-accent-background">SUBSCRIPTION</div>' +
+                  '<h3 class="heading-4-white">Stay in the Loop</h3>' +
+                '</div>' +
+                '<div class="text-md textwidth-500 subscription-subtext">' +
+                  'Keep up to date on the latest developments in coding, robotics and STEAM education for K-8 with African language roots.' +
+                '</div>' +
+                '<form class="c4k-subscribe-form" data-form="coding-subscribe">' +
+                  '<input type="email" name="email" placeholder="Enter your school or guardian email…" required class="c4k-sub-input" />' +
+                  '<button type="submit" class="footer-button c4k-sub-btn">' +
+                    '<span class="text-s bold">Sign Up ' + icon('arrow', 14) + '</span>' +
+                  '</button>' +
+                '</form>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<section class="code-safety-note">' +
+        icon('shield', 16) + ' This is a local learning prototype: starter code is checked with simple teaching rules, and the garden quest simulates movement blocks. It does not execute arbitrary programs, upload code, or connect to an AI service. Language glosses need fluent-speaker review.' +
+      '</section>' +
+    '</div>';
   }
+
 
   function renderStories() {
     const stories = [
