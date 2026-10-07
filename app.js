@@ -495,7 +495,18 @@
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
           <div class="hero-visual">
-            <div class="hero-photo-wrap"><img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo" /></div>
+            <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language & cultural learning preview">
+              <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo" />
+              <!-- Accessible Interactive Clickable Hotspots for all elements in the visual -->
+              <a href="#/trainer" data-route="trainer" class="hero-hotspot hotspot-listen" title="Open African Voice & Tone Trainer" aria-label="Open African Voice & Tone Trainer"></a>
+              <a href="#/course?lang=yoruba" data-route="course" data-lang="yoruba" class="hero-hotspot hotspot-yoruba" title="Learn Yorùbá" aria-label="Learn Yorùbá"></a>
+              <a href="#/course?lang=hausa" data-route="course" data-lang="hausa" class="hero-hotspot hotspot-hausa" title="Learn Hausa" aria-label="Learn Hausa"></a>
+              <a href="#/course?lang=igbo" data-route="course" data-lang="igbo" class="hero-hotspot hotspot-igbo" title="Learn Igbo" aria-label="Learn Igbo"></a>
+              <a href="#/course?lang=swahili" data-route="course" data-lang="swahili" class="hero-hotspot hotspot-swahili" title="Learn Swahili" aria-label="Learn Swahili"></a>
+              <a href="#/languages" data-route="languages" class="hero-hotspot hotspot-sun" title="Learn African Languages with Joy" aria-label="Learn African Languages with Joy"></a>
+              <a href="#/ere" data-route="ere" class="hero-hotspot hotspot-stories" title="Explore African Stories & Folktales" aria-label="Explore African Stories & Folktales"></a>
+              <a href="#/about" data-route="about" class="hero-hotspot hotspot-motto" title="A little every day makes a language feel closer" aria-label="About Idilewa"></a>
+            </div>
           </div>
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>

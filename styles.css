@@ -133,20 +133,24 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 .mini-avatars span:nth-child(2) { background: #ffe0c8; }
 .mini-avatars span:nth-child(3) { background: #dceeff; }
 .mini-avatars span:nth-child(4) { color: #ac7e11; background: #fff2c9; }
-.hero-visual { position: relative; min-width: 0; height: 430px; isolation: isolate; }
-.hero-photo-wrap { position: absolute; inset: 7px 0 16px 0; overflow: hidden; border-radius: 34px 34px 34px 8px; background: #f1f1e9; box-shadow: 0 22px 60px rgba(25,57,38,.11); }
-.hero-photo { width: 100%; height: 100%; object-fit: cover; object-position: 68% center; }
-.hero-photo-wrap::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,254,250,.22), transparent 45%), linear-gradient(0deg, rgba(21,58,38,.11), transparent 35%); pointer-events: none; }
-.floating-chip { position: absolute; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 10px 13px; border-radius: 14px; font-size: 11px; font-weight: 800; box-shadow: 0 11px 27px rgba(30,52,40,.15); animation: floaty 5s ease-in-out infinite; }
-.chip-blue { top: 48px; left: -19px; color: #fff; background: #2b9bce; transform: rotate(-5deg); }
-.chip-green { top: 133px; left: -28px; display: flex; flex-direction: column; align-items: flex-start; gap: 0; color: #fff; background: #20965b; transform: rotate(3deg); padding: 9px 14px; }
-.chip-green > span:first-child { font-size: 13px; }
-.chip-green .chip-small { font-size: 8px; opacity: .78; font-weight: 550; }
-.chip-coral { right: -17px; bottom: 99px; color: #fff; background: #e86d73; transform: rotate(4deg); }
-.chip-icon { display: flex; }
-.hero-sticker { position: absolute; z-index: 3; right: 23px; top: 22px; width: 65px; height: 65px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 50%; color: #8b5c00; background: #ffd260; text-align: center; font-size: 9px; line-height: 1.1; font-weight: 850; transform: rotate(10deg); box-shadow: 0 9px 20px rgba(130,93,7,.15); }
-.hero-caption { position: absolute; z-index: 2; left: 17px; bottom: 30px; max-width: 235px; border-radius: 10px; padding: 8px 11px; color: #34463a; background: rgba(255,255,255,.86); font-size: 9px; font-weight: 650; backdrop-filter: blur(8px); }
-@keyframes floaty { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+.hero-visual { position: relative; min-width: 0; width: 100%; display: flex; align-items: center; justify-content: center; isolation: isolate; }
+.hero-photo-wrap { position: relative; width: 100%; aspect-ratio: 2 / 1; overflow: hidden; border-radius: 26px; background: #0c5737; box-shadow: 0 24px 60px rgba(12,87,55,.18), 0 4px 16px rgba(0,0,0,.08); border: 2px solid rgba(21,118,74,.22); transition: transform .3s ease, box-shadow .3s ease; }
+.hero-photo-wrap:hover { transform: translateY(-3px); box-shadow: 0 28px 70px rgba(12,87,55,.24); }
+.hero-photo { width: 100%; height: 100%; object-fit: contain; object-position: center center; display: block; }
+
+/* Interactive Clickable Hotspots overlay */
+.hero-hotspot { position: absolute; display: block; border-radius: 12px; transition: background .2s ease, transform .15s ease, box-shadow .2s ease; cursor: pointer; z-index: 10; }
+.hero-hotspot:hover { background: rgba(255, 255, 255, 0.22); box-shadow: 0 0 0 2.5px rgba(255, 255, 255, 0.85), 0 4px 14px rgba(0,0,0,0.2); transform: scale(1.02); }
+
+.hotspot-listen { top: 5.5%; left: 2%; width: 22%; height: 14%; border-radius: 999px; }
+.hotspot-yoruba { top: 20%; left: 2.5%; width: 17%; height: 12.5%; }
+.hotspot-hausa { top: 33.5%; left: 2.5%; width: 17%; height: 12.5%; }
+.hotspot-igbo { top: 47%; left: 2.5%; width: 17%; height: 12.5%; }
+.hotspot-swahili { top: 60.5%; left: 2.5%; width: 17%; height: 12.5%; }
+.hotspot-sun { top: 7%; right: 4%; width: 13%; height: 25%; border-radius: 50%; }
+.hotspot-stories { top: 46%; right: 2%; width: 22.5%; height: 12%; border-radius: 999px; }
+.hotspot-motto { bottom: 3.5%; left: 2.5%; width: 38%; height: 9.5%; border-radius: 999px; }
+
 .hero-language-row { min-height: 57px; display: flex; align-items: center; gap: 14px; border-top: 1px solid #eff1ec; margin-top: 13px; padding-top: 13px; }
 .tiny-label { color: #768179; font-size: 10px; font-weight: 700; }
 .hero-lang-pills { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
@@ -806,8 +810,8 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 .modern-auth-page { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; min-height: 720px; padding-top: 28px; padding-bottom: 60px; align-items: start; }
 .modern-auth-art { min-width: 0; position: sticky; top: 96px; }
 .auth-showcase-card { display: flex; flex-direction: column; gap: 18px; padding: 22px; border-radius: 28px; background: linear-gradient(145deg, #f8fbf6 0%, #edf7ee 100%); border: 1px solid rgba(21, 118, 74, 0.14); box-shadow: 0 20px 45px rgba(25, 60, 40, 0.06); }
-.modern-auth-image { height: 350px; position: relative; overflow: hidden; border-radius: 20px; background: #0c5737; box-shadow: 0 14px 34px rgba(12, 87, 55, 0.18); }
-.modern-auth-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 0.5s ease; }
+.modern-auth-image { position: relative; width: 100%; aspect-ratio: 2 / 1; overflow: hidden; border-radius: 20px; background: #0c5737; box-shadow: 0 14px 34px rgba(12, 87, 55, 0.18); border: 1.5px solid rgba(21, 118, 74, 0.18); }
+.modern-auth-image img { width: 100%; height: 100%; object-fit: contain; object-position: center; transition: transform 0.5s ease; display: block; }
 .auth-showcase-card:hover .modern-auth-image img { transform: scale(1.02); }
 .auth-art-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 87, 55, 0.08) 0%, rgba(12, 87, 55, 0.55) 100%); pointer-events: none; }
 .auth-art-badge { position: absolute; top: 16px; left: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 13px; border-radius: 999px; background: rgba(255, 255, 255, 0.94); color: var(--green-dark); font-size: 11px; font-weight: 800; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); backdrop-filter: blur(8px); }
