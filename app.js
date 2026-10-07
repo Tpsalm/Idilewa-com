@@ -498,8 +498,14 @@
             <div class="hero-ambient-glow" aria-hidden="true"></div>
             <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language & cultural learning preview" id="heroPhotoWrap">
               <div class="hero-photo-frame">
-                <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo" />
+                <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
+                <div class="cinematic-sun-rays" aria-hidden="true"></div>
+                <div class="cinematic-lens-flare" aria-hidden="true"></div>
                 <div class="hero-vignette-overlay" aria-hidden="true"></div>
+                <div class="cinematic-live-badge" aria-label="3D Cinematic Live Video Simulation">
+                  <span class="cinematic-pulse-dot"></span>
+                  <span class="cinematic-badge-text">3D CINEMATIC LIVE</span>
+                </div>
               </div>
 
               <!-- Live Interactive Floating Hotspots Layer -->
