@@ -1061,7 +1061,7 @@
           badgeLabel: 'Red',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c52f048e62cb3586f3f6d_kindergarten_activity%20card%20(1).png',
+          image: imageUrl('c4k-kindergarten.jpg'),
           desc: 'Introduce young students to coding and robotics through the engaging Kindergarten curriculum. Designed with fun, hands-on activities, it fosters problem-solving, creativity, and foundational digital skills.',
           topics: ['Unplugged Algorithms', 'Directional Logic', 'Robot Helper Stories', 'Pattern Recognition'],
           bilingualFocus: 'Greetings & simple directions in African languages (Òkè, Ọ̀tún, Ìsàlẹ̀, Òsì)'
@@ -1112,7 +1112,7 @@
           badgeLabel: 'Green',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/67a311763474b2c02733522a_grade%203_alt_activity_card.png',
+          image: imageUrl('c4k-grade-3.jpg'),
           desc: 'In our 3rd Grade Course, students will tackle advanced problem-solving with conditionals and complex robot programming. From coding challenges to responsible digital creation, our lessons take their skills to the next level!',
           topics: ['Scratch Animation & Games', 'Variables & Timers', 'Simple Circuit Components', 'Pattern Encoding'],
           bilingualFocus: 'Variables & score tracking glosses across 4 African languages'
@@ -1124,7 +1124,7 @@
           badgeLabel: 'Blue',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/67a080317547bb83a8bfc288_Alternative%20grade%204_activity%20card.png',
+          image: imageUrl('c4k-grade-4.jpg'),
           desc: 'Our Grade 4 Curriculum introduces basic programming structures such as variables and loops, explores simple robotics with gears and sensors, and emphasises online safety and digital citizenship.',
           topics: ['Micro:bit Microcontrollers', 'Gears & Mechanical Linkages', 'Logic Gates & Operators', 'Cyber Citizenship'],
           bilingualFocus: 'Hardware components & safety expressions'
@@ -1136,7 +1136,7 @@
           badgeLabel: 'Purple',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/67a08155edd91923d06bf7f9_grade%205_alternative%20Activity%20card%20(1).png',
+          image: imageUrl('c4k-grade-5.jpg'),
           desc: 'This course advances students to intermediate programming, incorporating functions, problem-solving, robotics, and real-world sensor applications. With a focus on research and collaboration, these lessons make coding hands-on and engaging.',
           topics: ['Custom Functions & Parameters', '2D CAD Floor Plans', 'Sensory Robots', 'Data Spreadsheets'],
           bilingualFocus: 'Function definitions & collaborative project terminology'
@@ -1163,7 +1163,7 @@
           badgeLabel: '6 Blue',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c68a848e62cb358825c12_grade%206_activity%20card%20(1).png',
+          image: imageUrl('c4k-grade-6.jpg'),
           desc: 'Students dive into advanced programming with arrays, data structures, robotics, and AI. Lessons emphasize innovation, ethics, and the impact of technology on society, preparing them for the future of tech.',
           topics: ['JavaScript & Python Syntax', 'Arrays & Lists', 'AI Machine Learning Intro', 'Web Development (HTML/CSS)'],
           bilingualFocus: 'Syntax translations, algorithms & African technology milestones'
@@ -1175,7 +1175,7 @@
           badgeLabel: '7 Indigo',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c69d3fd2f81997c0c09d3_grade%207_activity%20card%20(1).png',
+          image: imageUrl('c4k-grade-7.jpg'),
           desc: 'In this course students will explore Object-Oriented Programming, learning about objects, classes, and inheritance. Lessons also cover robotics systems, digital communication, and the ethics of information in technology.',
           topics: ['Object-Oriented Programming', 'Classes & Methods', 'Networks (Wired/Wireless)', 'Cyber Threats & Defense'],
           bilingualFocus: 'Object models, classification & digital security terms'
@@ -1187,7 +1187,7 @@
           badgeLabel: '8th Grade',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c6bd64e9c2e629fb79434_grade%208_activity%20cardb.png',
+          image: imageUrl('c4k-grade-8.jpg'),
           desc: 'This course introduces students to advanced robotics and automation, allowing them to push the boundaries of digital collaboration and cybersecurity. Through hands-on projects and real-world applications, they dive into programming, critical thinking, and problem-solving.',
           topics: ['Binary, ASCII & Unicode', '3D CAD Mechanical Toy Design', 'Automated Robotics', 'Full-Stack Web Projects'],
           bilingualFocus: 'Computational linguistics & African digital preservation'
@@ -3147,6 +3147,15 @@
   }
 
   const IMAGE_READY = new Set([
+    'c4k-kindergarten.jpg',
+    'c4k-grade-1.jpg',
+    'c4k-grade-2.jpg',
+    'c4k-grade-3.jpg',
+    'c4k-grade-4.jpg',
+    'c4k-grade-5.jpg',
+    'c4k-grade-6.jpg',
+    'c4k-grade-7.jpg',
+    'c4k-grade-8.jpg',
     'journey-step-6.png',
     'journey-step-5.png',
     'journey-step-4.png',
@@ -3262,7 +3271,20 @@
     const source = String(markup || '');
     let output = source.replace(/<img\b[^>]*>/gi, (tag) => {
       const sourceMatch = tag.match(/\bsrc=("|')([^"']*)(?:\1)/i);
-      if (page === 'index' && sourceMatch && sourceMatch[2].includes('stories-culture.jpg')) return tag.replace(/\bsrc=("|')[^"']*(?:\1)/i, `src="${imageUrl('stories-culture.jpg')}"`);
+      const currentSrc = sourceMatch ? sourceMatch[2] : '';
+      
+      // Preserve any deliberate, authentic image source from cards, sections, flowcharts, or local assets
+      if (currentSrc && (
+        currentSrc.includes('c4k-') ||
+        currentSrc.includes('assets/') ||
+        currentSrc.startsWith('http') ||
+        currentSrc.startsWith('data:') ||
+        IMAGE_READY.has(currentSrc.replace(/^.*[\\\/]/, ''))
+      )) {
+        slot += 1;
+        return tag;
+      }
+
       slot += 1;
       const filename = ROUTE_IMAGE_OVERRIDES[`${page}-${slot}`] || `page-${page}-${slot}.jpg`;
       const alt = routeImageAlt(page, slot, tag);
@@ -3272,7 +3294,7 @@
       else rewritten = rewritten.replace('<img', `<img alt="${esc(alt)}"`);
       return rewritten;
     });
-    if (slot === 0) {
+    if (slot === 0 && !['coding', 'trainer', 'course', 'lesson'].includes(page)) {
       const filename = ROUTE_IMAGE_OVERRIDES[`${page}-1`] || `page-${page}-1.jpg`;
       const alt = routeImageAlt(page, 1);
       const visual = IMAGE_READY.has(filename)
