@@ -3174,3 +3174,293 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   .analysis-meters-grid { grid-template-columns: 1fr; }
   .trainer-stats-strip { grid-template-columns: 1fr; }
 }
+
+/* Button accent */
+.button-accent {
+  background: #0f613c;
+  color: #fff;
+  box-shadow: 0 9px 18px rgba(15, 97, 60, .2);
+  border: 1px solid #1ba363;
+}
+.button-accent:hover:not(:disabled) {
+  background: #0b4b2e;
+  box-shadow: 0 12px 24px rgba(15, 97, 60, .28);
+}
+
+/* Languages page trainer callout banner */
+.trainer-callout-banner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: linear-gradient(135deg, #eaf6ec 0%, #d4edd9 100%);
+  border: 1.5px solid #a8dcba;
+  border-radius: 20px;
+  padding: 22px 28px;
+  margin: 28px 0;
+  box-shadow: 0 8px 24px rgba(21, 118, 74, 0.08);
+}
+.trainer-callout-banner .callout-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #15764a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(21, 118, 74, 0.25);
+}
+.trainer-callout-banner .callout-content {
+  flex: 1;
+}
+.trainer-callout-banner .callout-kicker {
+  font-size: 10px;
+  font-weight: 850;
+  color: #0c5737;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 2px;
+}
+.trainer-callout-banner h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0c5737;
+}
+.trainer-callout-banner p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #334139;
+}
+
+/* Home Trainer Feature Section */
+.home-trainer-feature-section {
+  margin-top: 50px;
+  margin-bottom: 30px;
+}
+.home-trainer-card {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 36px;
+  align-items: center;
+  background: linear-gradient(135deg, #0a3d24 0%, #115e3b 50%, #15764a 100%);
+  border-radius: 28px;
+  padding: 44px 48px;
+  color: #fff;
+  box-shadow: 0 24px 60px rgba(12, 87, 55, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+.home-trainer-card::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(246, 200, 95, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+.home-trainer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+}
+.home-trainer-badge .badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f6c85f;
+  animation: floaty 2s infinite ease-in-out;
+}
+.home-trainer-copy h2 {
+  font-size: 30px;
+  line-height: 1.22;
+  margin: 0 0 14px 0;
+  color: #fff;
+  font-weight: 850;
+}
+.home-trainer-copy h2 .highlight-green {
+  color: #f6c85f;
+}
+.home-trainer-copy p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 24px 0;
+  max-width: 520px;
+}
+.home-trainer-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.trainer-highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.trainer-highlight-item .highlight-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #f6c85f;
+}
+.trainer-highlight-item strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 750;
+  color: #fff;
+  line-height: 1.2;
+}
+.trainer-highlight-item small {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.home-trainer-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.home-trainer-actions .button-primary {
+  background: #f6c85f;
+  color: #0c5737;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(246, 200, 95, 0.35);
+}
+.home-trainer-actions .button-primary:hover {
+  background: #fcd779;
+  transform: translateY(-2px);
+}
+.home-trainer-actions .button-outline {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+.home-trainer-actions .button-outline:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #fff;
+}
+.home-trainer-visual {
+  display: flex;
+  justify-content: center;
+}
+.trainer-visual-card {
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  padding: 22px;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+}
+.visual-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 14px;
+}
+.pulse-recording-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+.visual-card-phrase {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.phrase-tag {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 750;
+  color: #f6c85f;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.visual-card-phrase h3 {
+  font-size: 20px;
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+.visual-tones-demo {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.v-tone {
+  padding: 4px 7px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 750;
+}
+.tone-hi { background: rgba(59, 130, 246, 0.4); color: #bfdbfe; border: 1px solid rgba(147, 197, 253, 0.4); }
+.tone-mid { background: rgba(234, 179, 8, 0.4); color: #fef08a; border: 1px solid rgba(253, 224, 71, 0.4); }
+.tone-lo { background: rgba(239, 68, 68, 0.4); color: #fecaca; border: 1px solid rgba(252, 165, 165, 0.4); }
+.visual-card-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 9px 14px;
+}
+.score-pill strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 850;
+  color: #f6c85f;
+  line-height: 1;
+}
+.score-pill small {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.score-stars {
+  font-size: 12px;
+  color: #f6c85f;
+  font-weight: 750;
+}
+@media (max-width: 900px) {
+  .home-trainer-card {
+    grid-template-columns: 1fr;
+    padding: 30px 24px;
+  }
+  .home-trainer-highlights {
+    grid-template-columns: 1fr;
+  }
+  .trainer-callout-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

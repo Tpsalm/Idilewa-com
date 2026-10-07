@@ -69,6 +69,19 @@
   };
 
   const PAGE_META = {
+    trainer: {
+      title: 'Master African Tonal Pitch with Real-Time Voice AI.',
+      eyebrow: 'Voice African Language Trainer',
+      desc: 'Interactive speech studio with pitch detection, tone melody soundboards, and native voice synthesis across 6 African languages and 60 lessons.',
+      icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
+      active: 0, flow: ['Select Language', 'Hear Native Tones', 'Record & Analyze', 'Earn Certificate'],
+      cta: 'Open Voice Studio', ctaRoute: 'trainer',
+      cards: [
+        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
+        { title: 'Speech Evaluation', text: 'Real-time pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
+        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'trainer', tone: 'blue' }
+      ]
+    },
     about: {
       title: 'Culture is not a chapter. It is the whole story.',
       eyebrow: 'About Idilewa',
@@ -230,6 +243,7 @@
   const NAV = [
     { label: 'Home', route: 'index', group: 'home' },
     { label: 'Learn', route: 'languages', group: 'learn' },
+    { label: 'Voice Trainer', route: 'trainer', group: 'trainer' },
     { label: 'Read & listen', route: 'oral', group: 'read' },
     { label: 'Code', route: 'coding', group: 'code' },
     { label: 'Stories', route: 'ere', group: 'stories' },
@@ -390,7 +404,7 @@
   function renderHeader(page) {
     const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
     const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
-    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
+    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
     document.getElementById('site-header').innerHTML = `
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
@@ -401,14 +415,14 @@
         <div class="header-actions">
           <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
           <a class="header-signin" href="#/login" data-route="login">Sign in</a>
-          <a class="button button-small button-primary header-cta" href="#/languages" data-route="languages">Get started ${icon('arrow', 15)}</a>
+          <a class="button button-small button-primary header-cta" href="#/trainer" data-route="trainer">${icon('mic', 14)} Voice Studio</a>
           <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
         </div>
       </div>
       <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
         <div class="mobile-menu-list">${menu}</div>
-        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/languages" data-route="languages">Start learning ${icon('arrow', 16)}</a><a href="#/login" data-route="login">Sign in to your space</a></div>
+        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/trainer" data-route="trainer">${icon('mic', 15)} African Voice Trainer</a><a href="#/login" data-route="login">Sign in to your space</a></div>
       </div>`;
   }
 
@@ -416,6 +430,7 @@
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
       { route: 'languages', label: 'Learn', ico: 'book' },
+      { route: 'trainer', label: 'Trainer', ico: 'mic' },
       { route: 'ere', label: 'Stories', ico: 'quote' },
       { route: 'coding', label: 'Code', ico: 'code' },
       { route: 'profile', label: 'Progress', ico: 'user' }
@@ -430,8 +445,8 @@
           <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
           <p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p>
         </div>
-        <div class="footer-links"><h3>Learn</h3>${routeLink('languages', 'Choose a language')}${routeLink('course', 'Learning paths')}${routeLink('coding', 'Code in your language')}</div>
-        <div class="footer-links"><h3>Discover</h3>${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
+        <div class="footer-links"><h3>Learn</h3>${routeLink('languages', 'Choose a language')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}${routeLink('coding', 'Code in your language')}</div>
+        <div class="footer-links"><h3>Discover</h3>${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
         <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('families', 'For families')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('base', 'Explore all pages')}</div>
       </div>
       <div class="container footer-bottom"><span>© Idilewa · A learning space for languages, culture and technology</span><span class="footer-note">A thoughtful beginning, built to grow.</span></div>
@@ -443,6 +458,7 @@
   function renderHome() {
     const featureCards = [
       { title: 'Learn languages', desc: 'Speak, listen, read and practice.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'page-languages-1.jpg' },
+      { title: 'African Voice Trainer', desc: 'Real-time pitch scoring & tone feedback for 6 African languages.', icon: 'mic', route: 'trainer', tone: 'mint', tag: 'Interactive AI Studio', image: 'listening-reader.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
       { title: 'Code in your language', desc: 'Explore technology, side by side.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Create', image: 'code-kids.jpg' },
       { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
@@ -465,6 +481,7 @@
             <p class="hero-lede">A joyful place to learn a language, hear the stories behind it and imagine what you can create next.</p>
             <div class="hero-actions">
               ${routeLink('languages', `Start learning ${icon('arrow', 17)}`, 'button button-primary')}
+              ${routeLink('trainer', `${icon('mic', 16)} Voice Trainer`, 'button button-accent')}
               ${routeLink('about', `${icon('play', 15)} Our story`, 'button button-outline')}
             </div>
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
@@ -504,6 +521,70 @@
         <div class="coming-soon-line"><span class="coming-soon-dot"></span>Coming soon: ${SOON_LANGUAGES.map((l) => l.name).join(' · ')} ${routeLink('languages', 'Get curious ' + icon('arrow', 13), 'text-link text-link-small')}</div>
       </section>
 
+      <section class="container section home-trainer-feature-section">
+        <div class="home-trainer-card">
+          <div class="home-trainer-copy">
+            <div class="home-trainer-badge">
+              <span class="badge-dot"></span>
+              <span>AI VOICE & TONAL PITCH TRAINER</span>
+            </div>
+            <h2>Speak African Languages with <span class="highlight-green">Native Tonal Fluency</span></h2>
+            <p>Our interactive voice studio listens to your voice in real time, analyzes pitch accuracy, and gives instant feedback across Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.</p>
+            <div class="home-trainer-highlights">
+              <div class="trainer-highlight-item">
+                <span class="highlight-icon">${icon('volume', 18)}</span>
+                <div>
+                  <strong>60 Audio Lessons</strong>
+                  <small>3 progressive tiers</small>
+                </div>
+              </div>
+              <div class="trainer-highlight-item">
+                <span class="highlight-icon">${icon('music', 18)}</span>
+                <div>
+                  <strong>Dó-Re-Mí Melodies</strong>
+                  <small>Interactive pitch keys</small>
+                </div>
+              </div>
+              <div class="trainer-highlight-item">
+                <span class="highlight-icon">${icon('mic', 18)}</span>
+                <div>
+                  <strong>Live Mic Speech Scoring</strong>
+                  <small>Pitch accuracy & stars</small>
+                </div>
+              </div>
+            </div>
+            <div class="home-trainer-actions">
+              ${routeLink('trainer', `Launch Voice Studio ${icon('arrow', 17)}`, 'button button-primary')}
+              ${routeLink('voices', `Explore Voice Library`, 'button button-outline')}
+            </div>
+          </div>
+          <div class="home-trainer-visual">
+            <div class="trainer-visual-card">
+              <div class="visual-card-head">
+                <span class="pulse-recording-dot"></span>
+                <span>Live Interactive Audio Studio</span>
+              </div>
+              <div class="visual-card-phrase">
+                <span class="phrase-tag">Yorùbá Tones</span>
+                <h3>Ẹ kú àárọ̀ o</h3>
+                <div class="visual-tones-demo">
+                  <span class="v-tone tone-hi">kú (Mí)</span>
+                  <span class="v-tone tone-mid">àár (Re)</span>
+                  <span class="v-tone tone-lo">o (Dó)</span>
+                </div>
+              </div>
+              <div class="visual-card-score">
+                <div class="score-pill">
+                  <strong>96%</strong>
+                  <small>Native Pitch Match</small>
+                </div>
+                <div class="score-stars">★★★ Fluency</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="container section explore-section">
         <div class="section-heading"><div><span class="section-kicker">Picked for curious minds</span><h2>Explore books & little discoveries</h2><p>Read, listen and find a new doorway into language and culture.</p></div>${routeLink('ere', 'Visit the library ' + icon('arrow', 15), 'text-link')}</div>
         <div class="book-grid">${books.map((book, i) => `<a href="#/${book.route}" data-route="${book.route}" class="book-card"><div class="book-cover ${book.bg}"><span class="book-cover-mark">${book.shape}</span><span class="book-sun"></span><span class="book-hill book-hill-one"></span><span class="book-hill book-hill-two"></span><span class="book-cover-index">0${i + 1}</span></div><strong>${book.title}</strong><small>${book.label}</small></a>`).join('')}</div>
@@ -539,6 +620,15 @@
     return `<div class="container route-page language-page">
       <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><span>Learn</span><span>/</span><strong>Languages</strong></div>
       <section class="language-page-hero"><div class="language-page-copy"><span class="section-kicker">The first step is yours</span><h1>Find a language<br /><em>that feels like home.</em></h1><p>Choose an available language path. Each is built to grow with you—from a first greeting to stories, culture and more.</p><div class="language-page-badges"><span>${icon('shield', 16)} Designed to grow</span><span>${icon('volume', 16)} Listen as you learn</span></div></div><div class="language-page-art"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in beautiful Yorùbá attire reading together" /><div class="art-note">Words connect us <span>✦</span></div>\n    </section>
+      <section class="trainer-callout-banner">
+        <div class="callout-icon">${icon('mic', 24)}</div>
+        <div class="callout-content">
+          <span class="callout-kicker">NEW INTERACTIVE VOICE STUDIO</span>
+          <h3>Practice Real-Time Tonal Pronunciation & Pitch Melody</h3>
+          <p>Train with 60 audio lessons across 6 African languages. Get instant speech analysis and fluency score feedback.</p>
+        </div>
+        ${routeLink('trainer', `Open Voice Trainer ${icon('arrow', 15)}`, 'button button-primary')}
+      </section>
       ${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}<div class="language-group-head"><div><span class="section-kicker">Available to explore</span><h2>Choose your first path</h2></div><span class="muted-count">${availableLanguages.length} learning paths</span></div>
       <div class="language-choice-grid">${availableLanguages.map(renderLanguageCard).join('')}</div>
       <section class="coming-soon-panel"><div class="coming-intro"><span class="coming-icon">${icon('sparkles', 21)}</span><div><span class="section-kicker">Growing with our communities</span><h2>More languages, more futures.</h2><p>These paths are being prepared with care. Choose one to save your interest on this device.</p></div></div><div class="soon-list">${soon}</div></section>
@@ -1042,19 +1132,21 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
 
   function renderOral() {
     const genres = [
+      { title: 'Voice Trainer', titleSub: 'Real-time pitch & tone', copy: 'Interactive tone soundboards, native pronunciation and pitch scoring across 6 African languages.', icon: 'mic', route: 'trainer', tone: 'yellow' },
       { title: 'Oríkì', titleSub: 'Praise poetry', copy: 'Explore poetic praise, identity and remembrance through context and community voices.', icon: 'quote', route: 'oriki', tone: 'peach' },
       { title: 'Òwe', titleSub: 'Proverbs', copy: 'Notice how compact sayings can hold wit, wisdom and ways of seeing the world.', icon: 'sparkles', route: 'owe', tone: 'mint' },
       { title: 'Story & song', titleSub: 'Oral genres', copy: 'Find out how stories, songs and spoken forms carry memory across generations.', icon: 'music', route: 'oral_genre', tone: 'blue' }
     ];
-    return `<div class="container route-page oral-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Read & listen</strong></div><section class="oral-hero"><div class="oral-hero-copy"><span class="section-kicker">Voices, memory & meaning</span><h1>Some knowledge is<br /><em>spoken into the room.</em></h1><p>Listen to the forms that carry language through family and community—from praise poetry to proverbs and story.</p><div class="hero-actions">${routeLink('voices', `Hear the voice library ${icon('arrow', 15)}`, 'button button-primary')}${routeLink('ere', `${icon('book', 15)} Read a story`, 'button button-outline')}${aiHelperButton('oral')}</div></div><div class="oral-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing an oral story with children" /><span class="oral-image-note">Listen first. Learn the context.</span></div></section>${renderStepper(['Tradition', 'Genre', 'Piece', 'Reflection'], 0)}<section class="section oral-genres"><div class="section-heading"><div><span class="section-kicker">Choose a doorway</span><h2>Explore oral traditions.</h2><p>Each form has its own voice, purpose and place in community.</p></div></div><div class="oral-genre-grid">${genres.map((g) => `<a class="oral-genre-card tone-${g.tone}" href="#/${g.route}" data-route="${g.route}"><span class="oral-genre-icon">${icon(g.icon, 23)}</span><span class="oral-genre-sub">${g.titleSub}</span><h3>${g.title}</h3><p>${g.copy}</p><span class="oral-genre-arrow">Explore ${icon('arrow', 15)}</span></a>`).join('')}</div></section><section class="oral-quote-band"><span>${icon('quote', 25)}</span><div><strong>Stories are not just content.</strong><p>They are relationships—between speaker, listener, place and memory.</p></div>${routeLink('keepers', 'Meet the keepers ' + icon('arrow', 14), 'text-link')}</section></div>`;
+    return `<div class="container route-page oral-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Read & listen</strong></div><section class="oral-hero"><div class="oral-hero-copy"><span class="section-kicker">Voices, memory & meaning</span><h1>Some knowledge is<br /><em>spoken into the room.</em></h1><p>Listen to the forms that carry language through family and community—from praise poetry to proverbs, speech pitch and story.</p><div class="hero-actions">${routeLink('trainer', `${icon('mic', 16)} Voice Trainer`, 'button button-primary')}${routeLink('voices', `Hear the voice library ${icon('arrow', 15)}`, 'button button-outline')}${aiHelperButton('oral')}</div></div><div class="oral-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing an oral story with children" /><span class="oral-image-note">Listen first. Learn the context.</span></div></section>${renderStepper(['Tradition', 'Genre', 'Piece', 'Reflection'], 0)}<section class="section oral-genres"><div class="section-heading"><div><span class="section-kicker">Choose a doorway</span><h2>Explore oral traditions.</h2><p>Each form has its own voice, purpose and place in community.</p></div></div><div class="oral-genre-grid">${genres.map((g) => `<a class="oral-genre-card tone-${g.tone}" href="#/${g.route}" data-route="${g.route}"><span class="oral-genre-icon">${icon(g.icon, 23)}</span><span class="oral-genre-sub">${g.titleSub}</span><h3>${g.title}</h3><p>${g.copy}</p><span class="oral-genre-arrow">Explore ${icon('arrow', 15)}</span></a>`).join('')}</div></section><section class="oral-quote-band"><span>${icon('quote', 25)}</span><div><strong>Stories are not just content.</strong><p>They are relationships—between speaker, listener, place and memory.</p></div>${routeLink('keepers', 'Meet the keepers ' + icon('arrow', 14), 'text-link')}</section></div>`;
   }
 
   function renderOralGenre() {
     const cards = [
+      { route: 'trainer', title: 'Voice Trainer', subtitle: 'Live pitch & tone engine', icon: 'mic', tone: 'yellow', text: 'Interactive tone soundboards and voice recording across 60 lessons.' },
       { route: 'oriki', title: 'Oríkì', subtitle: 'Praise poetry & identity', icon: 'quote', tone: 'peach', text: 'Learn what praise poetry can express and how to listen for context.' },
       { route: 'owe', title: 'Òwe', subtitle: 'Proverbs & reflection', icon: 'sparkles', tone: 'mint', text: 'Explore short sayings and the ideas people carry through them.' },
       { route: 'ere', title: 'Folktales', subtitle: 'Stories & imagination', icon: 'book', tone: 'blue', text: 'Read a family story and notice what travels between generations.' },
-      { route: 'voices', title: 'Spoken word', subtitle: 'Voices & pronunciation', icon: 'headphones', tone: 'yellow', text: 'Hear words spoken and build confidence through listening.' }
+      { route: 'voices', title: 'Spoken word', subtitle: 'Voices & pronunciation', icon: 'headphones', tone: 'lilac', text: 'Hear words spoken and build confidence through listening.' }
     ];
     return `<div class="container route-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Genres</strong></div><section class="collection-hero simple-collection-hero"><span class="section-kicker">Oral forms · a guided introduction</span><h1>Many ways to tell<br /><em>what matters.</em></h1><p>Oral traditions are varied and living. Explore a form, listen for its context and follow the voice that leads you in.</p>${renderStepper(['Tradition', 'Genre', 'Example', 'Reflect'], 1)}</section><div class="section-heading collection-heading"><div><span class="section-kicker">Choose a genre</span><h2>Where would you like to begin?</h2></div>${aiHelperButton('oral')}</div><div class="oral-genre-grid">${cards.map((c) => `<a href="#/${c.route}" data-route="${c.route}" class="oral-genre-card tone-${c.tone}"><span class="oral-genre-icon">${icon(c.icon, 23)}</span><span class="oral-genre-sub">${c.subtitle}</span><h3>${c.title}</h3><p>${c.text}</p><span class="oral-genre-arrow">Explore ${icon('arrow', 15)}</span></a>`).join('')}</div><div class="content-note">${icon('shield', 17)} These introductions are a starting point. Community context, consent and attribution should guide how oral knowledge is shared.</div></div>`;
   }
