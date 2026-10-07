@@ -56,6 +56,7 @@
     globe2: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     volume: '<path d="M4 10v4h4l5 4V6l-5 4zM17 9a5 5 0 0 1 0 6m2.5-8.5a9 9 0 0 1 0 11"/>',
+    mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/>',
     smile: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',
     calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
     trophy: '<path d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0zM7 7H4v2a4 4 0 0 0 4 4m9-6h3v2a4 4 0 0 1-4 4"/>',
@@ -287,6 +288,18 @@
       helperLanguage: 'yoruba', search: '', points: 0, streak: 0,
       lastPracticeDate: '', completed: [], draft: '', result: '',
       questCommands: [], questTrail: [], questResult: ''
+    },
+    trainer: {
+      lang: 'yoruba',
+      level: 'beginner',
+      activeLessonId: 1,
+      speed: 1.0,
+      isRecording: false,
+      score: null,
+      analysis: null,
+      completed: {},
+      xp: 220,
+      streak: 5
     }
   };
 
@@ -298,6 +311,11 @@
         ...stored,
         available: { ...defaults.available, ...(stored.available || {}) },
         consent: { ...defaults.consent, ...(stored.consent || {}) },
+        trainer: {
+          ...defaults.trainer,
+          ...(stored.trainer || {}),
+          completed: typeof stored.trainer?.completed === 'object' && stored.trainer.completed !== null ? stored.trainer.completed : {}
+        },
         coding: {
           ...defaults.coding,
           ...(stored.coding || {}),
@@ -322,7 +340,7 @@
         completed: Array.isArray(stored.completed) ? stored.completed : defaults.completed.slice(),
         interested: Array.isArray(stored.interested) ? stored.interested : []
       };
-    } catch (_) { return { ...defaults, available: { ...defaults.available } }; }
+    } catch (_) { return { ...defaults, available: { ...defaults.available }, trainer: { ...defaults.trainer } }; }
   }
   const state = readState();
   if (state.level === 'growing') state.level = 'intermediate';
@@ -1169,7 +1187,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
       { lang: 'hausa', speaker: 'Friendly greeting', phrase: 'Sannu', translation: 'Hello', tint: 'blue' },
       { lang: 'swahili', speaker: 'Everyday greeting', phrase: 'Habari', translation: 'How are you?', tint: 'lilac' }
     ];
-    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Audio here is a browser-based prototype sample. Production recordings should be approved by native speakers.</p></div><span class="demo-badge">Sample phrases</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Language audio and pronunciation need review by fluent speakers before public release.</div></section></div>`;
+    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Audio here is a browser-based prototype sample. Production recordings should be approved by native speakers.</p></div><span class="demo-badge">Sample phrases</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Language audio and pronunciation need review by fluent speakers before public release.</div></section></div>`;
   }
 
   function renderGeneric(key) {
@@ -1187,7 +1205,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
 
   function renderDirectory() {
     const groups = [
-      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'languages', 'course', 'lesson', 'kids', 'individuals', 'families', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
+      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'kids', 'individuals', 'families', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
       { title: 'Stories & living culture', text: 'Explore oral traditions, voices, guides and cultural context.', pages: ['ere', 'ere_game', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'voices', 'ifa', 'ifa_odu', 'guides', 'human', 'keepers'] },
       { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'login', 'consent', 'base'] }
     ];
@@ -1365,19 +1383,8 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
     TRAINER_CURRICULUM.zulu = TRAINER_CURRICULUM.swahili;
     TRAINER_CURRICULUM.twi = TRAINER_CURRICULUM.yoruba;
 
-    if (!defaults.trainer) {
-      defaults.trainer = {
-        lang: "yoruba",
-        level: "beginner",
-        activeLessonId: 1,
-        speed: 1.0,
-        isRecording: false,
-        score: null,
-        analysis: null,
-        completed: {},
-        xp: 220,
-        streak: 5
-      };
+    if (!state.trainer) {
+      state.trainer = { ...defaults.trainer };
     }
 
     let audioCtx = null;
@@ -2257,7 +2264,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
           </div>
 
           <div class="how-it-works-steps-grid">
-            <a href="oral.html" class="journey-step-card" data-step="1">
+            <a href="#/oral" data-route="oral" class="journey-step-card" data-step="1">
               <div class="journey-step-content">
                 <div class="journey-step-badge">
                   <span class="journey-step-num">01</span>
@@ -2274,7 +2281,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
               </div>
             </a>
 
-            <a href="oral_genre.html" class="journey-step-card" data-step="2">
+            <a href="#/oral_genre" data-route="oral_genre" class="journey-step-card" data-step="2">
               <div class="journey-step-content">
                 <div class="journey-step-badge">
                   <span class="journey-step-num">02</span>
@@ -2291,7 +2298,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
               </div>
             </a>
 
-            <a href="owe.html" class="journey-step-card" data-step="3">
+            <a href="#/owe" data-route="owe" class="journey-step-card" data-step="3">
               <div class="journey-step-content">
                 <div class="journey-step-badge">
                   <span class="journey-step-num">03</span>
@@ -2308,7 +2315,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
               </div>
             </a>
 
-            <a href="voices.html" class="journey-step-card" data-step="4">
+            <a href="#/voices" data-route="voices" class="journey-step-card" data-step="4">
               <div class="journey-step-content">
                 <div class="journey-step-badge">
                   <span class="journey-step-num">04</span>
@@ -2325,7 +2332,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
               </div>
             </a>
 
-            <a href="method.html" class="journey-step-card" data-step="5">
+            <a href="#/method" data-route="method" class="journey-step-card" data-step="5">
               <div class="journey-step-content">
                 <div class="journey-step-badge">
                   <span class="journey-step-num">05</span>
@@ -2342,7 +2349,7 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
               </div>
             </a>
 
-            <a href="consent.html" class="journey-step-card" data-step="6">
+            <a href="#/consent" data-route="consent" class="journey-step-card" data-step="6">
               <div class="journey-step-content">
                 <div class="journey-step-badge">
                   <span class="journey-step-num">06</span>
@@ -2642,6 +2649,122 @@ content = `<section class="code-step-panel code-play-panel" aria-labelledby="cod
       case 'login-mode': state.loginMode = el.dataset.mode === 'signup' ? 'signup' : 'signin'; render(); break;
       case 'forgot-password': openModal('Password reset', 'Password reset will be available when secure account services are connected. Do not use a real password in this prototype.'); break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
+      case 'trainer-set-lang': {
+        const selectedLang = el.dataset.lang || 'yoruba';
+        state.trainer.lang = selectedLang;
+        state.trainer.score = null;
+        state.trainer.analysis = null;
+        saveState();
+        render();
+        const langNames = { yoruba: 'Yorùbá', igbo: 'Igbo', hausa: 'Hausa', swahili: 'Kiswahili', zulu: 'isiZulu', twi: 'Twi' };
+        showToast(`Selected ${langNames[selectedLang] || selectedLang} Voice Trainer`);
+        break;
+      }
+      case 'trainer-set-level': {
+        const lvl = el.dataset.level || 'beginner';
+        state.trainer.level = lvl;
+        state.trainer.activeLessonId = lvl === 'intermediate' ? 21 : lvl === 'advanced' ? 41 : 1;
+        state.trainer.score = null;
+        state.trainer.analysis = null;
+        saveState();
+        render();
+        const studio = document.getElementById('trainerStudio');
+        if (studio) studio.scrollIntoView({ behavior: 'smooth' });
+        break;
+      }
+      case 'trainer-set-speed': {
+        const speed = parseFloat(el.dataset.speed) || 1.0;
+        state.trainer.speed = speed;
+        saveState();
+        render();
+        showToast(`Voice speed set to ${speed}x`);
+        break;
+      }
+      case 'trainer-play-syllable': {
+        const freq = parseFloat(el.dataset.freq) || 293;
+        playToneSound(freq, 0.35, 'triangle');
+        el.classList.add('is-active-pitch');
+        setTimeout(() => el.classList.remove('is-active-pitch'), 350);
+        break;
+      }
+      case 'trainer-play-native': {
+        const lessonId = parseInt(el.dataset.lessonId) || state.trainer.activeLessonId || 1;
+        const langData = TRAINER_CURRICULUM[state.trainer.lang] || TRAINER_CURRICULUM.yoruba;
+        const currentTierLessons = langData[state.trainer.level] || langData.beginner;
+        const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
+        if (activeLesson) {
+          playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables);
+          showToast(`Playing native voice (${state.trainer.speed || 1.0}x)`);
+        }
+        break;
+      }
+      case 'trainer-start-record': {
+        const lessonId = parseInt(el.dataset.lessonId) || state.trainer.activeLessonId || 1;
+        startTrainerRecording(lessonId);
+        showToast('Listening... Speak the phrase clearly into your microphone!');
+        break;
+      }
+      case 'trainer-stop-record': {
+        const lessonId = parseInt(el.dataset.lessonId) || state.trainer.activeLessonId || 1;
+        stopTrainerRecordingAndAnalyze(lessonId);
+        break;
+      }
+      case 'trainer-prev-lesson': {
+        const minId = state.trainer.level === 'beginner' ? 1 : state.trainer.level === 'intermediate' ? 21 : 41;
+        if (state.trainer.activeLessonId > minId) {
+          state.trainer.activeLessonId -= 1;
+          state.trainer.score = null;
+          state.trainer.analysis = null;
+          saveState();
+          render();
+          const studio = document.getElementById('trainerStudio');
+          if (studio) studio.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      }
+      case 'trainer-next-lesson': {
+        const maxId = state.trainer.level === 'beginner' ? 20 : state.trainer.level === 'intermediate' ? 40 : 60;
+        if (state.trainer.activeLessonId < maxId) {
+          state.trainer.activeLessonId += 1;
+          state.trainer.score = null;
+          state.trainer.analysis = null;
+          saveState();
+          render();
+          const studio = document.getElementById('trainerStudio');
+          if (studio) studio.scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      }
+      case 'trainer-select-lesson': {
+        const id = parseInt(el.dataset.id) || 1;
+        state.trainer.activeLessonId = id;
+        state.trainer.score = null;
+        state.trainer.analysis = null;
+        saveState();
+        render();
+        const studio = document.getElementById('trainerStudio');
+        if (studio) studio.scrollIntoView({ behavior: 'smooth' });
+        break;
+      }
+      case 'trainer-view-cert': {
+        const langData = TRAINER_CURRICULUM[state.trainer.lang] || TRAINER_CURRICULUM.yoruba;
+        const currentTierLessons = langData[state.trainer.level] || langData.beginner;
+        const completedInTier = currentTierLessons.filter((l) => state.trainer.completed && state.trainer.completed[l.id]);
+        const count = completedInTier.length;
+        const total = currentTierLessons.length;
+        const isEligible = count >= total;
+        const avg = count > 0 ? Math.round(completedInTier.reduce((acc, l) => acc + (state.trainer.completed[l.id]?.score || 0), 0) / count) : 0;
+        const langNames = { yoruba: 'Yorùbá', igbo: 'Igbo', hausa: 'Hausa', swahili: 'Kiswahili', zulu: 'isiZulu', twi: 'Twi' };
+        const langName = langNames[state.trainer.lang] || state.trainer.lang;
+        const levelName = state.trainer.level.charAt(0).toUpperCase() + state.trainer.level.slice(1);
+        openModal(
+          `${langName} ${levelName} Tier Certificate`,
+          isEligible
+            ? `🎉 Congratulations! You have completed all ${total} lessons in the ${langName} ${levelName} tier with an average fluency score of ${avg}%! Your Idilewa African Voice Master badge has been certified.`
+            : `Progress: ${count} of ${total} lessons completed in the ${langName} ${levelName} tier (${Math.round((count / total) * 100)}%). Complete all ${total} lessons with at least 85% accuracy to unlock your verified certificate!`
+        );
+        break;
+      }
       default: break;
     }
   }
