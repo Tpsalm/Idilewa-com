@@ -1073,7 +1073,7 @@
           badgeLabel: 'Orange',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c466a6bc1c2287eedf45f_grade%201_activity%20card_thm.png',
+          image: imageUrl('c4k-grade-1.jpg'),
           desc: 'Young students will discover the basics of algorithms and robot control through interactive activities. From building simple commands to exploring robot movements, these lessons make coding an exciting hands-on adventure!',
           topics: ['Command Sequences', 'Event Triggers (Tap & Go)', 'Early Loops', 'Basic Robotics Movements'],
           bilingualFocus: 'Action verbs & sequence vocabulary in Yorùbá, Igbo, Hausa, and Swahili'
@@ -1085,7 +1085,7 @@
           badgeLabel: 'Yellow',
           lessonCount: '36+ Pre-Built Lessons',
           duration: '30-60 min each',
-          image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/679c4f6a322c8a8bec36530b_grade%202_activity%20card.avif',
+          image: imageUrl('c4k-grade-2.jpg'),
           desc: 'Students will take their coding skills further by exploring complex algorithms, loops, and robot behavior. From mastering control commands to discovering basic digital communication, this class makes coding an exciting challenge!',
           topics: ['Complex Loops (Repeat N times)', 'Conditionals (If/Else)', 'Sensor Inputs', 'Digital Communication Basics'],
           bilingualFocus: 'Condition & choice terms (Bí / Tí ó bá, Ọ̀rọ̀ ìbánisọ̀rọ̀)'
