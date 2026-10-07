@@ -4027,6 +4027,67 @@
         );
         break;
       }
+      case 'coding-jump-band': {
+        const bandId = el.dataset.band;
+        const target = document.getElementById(bandId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+      case 'coding-filter-band': {
+        state.coding.filter = el.dataset.band || 'all';
+        saveState();
+        render();
+        const freeSec = document.getElementById('free-lessons');
+        if (freeSec) freeSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+      case 'coding-filter-category': {
+        state.coding.category = el.dataset.category || 'all';
+        saveState();
+        render();
+        break;
+      }
+      case 'coding-explore-grade': {
+        const gradeId = el.dataset.grade;
+        openCurriculumModal(gradeId);
+        break;
+      }
+      case 'coding-start-lesson': {
+        const lessonId = el.dataset.lessonId;
+        openFreeLessonModal(lessonId);
+        break;
+      }
+      case 'coding-complete-free-lesson': {
+        const lessonId = el.dataset.lessonId;
+        if (lessonId && !state.coding.completedLessons.includes(lessonId)) {
+          state.coding.completedLessons.push(lessonId);
+          state.coding.points += 15;
+          const today = new Date().toISOString().slice(0, 10);
+          if (state.coding.lastPracticeDate !== today) {
+            const previous = new Date(`${state.coding.lastPracticeDate || '1970-01-01'}T00:00:00Z`);
+            const yesterday = new Date(`${today}T00:00:00Z`);
+            yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+            state.coding.streak = previous.toISOString().slice(0, 10) === yesterday.toISOString().slice(0, 10) ? state.coding.streak + 1 : 1;
+            state.coding.lastPracticeDate = today;
+          }
+          saveState();
+          showToast('Lesson completed! +15 Maker XP awarded to your profile.', 'success');
+          openFreeLessonModal(lessonId);
+        }
+        break;
+      }
+      case 'close-modal-and-jump': {
+        const modalRoot = document.getElementById('modal-root');
+        if (modalRoot) modalRoot.innerHTML = '';
+        const targetId = el.dataset.target;
+        if (targetId) {
+          setTimeout(() => {
+            const target = document.getElementById(targetId);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
+        }
+        break;
+      }
       default: break;
     }
   }
@@ -4085,6 +4146,15 @@
       saveState(); render();
       const next = document.getElementById('codingSearch');
       if (next) { next.focus(); try { next.setSelectionRange(cursor, cursor); } catch (_) { /* search inputs vary */ } }
+    }
+    if (event.target && event.target.id === 'lessonSearchInput') {
+      const value = event.target.value;
+      state.coding.lessonSearch = value;
+      const grid = document.getElementById('freeLessonsGrid');
+      const countEl = document.getElementById('freeLessonsCount');
+      const filtered = filterFreeLessons();
+      if (grid) grid.innerHTML = renderFreeLessonCards(filtered);
+      if (countEl) countEl.textContent = `Showing ${filtered.length} of ${C4K_FREE_LESSONS.length} free STEAM lessons`;
     }
   });
 
@@ -4166,6 +4236,12 @@
       } else {
         state.coding.result = `↻ ${copy.retry} Hint: include “${token}” in your example.`;
         saveState(); render();
+      }
+    } else if (type === 'coding-subscribe') {
+      const email = String(data.get('email') || '').trim();
+      if (email) {
+        form.reset();
+        showToast(`🎉 Thank you for subscribing (${email})! You will receive Code for Kids STEAM updates.`, 'success');
       }
     } else if (type === 'lesson-response') {
       const response = String(data.get('response') || '').trim();
