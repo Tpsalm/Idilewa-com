@@ -499,21 +499,20 @@
             <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language & cultural learning preview" id="heroPhotoWrap">
               <div class="hero-photo-frame">
                 <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
+                <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
                 <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
                 <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
-                <div class="cinematic-dust-motes" aria-hidden="true">
-                  <span class="mote m1"></span>
-                  <span class="mote m2"></span>
-                  <span class="mote m3"></span>
-                  <span class="mote m4"></span>
-                  <span class="mote m5"></span>
-                  <span class="mote m6"></span>
+                <div class="cinematic-jewelry-glints" aria-hidden="true">
+                  <span class="jewelry-glint j1" style="left: 54.2%; top: 48.5%;"></span>
+                  <span class="jewelry-glint j2" style="left: 56.5%; top: 44.2%;"></span>
+                  <span class="jewelry-glint j3" style="left: 52.8%; top: 22.8%;"></span>
+                  <span class="jewelry-glint j4" style="left: 33.6%; top: 62.4%;"></span>
                 </div>
                 <div class="cinematic-lens-flare" aria-hidden="true"></div>
                 <div class="hero-vignette-overlay" aria-hidden="true"></div>
-                <div class="cinematic-live-badge" aria-label="3D Cinematic Live Video Simulation">
+                <div class="cinematic-live-badge" aria-label="4K Ultra-HD Cinematic Video Stream">
                   <span class="cinematic-pulse-dot"></span>
-                  <span class="cinematic-badge-text">3D CINEMATIC LIVE</span>
+                  <span class="cinematic-badge-text">4K CINEMATIC VIDEO · LIVE</span>
                 </div>
               </div>
 
@@ -3960,6 +3959,93 @@
         </div>\n    </section>`;
   }
 
+  let heroCanvasAnimId = null;
+
+  function initHeroCinematicVideoEngine() {
+    if (heroCanvasAnimId) {
+      cancelAnimationFrame(heroCanvasAnimId);
+      heroCanvasAnimId = null;
+    }
+    const canvas = document.getElementById('heroCinematicCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+
+    // Volumetric golden light dust motes
+    const motes = Array.from({ length: 38 }, () => ({
+      x: Math.random() * (canvas.getBoundingClientRect().width || 800),
+      y: Math.random() * (canvas.getBoundingClientRect().height || 400),
+      r: 0.9 + Math.random() * 2.4,
+      vx: (Math.random() - 0.5) * 0.3 + 0.12,
+      vy: (Math.random() - 0.5) * 0.4 - 0.18,
+      baseAlpha: 0.25 + Math.random() * 0.55,
+      phase: Math.random() * Math.PI * 2,
+      hue: 42 + (Math.random() - 0.5) * 14
+    }));
+
+    const startTime = performance.now();
+
+    function renderFrame(now) {
+      const w = canvas.getBoundingClientRect().width || 800;
+      const h = canvas.getBoundingClientRect().height || 400;
+      if (!w || !h) return;
+
+      const elapsed = (now - startTime) * 0.001;
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Digital Tablet Screen Ambient Radiance (soft blue-green glow bounce)
+      const tabletPulse = 0.5 + 0.5 * Math.sin(elapsed * 1.6);
+      const tx = w * 0.54;
+      const ty = h * 0.74;
+      const tGrad = ctx.createRadialGradient(tx, ty, 8, tx, ty - h * 0.12, w * 0.26);
+      tGrad.addColorStop(0, `rgba(34, 211, 238, ${0.11 + 0.05 * tabletPulse})`);
+      tGrad.addColorStop(0.45, `rgba(16, 185, 129, ${0.07 + 0.03 * tabletPulse})`);
+      tGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+      ctx.fillStyle = tGrad;
+      ctx.beginPath();
+      ctx.ellipse(tx, ty - h * 0.06, w * 0.24, h * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Volumetric Dust Particles in Golden Light Shaft
+      motes.forEach((m) => {
+        m.x += m.vx + Math.sin(elapsed + m.phase) * 0.18;
+        m.y += m.vy + Math.cos(elapsed * 0.8 + m.phase) * 0.12;
+
+        if (m.x < 0) m.x = w;
+        if (m.x > w) m.x = 0;
+        if (m.y < 0) m.y = h;
+        if (m.y > h) m.y = 0;
+
+        const inLightShaft = Math.max(0, (m.x / w) * 0.65 + ((h - m.y) / h) * 0.35);
+        const alpha = m.baseAlpha * (0.6 + 0.4 * Math.sin(elapsed * 2 + m.phase)) * (0.7 + 0.6 * inLightShaft);
+
+        const radGrad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.r * 2.0);
+        radGrad.addColorStop(0, `hsla(${m.hue}, 90%, 80%, ${alpha})`);
+        radGrad.addColorStop(0.5, `hsla(${m.hue}, 85%, 65%, ${alpha * 0.45})`);
+        radGrad.addColorStop(1, `hsla(${m.hue}, 80%, 50%, 0)`);
+
+        ctx.fillStyle = radGrad;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.r * 2.0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      heroCanvasAnimId = requestAnimationFrame(renderFrame);
+    }
+
+    heroCanvasAnimId = requestAnimationFrame(renderFrame);
+  }
+
   function initHeroParallax() {
     const stage = document.getElementById('heroVisualStage');
     const wrap = document.getElementById('heroPhotoWrap');
@@ -4023,6 +4109,7 @@
     document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
     if (page === 'index') {
       initHeroParallax();
+      initHeroCinematicVideoEngine();
     }
   }
 

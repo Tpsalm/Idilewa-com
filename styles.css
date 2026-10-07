@@ -319,32 +319,58 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   100% { opacity: 0.62; transform: scale(1.01) rotate(-0.4deg); }
 }
 
-/* Volumetric Atmospheric Dust / Light Particles */
-.cinematic-dust-motes {
+/* 60FPS Hardware-Accelerated Atmosphere Video Canvas */
+.cinematic-video-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+  border-radius: 38px;
+}
+
+/* Golden Jewelry Sparkle Glints */
+.cinematic-jewelry-glints {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  overflow: hidden;
-  z-index: 7;
-  border-radius: 38px;
+  z-index: 10;
 }
-.cinematic-dust-motes .mote {
+.jewelry-glint {
   position: absolute;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: rgba(255, 238, 170, 0.75);
-  box-shadow: 0 0 6px rgba(255, 220, 120, 0.8);
+  background: #ffffff;
+  box-shadow: 0 0 10px 3px rgba(255, 234, 150, 0.95);
   pointer-events: none;
+  transform: scale(0);
+  animation: jewelryGlintShimmer 6s ease-in-out infinite;
 }
-.cinematic-dust-motes .m1 { width: 3px; height: 3px; top: 25%; right: 28%; animation: dustMoteDrift 8s ease-in-out infinite alternate; }
-.cinematic-dust-motes .m2 { width: 4px; height: 4px; top: 40%; right: 22%; animation: dustMoteDrift 11s ease-in-out 1s infinite alternate; }
-.cinematic-dust-motes .m3 { width: 2.5px; height: 2.5px; top: 18%; right: 38%; animation: dustMoteDrift 9s ease-in-out 2s infinite alternate; }
-.cinematic-dust-motes .m4 { width: 3.5px; height: 3.5px; top: 55%; right: 32%; animation: dustMoteDrift 12s ease-in-out 0.5s infinite alternate; }
-.cinematic-dust-motes .m5 { width: 2px; height: 2px; top: 32%; right: 48%; animation: dustMoteDrift 7s ease-in-out 1.5s infinite alternate; }
-.cinematic-dust-motes .m6 { width: 3px; height: 3px; top: 62%; right: 20%; animation: dustMoteDrift 10s ease-in-out 2.5s infinite alternate; }
-@keyframes dustMoteDrift {
-  0% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.2; }
-  50% { transform: translate3d(-14px, -18px, 0) scale(1.2); opacity: 0.85; }
-  100% { transform: translate3d(12px, -32px, 0) scale(0.9); opacity: 0.3; }
+.jewelry-glint::before,
+.jewelry-glint::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 6px rgba(255, 220, 120, 0.85);
+  border-radius: 2px;
+}
+.jewelry-glint::before { width: 14px; height: 1.5px; }
+.jewelry-glint::after { width: 1.5px; height: 14px; }
+.jewelry-glint.j1 { animation-delay: 0.5s; }
+.jewelry-glint.j2 { animation-delay: 2.2s; }
+.jewelry-glint.j3 { animation-delay: 3.8s; }
+.jewelry-glint.j4 { animation-delay: 5.1s; }
+
+@keyframes jewelryGlintShimmer {
+  0%, 15% { transform: scale(0) rotate(0deg); opacity: 0; }
+  20% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+  25% { transform: scale(0.9) rotate(90deg); opacity: 0.85; }
+  32%, 100% { transform: scale(0) rotate(135deg); opacity: 0; }
 }
 
 .cinematic-lens-flare {
