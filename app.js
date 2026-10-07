@@ -499,7 +499,16 @@
             <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language & cultural learning preview" id="heroPhotoWrap">
               <div class="hero-photo-frame">
                 <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
-                <div class="cinematic-sun-rays" aria-hidden="true"></div>
+                <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
+                <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
+                <div class="cinematic-dust-motes" aria-hidden="true">
+                  <span class="mote m1"></span>
+                  <span class="mote m2"></span>
+                  <span class="mote m3"></span>
+                  <span class="mote m4"></span>
+                  <span class="mote m5"></span>
+                  <span class="mote m6"></span>
+                </div>
                 <div class="cinematic-lens-flare" aria-hidden="true"></div>
                 <div class="hero-vignette-overlay" aria-hidden="true"></div>
                 <div class="cinematic-live-badge" aria-label="3D Cinematic Live Video Simulation">
