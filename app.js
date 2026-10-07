@@ -4050,13 +4050,13 @@
         break;
       }
       case 'coding-jump-band': {
-        const bandId = el.dataset.band;
+        const bandId = el.dataset.band || el.dataset['band'];
         const target = document.getElementById(bandId);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
       }
       case 'coding-filter-band': {
-        state.coding.filter = el.dataset.band || 'all';
+        state.coding.filter = el.dataset.band || el.dataset['band'] || 'all';
         saveState();
         render();
         const freeSec = document.getElementById('free-lessons');
@@ -4064,23 +4064,23 @@
         break;
       }
       case 'coding-filter-category': {
-        state.coding.category = el.dataset.category || 'all';
+        state.coding.category = el.dataset.category || el.dataset['category'] || 'all';
         saveState();
         render();
         break;
       }
       case 'coding-explore-grade': {
-        const gradeId = el.dataset.grade;
+        const gradeId = el.dataset.grade || el.dataset['grade'];
         openCurriculumModal(gradeId);
         break;
       }
       case 'coding-start-lesson': {
-        const lessonId = el.dataset.lessonId;
+        const lessonId = el.dataset.lessonId || el.dataset['lesson-id'] || el.dataset['lessonId'];
         openFreeLessonModal(lessonId);
         break;
       }
       case 'coding-complete-free-lesson': {
-        const lessonId = el.dataset.lessonId;
+        const lessonId = el.dataset.lessonId || el.dataset['lesson-id'] || el.dataset['lessonId'];
         if (lessonId && !state.coding.completedLessons.includes(lessonId)) {
           state.coding.completedLessons.push(lessonId);
           state.coding.points += 15;
@@ -4101,7 +4101,7 @@
       case 'close-modal-and-jump': {
         const modalRoot = document.getElementById('modal-root');
         if (modalRoot) modalRoot.innerHTML = '';
-        const targetId = el.dataset.target;
+        const targetId = el.dataset.target || el.dataset['target'];
         if (targetId) {
           setTimeout(() => {
             const target = document.getElementById(targetId);
