@@ -5,7 +5,7 @@
   const ROUTES = [
     'trainer',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'course',
-    'ere', 'ere_game', 'families', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
+    'ere', 'ere_game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
     'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'profile', 'schools',
     'tutor', 'voices'
@@ -91,22 +91,9 @@
       active: 2, flow: ['Belong', 'Discover', 'Learn', 'Pass it on'],
       cta: 'Explore our approach', ctaRoute: 'method',
       cards: [
-        { title: 'Language lives in community', text: 'Learning grows through everyday words, family stories and the voices of people who carry them.', icon: 'people', route: 'families', tone: 'mint' },
+        { title: 'Language lives in community', text: 'Learning grows through everyday words, family stories and the voices of people who carry them.', icon: 'people', route: 'individuals', tone: 'mint' },
         { title: 'Culture belongs in the classroom', text: 'Proverbs, oral traditions and cultural context sit beside language practice—not on the sidelines.', icon: 'book', route: 'oral', tone: 'peach' },
         { title: 'Technology can carry us forward', text: 'Young learners can explore coding while staying rooted in the languages they know.', icon: 'code', route: 'coding', tone: 'blue' }
-      ]
-    },
-    families: {
-      title: 'Make room for the language of home.',
-      eyebrow: 'For families',
-      desc: 'Small shared moments can keep a language close. Build a gentle routine for the whole family, wherever home is.',
-      icon: 'heart', image: 'story', imageAlt: 'A family learning together',
-      active: 0, flow: ['Choose a language', 'Set a rhythm', 'Learn together', 'Celebrate'],
-      cta: 'Start a family path', ctaRoute: 'languages',
-      cards: [
-        { title: 'A 10-minute routine', text: 'Try a greeting, one new phrase and a story at the end of the day.', icon: 'clock', route: 'course', tone: 'mint' },
-        { title: 'Share stories across generations', text: 'Invite a grandparent, auntie or trusted elder to tell a story in their own words.', icon: 'quote', route: 'ere', tone: 'peach' },
-        { title: 'Make progress feel joyful', text: 'Collect small wins, build a family streak and celebrate effort over perfection.', icon: 'trophy', route: 'profile', tone: 'yellow' }
       ]
     },
     individuals: {
@@ -197,7 +184,7 @@
       cards: [
         { title: 'Language educators', text: 'Teachers help learners turn curiosity into a steady practice.', icon: 'school', route: 'tutor', tone: 'mint' },
         { title: 'Story keepers', text: 'Elders and storytellers carry expressions, memories and local knowledge.', icon: 'quote', route: 'oral', tone: 'peach' },
-        { title: 'Creative learners', text: 'Children and adults bring their own questions, ideas and futures.', icon: 'sparkles', route: 'families', tone: 'yellow' }
+        { title: 'Creative learners', text: 'Children and adults bring their own questions, ideas and futures.', icon: 'sparkles', route: 'individuals', tone: 'yellow' }
       ]
     },
     keepers: {
@@ -248,18 +235,17 @@
     { label: 'Read & listen', route: 'oral', group: 'read' },
     { label: 'Code', route: 'coding', group: 'code' },
     { label: 'Stories', route: 'ere', group: 'stories' },
-    { label: 'Community', route: 'families', group: 'community' },
     { label: 'About', route: 'about', group: 'about' }
   ];
 
   const NAV_GROUPS = {
-      trainer: 'trainer',
+    trainer: 'trainer',
     languages: 'learn', course: 'learn', lesson: 'learn', kids: 'learn', individuals: 'learn',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
     owe_detail: 'read', owe_story: 'read', owe_reflection: 'read', voices: 'read',
-    connect_students: 'community', connect_teachers: 'community', consent: 'community',
+    connect_students: 'about', connect_teachers: 'about', consent: 'about',
     coding: 'code', ere: 'stories', ere_game: 'stories', ifa: 'culture', ifa_odu: 'culture',
-    about: 'about', method: 'about', families: 'community', schools: 'community', tutor: 'community', kids: 'community', individuals: 'community',
+    about: 'about', method: 'about', schools: 'about', tutor: 'about',
     guides: 'culture', human: 'culture', keepers: 'culture'
   };
 
@@ -455,7 +441,7 @@
         </div>
         <div class="footer-links"><h3>Learn</h3>${routeLink('languages', 'Choose a language')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}${routeLink('coding', 'Code in your language')}</div>
         <div class="footer-links"><h3>Discover</h3>${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
-        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('families', 'For families')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('base', 'Explore all pages')}</div>
+        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('base', 'Explore all pages')}</div>
       </div>
       <div class="container footer-bottom"><span>© Idilewa · A learning space for languages, culture and technology</span><span class="footer-note">A thoughtful beginning, built to grow.</span></div>
     </footer>`;
@@ -676,7 +662,7 @@
         <div class="section-heading"><div><span class="section-kicker">One home, many journeys</span><h2>Made for the way you learn.</h2><p>Welcoming for children, useful for adults and stronger when families learn together.</p></div></div>
         <div class="audience-grid">
           <a class="audience-card audience-kids" href="#/kids" data-route="kids"><span class="audience-icon">${icon('sparkles', 21)}</span><span class="audience-kicker">For young learners</span><strong>Curiosity comes first.</strong><small>Playful lessons, stories and gentle challenges.</small>${icon('arrow', 16)}</a>
-          <a class="audience-card audience-family" href="#/families" data-route="families"><span class="audience-icon">${icon('heart', 21)}</span><span class="audience-kicker">For families</span><strong>Keep language close.</strong><small>Build a shared learning rhythm at home.</small>${icon('arrow', 16)}</a>
+          <a class="audience-card audience-individual" href="#/individuals" data-route="individuals"><span class="audience-icon">${icon('compass', 21)}</span><span class="audience-kicker">For independent learners</span><strong>Your roots. Your pace.</strong><small>A clear, welcoming path for curious minds.</small>${icon('arrow', 16)}</a>
           <a class="audience-card audience-school" href="#/schools" data-route="schools"><span class="audience-icon">${icon('school', 21)}</span><span class="audience-kicker">For schools</span><strong>Bring culture into class.</strong><small>Clear learning paths for educators.</small>${icon('arrow', 16)}</a>
         </div>
       </section>
@@ -2539,11 +2525,11 @@
 
   function renderDirectory() {
     const groups = [
-      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'kids', 'individuals', 'families', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
+      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'kids', 'individuals', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
       { title: 'Stories & living culture', text: 'Explore oral traditions, voices, guides and cultural context.', pages: ['ere', 'ere_game', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'voices', 'ifa', 'ifa_odu', 'guides', 'human', 'keepers'] },
       { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'login', 'consent', 'base'] }
     ];
-    return `<div class="container route-page directory-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Explore all spaces</strong></div><section class="directory-hero"><span class="section-kicker">The Idilewa map</span><h1>One home.<br /><em>Many ways to belong.</em></h1><p>Start with a language, follow a story, explore culture or build something new.</p>${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}</section>${groups.map((g) => `<section class="directory-group"><div class="directory-heading"><div><span class="section-kicker">A learning layer</span><h2>${g.title}</h2><p>${g.text}</p></div><span class="directory-count">${g.pages.length} spaces</span></div><div class="directory-links">${g.pages.map((page) => `<a href="#/${page}" data-route="${page}" class="directory-link"><span>${icon(page === 'coding' ? 'code' : page.includes('oral') || page.includes('ere') || page === 'voices' ? 'book' : page === 'schools' || page === 'tutor' || page === 'families' || page === 'connect_students' || page === 'connect_teachers' ? 'people' : 'sparkles', 17)}</span><strong>${LABELS[page]}</strong>${icon('arrow', 15)}</a>`).join('')}</div></section>`).join('')}<div class="directory-note">${icon('info', 17)} Every named prototype route is connected through this route map and the main navigation.</div></div>`;
+    return `<div class="container route-page directory-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Explore all spaces</strong></div><section class="directory-hero"><span class="section-kicker">The Idilewa map</span><h1>One home.<br /><em>Many ways to belong.</em></h1><p>Start with a language, follow a story, explore culture or build something new.</p>${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}</section>${groups.map((g) => `<section class="directory-group"><div class="directory-heading"><div><span class="section-kicker">A learning layer</span><h2>${g.title}</h2><p>${g.text}</p></div><span class="directory-count">${g.pages.length} spaces</span></div><div class="directory-links">${g.pages.map((page) => `<a href="#/${page}" data-route="${page}" class="directory-link"><span>${icon(page === 'coding' ? 'code' : page.includes('oral') || page.includes('ere') || page === 'voices' ? 'book' : page === 'schools' || page === 'tutor' || page === 'connect_students' || page === 'connect_teachers' ? 'people' : 'sparkles', 17)}</span><strong>${LABELS[page]}</strong>${icon('arrow', 15)}</a>`).join('')}</div></section>`).join('')}<div class="directory-note">${icon('info', 17)} Every named prototype route is connected through this route map and the main navigation.</div></div>`;
   }
 
   function renderPricing() {
@@ -2873,7 +2859,7 @@
       : !childVerified
         ? `<form class="consent-code-check" data-form="child-consent-check"><div><span class="section-kicker">Parent approval found · child verification needed</span><h2>Enter the code your parent gave you.</h2><p>Only the tutor selected by your parent can be requested from this page.</p></div><label for="childConnectCode">Parent-approved code<input id="childConnectCode" name="consentCode" autocomplete="off" maxlength="12" placeholder="ID-123456" required /></label><button class="button button-primary" type="submit">Verify parent code ${icon('check', 15)}</button></form>`
         : `<div class="consent-gate-card is-approved">${icon('check', 20)}<div><strong>Parent approval verified on this device.</strong><p>Connection is limited to ${esc(TEACHER_PROFILES.find((item) => item.id === state.consent.tutorId)?.name || 'the approved tutor')}. No booking or message is sent by this preview.</p></div></div>`;
-    return `<div class="container route-page connection-page connect-teachers-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('families', 'Community')}<span>/</span><strong>Connect with Teachers</strong></div>
+    return `<div class="container route-page connection-page connect-teachers-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Teachers</strong></div>
       <section class="connection-hero"><div class="connection-hero-copy"><span class="section-kicker">For learners & families</span><h1>Find a teacher<br /><em>who helps you grow.</em></h1><p>Explore educator profiles, teaching times and learning experience. A guardian-approved code must match the specific tutor before an introduction can be requested.</p><div class="connection-hero-points"><span>${icon('shield', 16)} Parent-approved introductions</span><span>${icon('clock', 16)} Times shown in WAT</span></div></div><div class="connection-hero-image"><img src="./assets/yoruba-educator-man.jpg" alt="Illustrative Yorùbá educator in traditional agbada holding a language book" /><span>Educator portraits and schedules are illustrative demo content.</span></div></section>
       ${renderStepper(['Choose a tutor', 'Parent signs consent', 'Child verifies code', 'Connect safely'], childVerified ? 3 : codeActive ? 2 : 0)}
       ${banner}
@@ -2892,7 +2878,7 @@
     const assignment = verified
       ? `<article class="approved-assignment-card"><div class="approved-assignment-mark">${icon('check', 22)}</div><span class="section-kicker">Parent-approved assignment</span><h2>${esc(grant.learnerAlias || 'Young learner')}</h2><p>Assigned tutor: <strong>${esc(tutor?.name || 'Approved tutor')}</strong>. The guardian approved this specific pairing and signed the consent form.</p><div class="assignment-scope-pill">${icon('shield', 15)} Anonymous learner · no contact details</div>${grant.assignmentAccepted ? `<div class="assignment-active-note">${icon('check', 16)} Assignment accepted in this local demo. No lesson, message or booking is actually created.</div>` : `<button class="button button-primary" data-action="accept-assignment">Accept this approved demo assignment ${icon('arrow', 15)}</button>`}</article>`
       : `<form class="tutor-consent-verify-card" data-form="tutor-consent-check"><div><span class="section-kicker">Required before teaching or connecting</span><h2>Validate the parent-approved code.</h2><p>A tutor may only open the learner’s anonymous assignment after the parent has signed the form, approved that tutor and shared the matching code.</p></div><label for="tutorIdentity">Your tutor profile<select id="tutorIdentity" name="tutorId" required><option value="">Choose your sample tutor profile</option>${tutorOptions}</select></label><label for="tutorConsentCode">Parent-approved consent code<input id="tutorConsentCode" name="consentCode" type="text" autocomplete="off" maxlength="12" placeholder="ID-123456" required /></label><button class="button button-primary" type="submit">Validate code & assignment ${icon('shield', 15)}</button><small>No code or parent approval means no learner profile, response, booking or teaching access.</small></form>`;
-    return `<div class="container route-page connection-page connect-students-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('families', 'Community')}<span>/</span><strong>Connect with Students</strong></div>
+    return `<div class="container route-page connection-page connect-students-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Students</strong></div>
       <section class="connection-teacher-hero"><div><span class="section-kicker">For educators · safeguarding first</span><h1>Teach only after<br /><em>guardian approval.</em></h1><p>Every child–tutor pairing needs a signed parent consent form and a code that matches the assigned tutor before a learner can be accepted.</p><div class="hero-actions">${routeLink('connect_teachers', `Open family tutor directory ${icon('arrow', 15)}`, 'button button-outline')}${routeLink('consent', 'How consent works', 'text-link')}</div></div><div class="connection-kids-image"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in traditional Yorùbá attire sharing a language book" /><span>Safety and family permission come first.</span></div></section>
       ${renderStepper(['Review request', 'Parent signs form', 'Validate tutor code', 'Accept assignment'], verified ? 3 : 0)}
       <div class="connection-notice">${icon('shield', 17)} <div><strong>Four checks before a real lesson.</strong><span>Parent approval · signed form · code matches the assigned tutor · secure production verification. This offline prototype demonstrates the flow but cannot verify a real parent.</span></div></div>
@@ -2920,7 +2906,7 @@
         ? `<section class="consent-step-card"><span class="section-kicker">Approval expired</span><h2>Generate a fresh parent request.</h2><p>This demo code has expired or is no longer active. A guardian must complete a fresh form before a child account or tutor pairing can proceed.</p><button class="button button-primary" data-action="start-consent-request">Create a new request ${icon('arrow', 15)}</button></section>`
         : `<section class="consent-approved-card"><div class="consent-approved-icon">${icon('check', 25)}</div><span class="section-kicker">Step 3 · parent approved</span><h2>Guardian approval is ready.</h2><p>The parent-signed form has approved a supervised account${grant.tutorApproved ? ` and one named tutor: <strong>${esc(assignedTutor?.name || 'Approved tutor')}</strong>` : ' only; tutor access is not approved yet'}.</p><div class="approved-code-display"><small>Child consent code · share only with the learner and approved tutor</small><strong>${esc(grant.approvedCode)}</strong><span>Expires in 7 days · local demo only</span></div><div class="consent-scope-list"><span>${icon('check', 15)} Child account approval: active</span><span>${grant.tutorApproved ? icon('check', 15) : icon('lock', 15)} Tutor approval: ${grant.tutorApproved ? esc(assignedTutor?.name || 'one assigned tutor') : 'not included'}</span></div><div class="consent-action-row"><button class="button button-primary" data-action="consent-signup">Continue to child sign-up ${icon('arrow', 14)}</button>${routeLink('connect_students', 'Tutor code validation ' + icon('arrow', 14), 'button button-outline')}</div><p class="consent-demo-warning">This is an offline prototype: its local code cannot prove who signed or securely notify another device. Do not use it to authorise a real child account or lesson.</p></section>`;
     }
-    return `<div class="container route-page consent-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('families', 'Community')}<span>/</span><strong>Parent & guardian consent</strong></div><section class="consent-hero"><div><span class="section-kicker">A clear, family-first safeguard</span><h1>Permission before<br /><em>connection.</em></h1><p>A short guardian-signed form comes first. Only then can the child receive a code—and a tutor must validate that same code before a learner assignment opens.</p><div class="consent-hero-tags"><span>${icon('lock', 15)} No child contact details</span><span>${icon('shield', 15)} Tutor-specific approval</span></div></div><div class="consent-hero-image"><img src="./assets/hero-reader.jpg" alt="A parent and child reviewing a learning activity together" /><span>Illustrative family learning scene.</span></div></section>${renderStepper(['Request code', 'Guardian form', 'Approved code', 'Use & validate'], activeStep)}${body}<div class="consent-four-rules"><article><strong>1. Request</strong><span>A reference is created for the parent to review.</span></article><article><strong>2. Sign</strong><span>Guardian role, permissions and typed signature are required.</span></article><article><strong>3. Issue</strong><span>A child code appears only after the form passes its checks.</span></article><article><strong>4. Validate</strong><span>Signup and a named tutor must validate the approved code.</span></article></div><div class="consent-security-note">${icon('info', 16)} Browser storage is not secure verification. A production service needs a protected backend, guardian identity/authority checks, expiring one-time tokens, audit records, secure account controls and a reviewed child-safeguarding/legal process.</div></div>`;
+    return `<div class="container route-page consent-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Parent & guardian consent</strong></div><section class="consent-hero"><div><span class="section-kicker">A clear, family-first safeguard</span><h1>Permission before<br /><em>connection.</em></h1><p>A short guardian-signed form comes first. Only then can the child receive a code—and a tutor must validate that same code before a learner assignment opens.</p><div class="consent-hero-tags"><span>${icon('lock', 15)} No child contact details</span><span>${icon('shield', 15)} Tutor-specific approval</span></div></div><div class="consent-hero-image"><img src="./assets/hero-reader.jpg" alt="A parent and child reviewing a learning activity together" /><span>Illustrative family learning scene.</span></div></section>${renderStepper(['Request code', 'Guardian form', 'Approved code', 'Use & validate'], activeStep)}${body}<div class="consent-four-rules"><article><strong>1. Request</strong><span>A reference is created for the parent to review.</span></article><article><strong>2. Sign</strong><span>Guardian role, permissions and typed signature are required.</span></article><article><strong>3. Issue</strong><span>A child code appears only after the form passes its checks.</span></article><article><strong>4. Validate</strong><span>Signup and a named tutor must validate the approved code.</span></article></div><div class="consent-security-note">${icon('info', 16)} Browser storage is not secure verification. A production service needs a protected backend, guardian identity/authority checks, expiring one-time tokens, audit records, secure account controls and a reviewed child-safeguarding/legal process.</div></div>`;
   }
 
   function openTeacherProfile(id) {
@@ -3475,7 +3461,7 @@
     'page-index-5.jpg', 'page-index-6.jpg', 'page-index-7.jpg',
     'page-about-1.jpg', 'page-base-1.jpg', 'page-coding-1.jpg',
     'page-languages-1.jpg', 'page-course-1.jpg', 'page-lesson-1.jpg', 'page-kids-1.jpg',
-    'page-families-1.jpg', 'page-schools-1.jpg', 'page-connect_teachers-1.jpg',
+    'page-schools-1.jpg', 'page-connect_teachers-1.jpg',
     'page-connect_students-1.jpg', 'page-consent-1.jpg', 'page-oral-1.jpg',
     'page-owe-1.jpg', 'page-owe_detail-1.jpg', 'page-owe_story-1.jpg',
     'page-owe_reflection-1.jpg', 'page-owe_add-1.jpg', 'page-oral_genre-1.jpg',
@@ -3501,7 +3487,6 @@
     course: 'A young learner following an illustrated language course with a tutor',
     lesson: 'A grandmother gently guiding a child through a language lesson in a notebook',
     kids: 'Children in beautiful traditional attire sharing a picture book outdoors',
-    families: 'A Nigerian family practicing language together around a breakfast table',
     schools: 'Students collaborating on a coding activity in a welcoming classroom',
     connect_teachers: 'A Nigerian woman language educator holding a picture book in a community classroom',
     connect_students: 'African children in varied traditional attire warmly connecting around a picture book',
@@ -3538,7 +3523,6 @@
     'course-1': 'A child and grandmother following an illustrated language course together at home',
     'lesson-1': 'A grandmother helping a child write a language exercise in a notebook',
     'kids-1': 'Three children in colorful traditional clothing sharing a picture book in a leafy courtyard',
-    'families-1': 'A Nigerian family sharing picture cards and practicing a phrase at breakfast',
     'schools-1': 'Two schoolchildren collaborating on a colorful beginner coding activity in class',
     'connect_teachers-1': 'A Nigerian woman language educator in indigo aso-oke holding an open picture book',
     'connect_students-1': 'Children in Yoruba, Igbo, Hausa and East African attire warmly sharing a storybook',
@@ -4148,7 +4132,7 @@
 
   function searchResults(query) {
     const q = query.trim().toLowerCase();
-    const list = q ? searchable.filter((item) => `${item.title} ${item.summary}`.toLowerCase().includes(q)).slice(0, 7) : searchable.filter((item) => ['languages', 'course', 'ere', 'coding', 'oral', 'families'].includes(item.route)).slice(0, 6);
+    const list = q ? searchable.filter((item) => `${item.title} ${item.summary}`.toLowerCase().includes(q)).slice(0, 7) : searchable.filter((item) => ['languages', 'course', 'ere', 'coding', 'oral', 'about'].includes(item.route)).slice(0, 6);
     return list.length ? list.map((item) => `<button class="search-result" data-action="search-result" data-route="${item.route}"><span>${icon(item.route === 'coding' ? 'code' : item.route === 'languages' || item.route === 'course' ? 'globe' : 'book', 17)}</span><span><strong>${esc(item.title)}</strong><small>${esc(item.summary)}</small></span>${icon('arrow', 15)}</button>`).join('') : `<div class="search-empty">No match just yet. Try “language”, “story” or “code”.</div>`;
   }
 
