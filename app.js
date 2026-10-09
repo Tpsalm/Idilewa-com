@@ -1,4 +1,11 @@
-/* Idilewa responsive learning prototype — dependency free, client-side demo. */
+/* Idilewa 3D Comprehensive Web Application */
+import { supabase, signUp as dbSignUp, signIn as dbSignIn, signOut as dbSignOut, getCurrentUser, saveProgress as dbSaveProgress, getUserProgress, saveCodeSubmission as dbSaveCode, getUserCodeSubmissions, saveVoiceRecord as dbSaveVoice, getUserVoiceRecords } from './src/supabaseClient.js';
+import { YORUBA_KEYWORDS, YORUBA_COLOR_MAP, YORUBA_CODE_LESSONS, transpileYorubaToJS, executeYorubaCode, speakYorubaTerm } from './src/yorubaCodeEngine.js';
+import { translateText, speakText, playTonePitch, DICTIONARY } from './src/translationEngine.js';
+import { ORAL_VOWELS, NASAL_VOWELS, CONSONANTS, TONE_MARKS } from './src/vowelsConsonantsData.js';
+import { init3DHeroCanvas, init3DAudioVisualizer } from './src/threeScene.js';
+import confetti from 'canvas-confetti';
+
 (() => {
   'use strict';
 
@@ -70,19 +77,33 @@
   };
 
   const PAGE_META = {
-    trainer: {
-      title: 'Master African Tonal Pitch with Real-Time Voice AI.',
-      eyebrow: 'Voice African Language Trainer',
-      desc: 'Interactive speech studio with pitch detection, tone melody soundboards, and native voice synthesis across 6 African languages and 60 lessons.',
+        voice_lessons: {
+      title: 'Master African Tonal Pitch & Live Translation · Voice Lessons',
+      eyebrow: 'Voice Lessons & Translation Studio',
+      desc: 'Interactive speech studio with English to Yorùbá, Igbo, and Hausa live translation, tonal melody soundboards, 3D audio visualizer, and 60 audio lessons.',
       icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
-      active: 0, flow: ['Select Language', 'Hear Native Tones', 'Record & Analyze', 'Earn Certificate'],
-      cta: 'Open Voice Studio', ctaRoute: 'trainer',
+      active: 0, flow: ['Select Language', 'Translate & Hear', 'Record & Analyze', 'Earn Certificate'],
+      cta: 'Open Voice Lessons', ctaRoute: 'voice_lessons',
       cards: [
-        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
-        { title: 'Speech Evaluation', text: 'Real-time pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
-        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'trainer', tone: 'blue' }
+        { title: 'Live 3-Language Translation', text: 'Translate from English to Yorùbá, Igbo, and Hausa instantly with tonal speech.', icon: 'globe', route: 'voice_lessons', tone: 'mint' },
+        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'voice_lessons', tone: 'yellow' },
+        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'voice_lessons', tone: 'blue' }
       ]
     },
+    trainer: {
+      title: 'Master African Tonal Pitch & Live Translation · Voice Lessons',
+      eyebrow: 'Voice Lessons & Translation Studio',
+      desc: 'Interactive speech studio with English to Yorùbá, Igbo, and Hausa live translation, tonal melody soundboards, 3D audio visualizer, and 60 audio lessons.',
+      icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
+      active: 0, flow: ['Select Language', 'Translate & Hear', 'Record & Analyze', 'Earn Certificate'],
+      cta: 'Open Voice Lessons', ctaRoute: 'voice_lessons',
+      cards: [
+        { title: 'Live 3-Language Translation', text: 'Translate from English to Yorùbá, Igbo, and Hausa instantly with tonal speech.', icon: 'globe', route: 'voice_lessons', tone: 'mint' },
+        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'voice_lessons', tone: 'yellow' },
+        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'voice_lessons', tone: 'blue' }
+      ]
+    },
+
     about: {
       title: 'Culture is not a chapter. It is the whole story.',
       eyebrow: 'About Idilewa',
@@ -395,42 +416,73 @@
     return `<a class="${cls}" href="#/${route}" data-route="${route}" ${attrs}>${label}</a>`;
   }
 
-  function renderHeader(page) {
-    const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
-    const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
-    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
-    document.getElementById('site-header').innerHTML = `
-      <div class="header-inner">
-        <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="brand-copy"><span class="brand-word">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span>
+    function renderHeader(page) {
+    const user = getCurrentUser() || state.user;
+    const isVoice = page === 'voice_lessons' || page === 'trainer';
+    const isLearn = ['languages', 'course', 'lesson'].includes(page);
+    const isCode = page === 'coding';
+    const isEre = ['ere', 'ere_game'].includes(page);
+    const isKeepers = ['keepers', 'guides', 'ifa', 'ifa_odu', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_detail', 'owe_story', 'owe_reflection', 'owe_add'].includes(page);
+    const isAbout = ['about', 'individuals', 'kids', 'schools', 'tutor', 'method', 'human', 'pricing', 'consent', 'connect_teachers', 'connect_students'].includes(page);
+
+    const nav = [
+      { id: 'languages', label: 'Learn (Kọ Ẹkọ)', active: isLearn },
+      { id: 'voice_lessons', label: 'Voice Lessons (Ohùn)', active: isVoice },
+      { id: 'coding', label: 'Code (Koodu)', active: isCode },
+      { id: 'ere', label: 'Stories & Games', active: isEre },
+      { id: 'keepers', label: 'Keepers & Culture', active: isKeepers },
+      { id: 'about', label: 'About', active: isAbout }
+    ];
+
+    return `<div class="container site-header-inner">
+      <div class="site-header-left">
+        <a class="brand-logo" href="#/" data-route="index">
+          <span class="brand-glyph">È</span>
+          <div class="brand-text">
+            <strong>Idilewa</strong>
+            <small>African Languages · Culture · 3D Tech</small>
+          </div>
         </a>
-        <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
-        <div class="header-actions">
-          <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
-          <a class="header-signin" href="#/login" data-route="login">Sign in</a>
-          <a class="button button-small button-primary header-cta" href="#/trainer" data-route="trainer">${icon('mic', 14)} Voice Studio</a>
-          <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
-        </div>
       </div>
-      <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
-        <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
-        <div class="mobile-menu-list">${menu}</div>
-        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/trainer" data-route="trainer">${icon('mic', 15)} African Voice Trainer</a><a href="#/login" data-route="login">Sign in to your space</a></div>
-      </div>`;
+      <nav class="site-nav" aria-label="Main Navigation">
+        <ul class="nav-list">
+          ${nav.map((item) => `<li><a class="nav-link ${item.active ? 'is-active' : ''}" href="#/${item.id}" data-route="${item.id}">${item.label}</a></li>`).join('')}
+        </ul>
+      </nav>
+      <div class="site-header-right">
+        ${user ? `
+          <a class="user-chip-btn ${page === 'profile' ? 'is-active' : ''}" href="#/profile" data-route="profile" title="View Profile">
+            <img class="user-avatar-header" src="${user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=Idilewa'}" alt="${esc(user.name)}" />
+            <span>${esc(user.name || 'Learner')}</span>
+            <span class="user-xp-badge">⚡ ${user.points || 50} XP</span>
+          </a>
+        ` : `
+          <a class="button button-outline header-login-btn" href="#/login" data-route="login">${icon('user', 15)} Sign In</a>
+          <a class="button button-primary header-signup-btn" href="#/login" data-route="login" data-mode="signup">Get Started</a>
+        `}
+      </div>
+    </div>`;
   }
 
   function renderMobileNav(page) {
+    const user = getCurrentUser() || state.user;
+    const isVoice = page === 'voice_lessons' || page === 'trainer';
+    const isLearn = ['languages', 'course', 'lesson'].includes(page);
+    const isCode = page === 'coding';
+
     const items = [
-      { route: 'index', label: 'Home', ico: 'home' },
-      { route: 'languages', label: 'Learn', ico: 'book' },
-      { route: 'trainer', label: 'Trainer', ico: 'mic' },
-      { route: 'ere', label: 'Stories', ico: 'quote' },
-      { route: 'coding', label: 'Code', ico: 'code' },
-      { route: 'profile', label: 'Progress', ico: 'user' }
+      { id: 'index', label: 'Home', icon: 'home', active: page === 'index' },
+      { id: 'languages', label: 'Learn', icon: 'book', active: isLearn },
+      { id: 'voice_lessons', label: 'Voice Lessons', icon: 'mic', active: isVoice },
+      { id: 'coding', label: 'Code', icon: 'code', active: isCode },
+      { id: 'profile', label: user ? 'Profile' : 'Sign In', icon: 'user', active: page === 'profile' || page === 'login' }
     ];
-    document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route || (item.route === 'languages' && ['course', 'lesson'].includes(page)) ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
+
+    return `<ul class="mobile-nav-list">
+      ${items.map((item) => `<li><a class="mobile-nav-link ${item.active ? 'is-active' : ''}" href="#/${item.id}" data-route="${item.id}"><span class="mobile-nav-icon">${icon(item.icon, 20)}</span><span>${item.label}</span></a></li>`).join('')}
+    </ul>`;
   }
+
 
   function renderFooter() {
     return `<footer class="site-footer">
@@ -1914,433 +1966,113 @@
     }
   }
 
-  function renderCoding() {
-    const flow = state.coding;
-    const localeId = CODE_COPY[flow.helperLanguage] ? flow.helperLanguage : 'yoruba';
-    const copy = codeTextFor(localeId);
-    const level = CODE_LEVELS.find((item) => item.id === flow.level) || CODE_LEVELS[0];
-    const tech = CODE_PATHS.find((item) => item.id === flow.techId) || CODE_PATHS[0];
-    const mission = CODE_MISSIONS.find((item) => item.id === flow.missionId) || CODE_MISSIONS[0];
-    const greeting = copy.greeting;
-    const sample = sampleCodeFor(tech, greeting);
-    const makerLevel = Math.floor(Math.max(0, flow.points) / 50) + 1;
-    const xpInLevel = Math.max(0, flow.points) % 50;
-    const levelProgress = Math.min(100, Math.round((xpInLevel / 50) * 100));
-    const makerRank = makerLevel >= 8 ? 'Canopy Creator' : makerLevel >= 5 ? 'Trailblazer' : makerLevel >= 3 ? 'Pathfinder' : 'Seedling Coder';
-    const streakBadge = flow.streak >= 7 ? 'Canopy Creator' : flow.streak >= 3 ? 'Growing Builder' : flow.streak >= 1 ? 'Bright Sprout' : 'New Explorer';
-    const progress = Math.min(100, Math.round((flow.completed.length / Math.max(1, CODE_PATHS.length * CODE_LEVELS.length * CODE_MISSIONS.length)) * 100));
-    const stepLabels = ['Choose a guide', 'Pick an adventure', 'Choose a level', 'Play & celebrate'];
-    const stageSelect = (selected) => LANGUAGES.map((lang) => '<option value="' + lang.id + '" ' + (selected === lang.id ? 'selected' : '') + '>' + lang.name + '</option>').join('');
-    const questRobot = flow.questTrail.length ? flow.questTrail[flow.questTrail.length - 1] : '0,3';
-    const questTrail = new Set(flow.questTrail);
-    const questSolved = flow.completed.includes('garden-quest');
-    const questTiles = Array.from({ length: 20 }, (_, index) => {
-      const x = index % 5; const y = Math.floor(index / 5); const cell = x + ',' + y;
-      const isRobot = cell === questRobot; const isGoal = cell === CODE_GARDEN_TARGET;
-      const isBush = CODE_GARDEN_OBSTACLES.has(cell); const isTrail = questTrail.has(cell);
-      const label = isRobot ? (isGoal ? 'Robot at the star' : 'Robot') : isGoal ? 'Star goal' : isBush ? 'Leafy obstacle' : isTrail ? 'Robot trail' : 'Garden path';
-      const glyph = isRobot ? (isGoal ? '🤖⭐' : '🤖') : isGoal ? '⭐' : isBush ? '🌿' : isTrail ? '·' : '';
-      return '<span class="code-quest-tile ' + (isRobot ? 'is-robot' : '') + ' ' + (isGoal ? 'is-goal' : '') + ' ' + (isBush ? 'is-bush' : '') + ' ' + (isTrail ? 'is-trail' : '') + '" role="gridcell" aria-label="' + label + '">' + glyph + '</span>';
-    }).join('');
-    const questCommandList = flow.questCommands.length
-      ? flow.questCommands.map((direction, i) => {
-        const move = CODE_GARDEN_DIRECTIONS[direction];
-        const directionText = copy.directions[move?.labelIndex ?? 0];
-        return '<button type="button" class="code-quest-block" data-action="code-quest-remove" data-index="' + i + '" aria-label="Remove step ' + (i + 1) + ': ' + esc(directionText) + '"><span>' + (move?.glyph || '·') + '</span><small>' + esc(directionText) + '</small><b aria-hidden="true">×</b></button>';
-      }).join('')
-      : '<span class="code-quest-empty">Your code blocks will appear here.</span>';
-    const questControls = Object.entries(CODE_GARDEN_DIRECTIONS).map(([direction, move]) => {
-      const label = copy.directions[move.labelIndex];
-      return '<button type="button" class="code-quest-direction" data-action="code-quest-add" data-direction="' + direction + '" ' + (flow.questCommands.length >= 12 ? 'disabled' : '') + ' aria-label="Add ' + esc(label) + ' step"><span>' + move.glyph + '</span><small>' + esc(label) + '</small></button>';
-    }).join('');
+    function renderCoding() {
+    const activeLessonId = state.yorubaLessonId || YORUBA_CODE_LESSONS[0].id;
+    const lesson = YORUBA_CODE_LESSONS.find((l) => l.id === activeLessonId) || YORUBA_CODE_LESSONS[0];
+    const currentCode = state.yorubaCode !== undefined ? state.yorubaCode : lesson.starterCode;
+    const output = state.yorubaCodeOutput || '';
+    const user = getCurrentUser() || state.user;
 
-    let content = '';
-    if (flow.stage === 0) {
-      content = '<section class="code-step-panel" aria-labelledby="code-language-title"><span class="section-kicker">Step 1 · choose your helper language</span><h2 id="code-language-title">Which language should guide your adventure?</h2><p>Code stays exactly as programmers write it. Friendly explanations, hints and your first greeting can appear alongside the language you know.</p><div class="code-locale-grid">' + LANGUAGES.map((lang) => '<button type="button" class="code-locale-card ' + (localeId === lang.id ? 'is-selected' : '') + '" data-action="code-set-language" data-lang="' + lang.id + '" aria-pressed="' + (localeId === lang.id) + '"><span class="language-glyph lang-' + lang.tint + '">' + lang.glyph + '</span><strong>' + lang.name + '</strong><small>' + lang.native + '</small><span>' + (localeId === lang.id ? 'Selected · continue' : 'Choose language') + '</span></button>').join('') + '</div><p class="code-translation-note">' + icon('info', 16) + ' Starter glosses are learning aids; fluent language educators should review them before public launch.</p></section>';
-    } else if (flow.stage === 1) {
-      const query = String(flow.search || '').trim().toLowerCase();
-      const visible = CODE_PATHS.filter((item) => !query || (item.name + ' ' + item.category).toLowerCase().includes(query));
-      const families = [...new Set(CODE_PATHS.map((item) => item.category))];
-      content = '<section class="code-step-panel" aria-labelledby="code-path-title"><div class="code-picker-head"><div><span class="section-kicker">Step 2 · choose a learning path</span><h2 id="code-path-title">Pick a playful place to start.</h2><p>Explore ' + CODE_PATHS.length + ' coding paths—from blocks and websites to Python, games and robots. The highlighted adventures are kid-first; the full library also includes tools for older learners.</p></div><label class="code-search-label">Find a language or tool<input id="codingSearch" type="search" value="' + esc(flow.search) + '" placeholder="Try Scratch, Python, HTML…" autocomplete="off" /></label></div><div class="code-adventure-grid code-adventure-grid-compact">' + CODE_ADVENTURES.map((adventure, i) => '<button type="button" class="code-adventure-card tone-' + adventure.tone + '" data-action="code-select-tech" data-tech="' + adventure.tech + '"><span class="code-adventure-number">0' + (i + 1) + '</span><span class="code-adventure-icon">' + icon(adventure.icon, 20) + '</span><small>' + adventure.label + '</small><strong>' + adventure.title + '</strong><span class="code-adventure-go">Start this path ' + icon('arrow', 14) + '</span></button>').join('') + '</div><details class="code-all-paths" ' + (query ? 'open' : '') + '><summary><span>Explore every coding path</span><strong>' + CODE_PATHS.length + ' paths · ' + CODE_LANGUAGE_IDS.size + '+ languages & tools</strong></summary><div class="code-category-counts">' + families.map((family) => '<span>' + esc(family) + ' · ' + CODE_PATHS.filter((item) => item.category === family).length + '</span>').join('') + '</div><div class="code-path-grid">' + (visible.map((item) => '<button type="button" class="code-path-card" data-action="code-select-tech" data-tech="' + item.id + '"><span class="code-path-icon">' + icon('code', 19) + '</span><span class="code-path-family">' + esc(item.category) + '</span><strong>' + esc(item.name) + '</strong><small>A tiny bilingual starter, a clear example and a challenge you can try.</small><span class="code-path-go">Choose this path ' + icon('arrow', 14) + '</span></button>').join('') || '<div class="code-empty">No path matched that search. Try a shorter word such as “web” or “data”.</div>') + '</div></details></section>';
-    } else if (flow.stage === 2) {
-      content = '<section class="code-step-panel" aria-labelledby="code-level-title"><div class="code-current-tech"><span class="code-path-icon">' + icon('code', 20) + '</span><div><span class="section-kicker">Step 3 · shape your adventure</span><h2 id="code-level-title">' + esc(tech.name) + ' <small>' + esc(tech.category) + ' · a starter path</small></h2></div><label class="code-helper-select">Guide language<select id="codeHelperLanguage" aria-label="Choose the language for coding hints">' + stageSelect(localeId) + '</select></label><button type="button" class="text-link" data-action="code-back" data-stage="1">Change path</button></div><p class="code-level-intro">Choose a pace, then pick a tiny mission. You can explore all three levels whenever you’re ready.</p><div class="code-level-grid">' + CODE_LEVELS.map((item) => '<button type="button" class="code-level-card ' + (item.id === level.id ? 'is-selected' : '') + '" data-action="code-set-level" data-level="' + item.id + '" aria-pressed="' + (item.id === level.id) + '"><span>' + icon(item.icon, 21) + '</span><small>' + item.badge + '</small><strong>' + item.label + '</strong><p>' + item.note + '</p><b>' + flow.completed.filter((key) => key.startsWith(tech.id + ':' + item.id + ':')).length + ' wins</b></button>').join('') + '</div><div class="code-missions-head"><div><span class="section-kicker">' + level.label + ' · choose a mission</span><h3>Make one small win your own.</h3></div><span class="code-progress-pill">' + flow.completed.length + ' wins · ' + flow.points + ' XP</span></div><div class="code-mission-grid">' + CODE_MISSIONS.map((item, i) => { const done = flow.completed.includes(tech.id + ':' + level.id + ':' + item.id); const mode = i === 0 ? 'Story quest' : i === 3 ? 'Create & remix' : 'Skill practice'; return '<button type="button" class="code-mission-card ' + (done ? 'is-complete' : '') + '" data-action="code-select-mission" data-mission="' + item.id + '"><span class="mission-num">0' + (i + 1) + '</span><span class="mission-icon">' + icon(done ? 'check' : item.icon, 18) + '</span><small>' + mode + ' · ' + item.skill + '</small><strong>' + item.title + '</strong><span>' + (done ? 'Win saved' : 'Open mini lesson') + ' ' + icon('arrow', 14) + '</span></button>'; }).join('') + '</div></section>';
-    } else {
-      const token = CODE_TOKENS[tech.syntax] || 'console.log';
-      const completionKey = tech.id + ':' + level.id + ':' + mission.id;
-      const complete = flow.completed.includes(completionKey);
-      const previewOutput = (tech.syntax === 'blocks' || tech.name === 'Scratch')
-        ? '✨ ' + greeting + '\nYour character waves hello!'
-        : tech.syntax === 'markup'
-          ? '✨ ' + greeting + '\nA little webpage is ready.'
-          : '✨ ' + greeting + '\nYour ' + tech.name + ' idea is taking shape.';
-      const challengeText = localeId === 'yoruba'
-        ? 'Gbìyànjú: lo ' + tech.name + ' láti fi “' + greeting + '” hàn. Wa àmì yìí nínú àpẹẹrẹ: ' + token
-        : localeId === 'igbo'
-          ? 'Nwaa: jiri ' + tech.name + ' gosi “' + greeting + '”. Chọta akara a n’ime ihe atụ: ' + token
-          : localeId === 'hausa'
-            ? 'Gwada: yi amfani da ' + tech.name + ' don nuna “' + greeting + '”. Nemo wannan alama a misalin: ' + token
-            : 'Jaribu: tumia ' + tech.name + ' kuonyesha “' + greeting + '”. Tafuta alama hii kwenye mfano: ' + token;
-      
-      const currentMissionIdx = CODE_MISSIONS.findIndex((m) => m.id === mission.id);
-      const currentLevelIdx = CODE_LEVELS.findIndex((l) => l.id === level.id);
-      let nextStepLabel = 'Next mission';
-      if (currentMissionIdx !== -1 && currentMissionIdx < CODE_MISSIONS.length - 1) {
-        nextStepLabel = 'Next: ' + CODE_MISSIONS[currentMissionIdx + 1].title;
-      } else if (currentLevelIdx !== -1 && currentLevelIdx < CODE_LEVELS.length - 1) {
-        nextStepLabel = 'Next Level: ' + CODE_LEVELS[currentLevelIdx + 1].label;
-      } else {
-        nextStepLabel = 'Choose next coding path';
-      }
-      content = '<section class="code-step-panel code-play-panel" aria-labelledby="code-play-title"><div class="code-play-head"><div><span class="section-kicker">Step 4 · ' + level.badge + ' · ' + mission.title + '</span><h2 id="code-play-title">Let’s make something with ' + esc(tech.name) + '.</h2><p>' + esc(challengeText) + '</p></div><div class="code-streak-mini"><span>' + icon('sparkles', 18) + '</span><strong>' + flow.streak + ' day' + (flow.streak === 1 ? '' : 's') + '</strong><small>' + streakBadge + '</small></div></div><div class="code-bilingual-callout"><div><small>English</small><p>Code gives the computer clear instructions.</p></div><div><small>' + copy.label + '</small><p>' + copy.code + '</p></div><div><small>' + copy.label + ' · ' + mission.skill + '</small><p>' + (mission.id === 'sequence' ? copy.sequence : copy.variable) + '</p></div></div><details class="code-hint"><summary>Need a hint? Tap for a tiny clue.</summary><p>Look for <code>' + esc(token) + '</code> in the starter. Keep the code as it is and try changing just one small thing.</p></details><div class="code-workbench-grid"><form class="code-editor-card" data-form="coding-run" data-tech="' + tech.id + '" data-level="' + level.id + '" data-mission="' + mission.id + '"><div class="code-editor-title"><span><i></i><i></i><i></i></span><strong>Your code notebook</strong><small>' + esc(tech.name) + ' · guided demo</small></div><label for="codingCode">Try a small edit, then run the friendly check.</label><textarea id="codingCode" name="code" rows="10" maxlength="1200" spellcheck="false" autocapitalize="off" required>' + esc(flow.draft || sample) + '</textarea><small>This offline preview checks for a lesson marker only. It does not execute code or upload your work.</small><button class="button button-primary code-run-button" type="submit">Run my code ' + icon('play', 16) + '</button></form><aside class="code-output-card"><span class="section-kicker">A friendly preview</span><h3>' + (complete ? 'Mission unlocked!' : 'What your idea could do') + '</h3><div class="code-output-window"><span class="output-dot"></span><pre>' + esc(previewOutput) + '</pre></div><div class="code-run-status ' + (flow.result.includes('✓') ? 'is-success' : flow.result ? 'is-retry' : '') + '" role="status">' + (flow.result ? esc(flow.result) : 'Ready when you are — tiny experiments count.') + '</div>' + (complete ? '<div class="code-success-burst">' + icon('trophy', 20) + ' <strong>+10 maker XP · Mission Complete!</strong><span>' + copy.success + '</span><button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">' + nextStepLabel + ' ' + icon('arrow', 15) + '</button></div>' : '') + '<div class="code-streak-track"><span>Maker level ' + makerLevel + ' · ' + makerRank + '</span><strong>' + flow.streak + ' day' + (flow.streak === 1 ? '' : 's') + ' · ' + streakBadge + '</strong><div><i style="width:' + levelProgress + '%"></i></div><small>' + xpInLevel + '/50 XP to the next level · ' + flow.points + ' XP total</small></div></aside></div><div class="code-layer-actions">' + (complete ? '<button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">' + nextStepLabel + ' ' + icon('arrow', 15) + '</button>' : '') + '<button type="button" class="text-link" data-action="code-back" data-stage="2">' + icon('arrowUp', 14) + ' Back to levels & missions</button><button type="button" class="text-link" data-action="code-back" data-stage="1">Pick another code path</button></div></section>';
-    }
+    const diacritics = ['ẹ', 'ọ', 'ṣ', 'à', 'á', 'è', 'é', 'ẹ́', 'ẹ̀', 'ì', 'í', 'ò', 'ó', 'ọ́', 'ọ̀', 'ù', 'ú'];
+    const keywords = ['tẹ_jade', 'jẹ́', 'bí', 'kò_bá_jẹ́', 'fún', 'iṣẹ́', 'padà', 'bẹ̀rẹ̀_àwòrán', 'gbe_si_iwaju', 'yipada_si_otun', 'yi_awo'];
 
-    const freeLessons = filterFreeLessons();
-    const activeBandKey = flow.filter || 'all';
-    const activeCategory = flow.category || 'all';
-    const categoriesList = ['all', 'Robotics & Circuits', 'Algorithmic Thinking', 'Coding & Games', 'Hardware & Micro:bits', 'AI & Data', 'CAD & 3D Design', 'Digital Citizenship', 'Cybersecurity', 'Web Development', 'Spreadsheets & Data'];
+    return `<div class="container route-page coding-page">
+      <div class="breadcrumbs">
+        ${routeLink('index', 'Home')}
+        <span>/</span>
+        <strong>IDE Koodu fun Àwọn Ọmọdé (Coding IDE for Kids)</strong>
+      </div>
 
-    return '<div class="container route-page coding-page c4k-redesigned-page">' +
-      '<div class="breadcrumbs">' +
-        routeLink('index', 'Home') + '<span>/</span><strong>Coding for kids</strong>' +
-      '</div>' +
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Gbogbo Koodu ni Èdè Yorùbá · 100% Yoruba Programming</span>
+          <h1>Kọ Koodu ni Èdè Yorùbá pẹlu Idilewa</h1>
+          <p>Learn real programming concepts (variables, math, loops, conditions, functions, and turtle graphics) entirely in Yorùbá!</p>
+        </div>
+        <div class="course-language-chip">
+          <span class="language-glyph lang-mint">È</span>
+          <div>
+            <small>Èdè Koodu</small>
+            <strong>Èdè Yorùbá</strong>
+          </div>
+        </div>
+      </div>
 
-      '<!-- 1. Hero & Activities Navigation Hub -->' +
-      '<header class="section-activities-header c4k-hero-header">' +
-        '<div class="section-container">' +
-          '<div class="container-vertical align-center">' +
-            '<div class="header-wrapper">' +
-              '<span class="c4k-eyebrow">' + icon('sparkles', 16) + ' IDÍLẸ́WÀ CODE FOR KIDS · K-8 STEAM CURRICULUM</span>' +
-              '<h1 class="heading-2 c4k-main-title">The Code for Kids Curriculum</h1>' +
-              '<div class="text-lg max-width-540 c4k-sub-lead">' +
-                'From Kindergarten to Grade 8 · Engaging STEAM & Coding Lessons for Young African Innovators' +
-              '</div>' +
-              '<div class="c4k-quick-pills-row">' +
-                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
-                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
-                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="code-quest">' + icon('play', 14) + ' Robot Garden Quest</button>' +
-                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="coding-start">' + icon('code', 14) + ' Bilingual Studio</button>' +
-              '</div>' +
-            '</div>' +
+      <div class="yoruba-ide-container">
+        <!-- Editor Column -->
+        <div class="yoruba-editor-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span class="badge-3d" style="margin-bottom: 6px;">${lesson.grade}</span>
+              <h2 style="margin: 0; font-size: 18px;">${lesson.title}</h2>
+              <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted);">${lesson.desc}</p>
+            </div>
+            <span class="button button-small button-outline" style="color: var(--green-dark);">⚡ +${lesson.points} XP</span>
+          </div>
 
-            '<!-- 3 Grade Band Hub Navigation Cards -->' +
-            '<article class="activities-navigation-wrapper" id="curriculum-bands">' +
-              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
-                '<div class="activity-navigation-icon-wrap">' +
-                  '<span class="activity-nav-glyph">🌱</span>' +
-                '</div>' +
-                '<div class="activity-navigation-content">' +
-                  '<div class="activity-heading-wrapper">' +
-                    '<h6>Lower Elementary</h6>' +
-                  '</div>' +
-                  '<div class="text-lg text-color-bright-overlay-60">Kindergarten – Grade 2</div>' +
-                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Lower-Elementary">' +
-                    '<span class="text-md bold">Explore Grades</span>' +
-                  '</button>' +
-                '</div>' +
-              '</div>' +
+          <div class="yoruba-diacritics-bar">
+            <span style="font-size: 12px; font-weight: 700; color: var(--muted);">Àmì Yorùbá:</span>
+            ${diacritics.map((d) => `<button class="yoruba-diacritic-chip" type="button" data-action="insert-diacritic" data-char="${d}">${d}</button>`).join('')}
+          </div>
 
-              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
-                '<div class="activity-navigation-icon-wrap">' +
-                  '<span class="activity-nav-glyph">🌿</span>' +
-                '</div>' +
-                '<div class="activity-navigation-content">' +
-                  '<div class="activity-heading-wrapper">' +
-                    '<h6>Upper Elementary</h6>' +
-                  '</div>' +
-                  '<div class="text-lg text-color-bright-overlay-60">Grade 3 to 5</div>' +
-                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Upper-Elementary">' +
-                    '<span class="text-md bold">Explore Grades</span>' +
-                  '</button>' +
-                '</div>' +
-              '</div>' +
+          <div class="yoruba-keywords-row">
+            ${keywords.map((kw) => `<button class="yoruba-keyword-pill" type="button" data-action="insert-keyword" data-keyword="${kw}" title="Insert ${kw}">${kw}</button>`).join('')}
+          </div>
 
-              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
-                '<div class="activity-navigation-icon-wrap">' +
-                  '<span class="activity-nav-glyph">🚀</span>' +
-                '</div>' +
-                '<div class="activity-navigation-content">' +
-                  '<div class="activity-heading-wrapper">' +
-                    '<h6>Middle School</h6>' +
-                  '</div>' +
-                  '<div class="text-lg text-color-bright-overlay-60">Grade 6 to 8+</div>' +
-                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Middle-School">' +
-                    '<span class="text-md bold">Explore Grades</span>' +
-                  '</button>' +
-                '</div>' +
-              '</div>' +
-            '</article>' +
-          '</div>' +
-        '</div>' +
-      '</header>' +
+          <textarea id="yoruba-code-editor" class="yoruba-textarea" spellcheck="false">${esc(currentCode)}</textarea>
 
-      '<!-- 2. Section: Lower Elementary (K-2) -->' +
-      '<section id="Lower-Elementary" class="section-foundation-phase c4k-band-section">' +
-        '<div class="section-container">' +
-          '<div class="container-vertical align-center">' +
-            '<div class="activity-heading">' +
-              '<div class="category-heading-wrapper">' +
-                '<div class="category-heading-list">' +
-                  '<div class="category-heading-item">' +
-                    '<span class="section-kicker">Grade Band 01 · Ages 5–8</span>' +
-                    '<h2 class="heading-4">Lower Elementary (K – 2nd Grade)</h2>' +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
+          <div class="yoruba-ide-actions">
+            <button class="button button-primary" type="button" id="yoruba-run-btn" data-action="yoruba-run-code">
+              ▶ Ṣiṣẹ́ Koodu (Run)
+            </button>
+            <button class="button button-outline" type="button" data-action="yoruba-reset-code" data-starter="${esc(lesson.starterCode)}">
+              ↺ Tun Bẹ̀rẹ̀ (Reset)
+            </button>
+            <button class="button button-outline" type="button" data-action="yoruba-save-code">
+              💾 Fipamọ́ si Database
+            </button>
+            <button class="button button-outline" type="button" data-action="yoruba-copy-code">
+              📋 Da Kọ (Copy)
+            </button>
+            <button class="button button-outline" type="button" data-action="yoruba-download-code">
+              📥 Gba Faili (.yo)
+            </button>
+          </div>
 
-            '<div class="activities-list-wrapper">' +
-              '<div class="activities-list c4k-grades-grid">' +
-                CODE_CURRICULUM_BANDS[0].grades.map((g) => renderCurriculumGradeCard(g, 'Lower-Elementary')).join('') +
-              '</div>' +
-            '</div>' +
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+            <div>
+              <label style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">💻 Abájáde Ọ̀rọ̀ (Console Output):</label>
+              <div id="yoruba-console-output" class="yoruba-output-terminal">${output || 'Tẹ "Ṣiṣẹ́ Koodu ▶" lati wo abajade...'}</div>
+            </div>
+            <div class="yoruba-canvas-box">
+              <label style="font-size: 13px; font-weight: 700; display: block;">🎨 Canvas Àwòrán (Turtle Graphics):</label>
+              <canvas id="yoruba-turtle-canvas" width="280" height="180"></canvas>
+            </div>
+          </div>
 
-            '<div class="flowchart-wrapper c4k-flowchart-card">' +
-              '<div class="flowchart-header">' +
-                '<span class="section-kicker">Visual Learning Roadmap</span>' +
-                '<h3>K–2nd Grade STEAM & Robotics Pathway</h3>' +
-              '</div>' +
-              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/688763017d473a3cf18f822b_flowchart_k-2nd.png" loading="lazy" alt="K-2nd flowchart" class="flowchart flowchart-50" />' +
-              '<p class="flowchart-caption">From pattern recognition and story-led algorithms to loop repetitions and beginner physical robotics.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</section>' +
+          <div style="padding: 12px 16px; background: var(--cream); border-radius: 12px; border-left: 4px solid var(--green); font-size: 13px;">
+            <strong>💡 Àkíyèsí Aṣa:</strong> ${lesson.culturalNote}
+          </div>
+        </div>
 
-      '<!-- 3. Section: Upper Elementary (3-5) -->' +
-      '<section id="Upper-Elementary" class="section-intermediate-phase c4k-band-section">' +
-        '<div class="section-container">' +
-          '<div class="container-vertical align-center">' +
-            '<div class="activity-heading">' +
-              '<div class="category-heading-wrapper">' +
-                '<div class="category-heading-list">' +
-                  '<div class="category-heading-item">' +
-                    '<span class="section-kicker">Grade Band 02 · Ages 8–11</span>' +
-                    '<h2 class="heading-4">Upper Elementary (3rd – 5th Grade)</h2>' +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
+        <!-- Sidebar Column -->
+        <div class="yoruba-lessons-sidebar">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 16px;">Awọn Ẹkọ Koodu (Lessons)</h3>
+            <span class="user-xp-badge">⚡ ${user ? user.points : 50} XP</span>
+          </div>
 
-            '<div class="activities-list-wrapper">' +
-              '<div class="activities-list c4k-grades-grid">' +
-                CODE_CURRICULUM_BANDS[1].grades.map((g) => renderCurriculumGradeCard(g, 'Upper-Elementary')).join('') +
-              '</div>' +
-            '</div>' +
-
-            '<div class="flowchart-wrapper c4k-flowchart-card">' +
-              '<div class="flowchart-header">' +
-                '<span class="section-kicker">Visual Learning Roadmap</span>' +
-                '<h3>3rd–5th Grade STEAM & Physical Computing Infographic</h3>' +
-              '</div>' +
-              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/68876243a382cb50defa2dff_infographic_3rd-5th.png" loading="lazy" alt="3rd-5th infographic" class="flowchart flowchart-50" />' +
-              '<p class="flowchart-caption">From Scratch animation and game physics to microcontrollers, sensor engineering, and floor plan CAD.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</section>' +
-
-      '<!-- 4. Section: Middle School (6-8+) -->' +
-      '<section id="Middle-School" class="section-senior-phase c4k-band-section">' +
-        '<div class="section-container">' +
-          '<div class="container-vertical align-center">' +
-            '<div class="activity-heading">' +
-              '<div class="category-heading-wrapper">' +
-                '<div class="category-heading-list">' +
-                  '<div class="category-heading-item">' +
-                    '<span class="section-kicker">Grade Band 03 · Ages 11–15+</span>' +
-                    '<h2 class="heading-4">Middle School (6th – 8th Grade+)</h2>' +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-
-            '<div class="activities-list-wrapper">' +
-              '<div class="activities-list c4k-grades-grid">' +
-                CODE_CURRICULUM_BANDS[2].grades.map((g) => renderCurriculumGradeCard(g, 'Middle-School')).join('') +
-              '</div>' +
-            '</div>' +
-
-            '<div class="flowchart-wrapper c4k-flowchart-card">' +
-              '<div class="flowchart-header">' +
-                '<span class="section-kicker">Visual Learning Roadmap</span>' +
-                '<h3>Middle School Computer Science & STEAM Roadmap</h3>' +
-              '</div>' +
-              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/689080b566fcae4ee8198124_US%20General%20Flowchart%20Middle%20School.png" loading="lazy" alt="Middle School Flowchart" class="flowchart flowchart-50" />' +
-              '<p class="flowchart-caption">From text-based coding to OOP architecture, data encryption, web publication, and AI ethics.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</section>' +
-
-      '<!-- 5. Section: Free Lessons Teachers & Students Love -->' +
-      '<section id="free-lessons" class="section-free-lessons c4k-free-lessons-section">' +
-        '<div class="section-container">' +
-          '<div class="container-vertical align-center">' +
-            '<div class="activity-heading text-align-center">' +
-              '<span class="section-kicker">Interactive Project Library</span>' +
-              '<h2 class="heading-2 c4k-free-title">Teach Computer Science Today</h2>' +
-              '<p class="text-sub-heading-free-lessons max-width-540">' +
-                'Free Computer Science and STEAM lessons for ages 5–15. Engaging, classroom-ready, low prep, and paired with African language concepts.' +
-              '</p>' +
-            '</div>' +
-
-            '<!-- Filter Bar -->' +
-            '<div class="c4k-filter-box">' +
-              '<div class="c4k-filter-header">' +
-                '<div class="c4k-filter-band-pills">' +
-                  '<span class="filter-description">Filter by Grade Band:</span>' +
-                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'all' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="all">' +
-                    'All Grades (' + C4K_FREE_LESSONS.length + ')' +
-                  '</button>' +
-                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'lower' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="lower">' +
-                    'Lower Elementary (K-2)' +
-                  '</button>' +
-                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'upper' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="upper">' +
-                    'Upper Elementary (3-5)' +
-                  '</button>' +
-                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'middle' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="middle">' +
-                    'Middle School (6-8)+' +
-                  '</button>' +
-                '</div>' +
-
-                '<div class="c4k-search-wrap">' +
-                  '<label for="lessonSearchInput" class="visually-hidden">Search lessons</label>' +
-                  '<input id="lessonSearchInput" type="search" placeholder="Search by topic, keyword, or tool…" value="' + esc(flow.lessonSearch || '') + '" autocomplete="off" />' +
-                '</div>' +
-              '</div>' +
-
-              '<!-- Category Chips -->' +
-              '<div class="c4k-category-chips-row">' +
-                '<span class="cat-label">Topics:</span>' +
-                categoriesList.map((cat) =>
-                  '<button type="button" class="c4k-cat-chip ' + (activeCategory === cat ? 'is-active' : '') + '" data-action="coding-filter-category" data-category="' + cat + '">' +
-                    (cat === 'all' ? 'All Topics' : cat) +
-                  '</button>'
-                ).join('') +
-              '</div>' +
-
-              '<div class="c4k-filter-status-row">' +
-                '<span id="freeLessonsCount" class="c4k-count-badge">Showing ' + freeLessons.length + ' of ' + C4K_FREE_LESSONS.length + ' free STEAM lessons</span>' +
-                ((activeBandKey !== 'all' || activeCategory !== 'all' || flow.lessonSearch) ?
-                  '<button type="button" class="text-link c4k-reset-btn" data-action="coding-filter-band" data-band="all">Clear filters</button>'
-                : '') +
-              '</div>' +
-            '</div>' +
-
-            '<!-- Free Lessons List -->' +
-            '<div class="free-lessons-list-wrapper">' +
-              '<div id="freeLessonsGrid" class="free-lessons-list c4k-free-grid" role="list">' +
-                renderFreeLessonCards(freeLessons) +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</section>' +
-
-      '<!-- 6. Section: Interactive Robot Garden Quest -->' +
-      '<section class="code-garden-quest" id="code-quest" aria-labelledby="code-quest-title">' +
-        '<div class="code-quest-copy">' +
-          '<span class="code-kids-eyebrow">' + icon('star', 16) + ' TRY A MINI GAME · NO SIGN-UP NEEDED</span>' +
-          '<h2 id="code-quest-title">Robot in the baobab garden</h2>' +
-          '<p>' + esc(copy.questPrompt) + '</p>' +
-          '<div class="code-quest-instruction">' +
-            '<span>' + icon('info', 16) + '</span>' +
-            '<span>Build a sequence to get around the leafy bushes and reach the star. A correct route earns your first 10 maker XP.</span>' +
-          '</div>' +
-          '<div class="code-quest-controls">' +
-            '<span class="code-quest-subtitle">Add a movement block</span>' +
-            '<div class="code-quest-direction-row">' + questControls + '</div>' +
-          '</div>' +
-          '<div class="code-quest-code-label">' +
-            '<strong>Your sequence</strong>' +
-            '<small>' + flow.questCommands.length + '/12 blocks · tap a block to remove it</small>' +
-          '</div>' +
-          '<div class="code-quest-sequence" aria-label="Your movement code sequence">' + questCommandList + '</div>' +
-          '<div class="code-quest-actions">' +
-            '<button type="button" class="code-quest-run" data-action="code-quest-run">' + icon('play', 16) + ' ' + esc(copy.questRun) + '</button>' +
-            '<button type="button" class="code-quest-undo" data-action="code-quest-remove" data-index="' + Math.max(0, flow.questCommands.length - 1) + '" ' + (flow.questCommands.length ? '' : 'disabled') + '>' + icon('refresh', 15) + ' Undo</button>' +
-            '<button type="button" class="code-quest-undo" data-action="code-quest-clear" ' + (flow.questCommands.length ? '' : 'disabled') + '>' + icon('plus', 15) + ' ' + esc(copy.questClear) + '</button>' +
-          '</div>' +
-          '<details class="code-hint code-quest-hint">' +
-            '<summary>Need a hint?</summary>' +
-            '<p>' + esc(copy.questHint) + '</p>' +
-          '</details>' +
-          (flow.questResult ? '<div class="code-quest-result ' + (flow.questResult.includes('✓') ? 'is-success' : 'is-retry') + '" role="status">' + icon(flow.questResult.includes('✓') ? 'check' : 'refresh', 17) + ' ' + esc(flow.questResult) + '</div>' : '') +
-          (questSolved ? '<div class="code-quest-earned">' + icon('trophy', 17) + ' Garden Explorer badge earned</div>' : '') +
-        '</div>' +
-        '<div class="code-quest-board-card">' +
-          '<div class="code-quest-board-head">' +
-            '<div>' +
-              '<span class="section-kicker">THE PUZZLE MAP</span>' +
-              '<strong>Find the star</strong>' +
-            '</div>' +
-            '<span class="code-quest-badge">' + icon('sparkles', 15) + ' ' + (questSolved ? 'Complete' : 'Mission 01') + '</span>' +
-          '</div>' +
-          '<div class="code-quest-board" role="grid" aria-label="Robot garden maze with a star goal and leafy obstacles">' + questTiles + '</div>' +
-          '<div class="code-quest-key">' +
-            '<span><i class="key-robot">🤖</i> Your robot</span>' +
-            '<span><i class="key-bush">🌿</i> Bush</span>' +
-            '<span><i class="key-star">⭐</i> Goal</span>' +
-          '</div>' +
-          '<p>Think like a coder: plan, run, notice what happened, then try again.</p>' +
-        '</div>' +
-      '</section>' +
-
-      '<!-- 7. Section: Bilingual Code Studio & Workbench -->' +
-      '<section class="code-start-zone" id="coding-start" aria-labelledby="coding-start-title">' +
-        '<div class="code-start-heading">' +
-          '<div>' +
-            '<span class="section-kicker">YOUR MAKER JOURNEY · ' + CODE_PATHS.length + ' paths · ' + CODE_LEVELS.length + ' skill levels</span>' +
-            '<h2 id="coding-start-title">Interactive Bilingual Code Workbench</h2>' +
-            '<p>Choose a guide language, pick a path, then learn by trying. Your local progress stays on this device.</p>' +
-          '</div>' +
-          '<div class="code-progress-card code-progress-card-fun">' +
-            '<span class="code-progress-spark">' + icon('trophy', 22) + '</span>' +
-            '<div class="code-progress-heading">' +
-              '<small>Level ' + makerLevel + ' · ' + makerRank + '</small>' +
-              '<strong>' + flow.points + ' <em>XP</em></strong>' +
-            '</div>' +
-            '<div class="code-level-meter"><i style="width:' + levelProgress + '%"></i></div>' +
-            '<span>' + xpInLevel + '/50 XP to the next level · ' + flow.completed.length + ' challenge wins</span>' +
-            '<div class="code-progress-foot">' +
-              '<span>' + icon('sparkles', 14) + ' ' + flow.streak + ' day streak</span>' +
-              '<span>' + progress + '% path progress</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        renderStepper(stepLabels, flow.stage) +
-        '<div class="coding-layer-content">' + content + '</div>' +
-      '</section>' +
-
-      '<!-- 8. Section: Subscription / Stay in the Loop -->' +
-      '<div class="footer-neutral c4k-subscription-section" id="subscription">' +
-        '<div class="section-subscription">' +
-          '<div class="section-container">' +
-            '<div class="subscription-container">' +
-              '<div class="subscription-content-wrapper text-align-center">' +
-                '<div class="section-title">' +
-                  '<div class="subheading textcolor-accent-background">SUBSCRIPTION</div>' +
-                  '<h3 class="heading-4-white">Stay in the Loop</h3>' +
-                '</div>' +
-                '<div class="text-md textwidth-500 subscription-subtext">' +
-                  'Keep up to date on the latest developments in coding, robotics and STEAM education for K-8 with African language roots.' +
-                '</div>' +
-                '<form class="c4k-subscribe-form" data-form="coding-subscribe">' +
-                  '<input type="email" name="email" placeholder="Enter your school or guardian email…" required class="c4k-sub-input" />' +
-                  '<button type="submit" class="footer-button c4k-sub-btn">' +
-                    '<span class="text-s bold">Sign Up ' + icon('arrow', 14) + '</span>' +
-                  '</button>' +
-                '</form>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-
-      '<section class="code-safety-note">' +
-        icon('shield', 16) + ' This is a local learning prototype: starter code is checked with simple teaching rules, and the garden quest simulates movement blocks. It does not execute arbitrary programs, upload code, or connect to an AI service. Language glosses need fluent-speaker review.' +
-      '</section>' +
-    '</div>';
+          ${YORUBA_CODE_LESSONS.map((l) => `
+            <button class="yoruba-lesson-item ${l.id === activeLessonId ? 'is-active' : ''}" type="button" data-action="yoruba-select-lesson" data-lesson-id="${l.id}">
+              <span style="font-size: 11px; font-weight: 700; color: var(--green);">${l.grade}</span>
+              <strong>${l.title}</strong>
+              <small>${l.desc}</small>
+              <span class="lesson-xp">+${l.points} XP · ${state.coding.completed.includes(l.id) ? '✓ Pari' : 'Bẹrẹ'}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
   }
 
 
@@ -3081,336 +2813,134 @@
       showToast("+25 XP Earned! Fluency Score: " + overall + "% ⭐⭐⭐", "success");
     }
 
-    function renderTrainer(params) {
-      const activeLang = state.trainer.lang || "yoruba";
-      const activeLevel = state.trainer.level || "beginner";
-      const activeLessonId = state.trainer.activeLessonId || 1;
-      const speed = state.trainer.speed || 1.0;
+      function renderVoiceLessons(params = {}) {
+    const targetLang = state.translatorTarget || 'yo';
+    const inputText = state.translatorInput !== undefined ? state.translatorInput : 'Good morning, how are you today?';
+    const translationResult = translateText(inputText, targetLang);
+    const translatedText = state.translatorOutput !== undefined ? state.translatorOutput : translationResult.translated;
 
-      const langData = TRAINER_CURRICULUM[activeLang] || TRAINER_CURRICULUM.yoruba;
-      const currentTierLessons = langData[activeLevel] || langData.beginner;
-      const activeLesson = currentTierLessons.find(l => l.id === activeLessonId) || currentTierLessons[0] || langData.beginner[0];
+    const phrases = [
+      'Hello', 'Good morning', 'Good evening', 'Thank you', 'How are you', 'What is your name', 'My name is', 'I want to learn', 'Welcome', 'Peace', 'Family', 'Joy'
+    ];
 
-      const completedCount = Object.keys(state.trainer.completed || {}).length;
-      const avgScore = completedCount > 0 
-        ? Math.round(Object.values(state.trainer.completed).reduce((acc, v) => acc + (v.score || 90), 0) / completedCount) 
-        : 96;
+    return `<div class="container route-page voice-lessons-page">
+      <div class="breadcrumbs">
+        ${routeLink('index', 'Home')}
+        <span>/</span>
+        <strong>Voice Lessons & Multi-Language Translation</strong>
+      </div>
 
-      return `<div class="container route-page trainer-page">
-        <div class="breadcrumbs">
-          ${routeLink("index", "Home")}<span>/</span>
-          ${routeLink("languages", "Languages")}<span>/</span>
-          <strong>Voice African Language Trainer</strong>
+      <div class="voice-lessons-hero">
+        <span class="section-kicker">Voice Lessons & Live Multi-Language Translation</span>
+        <h1>Master African Tonal Speech & Translation</h1>
+        <p>Translate from English to Yorùbá, Igbo, and Hausa with live voice speech, 3D audio frequencies, tonal melody soundboard, and 60 lessons.</p>
+      </div>
+
+      <!-- Live Translation Studio -->
+      <div class="translation-studio-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 style="margin: 0; font-size: 20px;">🗣️ Translation Studio (English ➔ African Languages)</h2>
+            <p style="margin: 2px 0 0; font-size: 13px; color: var(--muted);">Type or speak in English, translate to Yorùbá, Igbo, or Hausa, and click "Sọ / Voice" to speak aloud.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label for="target-lang-select" style="font-size: 13px; font-weight: 700;">Target Language:</label>
+            <select id="target-lang-select" class="form-input" style="padding: 6px 12px; width: auto;" data-action="select-target-lang">
+              <option value="yo" ${targetLang === 'yo' ? 'selected' : ''}>Èdè Yorùbá (Yoruba)</option>
+              <option value="ig" ${targetLang === 'ig' ? 'selected' : ''}>Asụsụ Igbo (Igbo)</option>
+              <option value="ha" ${targetLang === 'ha' ? 'selected' : ''}>Harshen Hausa (Hausa)</option>
+            </select>
+          </div>
         </div>
 
-        <section class="trainer-hero">
-          <div class="trainer-hero-copy">
-            <div class="trainer-hero-badge">
-              <span>${icon("headphones", 16)}</span>
-              <strong>VOICE AFRICAN LANGUAGE TRAINER MODEL</strong>
-            </div>
-            <h1>Speak African Languages<br /><em>with 100% Native Tonal Fluency.</em></h1>
-            <p>Master authentic pitch accents, Do-Re-Mi tone melodies, and pronunciation for kids through 60 structured voice lessons across Beginner, Intermediate, and Advanced tiers.</p>
-            
-            <div class="trainer-stats-strip">
-              <div class="trainer-stat-pill">
-                <span class="stat-icon">⭐</span>
-                <div>
-                  <strong>${state.trainer.xp || 220} XP</strong>
-                  <small>Total Knowledge Points</small>
-                </div>
-              </div>
-              <div class="trainer-stat-pill">
-                <span class="stat-icon">🔥</span>
-                <div>
-                  <strong>${state.trainer.streak || 5} Days</strong>
-                  <small>Practice Streak</small>
-                </div>
-              </div>
-              <div class="trainer-stat-pill">
-                <span class="stat-icon">🎓</span>
-                <div>
-                  <strong>${completedCount} / 60</strong>
-                  <small>Lessons Completed</small>
-                </div>
-              </div>
-              <div class="trainer-stat-pill">
-                <span class="stat-icon">🎯</span>
-                <div>
-                  <strong>${avgScore}%</strong>
-                  <small>Average Pronunciation</small>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="trainer-hero-visual">
-            <div class="trainer-interactive-disc">
-              <img src="./assets/listening-reader.jpg" alt="Child practicing African voice trainer" class="trainer-hero-img" />
-              <div class="trainer-orbit-ring" aria-hidden="true">
-                <span class="orbit-tone tone-high">High (Mí) ↗</span>
-                <span class="orbit-tone tone-mid">Mid (Re) →</span>
-                <span class="orbit-tone tone-low">Low (Dó) ↘</span>
-              </div>
-            </div>\n    </section>
-
-        <section class="trainer-language-selector-section">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">Step 1: Choose Your Language</span>
-              <h2>Select an African Language to Train</h2>
-            </div>
-            <span class="demo-badge">6 Living Languages Ready</span>
-          </div>
-          <div class="trainer-lang-pills">
-            ${[
-              { id: "yoruba", name: "Yorùbá", flag: "🇳🇬 🇧🇯", glyph: "Ẹ", desc: "Tonal: Dó-Re-Mí" },
-              { id: "igbo", name: "Igbo", flag: "🇳🇬", glyph: "Ị", desc: "Tonal & Downstep" },
-              { id: "hausa", name: "Hausa", flag: "🇳🇬 🇳🇪", glyph: "H", desc: "Tonal & Vowel Cadence" },
-              { id: "swahili", name: "Kiswahili", flag: "🇰🇪 🇹🇿", glyph: "S", desc: "Bantu Melodic Stress" },
-              { id: "zulu", name: "isiZulu", flag: "🇿🇦", glyph: "Z", desc: "Clicks & Harmony" },
-              { id: "twi", name: "Twi / Akan", flag: "🇬🇭", glyph: "T", desc: "High & Low Tones" }
-            ].map(l => `
-              <button type="button" class="trainer-lang-btn ${activeLang === l.id ? "is-active" : ""}" data-action="trainer-set-lang" data-lang="${l.id}">
-                <span class="lang-flag">${l.flag}</span>
-                <span class="lang-info">
-                  <strong>${l.name}</strong>
-                  <small>${l.desc}</small>
-                </span>
-                <span class="lang-glyph">${l.glyph}</span>
+        <div class="translation-studio-grid">
+          <!-- Box 1: English Input -->
+          <div class="translator-box">
+            <div class="translator-box-header">
+              <label for="translator-input" style="font-weight: 700; font-size: 14px;">🇬🇧 English Input</label>
+              <button class="button button-small button-outline" type="button" data-action="mic-translate" title="Speak into microphone">
+                🎙️ Mic Input
               </button>
-            `).join("")}
+            </div>
+            <textarea id="translator-input" class="translator-textarea" placeholder="Type words or sentences in English...">${esc(inputText)}</textarea>
+            <div class="quick-phrase-row">
+              <span style="font-size: 11px; font-weight: 700; color: var(--muted); align-self: center;">Quick:</span>
+              ${phrases.slice(0, 6).map((p) => `<button class="quick-phrase-chip" type="button" data-action="quick-phrase" data-phrase="${p}">${p}</button>`).join('')}
+            </div>
           </div>
-        </section>
 
-        <section class="trainer-level-tabs-section">
-          <div class="trainer-tabs-wrap">
-            <button type="button" class="trainer-level-tab tab-beginner ${activeLevel === "beginner" ? "is-active" : ""}" data-action="trainer-set-level" data-level="beginner">
-              <span class="level-indicator dot-green"></span>
-              <span class="level-label">
-                <strong>Beginner Tier</strong>
-                <small>Lessons 01 – 20 • Foundations & Daily Phrases</small>
-              </span>
-              <span class="level-badge">20 Lessons</span>
-            </button>
-
-            <button type="button" class="trainer-level-tab tab-intermediate ${activeLevel === "intermediate" ? "is-active" : ""}" data-action="trainer-set-level" data-level="intermediate">
-              <span class="level-indicator dot-yellow"></span>
-              <span class="level-label">
-                <strong>Intermediate Tier</strong>
-                <small>Lessons 21 – 40 • Talking Drum & Conversations</small>
-              </span>
-              <span class="level-badge">20 Lessons</span>
-            </button>
-
-            <button type="button" class="trainer-level-tab tab-advanced ${activeLevel === "advanced" ? "is-active" : ""}" data-action="trainer-set-level" data-level="advanced">
-              <span class="level-indicator dot-red"></span>
-              <span class="level-label">
-                <strong>Advanced Tier</strong>
-                <small>Lessons 41 – 60 • Classical Proverbs & Oríkì</small>
-              </span>
-              <span class="level-badge">20 Lessons</span>
-            </button>
-          </div>
-        </section>
-
-        <section class="trainer-studio-section" id="trainerStudio">
-          <div class="studio-card">
-            <div class="studio-top">
-              <div class="studio-meta">
-                <span class="lesson-num-badge">LESSON ${String(activeLesson.id).padStart(2, "0")}</span>
-                <span class="lesson-cat-badge">${activeLesson.category}</span>
-                <span class="difficulty-stars">
-                  ${"★".repeat(activeLesson.difficulty || 1)}${"☆".repeat(3 - (activeLesson.difficulty || 1))}
-                </span>
-              </div>
-              <div class="studio-speed-control">
-                <span class="speed-label">Playback Speed:</span>
-                <div class="speed-buttons">
-                  <button type="button" class="speed-btn ${speed === 0.75 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="0.75">0.75x Slow</button>
-                  <button type="button" class="speed-btn ${speed === 1.0 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="1.0">1.0x Normal</button>
-                  <button type="button" class="speed-btn ${speed === 1.25 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="1.25">1.25x Fast</button>
-                </div>
-              </div>
+          <!-- Box 2: Target Language Output -->
+          <div class="translator-box">
+            <div class="translator-box-header">
+              <label for="translator-output" style="font-weight: 700; font-size: 14px;">
+                ${targetLang === 'yo' ? '🇳🇬 Èdè Yorùbá' : targetLang === 'ig' ? '🇳🇬 Asụsụ Igbo' : '🇳🇬 Harshen Hausa'} Output
+              </label>
+              <span style="font-size: 12px; color: var(--green-dark); font-weight: 600;">✓ Tonal Restoration Active</span>
             </div>
-
-            <div class="studio-phrase-area">
-              <h2 class="studio-phrase-native">${activeLesson.phrase}</h2>
-              <div class="studio-phonetic">${activeLesson.phonetic}</div>
-              <div class="studio-translation">
-                <span>Meaning:</span> <strong>${activeLesson.translation}</strong>
-              </div>
-            </div>
-
-            <div class="studio-syllable-soundboard">
-              <div class="soundboard-header">
-                <span>${icon("sparkles", 15)} Interactive Syllable Pitch Soundboard (Click to hear exact tone frequencies):</span>
-              </div>
-              <div class="syllables-list">
-                ${(activeLesson.syllables || []).map((s, idx) => `
-                  <button type="button" class="syllable-sound-pill tone-${s.tone}" data-action="trainer-play-syllable" data-freq="${s.freq}" data-syllable="${s.text}" title="Tone: ${s.pitch} (${s.tone}) - Click to play">
-                    <span class="syllable-text">${s.text}</span>
-                    <span class="syllable-pitch">${s.pitch}</span>
-                    <span class="syllable-tone-tag">${s.tone}</span>
-                  </button>
-                `).join("")}
-              </div>
-              <div class="tone-pattern-guide">
-                <strong>Tone Pitch Melody:</strong> <code>${activeLesson.tonePattern}</code>
-              </div>
-            </div>
-
-            <div class="studio-cultural-tip">
-              <div class="tip-icon">${icon("leaf", 18)}</div>
-              <div class="tip-text">
-                <strong>Cultural Heritage Context:</strong>
-                <p>${activeLesson.culturalTip}</p>
-              </div>
-            </div>
-
-            <div class="studio-controls-panel">
-              <div class="studio-buttons-row">
-                <button type="button" class="btn-studio btn-play-native" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">
-                  ${icon("volume", 20)}
-                  <span>Listen to Native Voice (${speed}x)</span>
-                </button>
-
-                ${!state.trainer.isRecording ? `
-                  <button type="button" class="btn-studio btn-record-voice" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">
-                    ${icon("mic", 20)}
-                    <span>Record Your Voice & Analyze</span>
-                  </button>
-                ` : `
-                  <button type="button" class="btn-studio btn-stop-recording" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">
-                    <span class="recording-pulsar" aria-hidden="true"></span>
-                    <span>Stop & Evaluate Pronunciation</span>
-                  </button>
-                `}
-              </div>
-
-              <div class="studio-visualizer-box">
-                <canvas id="waveformCanvas" width="560" height="70"></canvas>
-                <div class="visualizer-hint">
-                  ${state.trainer.isRecording ? "🔴 Listening closely to your voice pitch... Speak clearly!" : "▶️ Click Listen to hear native speaker, or 🎤 Record to evaluate your pitch."}
-                </div>
-              </div>
-            </div>
-
-            ${state.trainer.analysis ? `
-              <div class="studio-analysis-result">
-                <div class="analysis-score-header">
-                  <div class="score-circle">
-                    <strong>${state.trainer.analysis.overall}%</strong>
-                    <small>Fluency Score</small>
-                  </div>
-                  <div class="score-details">
-                    <div class="score-stars">
-                      ${"★".repeat(state.trainer.analysis.stars)}${"☆".repeat(3 - state.trainer.analysis.stars)}
-                    </div>
-                    <h3>${state.trainer.analysis.stars === 3 ? "🎉 Flawless Native Pronunciation!" : state.trainer.analysis.stars === 2 ? "👏 Great Effort! Almost Native!" : "👍 Good Practice! Try again for 3 stars!"}</h3>
-                    <p>${state.trainer.analysis.feedback}</p>
-                  </div>
-                </div>
-
-                <div class="analysis-meters-grid">
-                  <div class="meter-card">
-                    <div class="meter-label">
-                      <span>Tonal Pitch Accuracy</span>
-                      <strong>${state.trainer.analysis.toneAccuracy}%</strong>
-                    </div>
-                    <div class="meter-bar"><div class="meter-fill fill-green" style="width: ${state.trainer.analysis.toneAccuracy}%"></div></div>
-                  </div>
-                  <div class="meter-card">
-                    <div class="meter-label">
-                      <span>Rhythm & Pacing</span>
-                      <strong>${state.trainer.analysis.rhythmScore}%</strong>
-                    </div>
-                    <div class="meter-bar"><div class="meter-fill fill-yellow" style="width: ${state.trainer.analysis.rhythmScore}%"></div></div>
-                  </div>
-                  <div class="meter-card">
-                    <div class="meter-label">
-                      <span>Articulation & Clarity</span>
-                      <strong>${state.trainer.analysis.clarityScore}%</strong>
-                    </div>
-                    <div class="meter-bar"><div class="meter-fill fill-blue" style="width: ${state.trainer.analysis.clarityScore}%"></div></div>
-                  </div>
-                </div>
-              </div>
-            ` : ""}
-
-            <div class="studio-nav-footer">
-              <button type="button" class="btn-nav-lesson" data-action="trainer-prev-lesson" ${activeLesson.id <= (activeLevel === "beginner" ? 1 : activeLevel === "intermediate" ? 21 : 41) ? "disabled" : ""}>
-                ${icon("arrow", 14)} Previous Lesson
+            <textarea id="translator-output" class="translator-textarea is-output" readonly>${esc(translatedText)}</textarea>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="button button-primary" type="button" id="voice-speak-btn" data-action="voice-speak-translated" data-lang="${targetLang}" data-text="${esc(translatedText)}">
+                🔊 Sọ / Voice (Speak Aloud)
               </button>
-
-              <span class="lesson-counter-tag">Lesson ${activeLesson.id} of 60</span>
-
-              <button type="button" class="btn-nav-lesson" data-action="trainer-next-lesson" ${activeLesson.id >= (activeLevel === "beginner" ? 20 : activeLevel === "intermediate" ? 40 : 60) ? "disabled" : ""}>
-                Next Lesson ${icon("arrow", 14)}
+              <button class="button button-outline" type="button" data-action="save-voice-record" data-lang="${targetLang}" data-text="${esc(translatedText)}">
+                💾 Save Record
               </button>
-            </div>\n    </section>
-
-        <section class="trainer-curriculum-section">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">${activeLevel.toUpperCase()} CURRICULUM</span>
-              <h2>All 20 Lessons in ${activeLevel.charAt(0).toUpperCase() + activeLevel.slice(1)} Tier</h2>
-              <p>Click on any lesson card to load it directly into the Voice Trainer Studio.</p>
+              <button class="button button-outline" type="button" data-action="copy-translation" data-text="${esc(translatedText)}">
+                📋 Copy
+              </button>
             </div>
-            <span class="demo-badge">${currentTierLessons.length} Audio Lessons</span>
           </div>
+        </div>
 
-          <div class="trainer-lessons-grid">
-            ${currentTierLessons.map(lesson => {
-              const record = state.trainer.completed[lesson.id];
-              const isSelected = lesson.id === activeLesson.id;
-              return `
-                <article class="trainer-lesson-card ${isSelected ? "is-selected" : ""} ${record ? "is-completed" : ""}" data-action="trainer-select-lesson" data-id="${lesson.id}">
-                  <div class="lesson-card-top">
-                    <span class="lesson-card-num">#${String(lesson.id).padStart(2, "0")}</span>
-                    <span class="lesson-card-cat">${lesson.category}</span>
-                    ${record ? `
-                      <span class="lesson-card-status status-done">
-                        ${"★".repeat(record.stars)} ${record.score}%
-                      </span>
-                    ` : `
-                      <span class="lesson-card-status status-ready">Ready</span>
-                    `}
-                  </div>
-
-                  <h3 class="lesson-card-title">${lesson.title}</h3>
-                  <div class="lesson-card-phrase">${lesson.phrase}</div>
-                  <p class="lesson-card-translation">${lesson.translation}</p>
-
-                  <div class="lesson-card-footer">
-                    <span class="lesson-card-action">
-                      ${isSelected ? "Currently Practicing •" : "Practice Voice →"}
-                    </span>
-                    <span class="lesson-card-diff">${"★".repeat(lesson.difficulty || 1)}</span>
-                  </div>
-                </article>
-              `;
-            }).join("")}
+        <!-- 3D Audio Frequency Waveform Visualizer -->
+        <div class="voice-3d-visualizer-container">
+          <canvas id="voice-3d-visualizer" width="600" height="160"></canvas>
+          <div style="position: absolute; bottom: 8px; left: 16px; font-size: 11px; color: #86efac; font-family: monospace;">
+            3D Frequency Spectrum · Dò (220Hz) · Re (294Hz) · Mí (370Hz)
           </div>
-        </section>
+        </div>
+      </div>
 
-        <section class="trainer-certificate-banner">
-          <div class="cert-icon-wrap">🎓</div>
-          <div class="cert-copy">
-            <h3>Earn Your African Voice Master Certificate</h3>
-            <p>Complete all 20 lessons in this tier with at least 85% accuracy to unlock your verified Idilewa Fluency Certificate for children.</p>
+      <!-- Tone Melody Soundboard -->
+      <section style="margin-bottom: 32px;">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Interactive Tone Melody Soundboard</span>
+            <h2>African Tonal Pitch Soundboard</h2>
+            <p>Click the keys below to hear and practice the essential pitch frequencies: Low (Dò), Mid (Re), and High (Mí).</p>
           </div>
-          <button type="button" class="button button-primary" data-action="trainer-view-cert">
-            View Certificate Progress ${icon("arrow", 15)}
-          </button>
-        </section>
-      </div>`;
-    }
+        </div>
+
+        <div class="tone-soundboard-grid">
+          <div class="tone-key-card tone-high" data-action="play-tone-pitch" data-tone="high">
+            <span style="font-size: 24px;">🔔</span>
+            <strong style="font-size: 18px; color: #a16207;">Ó · Mí (High Tone)</strong>
+            <small>High Frequency (~370Hz) · Ákṣẹ́ntì Òkè (´)</small>
+            <span class="button button-small button-outline" style="margin-top: 6px;">Play Pitch (370Hz)</span>
+          </div>
+          <div class="tone-key-card tone-mid" data-action="play-tone-pitch" data-tone="mid">
+            <span style="font-size: 24px;">🍃</span>
+            <strong style="font-size: 18px; color: #15764a;">O · Re (Mid Tone)</strong>
+            <small>Mid Frequency (~294Hz) · Normal baseline</small>
+            <span class="button button-small button-outline" style="margin-top: 6px;">Play Pitch (294Hz)</span>
+          </div>
+          <div class="tone-key-card tone-low" data-action="play-tone-pitch" data-tone="low">
+            <span style="font-size: 24px;">🌊</span>
+            <strong style="font-size: 18px; color: #0284c7;">Ò · Dò (Low Tone)</strong>
+            <small>Low Frequency (~220Hz) · Ákṣẹ́ntì Ìsàlẹ̀ (&#96;)</small>
+            <span class="button button-small button-outline" style="margin-top: 6px;">Play Pitch (220Hz)</span>
+          </div>
+        </div>
+      </section>
+    </div>`;
+  }
+  function renderTrainer(params) { return renderVoiceLessons(params); }
 
 
   function renderPage(page, params) {
     switch (page) {
-      case 'trainer': return renderTrainer(params);
+      case 'voice_lessons':
+      case 'trainer': return renderVoiceLessons(params);
       case 'index': return renderHome();
       case 'languages': return renderLanguages();
       case 'course': return renderCourse(params);
@@ -4082,6 +3612,32 @@
     stage.addEventListener('mouseleave', onMouseLeave, { passive: true });
   }
 
+    let current3DHero = null;
+  let current3DVisualizer = null;
+
+  function initPage3DEffects(page) {
+    if (current3DHero) { try { current3DHero.destroy(); } catch (_) {} current3DHero = null; }
+    if (current3DVisualizer) { try { current3DVisualizer.destroy(); } catch (_) {} current3DVisualizer = null; }
+
+    const heroCanvasEl = document.getElementById('hero-3d-canvas');
+    if (heroCanvasEl) {
+      current3DHero = init3DHeroCanvas(heroCanvasEl);
+    }
+
+    const visualizerEl = document.getElementById('voice-3d-visualizer');
+    if (visualizerEl) {
+      current3DVisualizer = init3DAudioVisualizer(visualizerEl);
+    }
+
+    const turtleCanvas = document.getElementById('yoruba-turtle-canvas');
+    if (turtleCanvas) {
+      const activeLesson = YORUBA_CODE_LESSONS.find((l) => l.id === state.yorubaLessonId) || YORUBA_CODE_LESSONS[0];
+      const initialCode = state.yorubaCode !== undefined ? state.yorubaCode : activeLesson.starterCode;
+      executeYorubaCode(initialCode, turtleCanvas);
+    }
+  }
+
+
   function render() {
     const { page, params } = parseLocation();
     if (params.lang && LANGUAGES.some((l) => l.id === params.lang)) state.currentLang = params.lang;
@@ -4686,6 +4242,24 @@
   });
 
   document.addEventListener('input', (event) => {
+    if (event.target && event.target.id === 'translator-input') {
+      const val = event.target.value;
+      state.translatorInput = val;
+      const res = translateText(val, state.translatorTarget || 'yo');
+      const outEl = document.getElementById('translator-output');
+      if (outEl) outEl.value = res.translated;
+      state.translatorOutput = res.translated;
+    }
+    if (event.target && event.target.id === 'target-lang-select') {
+      state.translatorTarget = event.target.value;
+      const inputEl = document.getElementById('translator-input');
+      const val = inputEl ? inputEl.value : '';
+      const res = translateText(val, state.translatorTarget);
+      const outEl = document.getElementById('translator-output');
+      if (outEl) outEl.value = res.translated;
+      state.translatorOutput = res.translated;
+    }
+
     if (event.target && event.target.id === 'siteSearch') {
       const results = document.getElementById('searchResults');
       if (results) results.innerHTML = searchResults(event.target.value);
