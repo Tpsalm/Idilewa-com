@@ -1,11 +1,4 @@
-/* Idilewa 3D Comprehensive Web Application */
-import { supabase, signUp as dbSignUp, signIn as dbSignIn, signOut as dbSignOut, getCurrentUser, saveProgress as dbSaveProgress, getUserProgress, saveCodeSubmission as dbSaveCode, getUserCodeSubmissions, saveVoiceRecord as dbSaveVoice, getUserVoiceRecords } from './src/supabaseClient.js';
-import { YORUBA_KEYWORDS, YORUBA_COLOR_MAP, YORUBA_CODE_LESSONS, transpileYorubaToJS, executeYorubaCode, speakYorubaTerm } from './src/yorubaCodeEngine.js';
-import { translateText, speakText, playTonePitch, DICTIONARY } from './src/translationEngine.js';
-import { ORAL_VOWELS, NASAL_VOWELS, CONSONANTS, TONE_MARKS } from './src/vowelsConsonantsData.js';
-import { init3DHeroCanvas, init3DAuthCanvas, init3DCodingCanvas, init3DStoryCanvas, init3DAudioVisualizer, init3DTiltEngine, autoMount3DElements } from './src/threeScene.js';
-import confetti from 'canvas-confetti';
-
+/* Idilewa responsive learning prototype — dependency free, client-side demo. */
 (() => {
   'use strict';
 
@@ -77,33 +70,19 @@ import confetti from 'canvas-confetti';
   };
 
   const PAGE_META = {
-        voice_lessons: {
-      title: 'Master African Tonal Pitch & Live Translation · Voice Lessons',
-      eyebrow: 'Voice Lessons & Translation Studio',
-      desc: 'Interactive speech studio with English to Yorùbá, Igbo, and Hausa live translation, tonal melody soundboards, 3D audio visualizer, and 60 audio lessons.',
-      icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
-      active: 0, flow: ['Select Language', 'Translate & Hear', 'Record & Analyze', 'Earn Certificate'],
-      cta: 'Open Voice Lessons', ctaRoute: 'voice_lessons',
-      cards: [
-        { title: 'Live 3-Language Translation', text: 'Translate from English to Yorùbá, Igbo, and Hausa instantly with tonal speech.', icon: 'globe', route: 'voice_lessons', tone: 'mint' },
-        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'voice_lessons', tone: 'yellow' },
-        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'voice_lessons', tone: 'blue' }
-      ]
-    },
     trainer: {
-      title: 'Master African Tonal Pitch & Live Translation · Voice Lessons',
-      eyebrow: 'Voice Lessons & Translation Studio',
-      desc: 'Interactive speech studio with English to Yorùbá, Igbo, and Hausa live translation, tonal melody soundboards, 3D audio visualizer, and 60 audio lessons.',
+      title: 'Master African Tonal Pitch with Real-Time Voice AI.',
+      eyebrow: 'Voice African Language Trainer',
+      desc: 'Interactive speech studio with pitch detection, tone melody soundboards, and native voice synthesis across 6 African languages and 60 lessons.',
       icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
-      active: 0, flow: ['Select Language', 'Translate & Hear', 'Record & Analyze', 'Earn Certificate'],
-      cta: 'Open Voice Lessons', ctaRoute: 'voice_lessons',
+      active: 0, flow: ['Select Language', 'Hear Native Tones', 'Record & Analyze', 'Earn Certificate'],
+      cta: 'Open Voice Studio', ctaRoute: 'trainer',
       cards: [
-        { title: 'Live 3-Language Translation', text: 'Translate from English to Yorùbá, Igbo, and Hausa instantly with tonal speech.', icon: 'globe', route: 'voice_lessons', tone: 'mint' },
-        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'voice_lessons', tone: 'yellow' },
-        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'voice_lessons', tone: 'blue' }
+        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
+        { title: 'Speech Evaluation', text: 'Real-time pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
+        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'trainer', tone: 'blue' }
       ]
     },
-
     about: {
       title: 'Culture is not a chapter. It is the whole story.',
       eyebrow: 'About Idilewa',
@@ -416,73 +395,42 @@ import confetti from 'canvas-confetti';
     return `<a class="${cls}" href="#/${route}" data-route="${route}" ${attrs}>${label}</a>`;
   }
 
-    function renderHeader(page) {
-    const user = getCurrentUser() || state.user;
-    const isVoice = page === 'voice_lessons' || page === 'trainer';
-    const isLearn = ['languages', 'course', 'lesson'].includes(page);
-    const isCode = page === 'coding';
-    const isEre = ['ere', 'ere_game'].includes(page);
-    const isKeepers = ['keepers', 'guides', 'ifa', 'ifa_odu', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_detail', 'owe_story', 'owe_reflection', 'owe_add'].includes(page);
-    const isAbout = ['about', 'individuals', 'kids', 'schools', 'tutor', 'method', 'human', 'pricing', 'consent', 'connect_teachers', 'connect_students'].includes(page);
-
-    const nav = [
-      { id: 'languages', label: 'Learn (Kọ Ẹkọ)', active: isLearn },
-      { id: 'voice_lessons', label: 'Voice Lessons (Ohùn)', active: isVoice },
-      { id: 'coding', label: 'Code (Koodu)', active: isCode },
-      { id: 'ere', label: 'Stories & Games', active: isEre },
-      { id: 'keepers', label: 'Keepers & Culture', active: isKeepers },
-      { id: 'about', label: 'About', active: isAbout }
-    ];
-
-    return `<div class="container site-header-inner">
-      <div class="site-header-left">
-        <a class="brand-logo" href="#/" data-route="index">
-          <span class="brand-glyph">È</span>
-          <div class="brand-text">
-            <strong>Idilewa</strong>
-            <small>African Languages · Culture · 3D Tech</small>
-          </div>
+  function renderHeader(page) {
+    const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
+    const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
+    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
+    document.getElementById('site-header').innerHTML = `
+      <div class="header-inner">
+        <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span class="brand-copy"><span class="brand-word">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span>
         </a>
+        <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
+        <div class="header-actions">
+          <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
+          <a class="header-signin" href="#/login" data-route="login">Sign in</a>
+          <a class="button button-small button-primary header-cta" href="#/trainer" data-route="trainer">${icon('mic', 14)} Voice Studio</a>
+          <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
+        </div>
       </div>
-      <nav class="site-nav" aria-label="Main Navigation">
-        <ul class="nav-list">
-          ${nav.map((item) => `<li><a class="nav-link ${item.active ? 'is-active' : ''}" href="#/${item.id}" data-route="${item.id}">${item.label}</a></li>`).join('')}
-        </ul>
-      </nav>
-      <div class="site-header-right">
-        ${user ? `
-          <a class="user-chip-btn ${page === 'profile' ? 'is-active' : ''}" href="#/profile" data-route="profile" title="View Profile">
-            <img class="user-avatar-header" src="${user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=Idilewa'}" alt="${esc(user.name)}" />
-            <span>${esc(user.name || 'Learner')}</span>
-            <span class="user-xp-badge">⚡ ${user.points || 50} XP</span>
-          </a>
-        ` : `
-          <a class="button button-outline header-login-btn" href="#/login" data-route="login">${icon('user', 15)} Sign In</a>
-          <a class="button button-primary header-signup-btn" href="#/login" data-route="login" data-mode="signup">Get Started</a>
-        `}
-      </div>
-    </div>`;
+      <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
+        <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
+        <div class="mobile-menu-list">${menu}</div>
+        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/trainer" data-route="trainer">${icon('mic', 15)} African Voice Trainer</a><a href="#/login" data-route="login">Sign in to your space</a></div>
+      </div>`;
   }
 
   function renderMobileNav(page) {
-    const user = getCurrentUser() || state.user;
-    const isVoice = page === 'voice_lessons' || page === 'trainer';
-    const isLearn = ['languages', 'course', 'lesson'].includes(page);
-    const isCode = page === 'coding';
-
     const items = [
-      { id: 'index', label: 'Home', icon: 'home', active: page === 'index' },
-      { id: 'languages', label: 'Learn', icon: 'book', active: isLearn },
-      { id: 'voice_lessons', label: 'Voice Lessons', icon: 'mic', active: isVoice },
-      { id: 'coding', label: 'Code', icon: 'code', active: isCode },
-      { id: 'profile', label: user ? 'Profile' : 'Sign In', icon: 'user', active: page === 'profile' || page === 'login' }
+      { route: 'index', label: 'Home', ico: 'home' },
+      { route: 'languages', label: 'Learn', ico: 'book' },
+      { route: 'trainer', label: 'Trainer', ico: 'mic' },
+      { route: 'ere', label: 'Stories', ico: 'quote' },
+      { route: 'coding', label: 'Code', ico: 'code' },
+      { route: 'profile', label: 'Progress', ico: 'user' }
     ];
-
-    return `<ul class="mobile-nav-list">
-      ${items.map((item) => `<li><a class="mobile-nav-link ${item.active ? 'is-active' : ''}" href="#/${item.id}" data-route="${item.id}"><span class="mobile-nav-icon">${icon(item.icon, 20)}</span><span>${item.label}</span></a></li>`).join('')}
-    </ul>`;
+    document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route || (item.route === 'languages' && ['course', 'lesson'].includes(page)) ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
   }
-
 
   function renderFooter() {
     return `<footer class="site-footer">
@@ -501,93 +449,225 @@ import confetti from 'canvas-confetti';
 
   function pill(text, tone = 'soft') { return `<span class="pill pill-${tone}">${text}</span>`; }
 
-    function renderHome() {
+  function renderHome() {
     const featureCards = [
-      { title: 'Learn Languages (Kọ Ẹkọ)', desc: 'Speak, listen, read and practice with native audio.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'page-languages-1.jpg' },
-      { title: 'Voice Lessons (Ohùn)', desc: 'Real-time translation to Yoruba, Igbo, Hausa with 3D audio synthesis.', icon: 'headphones', route: 'voice_lessons', tone: 'mint', tag: '3D Voice Studio', image: 'listening-reader.jpg' },
-      { title: 'Code in Yorùbá (Koodu)', desc: '100% pure Yoruba coding IDE for kids with Turtle graphics.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Create & Code', image: 'code-kids.jpg' },
-      { title: 'Stories & Culture (Àṣà)', desc: 'Discover ancient stories, folktales and oral traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items' },
-      { title: 'African Proverbs (Òwe)', desc: 'Learn timeless African wisdom, meanings and cultural context.', icon: 'sparkles', route: 'owe', tone: 'mint', tag: 'Wisdom', image: 'hero-reader.jpg' },
-      { title: 'Connect with Educators', desc: 'Browse educator profiles, learning hours and experience.', icon: 'school', route: 'connect_teachers', tone: 'lilac', tag: 'For learners', image: 'yoruba-educator-man.jpg' }
+      { title: 'Learn languages', desc: 'Speak, listen, read and practice.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'page-languages-1.jpg' },
+      { title: 'African Voice Trainer', desc: 'Real-time pitch scoring & tone feedback for 6 African languages.', icon: 'mic', route: 'trainer', tone: 'mint', tag: 'Interactive AI Studio', image: 'listening-reader.jpg' },
+      { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
+      { title: 'Code in your language', desc: 'Explore technology, side by side.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Create', image: 'code-kids.jpg' },
+      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
+      { title: 'Connect with Students', desc: 'A respectful space for educators to meet learners.', icon: 'people', route: 'connect_students', tone: 'peach', tag: 'For educators', image: 'african-kids-friends.jpg' },
+      { title: 'Connect with Teachers', desc: 'Browse educator profiles, learning hours and experience.', icon: 'school', route: 'connect_teachers', tone: 'lilac', tag: 'For learners', image: 'yoruba-educator-man.jpg' }
     ];
-
+    const books = [
+      { title: 'A Morning Greeting', label: 'Yorùbá · Beginner', bg: 'cover-green', shape: 'È', route: 'course' },
+      { title: 'The Talking Drum', label: 'Story · Read & listen', bg: 'cover-blue', shape: '♫', route: 'ere' },
+      { title: 'Little Code Garden', label: 'English + Yorùbá', bg: 'cover-yellow', shape: '</>', route: 'coding' },
+      { title: 'Wisdom We Carry', label: 'Culture · Short read', bg: 'cover-pink', shape: '“', route: 'oral' }
+    ];
     return `
       <section class="hero-section">
         <div class="container hero-grid">
           <div class="hero-copy">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>African roots <span class="eyebrow-separator">·</span> 3D tech futures</div>
-            <h1>Preserving African Culture.<br /><span>Promoting 3D Technology.</span></h1>
+            <div class="eyebrow"><span class="eyebrow-dot"></span>African roots <span class="eyebrow-separator">·</span> brighter futures</div>
+            <h1>Preserving African Culture.<br /><span>Promoting Technology.</span></h1>
             <p class="hero-mantra">Learn. Speak. Code. Create. Belong.</p>
-            <p class="hero-lede">A joyful, 3D-animated cultural space to learn indigenous African languages, master kids coding in Yorùbá, and explore timeless traditions.</p>
-            
-            <!-- Restored & Enhanced Hero Quick Action Navigation Buttons -->
-            <div class="hero-quick-actions-bar">
-              <a href="#/languages" data-route="languages" class="hero-quick-btn hero-quick-btn-primary">
-                ${icon('globe', 18)} Start Learning (Kọ Ẹkọ)
-              </a>
-              <a href="#/coding" data-route="coding" class="hero-quick-btn hero-quick-btn-accent">
-                ${icon('code', 18)} Yoruba Code (Koodu)
-              </a>
-              <a href="#/voice_lessons" data-route="voice_lessons" class="hero-quick-btn hero-quick-btn-outline">
-                ${icon('headphones', 18)} Voice Lessons (Ohùn)
-              </a>
-              <a href="#/ere" data-route="ere" class="hero-quick-btn hero-quick-btn-outline">
-                ${icon('book', 18)} Stories & Games
-              </a>
-              <a href="#/about" data-route="about" class="hero-quick-btn hero-quick-btn-outline">
-                ${icon('play', 16)} About Us
-              </a>
-              <a href="#/owe" data-route="owe" class="hero-quick-btn hero-quick-btn-outline">
-                ${icon('sparkles', 16)} Òwe (Proverbs)
-              </a>
+            <p class="hero-lede">A joyful place to learn a language, hear the stories behind it and imagine what you can create next.</p>
+            <div class="hero-actions">
+              ${routeLink('languages', `Start learning ${icon('arrow', 17)}`, 'button button-primary')}
+              ${routeLink('trainer', `${icon('mic', 16)} Voice Trainer`, 'button button-accent')}
+              ${routeLink('about', `${icon('play', 15)} Our story`, 'button button-outline')}
             </div>
+            <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
+          </div>
+          <div class="hero-visual modern-hero-visual" id="heroVisualStage">
+            <div class="hero-ambient-glow" aria-hidden="true"></div>
+            <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language & cultural learning preview" id="heroPhotoWrap">
+              <div class="hero-photo-frame">
+                <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
+                <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
+                <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
+                <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
+                <div class="cinematic-jewelry-glints" aria-hidden="true">
+                  <span class="jewelry-glint j1" style="left: 54.2%; top: 48.5%;"></span>
+                  <span class="jewelry-glint j2" style="left: 56.5%; top: 44.2%;"></span>
+                  <span class="jewelry-glint j3" style="left: 52.8%; top: 22.8%;"></span>
+                  <span class="jewelry-glint j4" style="left: 33.6%; top: 62.4%;"></span>
+                </div>
+                <div class="cinematic-lens-flare" aria-hidden="true"></div>
+                <div class="hero-vignette-overlay" aria-hidden="true"></div>
+                <div class="cinematic-live-badge" aria-label="4K Ultra-HD Cinematic Video Stream">
+                  <span class="cinematic-pulse-dot"></span>
+                  <span class="cinematic-badge-text">4K CINEMATIC VIDEO · LIVE</span>
+                </div>
+              </div>
 
-            <div class="hero-social-proof" style="margin-top: 24px;">
-              <div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div>
-              <span>For curious learners, families, and young tech innovators</span>
+              <!-- Live Interactive Floating Hotspots Layer -->
+              <div class="hero-floating-elements-layer">
+                <!-- 1. Floating Top Badge: Listen & speak -->
+                <button type="button" class="hero-interactive-hotspot hotspot-listen" data-action="hero-listen-speak" title="Listen &amp; speak African Greetings (Click for Voice Tour)" aria-label="Listen &amp; speak African Greetings">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-live-eq" aria-hidden="true">
+                    <span class="bar b1"></span>
+                    <span class="bar b2"></span>
+                    <span class="bar b3"></span>
+                  </span>
+                </button>
+
+                <!-- 2. Floating Card 1: Yorùbá (Ẹ káàrọ̀) -->
+                <button type="button" class="hero-interactive-hotspot hotspot-yoruba" data-action="hero-play-greeting" data-lang="yoruba" data-phrase="Ẹ káàárọ̀" data-translation="Good morning" title="Click to hear Yorùbá: Ẹ káàárọ̀ (Good morning)" aria-label="Yorùbá greeting: Ẹ káàárọ̀, Good morning">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                </button>
+
+                <!-- 3. Floating Card 2: Hausa (Sannu) -->
+                <button type="button" class="hero-interactive-hotspot hotspot-hausa" data-action="hero-play-greeting" data-lang="hausa" data-phrase="Sannu" data-translation="Good morning" title="Click to hear Hausa: Sannu (Good morning)" aria-label="Hausa greeting: Sannu, Good morning">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                </button>
+
+                <!-- 4. Floating Card 3: Igbo (Ndewo) -->
+                <button type="button" class="hero-interactive-hotspot hotspot-igbo" data-action="hero-play-greeting" data-lang="igbo" data-phrase="Ndewo" data-translation="Good morning" title="Click to hear Igbo: Ndewo (Good morning)" aria-label="Igbo greeting: Ndewo, Good morning">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                </button>
+
+                <!-- 5. Floating Card 4: Swahili (Habari) -->
+                <button type="button" class="hero-interactive-hotspot hotspot-swahili" data-action="hero-play-greeting" data-lang="swahili" data-phrase="Habari" data-translation="Good morning" title="Click to hear Swahili: Habari (Good morning)" aria-label="Swahili greeting: Habari, Good morning">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                </button>
+
+                <!-- 6. Floating Top-Right: Learn with joy Sun Sticker -->
+                <a href="#/languages" data-route="languages" class="hero-interactive-hotspot hotspot-sun" title="Learn African Languages with Joy" aria-label="Learn African Languages with Joy">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-sun-glow" aria-hidden="true"></span>
+                </a>
+
+                <!-- 7. Floating Middle-Right: Stories that stay Pill -->
+                <a href="#/ere" data-route="ere" class="hero-interactive-hotspot hotspot-stories" title="Explore African Stories &amp; Folktales" aria-label="Explore African Stories &amp; Folktales">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  <span class="hotspot-shimmer-bar" aria-hidden="true"></span>
+                </a>
+
+                <!-- 8. Floating Bottom Motto Card -->
+                <button type="button" class="hero-interactive-hotspot hotspot-motto" data-action="hero-motto-click" title="Click to see Idilewa daily learning motto" aria-label="Idilewa learning motto">
+                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+        <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
+      </section>
 
-          <!-- 3D Interactive Hero Visual Stage -->
-          <div class="hero-visual modern-hero-visual">
-            <div class="hero-3d-stage-container" id="hero3DStage">
-              <div id="hero3DCanvasWrap" class="hero-3d-canvas-wrap" data-3d-scene="hero" style="width: 100%; height: 100%; min-height: 340px;" title="Drag to rotate 3D cultural artifact"></div>
-              <div class="hero-3d-floating-badge">
-                <span class="hero-3d-pulse-dot"></span>
-                <span>🪐 3D Gángan Drum & Glyphs · Grab & Rotate</span>
+      <section class="container section section-start">
+        <div class="section-heading"><div><span class="section-kicker">A world of ways to learn</span><h2>Learn a little. Carry a lot.</h2><p>Choose a path that feels like you. There is always room to explore.</p></div><a class="text-link desktop-only" href="#/base" data-route="base">Explore the platform ${icon('arrow', 15)}</a></div>
+        <div class="feature-grid">${featureCards.map((card) => `<a class="feature-card tone-${card.tone}" href="#/${card.route}" data-route="${card.route}"><span class="feature-card-portrait"><img src="./assets/${card.image}" alt="${card.imageAlt ? esc(card.imageAlt) : ''}" ${card.imageAlt ? '' : 'aria-hidden="true"'} loading="lazy" /></span><div class="feature-card-top"><span class="feature-icon">${icon(card.icon, 23)}</span><span class="feature-tag">${card.tag}</span></div><h3>${card.title}</h3><p>${card.desc}</p><span class="card-arrow">${icon('arrow', 17)}</span></a>`).join('')}</div>
+      </section>
+
+      <section class="journey-section">
+        <div class="container journey-inner">
+          <div class="journey-intro"><span class="section-kicker">A clear path, at your pace</span><h2>Four small steps.<br /><span>One big connection.</span></h2><p>Every learning path makes the next step easy to see—without rushing the joy out of discovery.</p>${routeLink('course', `See how learning works ${icon('arrow', 16)}`, 'text-link')}</div>
+          <div class="journey-steps">
+            ${[
+              ['01', 'Choose a language', 'Start with the words you love.', 'globe', 'languages'],
+              ['02', 'Find your level', 'Begin where you feel ready.', 'compass', 'course'],
+              ['03', 'Explore a module', 'Move through connected ideas.', 'layers', 'course'],
+              ['04', 'Try a lesson', 'Listen, practice and celebrate.', 'check', 'lesson']
+            ].map(([num, title, desc, ico, route]) => `<a href="#/${route}" data-route="${route}" class="journey-step"><span class="journey-number">${num}</span><span class="journey-icon">${icon(ico, 20)}</span><strong>${title}</strong><small>${desc}</small><span class="journey-link">${icon('arrow', 15)}</span></a>`).join('')}
+          </div>\n    </section>
+
+      <section class="container section language-section">
+        <div class="section-heading"><div><span class="section-kicker">Start with a language</span><h2>Which one feels like home?</h2><p>Four learning paths are ready to explore, with more voices on the way.</p></div>${routeLink('languages', 'All languages ' + icon('arrow', 15), 'text-link')}</div>
+        <div class="language-grid home-language-grid">${LANGUAGES.map((l) => `<button type="button" class="language-card lang-${l.tint}" data-action="${state.available[l.id] ? 'select-language' : 'notify-language'}" data-lang="${l.id}"><span class="language-glyph">${l.glyph}</span><span class="language-info"><strong>${l.name}</strong><small>${l.region}</small></span><span class="language-go">${icon('arrow', 16)}</span></button>`).join('')}</div>
+        <div class="coming-soon-line"><span class="coming-soon-dot"></span>Coming soon: ${SOON_LANGUAGES.map((l) => l.name).join(' · ')} ${routeLink('languages', 'Get curious ' + icon('arrow', 13), 'text-link text-link-small')}</div>
+      </section>
+
+      <section class="container section home-trainer-feature-section">
+        <div class="home-trainer-card">
+          <div class="home-trainer-copy">
+            <div class="home-trainer-badge">
+              <span class="badge-dot"></span>
+              <span>AI VOICE & TONAL PITCH TRAINER</span>
+            </div>
+            <h2>Speak African Languages with <span class="highlight-green">Native Tonal Fluency</span></h2>
+            <p>Our interactive voice studio listens to your voice in real time, analyzes pitch accuracy, and gives instant feedback across Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.</p>
+            <div class="home-trainer-highlights">
+              <div class="trainer-highlight-item">
+                <span class="highlight-icon">${icon('volume', 18)}</span>
+                <div>
+                  <strong>60 Audio Lessons</strong>
+                  <small>3 progressive tiers</small>
+                </div>
+              </div>
+              <div class="trainer-highlight-item">
+                <span class="highlight-icon">${icon('music', 18)}</span>
+                <div>
+                  <strong>Dó-Re-Mí Melodies</strong>
+                  <small>Interactive pitch keys</small>
+                </div>
+              </div>
+              <div class="trainer-highlight-item">
+                <span class="highlight-icon">${icon('mic', 18)}</span>
+                <div>
+                  <strong>Live Mic Speech Scoring</strong>
+                  <small>Pitch accuracy & stars</small>
+                </div>
+              </div>
+            </div>
+            <div class="home-trainer-actions">
+              ${routeLink('trainer', `Launch Voice Studio ${icon('arrow', 17)}`, 'button button-primary')}
+              ${routeLink('voices', `Explore Voice Library`, 'button button-outline')}
+            </div>
+          </div>
+          <div class="home-trainer-visual">
+            <div class="trainer-visual-card">
+              <div class="visual-card-head">
+                <span class="pulse-recording-dot"></span>
+                <span>Live Interactive Audio Studio</span>
+              </div>
+              <div class="visual-card-phrase">
+                <span class="phrase-tag">Yorùbá Tones</span>
+                <h3>Ẹ kú àárọ̀ o</h3>
+                <div class="visual-tones-demo">
+                  <span class="v-tone tone-hi">kú (Mí)</span>
+                  <span class="v-tone tone-mid">àár (Re)</span>
+                  <span class="v-tone tone-lo">o (Dó)</span>
+                </div>
+              </div>
+              <div class="visual-card-score">
+                <div class="score-pill">
+                  <strong>96%</strong>
+                  <small>Native Pitch Match</small>
+                </div>
+                <div class="score-stars">★★★ Fluency</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Interactive 3D Feature Grid -->
-      <section class="container section-gap">
-        <div class="section-heading">
-          <div>
-            <span class="section-kicker">Everything in One Platform</span>
-            <h2>Explore the Idilewa 3D Experience</h2>
-            <p>From speech training to kids coding in pure Yoruba, every feature is built for deep cultural immersion.</p>
-          </div>
-        </div>
+      <section class="container section explore-section">
+        <div class="section-heading"><div><span class="section-kicker">Picked for curious minds</span><h2>Explore books & little discoveries</h2><p>Read, listen and find a new doorway into language and culture.</p></div>${routeLink('ere', 'Visit the library ' + icon('arrow', 15), 'text-link')}</div>
+        <div class="book-grid">${books.map((book, i) => `<a href="#/${book.route}" data-route="${book.route}" class="book-card"><div class="book-cover ${book.bg}"><span class="book-cover-mark">${book.shape}</span><span class="book-sun"></span><span class="book-hill book-hill-one"></span><span class="book-hill book-hill-two"></span><span class="book-cover-index">0${i + 1}</span></div><strong>${book.title}</strong><small>${book.label}</small></a>`).join('')}</div>
+      </section>
 
-        <div class="feature-grid">
-          ${featureCards.map((card) => `
-            <article class="feature-card perspective-3d-card tone-${card.tone}">
-              <div class="feature-card-header">
-                <span class="feature-icon tone-${card.tone}">${icon(card.icon, 22)}</span>
-                <span class="pill pill-${card.tone}">${card.tag}</span>
-              </div>
-              <h3 class="feature-title">${card.title}</h3>
-              <p class="feature-desc">${card.desc}</p>
-              <div class="feature-card-footer">
-                <a class="button button-outline button-small" href="#/${card.route}" data-route="${card.route}">Explore ${icon('arrow', 14)}</a>
-              </div>
-            </article>
-          `).join('')}
+      <section class="container story-feature section">
+        <div class="story-feature-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with two children" loading="lazy" /><span class="image-caption">Stories are a way of remembering together.</span></div>
+        <div class="story-feature-copy"><span class="section-kicker">Read · listen · remember</span><h2>Every story carries<br /><span>a little piece of us.</span></h2><p>Meet the voices behind a story. Listen in your language, notice a new phrase and bring the conversation home.</p><div class="story-feature-points"><span>${icon('headphones', 17)} Audio-first stories</span><span>${icon('people', 17)} Made for sharing</span></div>${routeLink('ere', `Explore stories ${icon('arrow', 16)}`, 'button button-primary')}</div>
+      </section>
+
+      <section class="container section audience-section">
+        <div class="section-heading"><div><span class="section-kicker">One home, many journeys</span><h2>Made for the way you learn.</h2><p>Welcoming for children, useful for adults and stronger when families learn together.</p></div></div>
+        <div class="audience-grid">
+          <a class="audience-card audience-kids" href="#/kids" data-route="kids"><span class="audience-icon">${icon('sparkles', 21)}</span><span class="audience-kicker">For young learners</span><strong>Curiosity comes first.</strong><small>Playful lessons, stories and gentle challenges.</small>${icon('arrow', 16)}</a>
+          <a class="audience-card audience-individual" href="#/individuals" data-route="individuals"><span class="audience-icon">${icon('compass', 21)}</span><span class="audience-kicker">For independent learners</span><strong>Your roots. Your pace.</strong><small>A clear, welcoming path for curious minds.</small>${icon('arrow', 16)}</a>
+          <a class="audience-card audience-school" href="#/schools" data-route="schools"><span class="audience-icon">${icon('school', 21)}</span><span class="audience-kicker">For schools</span><strong>Bring culture into class.</strong><small>Clear learning paths for educators.</small>${icon('arrow', 16)}</a>
         </div>
       </section>
-    `;
+
+      <section class="container home-cta-section"><div class="home-cta"><div><span class="section-kicker">Your next word is waiting</span><h2>Let’s keep the good things growing.</h2><p>Choose a language and take your first small step today.</p></div>${routeLink('languages', `Find your language ${icon('arrow', 17)}`, 'button button-white')}</div></section>`;
   }
 
   function renderLanguageCard(l) {
@@ -1834,174 +1914,443 @@ import confetti from 'canvas-confetti';
     }
   }
 
-      function renderCoding() {
-    const activeLessonId = state.yorubaLessonId || YORUBA_CODE_LESSONS[0].id;
-    const lesson = YORUBA_CODE_LESSONS.find((l) => l.id === activeLessonId) || YORUBA_CODE_LESSONS[0];
-    const currentCode = state.yorubaCode !== undefined ? state.yorubaCode : lesson.starterCode;
-    const output = state.yorubaCodeOutput || '';
-    const user = getCurrentUser() || state.user;
+  function renderCoding() {
+    const flow = state.coding;
+    const localeId = CODE_COPY[flow.helperLanguage] ? flow.helperLanguage : 'yoruba';
+    const copy = codeTextFor(localeId);
+    const level = CODE_LEVELS.find((item) => item.id === flow.level) || CODE_LEVELS[0];
+    const tech = CODE_PATHS.find((item) => item.id === flow.techId) || CODE_PATHS[0];
+    const mission = CODE_MISSIONS.find((item) => item.id === flow.missionId) || CODE_MISSIONS[0];
+    const greeting = copy.greeting;
+    const sample = sampleCodeFor(tech, greeting);
+    const makerLevel = Math.floor(Math.max(0, flow.points) / 50) + 1;
+    const xpInLevel = Math.max(0, flow.points) % 50;
+    const levelProgress = Math.min(100, Math.round((xpInLevel / 50) * 100));
+    const makerRank = makerLevel >= 8 ? 'Canopy Creator' : makerLevel >= 5 ? 'Trailblazer' : makerLevel >= 3 ? 'Pathfinder' : 'Seedling Coder';
+    const streakBadge = flow.streak >= 7 ? 'Canopy Creator' : flow.streak >= 3 ? 'Growing Builder' : flow.streak >= 1 ? 'Bright Sprout' : 'New Explorer';
+    const progress = Math.min(100, Math.round((flow.completed.length / Math.max(1, CODE_PATHS.length * CODE_LEVELS.length * CODE_MISSIONS.length)) * 100));
+    const stepLabels = ['Choose a guide', 'Pick an adventure', 'Choose a level', 'Play & celebrate'];
+    const stageSelect = (selected) => LANGUAGES.map((lang) => '<option value="' + lang.id + '" ' + (selected === lang.id ? 'selected' : '') + '>' + lang.name + '</option>').join('');
+    const questRobot = flow.questTrail.length ? flow.questTrail[flow.questTrail.length - 1] : '0,3';
+    const questTrail = new Set(flow.questTrail);
+    const questSolved = flow.completed.includes('garden-quest');
+    const questTiles = Array.from({ length: 20 }, (_, index) => {
+      const x = index % 5; const y = Math.floor(index / 5); const cell = x + ',' + y;
+      const isRobot = cell === questRobot; const isGoal = cell === CODE_GARDEN_TARGET;
+      const isBush = CODE_GARDEN_OBSTACLES.has(cell); const isTrail = questTrail.has(cell);
+      const label = isRobot ? (isGoal ? 'Robot at the star' : 'Robot') : isGoal ? 'Star goal' : isBush ? 'Leafy obstacle' : isTrail ? 'Robot trail' : 'Garden path';
+      const glyph = isRobot ? (isGoal ? '🤖⭐' : '🤖') : isGoal ? '⭐' : isBush ? '🌿' : isTrail ? '·' : '';
+      return '<span class="code-quest-tile ' + (isRobot ? 'is-robot' : '') + ' ' + (isGoal ? 'is-goal' : '') + ' ' + (isBush ? 'is-bush' : '') + ' ' + (isTrail ? 'is-trail' : '') + '" role="gridcell" aria-label="' + label + '">' + glyph + '</span>';
+    }).join('');
+    const questCommandList = flow.questCommands.length
+      ? flow.questCommands.map((direction, i) => {
+        const move = CODE_GARDEN_DIRECTIONS[direction];
+        const directionText = copy.directions[move?.labelIndex ?? 0];
+        return '<button type="button" class="code-quest-block" data-action="code-quest-remove" data-index="' + i + '" aria-label="Remove step ' + (i + 1) + ': ' + esc(directionText) + '"><span>' + (move?.glyph || '·') + '</span><small>' + esc(directionText) + '</small><b aria-hidden="true">×</b></button>';
+      }).join('')
+      : '<span class="code-quest-empty">Your code blocks will appear here.</span>';
+    const questControls = Object.entries(CODE_GARDEN_DIRECTIONS).map(([direction, move]) => {
+      const label = copy.directions[move.labelIndex];
+      return '<button type="button" class="code-quest-direction" data-action="code-quest-add" data-direction="' + direction + '" ' + (flow.questCommands.length >= 12 ? 'disabled' : '') + ' aria-label="Add ' + esc(label) + ' step"><span>' + move.glyph + '</span><small>' + esc(label) + '</small></button>';
+    }).join('');
 
-    const diacritics = ['ẹ', 'ọ', 'ṣ', 'à', 'á', 'è', 'é', 'ẹ́', 'ẹ̀', 'ì', 'í', 'ò', 'ó', 'ọ́', 'ọ̀', 'ù', 'ú'];
-    const keywords = ['tẹ_jade', 'jẹ́', 'bí', 'kò_bá_jẹ́', 'fún', 'iṣẹ́', 'padà', 'bẹ̀rẹ̀_àwòrán', 'gbe_si_iwaju', 'yipada_si_otun', 'yi_awo'];
+    let content = '';
+    if (flow.stage === 0) {
+      content = '<section class="code-step-panel" aria-labelledby="code-language-title"><span class="section-kicker">Step 1 · choose your helper language</span><h2 id="code-language-title">Which language should guide your adventure?</h2><p>Code stays exactly as programmers write it. Friendly explanations, hints and your first greeting can appear alongside the language you know.</p><div class="code-locale-grid">' + LANGUAGES.map((lang) => '<button type="button" class="code-locale-card ' + (localeId === lang.id ? 'is-selected' : '') + '" data-action="code-set-language" data-lang="' + lang.id + '" aria-pressed="' + (localeId === lang.id) + '"><span class="language-glyph lang-' + lang.tint + '">' + lang.glyph + '</span><strong>' + lang.name + '</strong><small>' + lang.native + '</small><span>' + (localeId === lang.id ? 'Selected · continue' : 'Choose language') + '</span></button>').join('') + '</div><p class="code-translation-note">' + icon('info', 16) + ' Starter glosses are learning aids; fluent language educators should review them before public launch.</p></section>';
+    } else if (flow.stage === 1) {
+      const query = String(flow.search || '').trim().toLowerCase();
+      const visible = CODE_PATHS.filter((item) => !query || (item.name + ' ' + item.category).toLowerCase().includes(query));
+      const families = [...new Set(CODE_PATHS.map((item) => item.category))];
+      content = '<section class="code-step-panel" aria-labelledby="code-path-title"><div class="code-picker-head"><div><span class="section-kicker">Step 2 · choose a learning path</span><h2 id="code-path-title">Pick a playful place to start.</h2><p>Explore ' + CODE_PATHS.length + ' coding paths—from blocks and websites to Python, games and robots. The highlighted adventures are kid-first; the full library also includes tools for older learners.</p></div><label class="code-search-label">Find a language or tool<input id="codingSearch" type="search" value="' + esc(flow.search) + '" placeholder="Try Scratch, Python, HTML…" autocomplete="off" /></label></div><div class="code-adventure-grid code-adventure-grid-compact">' + CODE_ADVENTURES.map((adventure, i) => '<button type="button" class="code-adventure-card tone-' + adventure.tone + '" data-action="code-select-tech" data-tech="' + adventure.tech + '"><span class="code-adventure-number">0' + (i + 1) + '</span><span class="code-adventure-icon">' + icon(adventure.icon, 20) + '</span><small>' + adventure.label + '</small><strong>' + adventure.title + '</strong><span class="code-adventure-go">Start this path ' + icon('arrow', 14) + '</span></button>').join('') + '</div><details class="code-all-paths" ' + (query ? 'open' : '') + '><summary><span>Explore every coding path</span><strong>' + CODE_PATHS.length + ' paths · ' + CODE_LANGUAGE_IDS.size + '+ languages & tools</strong></summary><div class="code-category-counts">' + families.map((family) => '<span>' + esc(family) + ' · ' + CODE_PATHS.filter((item) => item.category === family).length + '</span>').join('') + '</div><div class="code-path-grid">' + (visible.map((item) => '<button type="button" class="code-path-card" data-action="code-select-tech" data-tech="' + item.id + '"><span class="code-path-icon">' + icon('code', 19) + '</span><span class="code-path-family">' + esc(item.category) + '</span><strong>' + esc(item.name) + '</strong><small>A tiny bilingual starter, a clear example and a challenge you can try.</small><span class="code-path-go">Choose this path ' + icon('arrow', 14) + '</span></button>').join('') || '<div class="code-empty">No path matched that search. Try a shorter word such as “web” or “data”.</div>') + '</div></details></section>';
+    } else if (flow.stage === 2) {
+      content = '<section class="code-step-panel" aria-labelledby="code-level-title"><div class="code-current-tech"><span class="code-path-icon">' + icon('code', 20) + '</span><div><span class="section-kicker">Step 3 · shape your adventure</span><h2 id="code-level-title">' + esc(tech.name) + ' <small>' + esc(tech.category) + ' · a starter path</small></h2></div><label class="code-helper-select">Guide language<select id="codeHelperLanguage" aria-label="Choose the language for coding hints">' + stageSelect(localeId) + '</select></label><button type="button" class="text-link" data-action="code-back" data-stage="1">Change path</button></div><p class="code-level-intro">Choose a pace, then pick a tiny mission. You can explore all three levels whenever you’re ready.</p><div class="code-level-grid">' + CODE_LEVELS.map((item) => '<button type="button" class="code-level-card ' + (item.id === level.id ? 'is-selected' : '') + '" data-action="code-set-level" data-level="' + item.id + '" aria-pressed="' + (item.id === level.id) + '"><span>' + icon(item.icon, 21) + '</span><small>' + item.badge + '</small><strong>' + item.label + '</strong><p>' + item.note + '</p><b>' + flow.completed.filter((key) => key.startsWith(tech.id + ':' + item.id + ':')).length + ' wins</b></button>').join('') + '</div><div class="code-missions-head"><div><span class="section-kicker">' + level.label + ' · choose a mission</span><h3>Make one small win your own.</h3></div><span class="code-progress-pill">' + flow.completed.length + ' wins · ' + flow.points + ' XP</span></div><div class="code-mission-grid">' + CODE_MISSIONS.map((item, i) => { const done = flow.completed.includes(tech.id + ':' + level.id + ':' + item.id); const mode = i === 0 ? 'Story quest' : i === 3 ? 'Create & remix' : 'Skill practice'; return '<button type="button" class="code-mission-card ' + (done ? 'is-complete' : '') + '" data-action="code-select-mission" data-mission="' + item.id + '"><span class="mission-num">0' + (i + 1) + '</span><span class="mission-icon">' + icon(done ? 'check' : item.icon, 18) + '</span><small>' + mode + ' · ' + item.skill + '</small><strong>' + item.title + '</strong><span>' + (done ? 'Win saved' : 'Open mini lesson') + ' ' + icon('arrow', 14) + '</span></button>'; }).join('') + '</div></section>';
+    } else {
+      const token = CODE_TOKENS[tech.syntax] || 'console.log';
+      const completionKey = tech.id + ':' + level.id + ':' + mission.id;
+      const complete = flow.completed.includes(completionKey);
+      const previewOutput = (tech.syntax === 'blocks' || tech.name === 'Scratch')
+        ? '✨ ' + greeting + '\nYour character waves hello!'
+        : tech.syntax === 'markup'
+          ? '✨ ' + greeting + '\nA little webpage is ready.'
+          : '✨ ' + greeting + '\nYour ' + tech.name + ' idea is taking shape.';
+      const challengeText = localeId === 'yoruba'
+        ? 'Gbìyànjú: lo ' + tech.name + ' láti fi “' + greeting + '” hàn. Wa àmì yìí nínú àpẹẹrẹ: ' + token
+        : localeId === 'igbo'
+          ? 'Nwaa: jiri ' + tech.name + ' gosi “' + greeting + '”. Chọta akara a n’ime ihe atụ: ' + token
+          : localeId === 'hausa'
+            ? 'Gwada: yi amfani da ' + tech.name + ' don nuna “' + greeting + '”. Nemo wannan alama a misalin: ' + token
+            : 'Jaribu: tumia ' + tech.name + ' kuonyesha “' + greeting + '”. Tafuta alama hii kwenye mfano: ' + token;
+      
+      const currentMissionIdx = CODE_MISSIONS.findIndex((m) => m.id === mission.id);
+      const currentLevelIdx = CODE_LEVELS.findIndex((l) => l.id === level.id);
+      let nextStepLabel = 'Next mission';
+      if (currentMissionIdx !== -1 && currentMissionIdx < CODE_MISSIONS.length - 1) {
+        nextStepLabel = 'Next: ' + CODE_MISSIONS[currentMissionIdx + 1].title;
+      } else if (currentLevelIdx !== -1 && currentLevelIdx < CODE_LEVELS.length - 1) {
+        nextStepLabel = 'Next Level: ' + CODE_LEVELS[currentLevelIdx + 1].label;
+      } else {
+        nextStepLabel = 'Choose next coding path';
+      }
+      content = '<section class="code-step-panel code-play-panel" aria-labelledby="code-play-title"><div class="code-play-head"><div><span class="section-kicker">Step 4 · ' + level.badge + ' · ' + mission.title + '</span><h2 id="code-play-title">Let’s make something with ' + esc(tech.name) + '.</h2><p>' + esc(challengeText) + '</p></div><div class="code-streak-mini"><span>' + icon('sparkles', 18) + '</span><strong>' + flow.streak + ' day' + (flow.streak === 1 ? '' : 's') + '</strong><small>' + streakBadge + '</small></div></div><div class="code-bilingual-callout"><div><small>English</small><p>Code gives the computer clear instructions.</p></div><div><small>' + copy.label + '</small><p>' + copy.code + '</p></div><div><small>' + copy.label + ' · ' + mission.skill + '</small><p>' + (mission.id === 'sequence' ? copy.sequence : copy.variable) + '</p></div></div><details class="code-hint"><summary>Need a hint? Tap for a tiny clue.</summary><p>Look for <code>' + esc(token) + '</code> in the starter. Keep the code as it is and try changing just one small thing.</p></details><div class="code-workbench-grid"><form class="code-editor-card" data-form="coding-run" data-tech="' + tech.id + '" data-level="' + level.id + '" data-mission="' + mission.id + '"><div class="code-editor-title"><span><i></i><i></i><i></i></span><strong>Your code notebook</strong><small>' + esc(tech.name) + ' · guided demo</small></div><label for="codingCode">Try a small edit, then run the friendly check.</label><textarea id="codingCode" name="code" rows="10" maxlength="1200" spellcheck="false" autocapitalize="off" required>' + esc(flow.draft || sample) + '</textarea><small>This offline preview checks for a lesson marker only. It does not execute code or upload your work.</small><button class="button button-primary code-run-button" type="submit">Run my code ' + icon('play', 16) + '</button></form><aside class="code-output-card"><span class="section-kicker">A friendly preview</span><h3>' + (complete ? 'Mission unlocked!' : 'What your idea could do') + '</h3><div class="code-output-window"><span class="output-dot"></span><pre>' + esc(previewOutput) + '</pre></div><div class="code-run-status ' + (flow.result.includes('✓') ? 'is-success' : flow.result ? 'is-retry' : '') + '" role="status">' + (flow.result ? esc(flow.result) : 'Ready when you are — tiny experiments count.') + '</div>' + (complete ? '<div class="code-success-burst">' + icon('trophy', 20) + ' <strong>+10 maker XP · Mission Complete!</strong><span>' + copy.success + '</span><button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">' + nextStepLabel + ' ' + icon('arrow', 15) + '</button></div>' : '') + '<div class="code-streak-track"><span>Maker level ' + makerLevel + ' · ' + makerRank + '</span><strong>' + flow.streak + ' day' + (flow.streak === 1 ? '' : 's') + ' · ' + streakBadge + '</strong><div><i style="width:' + levelProgress + '%"></i></div><small>' + xpInLevel + '/50 XP to the next level · ' + flow.points + ' XP total</small></div></aside></div><div class="code-layer-actions">' + (complete ? '<button type="button" class="button button-primary code-next-mission-btn" data-action="code-next-mission">' + nextStepLabel + ' ' + icon('arrow', 15) + '</button>' : '') + '<button type="button" class="text-link" data-action="code-back" data-stage="2">' + icon('arrowUp', 14) + ' Back to levels & missions</button><button type="button" class="text-link" data-action="code-back" data-stage="1">Pick another code path</button></div></section>';
+    }
 
-    const decisionNodes = [
-      { step: '1. Gbọ́ Ọ̀rọ̀ (Input)', desc: 'Gba iye tabi orúkọ lati ọwọ olumulo', code: 'jẹ́ orúkọ = "Adé"', glyph: '📥' },
-      { step: '2. Ṣe Ìpinnu (Decision)', desc: 'Ṣayẹwo: Bí orúkọ ba jẹ́ "Adé"', code: 'bí (orúkọ == "Adé")', glyph: '⚖️' },
-      { step: '3. Ọ̀nà A (True Branch)', desc: 'Tẹ ikini ti o tọ sita', code: 'tẹ_jade("Kaabo Ọba Adé!")', glyph: '✅' },
-      { step: '4. Ọ̀nà B (False Branch)', desc: 'Kò_bá_jẹ́: Tẹ ikini miiran', code: 'tẹ_jade("Kaabo Alejo!")', glyph: '❌' }
-    ];
+    const freeLessons = filterFreeLessons();
+    const activeBandKey = flow.filter || 'all';
+    const activeCategory = flow.category || 'all';
+    const categoriesList = ['all', 'Robotics & Circuits', 'Algorithmic Thinking', 'Coding & Games', 'Hardware & Micro:bits', 'AI & Data', 'CAD & 3D Design', 'Digital Citizenship', 'Cybersecurity', 'Web Development', 'Spreadsheets & Data'];
 
-    return `<div class="container route-page coding-page">
-      <div class="breadcrumbs">
-        ${routeLink('index', 'Home')}
-        <span>/</span>
-        <strong>K-8 Coding & IDE fun Àwọn Ọmọdé</strong>
-      </div>
+    return '<div class="container route-page coding-page c4k-redesigned-page">' +
+      '<div class="breadcrumbs">' +
+        routeLink('index', 'Home') + '<span>/</span><strong>Coding for kids</strong>' +
+      '</div>' +
 
-      <!-- 3D Interactive Coding Hero Stage (No Static Image Box) -->
-      <header class="coding-3d-hero-stage">
-        <div style="max-width: 580px; z-index: 2;">
-          <span class="c4k-eyebrow" style="color: #6ee7b7 !important;">${icon('sparkles', 16)} IDÍLẸ́WÀ 3D CODE FOR KIDS · K-8 STEAM</span>
-          <h1 style="color: #ffffff !important; margin: 10px 0;">Kọ Koodu ni Èdè Yorùbá</h1>
-          <p style="color: #d1fae5 !important; font-size: 1.15rem; margin: 0;">Learn algorithmic flowcharts and 100% pure Yoruba coding with 3D Holographic Matrix and Turtle graphics.</p>
-        </div>
-        <div class="coding-3d-canvas-wrap" id="coding3DCanvasWrap" data-3d-scene="coding" title="Drag to rotate 3D coding cube">
-          <div class="hero-3d-floating-badge" style="bottom: 8px;">
-            <span class="hero-3d-pulse-dot"></span>
-            <span>⚡ 3D Hologram Cube · Drag to Rotate</span>
-          </div>
-        </div>
-      </header>
+      '<!-- 1. Hero & Activities Navigation Hub -->' +
+      '<header class="section-activities-header c4k-hero-header">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="header-wrapper">' +
+              '<span class="c4k-eyebrow">' + icon('sparkles', 16) + ' IDÍLẸ́WÀ CODE FOR KIDS · K-8 STEAM CURRICULUM</span>' +
+              '<h1 class="heading-2 c4k-main-title">The Code for Kids Curriculum</h1>' +
+              '<div class="text-lg max-width-540 c4k-sub-lead">' +
+                'From Kindergarten to Grade 8 · Engaging STEAM & Coding Lessons for Young African Innovators' +
+              '</div>' +
+              '<div class="c4k-quick-pills-row">' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="code-quest">' + icon('play', 14) + ' Robot Garden Quest</button>' +
+                '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="coding-start">' + icon('code', 14) + ' Bilingual Studio</button>' +
+              '</div>' +
+            '</div>' +
 
-      <!-- 1. DECISION TREE & LOGIC FLOW (COMES BEFORE CARDS) -->
-      <section class="section-gap" style="margin-bottom: 32px;">
-        <div class="section-heading">
-          <div>
-            <span class="section-kicker">Ètò Ìpinnu · Step 1 Logic Flow</span>
-            <h2>Awọn Ìgbésẹ̀ Ìpinnu Koodu (Decision Tree Flowchart)</h2>
-            <p>Every computer program follows clear decision paths. Here is how your Yoruba code thinks before running:</p>
-          </div>
-        </div>
+            '<!-- 3 Grade Band Hub Navigation Cards -->' +
+            '<article class="activities-navigation-wrapper" id="curriculum-bands">' +
+              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
+                '<div class="activity-navigation-icon-wrap">' +
+                  '<span class="activity-nav-glyph">🌱</span>' +
+                '</div>' +
+                '<div class="activity-navigation-content">' +
+                  '<div class="activity-heading-wrapper">' +
+                    '<h6>Lower Elementary</h6>' +
+                  '</div>' +
+                  '<div class="text-lg text-color-bright-overlay-60">Kindergarten – Grade 2</div>' +
+                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Lower-Elementary">' +
+                    '<span class="text-md bold">Explore Grades</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
-          ${decisionNodes.map((node, i) => `
-            <div class="activity-card perspective-3d-card" style="padding: 20px; border-left: 4px solid var(--green);">
-              <div style="font-size: 28px; margin-bottom: 8px;">${node.glyph}</div>
-              <h3 style="font-size: 1.15rem; margin: 0 0 6px;">${node.step}</h3>
-              <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 10px;">${node.desc}</p>
-              <code style="background: var(--cream); padding: 4px 8px; border-radius: 6px; font-size: 0.88rem; font-weight: 700; color: var(--green-dark); display: block;">${node.code}</code>
-            </div>
-          `).join('')}
-        </div>
-      </section>
+              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
+                '<div class="activity-navigation-icon-wrap">' +
+                  '<span class="activity-nav-glyph">🌿</span>' +
+                '</div>' +
+                '<div class="activity-navigation-content">' +
+                  '<div class="activity-heading-wrapper">' +
+                    '<h6>Upper Elementary</h6>' +
+                  '</div>' +
+                  '<div class="text-lg text-color-bright-overlay-60">Grade 3 to 5</div>' +
+                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Upper-Elementary">' +
+                    '<span class="text-md bold">Explore Grades</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
 
-      <!-- 2. INTERACTIVE YORUBA CODING WORKBENCH -->
-      <div class="section-heading" style="margin-top: 10px;">
-        <div>
-          <span class="section-kicker">Èdè Koodu Yorùbá · 100% Yoruba Syntax</span>
-          <h2>Agbègbè Ṣiṣẹ́ Koodu (Yoruba Coding IDE Workbench)</h2>
-          <p>Type keywords, insert Yoruba tone accents, run your code, and watch the Turtle draw shapes live.</p>
-        </div>
-      </div>
+              '<div class="activities-navigation-item background-color-primary c4k-hub-card">' +
+                '<div class="activity-navigation-icon-wrap">' +
+                  '<span class="activity-nav-glyph">🚀</span>' +
+                '</div>' +
+                '<div class="activity-navigation-content">' +
+                  '<div class="activity-heading-wrapper">' +
+                    '<h6>Middle School</h6>' +
+                  '</div>' +
+                  '<div class="text-lg text-color-bright-overlay-60">Grade 6 to 8+</div>' +
+                  '<button type="button" class="button-ghost-default-white" data-action="coding-jump-band" data-band="Middle-School">' +
+                    '<span class="text-md bold">Explore Grades</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+            '</article>' +
+          '</div>' +
+        '</div>' +
+      '</header>' +
 
-      <div class="yoruba-ide-container" style="margin-bottom: 40px;">
-        <!-- Editor Column -->
-        <div class="yoruba-editor-card perspective-3d-card">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <span class="badge-3d" style="margin-bottom: 6px;">${lesson.grade}</span>
-              <h2 style="margin: 0; font-size: 1.3rem;">${lesson.title}</h2>
-              <p style="margin: 4px 0 0; font-size: 1rem; color: var(--muted);">${lesson.desc}</p>
-            </div>
-            <span class="button button-small button-outline" style="color: var(--green-dark); font-weight: 800;">⚡ +${lesson.points} XP</span>
-          </div>
+      '<!-- 2. Section: Lower Elementary (K-2) -->' +
+      '<section id="Lower-Elementary" class="section-foundation-phase c4k-band-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 01 · Ages 5–8</span>' +
+                    '<h2 class="heading-4">Lower Elementary (K – 2nd Grade)</h2>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
 
-          <div class="yoruba-diacritics-bar">
-            <span style="font-size: 13px; font-weight: 800; color: var(--muted);">Àmì Yorùbá:</span>
-            ${diacritics.map((d) => `<button class="yoruba-diacritic-chip" type="button" data-action="insert-diacritic" data-char="${d}">${d}</button>`).join('')}
-          </div>
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[0].grades.map((g) => renderCurriculumGradeCard(g, 'Lower-Elementary')).join('') +
+              '</div>' +
+            '</div>' +
 
-          <div class="yoruba-keywords-row">
-            ${keywords.map((kw) => `<button class="yoruba-keyword-pill" type="button" data-action="insert-keyword" data-keyword="${kw}" title="Insert ${kw}">${kw}</button>`).join('')}
-          </div>
+            '<div class="flowchart-wrapper c4k-flowchart-card">' +
+              '<div class="flowchart-header">' +
+                '<span class="section-kicker">Visual Learning Roadmap</span>' +
+                '<h3>K–2nd Grade STEAM & Robotics Pathway</h3>' +
+              '</div>' +
+              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/688763017d473a3cf18f822b_flowchart_k-2nd.png" loading="lazy" alt="K-2nd flowchart" class="flowchart flowchart-50" />' +
+              '<p class="flowchart-caption">From pattern recognition and story-led algorithms to loop repetitions and beginner physical robotics.</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
 
-          <textarea id="yoruba-code-editor" class="yoruba-textarea" spellcheck="false">${esc(currentCode)}</textarea>
+      '<!-- 3. Section: Upper Elementary (3-5) -->' +
+      '<section id="Upper-Elementary" class="section-intermediate-phase c4k-band-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 02 · Ages 8–11</span>' +
+                    '<h2 class="heading-4">Upper Elementary (3rd – 5th Grade)</h2>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
 
-          <div class="yoruba-ide-actions">
-            <button class="button button-primary" type="button" id="yoruba-run-btn" data-action="yoruba-run-code">
-              ▶ Ṣiṣẹ́ Koodu (Run)
-            </button>
-            <button class="button button-outline" type="button" data-action="yoruba-speak-code">
-              🔊 Gbọ́ Koodu (Speak)
-            </button>
-            <button class="button button-outline" type="button" data-action="yoruba-reset-code" data-starter="${esc(lesson.starterCode)}">
-              ↺ Tun Bẹ̀rẹ̀ (Reset)
-            </button>
-            <button class="button button-outline" type="button" data-action="yoruba-save-code">
-              💾 Fipamọ́ si Database
-            </button>
-            <button class="button button-outline" type="button" data-action="yoruba-download-code">
-              📥 Gba Faili (.yo)
-            </button>
-          </div>
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[1].grades.map((g) => renderCurriculumGradeCard(g, 'Upper-Elementary')).join('') +
+              '</div>' +
+            '</div>' +
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px;">
-            <div>
-              <label style="font-size: 14px; font-weight: 800; display: block; margin-bottom: 6px;">💻 Abájáde Ọ̀rọ̀ (Console Output):</label>
-              <div id="yoruba-console-output" class="yoruba-output-terminal">${output || 'Tẹ "Ṣiṣẹ́ Koodu ▶" lati wo abajade...'}</div>
-            </div>
-            <div class="yoruba-canvas-box">
-              <label style="font-size: 14px; font-weight: 800; display: block; margin-bottom: 6px;">🎨 Canvas Àwòrán (Turtle Graphics):</label>
-              <canvas id="yoruba-turtle-canvas" width="300" height="200"></canvas>
-            </div>
-          </div>
+            '<div class="flowchart-wrapper c4k-flowchart-card">' +
+              '<div class="flowchart-header">' +
+                '<span class="section-kicker">Visual Learning Roadmap</span>' +
+                '<h3>3rd–5th Grade STEAM & Physical Computing Infographic</h3>' +
+              '</div>' +
+              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/68876243a382cb50defa2dff_infographic_3rd-5th.png" loading="lazy" alt="3rd-5th infographic" class="flowchart flowchart-50" />' +
+              '<p class="flowchart-caption">From Scratch animation and game physics to microcontrollers, sensor engineering, and floor plan CAD.</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
 
-          <div style="padding: 14px 18px; background: var(--cream); border-radius: 14px; border-left: 5px solid var(--green); font-size: 0.95rem; margin-top: 12px;">
-            <strong>💡 Àkíyèsí Aṣa:</strong> ${lesson.culturalNote}
-          </div>
-        </div>
+      '<!-- 4. Section: Middle School (6-8+) -->' +
+      '<section id="Middle-School" class="section-senior-phase c4k-band-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 03 · Ages 11–15+</span>' +
+                    '<h2 class="heading-4">Middle School (6th – 8th Grade+)</h2>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
 
-        <!-- Sidebar Column -->
-        <div class="yoruba-lessons-sidebar">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <h3 style="margin: 0; font-size: 1.15rem;">Awọn Ẹkọ Koodu (Lessons)</h3>
-            <span class="user-xp-badge">⚡ ${user ? user.points : 50} XP</span>
-          </div>
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[2].grades.map((g) => renderCurriculumGradeCard(g, 'Middle-School')).join('') +
+              '</div>' +
+            '</div>' +
 
-          ${YORUBA_CODE_LESSONS.map((l) => `
-            <button class="yoruba-lesson-item ${l.id === activeLessonId ? 'is-active' : ''}" type="button" data-action="yoruba-select-lesson" data-lesson-id="${l.id}">
-              <span style="font-size: 12px; font-weight: 800; color: var(--green);">${l.grade}</span>
-              <strong style="font-size: 1.05rem;">${l.title}</strong>
-              <small style="font-size: 0.9rem;">${l.desc}</small>
-              <span class="lesson-xp">+${l.points} XP · ${state.coding && state.coding.completed && state.coding.completed.includes(l.id) ? '✓ Pari' : 'Bẹrẹ'}</span>
-            </button>
-          `).join('')}
-        </div>
-      </div>
-    </div>`;
+            '<div class="flowchart-wrapper c4k-flowchart-card">' +
+              '<div class="flowchart-header">' +
+                '<span class="section-kicker">Visual Learning Roadmap</span>' +
+                '<h3>Middle School Computer Science & STEAM Roadmap</h3>' +
+              '</div>' +
+              '<img src="https://cdn.prod.website-files.com/67515ca117da61ac21154553/689080b566fcae4ee8198124_US%20General%20Flowchart%20Middle%20School.png" loading="lazy" alt="Middle School Flowchart" class="flowchart flowchart-50" />' +
+              '<p class="flowchart-caption">From text-based coding to OOP architecture, data encryption, web publication, and AI ethics.</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 5. Section: Free Lessons Teachers & Students Love -->' +
+      '<section id="free-lessons" class="section-free-lessons c4k-free-lessons-section">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading text-align-center">' +
+              '<span class="section-kicker">Interactive Project Library</span>' +
+              '<h2 class="heading-2 c4k-free-title">Teach Computer Science Today</h2>' +
+              '<p class="text-sub-heading-free-lessons max-width-540">' +
+                'Free Computer Science and STEAM lessons for ages 5–15. Engaging, classroom-ready, low prep, and paired with African language concepts.' +
+              '</p>' +
+            '</div>' +
+
+            '<!-- Filter Bar -->' +
+            '<div class="c4k-filter-box">' +
+              '<div class="c4k-filter-header">' +
+                '<div class="c4k-filter-band-pills">' +
+                  '<span class="filter-description">Filter by Grade Band:</span>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'all' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="all">' +
+                    'All Grades (' + C4K_FREE_LESSONS.length + ')' +
+                  '</button>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'lower' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="lower">' +
+                    'Lower Elementary (K-2)' +
+                  '</button>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'upper' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="upper">' +
+                    'Upper Elementary (3-5)' +
+                  '</button>' +
+                  '<button type="button" class="c4k-band-pill ' + (activeBandKey === 'middle' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="middle">' +
+                    'Middle School (6-8)+' +
+                  '</button>' +
+                '</div>' +
+
+                '<div class="c4k-search-wrap">' +
+                  '<label for="lessonSearchInput" class="visually-hidden">Search lessons</label>' +
+                  '<input id="lessonSearchInput" type="search" placeholder="Search by topic, keyword, or tool…" value="' + esc(flow.lessonSearch || '') + '" autocomplete="off" />' +
+                '</div>' +
+              '</div>' +
+
+              '<!-- Category Chips -->' +
+              '<div class="c4k-category-chips-row">' +
+                '<span class="cat-label">Topics:</span>' +
+                categoriesList.map((cat) =>
+                  '<button type="button" class="c4k-cat-chip ' + (activeCategory === cat ? 'is-active' : '') + '" data-action="coding-filter-category" data-category="' + cat + '">' +
+                    (cat === 'all' ? 'All Topics' : cat) +
+                  '</button>'
+                ).join('') +
+              '</div>' +
+
+              '<div class="c4k-filter-status-row">' +
+                '<span id="freeLessonsCount" class="c4k-count-badge">Showing ' + freeLessons.length + ' of ' + C4K_FREE_LESSONS.length + ' free STEAM lessons</span>' +
+                ((activeBandKey !== 'all' || activeCategory !== 'all' || flow.lessonSearch) ?
+                  '<button type="button" class="text-link c4k-reset-btn" data-action="coding-filter-band" data-band="all">Clear filters</button>'
+                : '') +
+              '</div>' +
+            '</div>' +
+
+            '<!-- Free Lessons List -->' +
+            '<div class="free-lessons-list-wrapper">' +
+              '<div id="freeLessonsGrid" class="free-lessons-list c4k-free-grid" role="list">' +
+                renderFreeLessonCards(freeLessons) +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 6. Section: Interactive Robot Garden Quest -->' +
+      '<section class="code-garden-quest" id="code-quest" aria-labelledby="code-quest-title">' +
+        '<div class="code-quest-copy">' +
+          '<span class="code-kids-eyebrow">' + icon('star', 16) + ' TRY A MINI GAME · NO SIGN-UP NEEDED</span>' +
+          '<h2 id="code-quest-title">Robot in the baobab garden</h2>' +
+          '<p>' + esc(copy.questPrompt) + '</p>' +
+          '<div class="code-quest-instruction">' +
+            '<span>' + icon('info', 16) + '</span>' +
+            '<span>Build a sequence to get around the leafy bushes and reach the star. A correct route earns your first 10 maker XP.</span>' +
+          '</div>' +
+          '<div class="code-quest-controls">' +
+            '<span class="code-quest-subtitle">Add a movement block</span>' +
+            '<div class="code-quest-direction-row">' + questControls + '</div>' +
+          '</div>' +
+          '<div class="code-quest-code-label">' +
+            '<strong>Your sequence</strong>' +
+            '<small>' + flow.questCommands.length + '/12 blocks · tap a block to remove it</small>' +
+          '</div>' +
+          '<div class="code-quest-sequence" aria-label="Your movement code sequence">' + questCommandList + '</div>' +
+          '<div class="code-quest-actions">' +
+            '<button type="button" class="code-quest-run" data-action="code-quest-run">' + icon('play', 16) + ' ' + esc(copy.questRun) + '</button>' +
+            '<button type="button" class="code-quest-undo" data-action="code-quest-remove" data-index="' + Math.max(0, flow.questCommands.length - 1) + '" ' + (flow.questCommands.length ? '' : 'disabled') + '>' + icon('refresh', 15) + ' Undo</button>' +
+            '<button type="button" class="code-quest-undo" data-action="code-quest-clear" ' + (flow.questCommands.length ? '' : 'disabled') + '>' + icon('plus', 15) + ' ' + esc(copy.questClear) + '</button>' +
+          '</div>' +
+          '<details class="code-hint code-quest-hint">' +
+            '<summary>Need a hint?</summary>' +
+            '<p>' + esc(copy.questHint) + '</p>' +
+          '</details>' +
+          (flow.questResult ? '<div class="code-quest-result ' + (flow.questResult.includes('✓') ? 'is-success' : 'is-retry') + '" role="status">' + icon(flow.questResult.includes('✓') ? 'check' : 'refresh', 17) + ' ' + esc(flow.questResult) + '</div>' : '') +
+          (questSolved ? '<div class="code-quest-earned">' + icon('trophy', 17) + ' Garden Explorer badge earned</div>' : '') +
+        '</div>' +
+        '<div class="code-quest-board-card">' +
+          '<div class="code-quest-board-head">' +
+            '<div>' +
+              '<span class="section-kicker">THE PUZZLE MAP</span>' +
+              '<strong>Find the star</strong>' +
+            '</div>' +
+            '<span class="code-quest-badge">' + icon('sparkles', 15) + ' ' + (questSolved ? 'Complete' : 'Mission 01') + '</span>' +
+          '</div>' +
+          '<div class="code-quest-board" role="grid" aria-label="Robot garden maze with a star goal and leafy obstacles">' + questTiles + '</div>' +
+          '<div class="code-quest-key">' +
+            '<span><i class="key-robot">🤖</i> Your robot</span>' +
+            '<span><i class="key-bush">🌿</i> Bush</span>' +
+            '<span><i class="key-star">⭐</i> Goal</span>' +
+          '</div>' +
+          '<p>Think like a coder: plan, run, notice what happened, then try again.</p>' +
+        '</div>' +
+      '</section>' +
+
+      '<!-- 7. Section: Bilingual Code Studio & Workbench -->' +
+      '<section class="code-start-zone" id="coding-start" aria-labelledby="coding-start-title">' +
+        '<div class="code-start-heading">' +
+          '<div>' +
+            '<span class="section-kicker">YOUR MAKER JOURNEY · ' + CODE_PATHS.length + ' paths · ' + CODE_LEVELS.length + ' skill levels</span>' +
+            '<h2 id="coding-start-title">Interactive Bilingual Code Workbench</h2>' +
+            '<p>Choose a guide language, pick a path, then learn by trying. Your local progress stays on this device.</p>' +
+          '</div>' +
+          '<div class="code-progress-card code-progress-card-fun">' +
+            '<span class="code-progress-spark">' + icon('trophy', 22) + '</span>' +
+            '<div class="code-progress-heading">' +
+              '<small>Level ' + makerLevel + ' · ' + makerRank + '</small>' +
+              '<strong>' + flow.points + ' <em>XP</em></strong>' +
+            '</div>' +
+            '<div class="code-level-meter"><i style="width:' + levelProgress + '%"></i></div>' +
+            '<span>' + xpInLevel + '/50 XP to the next level · ' + flow.completed.length + ' challenge wins</span>' +
+            '<div class="code-progress-foot">' +
+              '<span>' + icon('sparkles', 14) + ' ' + flow.streak + ' day streak</span>' +
+              '<span>' + progress + '% path progress</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        renderStepper(stepLabels, flow.stage) +
+        '<div class="coding-layer-content">' + content + '</div>' +
+      '</section>' +
+
+      '<!-- 8. Section: Subscription / Stay in the Loop -->' +
+      '<div class="footer-neutral c4k-subscription-section" id="subscription">' +
+        '<div class="section-subscription">' +
+          '<div class="section-container">' +
+            '<div class="subscription-container">' +
+              '<div class="subscription-content-wrapper text-align-center">' +
+                '<div class="section-title">' +
+                  '<div class="subheading textcolor-accent-background">SUBSCRIPTION</div>' +
+                  '<h3 class="heading-4-white">Stay in the Loop</h3>' +
+                '</div>' +
+                '<div class="text-md textwidth-500 subscription-subtext">' +
+                  'Keep up to date on the latest developments in coding, robotics and STEAM education for K-8 with African language roots.' +
+                '</div>' +
+                '<form class="c4k-subscribe-form" data-form="coding-subscribe">' +
+                  '<input type="email" name="email" placeholder="Enter your school or guardian email…" required class="c4k-sub-input" />' +
+                  '<button type="submit" class="footer-button c4k-sub-btn">' +
+                    '<span class="text-s bold">Sign Up ' + icon('arrow', 14) + '</span>' +
+                  '</button>' +
+                '</form>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<section class="code-safety-note">' +
+        icon('shield', 16) + ' This is a local learning prototype: starter code is checked with simple teaching rules, and the garden quest simulates movement blocks. It does not execute arbitrary programs, upload code, or connect to an AI service. Language glosses need fluent-speaker review.' +
+      '</section>' +
+    '</div>';
   }
 
-  function renderStories() {
-    return `<div class="container route-page stories-page">
-      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories & Culture</strong></div>
-      
-      <!-- 3D Story Stage -->
-      <div class="story-3d-hero-stage">
-        <div id="story3DCanvasWrap" style="width: 100%; height: 100%;" data-3d-scene="story" title="Drag to rotate 3D ancient drum & magic story orb"></div>
-        <div class="hero-3d-floating-badge">
-          <span class="hero-3d-pulse-dot"></span>
-          <span>📜 3D Ancient Yoruba Lore Orb · Drag to Rotate</span>
-        </div>
-      </div>
 
-      <div class="section-heading">
-        <div>
-          <span class="section-kicker">Oral Tradition & Folklore</span>
-          <h1>African Stories, Riddles & Folktales</h1>
-          <p>Immerse yourself in rich West African oral history, ancestral wisdom, and interactive cultural games.</p>
-        </div>
-      </div>
-    </div>`;
+  function renderStories() {
+    const stories = [
+      { title: 'The story that travelled', desc: 'A family story told, remembered and shared again.', image: 'story-grandmother.jpg', tag: 'Oral tradition', lang: 'Yorùbá · English', tone: 'peach' },
+      { title: 'Words from the garden', desc: 'Notice new words as a small garden begins to grow.', image: 'yoruba-kids-culture.jpg', tag: 'Read together', lang: 'Beginner · 5 min', tone: 'mint' },
+      { title: 'A team of little builders', desc: 'Follow two friends as they solve a puzzle with code.', image: 'code-kids.jpg', tag: 'Code & create', lang: 'English + Yorùbá', tone: 'blue' }
+    ];
+    return `<div class="container route-page stories-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories</strong></div><section class="stories-hero"><div><span class="section-kicker">Stories & imagination</span><h1>Some things are best<br /><em>shared as a story.</em></h1><p>Read, listen and notice the words, voices and moments that bring a story to life.</p>${routeLink('ere_game', `Try a story game ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('story')}</div><div class="stories-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a folktale with two children" /><span class="story-image-chip">${icon('headphones', 16)} Listen together</span></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 0)}<div class="stories-topline"><div><span class="section-kicker">The story shelf</span><h2>Pick up where curiosity takes you.</h2></div><div class="story-filter">${icon('filter', 15)} Stories for everyone</div></div><div class="story-grid">${stories.map((s, i) => `<article class="story-card"><a class="story-card-image story-card-art story-card-art-${i + 1}" href="#/ere_game" data-route="ere_game" aria-label="Open story: ${esc(s.title)}"><span class="story-card-art-icon" aria-hidden="true">${icon(i === 0 ? 'book' : i === 1 ? 'quote' : 'music', 34)}</span><span class="story-card-tag">${s.tag}</span><span class="story-card-number">0${i + 1}</span></a><div class="story-card-body"><span class="story-language">${s.lang}</span><h3>${s.title}</h3><p>${s.desc}</p><div class="story-card-actions"><a class="text-link" href="#/ere_game" data-route="ere_game">Read & listen ${icon('arrow', 14)}</a><button class="save-button ${state.saved.includes(s.title) ? 'is-saved' : ''}" aria-label="Save ${s.title}" data-action="save-item" data-item="${esc(s.title)}">${icon('bookmark', 17)}</button></div></div></article>`).join('')}</div><section class="stories-bottom"><div><span class="section-kicker">More than a story</span><h2>Explore the voices behind the words.</h2><p>Discover oral genres, proverbs and language audio.</p></div><div class="stories-bottom-links">${routeLink('oral', 'Oral traditions ' + icon('arrow', 14), 'button button-outline')}${routeLink('voices', 'Voice library ' + icon('arrow', 14), 'button button-soft')}</div></section></div>`;
   }
 
   function renderStoryGame() {
@@ -2188,319 +2537,317 @@ import confetti from 'canvas-confetti';
     return `<div class="container route-page pricing-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Plans</strong></div><section class="pricing-hero"><span class="section-kicker">Flexible ways to learn</span><h1>More language.<br /><em>More belonging.</em></h1><p>Find the learning setup that fits your home or classroom. This preview keeps plans simple while the final scope is being shaped.</p><div class="billing-switch" role="group" aria-label="Billing period"><button class="${selected === 'monthly' ? 'active' : ''}" data-action="billing-period" data-period="monthly">Monthly</button><button class="${selected === 'yearly' ? 'active' : ''}" data-action="billing-period" data-period="yearly">Yearly</button><span>Preview only</span></div></section>${renderStepper(['Explore plans', 'Choose learning paths', 'Review as a family', 'Begin together'], 0)}<div class="pricing-grid"><article class="pricing-card"><span class="pricing-label">Begin here</span><h2>Explorer</h2><p>For learners ready to try a first path.</p><div class="pricing-cost"><strong>Free</strong><small>to get started</small></div><ul><li>${icon('check', 15)} Explore available languages</li><li>${icon('check', 15)} Try sample lessons & stories</li><li>${icon('check', 15)} Follow a personal learning path</li></ul>${routeLink('languages', 'Start exploring ' + icon('arrow', 15), 'button button-outline')}</article><article class="pricing-card pricing-featured"><span class="popular-pill">Made for together</span><span class="pricing-label">For home</span><h2>Family</h2><p>A shared learning space for the people close to you.</p><div class="pricing-cost"><strong>Coming soon</strong><small>final details to be confirmed</small></div><ul><li>${icon('check', 15)} Shared family learning routines</li><li>${icon('check', 15)} Stories to read and listen together</li><li>${icon('check', 15)} Progress designed for encouragement</li></ul><button class="button button-primary" data-action="choose-plan" data-plan="Family">Join the interest list ${icon('arrow', 15)}</button></article><article class="pricing-card"><span class="pricing-label">For educators</span><h2>School</h2><p>Learning paths for classrooms and teaching teams.</p><div class="pricing-cost"><strong>Let’s talk</strong><small>school plans are tailored</small></div><ul><li>${icon('check', 15)} Structured language modules</li><li>${icon('check', 15)} Culture and coding experiences</li><li>${icon('check', 15)} Educator-led learning journeys</li></ul>${routeLink('schools', 'Explore schools ' + icon('arrow', 15), 'button button-outline')}</article></div><p class="pricing-footnote">No final pricing or subscription commitments are represented in this prototype. Hosting, API and production costs should be confirmed with the Idilewa team.</p></div>`;
   }
 
-    function renderProfile() {
-    const user = getCurrentUser() || state.user || {
-      name: 'Learner',
-      email: 'learner@idilewa.com',
-      role: state.authRole || 'child',
-      points: 80,
-      streak: 2,
-      avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Idilewa'
-    };
-    const role = user.role || 'child';
-    const completedCount = state.completed ? state.completed.length : 1;
+  function renderProfile() {
+    const completedCount = state.completed.length;
     const percent = Math.min(100, Math.round((completedCount / 8) * 100));
     const lang = getLanguage(state.currentLang);
-
-    // Role-specific Header & Content
-    let roleDashboardHtml = '';
-
-    if (role === 'child') {
-      // 1. CHILD PORTAL: Gamified Coding & Voice Adventures
-      roleDashboardHtml = `
-        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #15764a 0%, #064e3b 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(21, 118, 74, 0.2);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-              <span class="badge-3d" style="background: #fde047; color: #18231d; margin-bottom: 8px;">🌱 Ọmọ Idilẹẹwa · Junior Explorer</span>
-              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Kaabo, ${esc(user.name)}!</h1>
-              <p style="color: #d1fae5; margin: 0; font-size: 1.05rem;">Master pure Yoruba coding, earn Maker XP, and unlock speech badges.</p>
-            </div>
-            <div style="display: flex; gap: 12px;">
-              <div class="stat-card perspective-3d-card" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 12px 20px; text-align: center; border-radius: 16px;">
-                <span style="font-size: 22px;">⚡</span>
-                <strong style="font-size: 1.4rem; display: block;">${user.points || 80} XP</strong>
-                <small style="color: #fde047; font-weight: 700;">Maker Points</small>
-              </div>
-              <div class="stat-card perspective-3d-card" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 12px 20px; text-align: center; border-radius: 16px;">
-                <span style="font-size: 22px;">🔥</span>
-                <strong style="font-size: 1.4rem; display: block;">${user.streak || 2} Days</strong>
-                <small style="color: #fde047; font-weight: 700;">Streak Flame</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Child Quick Quest Launchers -->
-        <h2 style="font-size: 1.4rem; margin-bottom: 14px;">Awọn Iṣẹ́ Rẹ Loni (Your Quests Today)</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 28px;">
-          <article class="activity-card perspective-3d-card" style="padding: 22px; border-top: 5px solid #eab308;">
-            <div style="font-size: 32px; margin-bottom: 10px;">💻</div>
-            <h3 style="font-size: 1.2rem; margin: 0 0 6px;">Kọ Koodu ni Yorùbá</h3>
-            <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 14px;">Run turtle graphics and write loops using pure Yoruba keywords.</p>
-            ${routeLink('coding', 'Open Yoruba Coding IDE ' + icon('arrow', 14), 'button button-primary button-small')}
-          </article>
-          <article class="activity-card perspective-3d-card" style="padding: 22px; border-top: 5px solid #15764a;">
-            <div style="font-size: 32px; margin-bottom: 10px;">🎙️</div>
-            <h3 style="font-size: 1.2rem; margin: 0 0 6px;">Ẹ̀kọ́ Ohùn (Voice Lessons)</h3>
-            <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 14px;">Translate English to Yoruba, Igbo, Hausa and test tonal pitch.</p>
-            ${routeLink('voice_lessons', 'Launch Voice Studio ' + icon('arrow', 14), 'button button-accent button-small')}
-          </article>
-          <article class="activity-card perspective-3d-card" style="padding: 22px; border-top: 5px solid #0284c7;">
-            <div style="font-size: 32px; margin-bottom: 10px;">🔤</div>
-            <h3 style="font-size: 1.2rem; margin: 0 0 6px;">Fawẹli & Kọnsònáǹtì</h3>
-            <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 14px;">Practice oral and nasal vowels with native sound synthesis.</p>
-            ${routeLink('lesson', 'Practice Vowels ' + icon('arrow', 14), 'button button-outline button-small')}
-          </article>
-        </div>
-
-        <!-- Gamified Badges Showcase -->
-        <div class="profile-lower-grid">
-          <section class="profile-card perspective-3d-card">
-            <div class="section-heading compact-heading">
-              <div><span class="section-kicker">Curriculum Track</span><h2>Igbésẹ̀ Ẹ̀kọ́ (Progress Path)</h2></div>
-            </div>
-            <div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div>
-            <p style="font-size: 0.95rem; color: var(--muted); margin-top: 8px;">${completedCount} lessons completed across language, voice and coding.</p>
-          </section>
-
-          <aside class="profile-badges perspective-3d-card">
-            <span class="section-kicker">Àwọn Àmì Ẹ̀yẹ (Your Badges)</span>
-            <h2 style="margin: 4px 0 14px;">Unlocked Achievements</h2>
-            <div class="badge-list">
-              <div class="badge-item"><span class="badge-icon badge-green">⚡</span><div><strong>First Yoruba Code</strong><small>Executed a valid EdeKoodu script</small></div></div>
-              <div class="badge-item"><span class="badge-icon badge-yellow">🎙️</span><div><strong>Tonal Master</strong><small>Practiced Dò-Re-Mí soundboard</small></div></div>
-              <div class="badge-item"><span class="badge-icon badge-blue">📜</span><div><strong>Story Explorer</strong><small>Read African folklore and Òwe</small></div></div>
-            </div>
-          </aside>
-        </div>
-      `;
-    } else if (role === 'adult') {
-      // 2. ADULT PORTAL: Professional Language, STEM & Oral Archives
-      roleDashboardHtml = `
-        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.2);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-              <span class="badge-3d" style="background: #38bdf8; color: #0f172a; margin-bottom: 8px;">🎓 Àgbàlagbà · Professional Scholar</span>
-              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Welcome, ${esc(user.name)}</h1>
-              <p style="color: #cbd5e1; margin: 0; font-size: 1.05rem;">Advanced African Linguistic Frameworks, STEM Pedagogy & Cultural Wisdom Archives.</p>
-            </div>
-            <div style="display: flex; gap: 12px;">
-              <button class="button button-accent button-small" data-route="languages">Explore Curricula</button>
-              <button class="button button-outline button-small" style="color: #fff; border-color: rgba(255,255,255,0.4);" data-route="owe">Òwe Archives</button>
-            </div>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 28px;">
-          <article class="activity-card perspective-3d-card" style="padding: 22px;">
-            <span class="section-kicker">Linguistics</span>
-            <h3>Comprehensive Grammar & Tone Tiers</h3>
-            <p style="color: var(--muted); font-size: 0.95rem;">High, mid, and low tonal registers with syllable phonetic breakdowns.</p>
-            ${routeLink('guides', 'Access Guides ' + icon('arrow', 14), 'text-link')}
-          </article>
-          <article class="activity-card perspective-3d-card" style="padding: 22px;">
-            <span class="section-kicker">Oral Tradition</span>
-            <h3>Ifá Odù & Philosophical Corpus</h3>
-            <p style="color: var(--muted); font-size: 0.95rem;">Examine canonical ethical discourses, ancient poetry, and proverbs.</p>
-            ${routeLink('ifa', 'Study Ifá Corpus ' + icon('arrow', 14), 'text-link')}
-          </article>
-          <article class="activity-card perspective-3d-card" style="padding: 22px;">
-            <span class="section-kicker">STEM Integration</span>
-            <h3>Indigenous Algorithmic Thinking</h3>
-            <p style="color: var(--muted); font-size: 0.95rem;">Computational structures and Yoruba programming syntax.</p>
-            ${routeLink('coding', 'Launch IDE ' + icon('arrow', 14), 'text-link')}
-          </article>
-        </div>
-      `;
-    } else if (role === 'parent') {
-      // 3. PARENT PORTAL: Guardian Safeguarding & 2-Factor Consent Center
-      const grant = state.consent || {};
-      const active = consentCodeIsActive();
-      roleDashboardHtml = `
-        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #065f46 0%, #064e3b 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(6, 95, 70, 0.25);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-              <span class="badge-3d" style="background: #a7f3d0; color: #064e3b; margin-bottom: 8px;">🛡️ Òbí / Guardian · Compliance & Safety Portal</span>
-              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Guardian Dashboard: ${esc(user.name)}</h1>
-              <p style="color: #d1fae5; margin: 0; font-size: 1.05rem;">Supervise children accounts, approve tutor connections, and issue secure Code Passes.</p>
-            </div>
-            ${routeLink('consent', 'Manage Consent Forms ' + icon('shield', 15), 'button button-accent')}
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 28px;">
-          <section class="activity-card perspective-3d-card" style="padding: 24px;">
-            <div class="section-heading compact-heading">
-              <div><span class="section-kicker">Supervised Learners</span><h2>Children Under Your Care</h2></div>
-            </div>
-            <div style="background: var(--cream); border-radius: 16px; padding: 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <span style="font-size: 32px;">👦🏽</span>
-                <div>
-                  <strong style="font-size: 1.1rem; display: block;">${esc(grant.learnerAlias || 'Ọmọ Adéwálé (Child Account)')}</strong>
-                  <small style="color: var(--muted);">Yorùbá K-8 Track · ${active ? '✓ Guardian Consent Active' : '⚠️ Pending Approval'}</small>
-                </div>
-              </div>
-              ${routeLink('consent', active ? 'View Code Pass' : 'Approve Now', 'button button-small ' + (active ? 'button-outline' : 'button-primary'))}
-            </div>
-            <div style="padding: 14px; border: 1.5px dashed var(--line); border-radius: 14px; font-size: 0.92rem; color: var(--muted);">
-              🔒 <strong>Child Privacy Guarantee:</strong> No legal names, phone numbers, or addresses are ever shared with tutors.
-            </div>
-          </section>
-
-          <aside class="activity-card perspective-3d-card" style="padding: 24px;">
-            <span class="section-kicker">Access Token</span>
-            <h3 style="margin: 4px 0 12px;">Active Code Pass</h3>
-            ${active ? `
-              <div style="background: #eaf6ec; border: 2px solid #15764a; border-radius: 14px; padding: 16px; text-align: center;">
-                <small style="font-weight: 700; color: #15764a;">7-Day Guardian Code Pass</small>
-                <div style="font-size: 1.5rem; font-weight: 800; color: #15764a; letter-spacing: 0.06em; margin: 6px 0;">${esc(grant.approvedCode || 'PASS-YOR-8492')}</div>
-                <small style="color: var(--muted);">Share only with your verified tutor</small>
-              </div>
-            ` : `
-              <div style="background: var(--cream); border-radius: 14px; padding: 16px; text-align: center;">
-                <p style="font-size: 0.92rem; color: var(--muted); margin: 0 0 10px;">No active Code Pass generated yet.</p>
-                ${routeLink('consent', 'Generate Parent Code ' + icon('arrow', 14), 'button button-primary button-small')}
-              </div>
-            `}
-          </aside>
-        </div>
-      `;
-    } else {
-      // 4. EDUCATOR / TUTOR PORTAL: Classroom & Student Management
-      roleDashboardHtml = `
-        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #78350f 0%, #451a03 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(120, 53, 15, 0.25);">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-              <span class="badge-3d" style="background: #fed7aa; color: #78350f; margin-bottom: 8px;">🏫 Olùkọ́ · Educator Portal</span>
-              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Educator Desk: ${esc(user.name)}</h1>
-              <p style="color: #fed7aa; margin: 0; font-size: 1.05rem;">Browse student requests, validate parent-approved Code Passes, and manage lessons.</p>
-            </div>
-            ${routeLink('connect_students', 'Validate Code Pass ' + icon('check', 15), 'button button-accent')}
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 28px;">
-          <article class="activity-card perspective-3d-card" style="padding: 22px;">
-            <span class="section-kicker">Discovery</span>
-            <h3>Learner Requests Queue</h3>
-            <p style="color: var(--muted); font-size: 0.95rem;">Browse ${LEARNER_REQUESTS.length} available students seeking African language and coding guidance.</p>
-            ${routeLink('connect_students', 'Browse Learners ' + icon('arrow', 14), 'button button-primary button-small')}
-          </article>
-          <article class="activity-card perspective-3d-card" style="padding: 22px;">
-            <span class="section-kicker">Verification</span>
-            <h3>Two-Factor Code Pass Validation</h3>
-            <p style="color: var(--muted); font-size: 0.95rem;">Unlock an assigned student's anonymous profile with their parent's Code Pass.</p>
-            ${routeLink('connect_students', 'Enter Code Pass ' + icon('arrow', 14), 'button button-outline button-small')}
-          </article>
-        </div>
-      `;
-    }
-
-    return `<div class="container route-page profile-page">
-      <div class="breadcrumbs">
-        ${routeLink('index', 'Home')}
-        <span>/</span>
-        <strong>${role.toUpperCase()} Dashboard</strong>
-      </div>
-
-      ${roleDashboardHtml}
-
-      <!-- Account Settings Bar -->
-      <div style="margin-top: 24px; padding: 18px 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <img src="${user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + esc(user.name)}" alt="Avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--green);" />
-          <div>
-            <strong>${esc(user.name)}</strong> · <small style="color: var(--muted);">${esc(user.email)}</small>
-            <span class="pill pill-soft" style="margin-left: 8px;">Role: ${role}</span>
-          </div>
-        </div>
-        <div style="display: flex; gap: 10px;">
-          <button class="button button-outline button-small" data-route="login">Switch Role / Login</button>
-          <button class="button button-soft button-small" data-action="logout-user">Wọle Jade (Sign Out)</button>
-        </div>
-      </div>
-    </div>`;
+    const journeyStep = completedCount >= 8 ? 3 : state.streak >= 3 ? 2 : completedCount ? 1 : 0;
+    return `<div class="container route-page profile-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My progress</strong></div>${renderStepper(['Choose a path', 'Practice a lesson', 'Build a streak', 'Celebrate progress'], journeyStep)}<section class="profile-welcome"><div class="profile-avatar">${icon('user', 27)}</div><div><span class="section-kicker">Your learning space · demo</span><h1>A good day to keep going.</h1><p>Your progress is saved in this browser for this prototype.</p></div><button class="button button-outline" data-route="login">${icon('user', 16)} Account settings</button></section><div class="profile-overview-grid"><article class="progress-main-card"><div class="progress-main-head"><div><span class="section-kicker">Current path</span><h2>${lang.name} · ${state.level.charAt(0).toUpperCase() + state.level.slice(1)}</h2><p>Keep building confidence, one small lesson at a time.</p></div><span class="progress-medallion">${icon('leaf', 23)}</span></div><div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div><div class="progress-foot"><span>${completedCount} lessons completed</span>${routeLink('course', 'Continue learning ' + icon('arrow', 14), 'text-link')}</div></article><div class="stat-card stat-streak"><span>${icon('sparkles', 20)}</span><small>Learning streak</small><strong>${state.streak} <em>days</em></strong><p>Showing up is a win.</p></div><div class="stat-card stat-points"><span>${icon('star', 20)}</span><small>Practice points</small><strong>${state.points}</strong><p>Earned by trying new things.</p></div></div><div class="profile-lower-grid"><section class="profile-card"><div class="section-heading compact-heading"><div><span class="section-kicker">Your recent steps</span><h2>Learning timeline</h2></div>${routeLink('course', 'View path ' + icon('arrow', 14), 'text-link')}</div><div class="timeline-row"><span class="timeline-check">${icon('check', 15)}</span><div><strong>Start with a greeting</strong><small>${lang.name} · First lesson</small></div><span class="timeline-status">${state.completed.includes(`${lang.id}-greetings-intro`) ? 'Complete' : 'Ready'}</span></div><div class="timeline-row timeline-next"><span class="timeline-num">02</span><div><strong>People close to us</strong><small>Next module · Words for family</small></div><button class="text-link" data-action="open-module" data-module="family" data-lang="${lang.id}" data-level="${state.level}">Open ${icon('arrow', 14)}</button></div><div class="timeline-row timeline-next"><span class="timeline-num">03</span><div><strong>Stories & memory</strong><small>Explore a story and listen for new words</small></div>${routeLink('ere', 'Explore ' + icon('arrow', 14), 'text-link')}</div></section><aside class="profile-badges"><span class="section-kicker">Small things worth celebrating</span><h2>Your first badges</h2><div class="badge-list"><div class="badge-item"><span class="badge-icon badge-green">${icon('leaf', 18)}</span><div><strong>First steps</strong><small>Opened your learning path</small></div></div><div class="badge-item"><span class="badge-icon badge-yellow">${icon('volume', 18)}</span><div><strong>Good listener</strong><small>Practiced a spoken phrase</small></div></div><div class="badge-item badge-locked"><span class="badge-icon">${icon('trophy', 18)}</span><div><strong>Story keeper</strong><small>Complete a story activity</small></div></div></div></aside></div><div class="profile-privacy-note">${icon('lock', 16)} This demo keeps progress on this device. Production accounts require secure authentication and privacy review.</div></div>`;
   }
 
   function renderLogin() {
     const signUp = state.loginMode === 'signup';
+    const activeGrant = consentCodeIsActive();
     const role = state.authRole || 'child';
+    const isChild = role === 'child';
+    const isEducator = role === 'educator';
+    const isParent = role === 'parent';
+    const isAdult = role === 'adult';
 
-    return `<div class="container route-page auth-page">
-      <div class="breadcrumbs" style="margin-bottom: 12px;">
-        ${routeLink('index', 'Home')}
-        <span>/</span>
-        <strong>${signUp ? 'Ṣẹda Akọọlẹ (Sign Up)' : 'Wọle (Sign In)'}</strong>
-      </div>
+    const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
+    const authLayers = [
+      { title: 'Choose who is learning', text: 'Adults and educators can explore independently. A child path starts with a parent or guardian, never personal details.' },
+      { title: 'Get signed family approval', text: 'A guardian reviews the request and signs. Approval for an assigned tutor is an explicit, separate choice.' },
+      { title: 'Check the approved code', text: 'The code is a local verification check ensuring all young learners stay under active parental supervision.' },
+      { title: 'Continue safely & explore', text: 'You can explore all language paths freely. Never enter real passwords or sensitive personal data in this demo.' }
+    ];
 
-      <div class="auth-clean-wrapper">
-        <div class="auth-clean-card perspective-3d-card">
-          <!-- 3D Interactive Sacred Shield Stage -->
-          <div class="auth-3d-stage">
-            <div id="auth3DCanvasWrap" class="auth-3d-canvas-wrap" data-3d-scene="auth" style="width: 100%; height: 100%;" title="Drag to rotate 3D sacred key & shield"></div>
-            <div class="hero-3d-floating-badge" style="bottom: 10px;">
-              <span class="hero-3d-pulse-dot"></span>
-              <span>🛡️ 3D Cultural Gateway · Drag to Rotate</span>
+    return `<div class="container route-page auth-page modern-auth-page">
+      <!-- Left Column: Rich Cultural Media & Highlights Showcase -->
+      <aside class="auth-art modern-auth-art">
+        <div class="auth-showcase-card">
+          <div class="auth-image modern-auth-image">
+            <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" />
+            <div class="auth-art-overlay"></div>
+            <div class="auth-art-badge">
+              <span class="pulse-dot"></span>
+              <span>Idilewa Learning Space</span>
+            </div>
+            <div class="auth-art-note">
+              <span>Èdè wa, àṣà wa, ìdílé wa</span>
+              <strong>Our language. Our culture. Our family.</strong>
             </div>
           </div>
 
-          <div class="auth-clean-header">
-            <h1>${signUp ? 'Ṣẹda Akọọlẹ Titun' : 'Kaabo! Wọle si Idilẹẹwa'}</h1>
-            <p>${signUp ? 'Create your personalized cultural & coding profile' : 'Enter your email and password to enter the 3D home portal'}</p>
-          </div>
-
-          <!-- Clean Tab Switcher -->
-          <div class="auth-tab-switch">
-            <button type="button" class="auth-tab-btn ${!signUp ? 'is-active' : ''}" data-action="set-login-mode" data-mode="signin">
-              Wọle (Sign In)
-            </button>
-            <button type="button" class="auth-tab-btn ${signUp ? 'is-active' : ''}" data-action="set-login-mode" data-mode="signup">
-              Ṣẹda Akọọlẹ (Sign Up)
-            </button>
-          </div>
-
-          <div id="authStatusAlert" style="display: none; padding: 12px 16px; border-radius: 12px; margin-bottom: 18px; font-size: 0.95rem; font-weight: 700;"></div>
-
-          <form id="cleanAuthForm" data-form="clean-auth">
-            ${signUp ? `
-              <div class="auth-clean-field">
-                <label for="authName">Orukọ Rẹ (Your Name):</label>
-                <input type="text" id="authName" name="name" placeholder="E.g. Adéwálé Babatunde" required />
+          <div class="auth-highlights-box">
+            <div class="auth-highlight-pill">
+              <span class="auth-pill-ico tone-mint">${icon('mic', 16)}</span>
+              <div>
+                <strong>AI Voice & Tonal Feedback</strong>
+                <small>6 African languages with live pitch scoring</small>
               </div>
-
-              <div class="auth-clean-field">
-                <label>Ipa Rẹ (Role):</label>
-                <div class="auth-role-pills">
-                  <button type="button" class="auth-role-pill ${role === 'child' ? 'is-active' : ''}" data-action="set-auth-role" data-role="child">Ọmọ (Child)</button>
-                  <button type="button" class="auth-role-pill ${role === 'adult' ? 'is-active' : ''}" data-action="set-auth-role" data-role="adult">Àgbàlagbà (Adult)</button>
-                  <button type="button" class="auth-role-pill ${role === 'parent' ? 'is-active' : ''}" data-action="set-auth-role" data-role="parent">Òbí (Parent)</button>
-                  <button type="button" class="auth-role-pill ${role === 'educator' ? 'is-active' : ''}" data-action="set-auth-role" data-role="educator">Olùkọ́ (Educator)</button>
-                </div>
+            </div>
+            <div class="auth-highlight-pill">
+              <span class="auth-pill-ico tone-yellow">${icon('code', 16)}</span>
+              <div>
+                <strong>K–8 Code for Kids & STEAM</strong>
+                <small>30+ interactive lessons paired with cultural proverbs</small>
               </div>
-            ` : ''}
-
-            <div class="auth-clean-field">
-              <label for="authEmail">Imeeli Rẹ (Email Address):</label>
-              <input type="email" id="authEmail" name="email" placeholder="oruko@example.com" required autocomplete="email" />
             </div>
-
-            <div class="auth-clean-field">
-              <label for="authPassword">Ọ̀rọ̀ìgbànilọ́wọ́ (Password):</label>
-              <input type="password" id="authPassword" name="password" placeholder="••••••••" required minlength="6" autocomplete="current-password" />
+            <div class="auth-highlight-pill">
+              <span class="auth-pill-ico tone-blue">${icon('shield', 16)}</span>
+              <div>
+                <strong>Child-Safe Guardian Supervision</strong>
+                <small>Consent codes & verified educator matching</small>
+              </div>
             </div>
+          </div>
 
-            <button type="submit" class="auth-submit-btn" id="authSubmitBtn">
-              ${signUp ? 'Ṣẹda Akọọlẹ Mi (Create Account)' : 'Wọle (Sign In)'} ${icon('arrow', 16)}
-            </button>
-
-            <button type="button" class="auth-demo-fill-btn" data-action="fill-demo-auth">
-              ⚡ Demo 1-Click Test Credentials
-            </button>
-          </form>
+          <div class="auth-quote-card">
+            <div class="auth-quote-mark">“</div>
+            <p>A joyful place where children and families preserve African heritage while mastering 21st-century tech.</p>
+            <div class="auth-quote-author">— The Idilewa Philosophy</div>
+          </div>
         </div>
-      </div>
+      </aside>
+
+      <!-- Right Column: Modern Authentication Card Panel -->
+      <main class="auth-panel modern-auth-panel">
+        <div class="breadcrumbs">
+          ${routeLink('index', 'Home')}
+          <span>/</span>
+          <strong>${signUp ? 'Create Account' : 'Sign In'}</strong>
+        </div>
+
+        <div class="auth-header-block">
+          <span class="section-kicker">${signUp ? 'Join the Idilewa Family' : 'Welcome Back'}</span>
+          <h1 class="auth-title">${signUp ? 'Start Your Heritage Journey' : 'Sign In to Your Space'}</h1>
+          <p class="auth-subtitle">${signUp ? 'Create a personalized learning space for yourself or your family.' : 'Continue practicing languages, voice training, and coding.'}</p>
+        </div>
+
+        <!-- Mode Selector Switcher Tabs -->
+        <div class="auth-toggle modern-auth-tabs" role="tablist">
+          <button type="button" class="auth-tab-btn ${!signUp ? 'active' : ''}" data-action="login-mode" data-mode="signin" role="tab" aria-selected="${!signUp}">
+            ${icon('user', 15)} Sign In
+          </button>
+          <button type="button" class="auth-tab-btn ${signUp ? 'active' : ''}" data-action="login-mode" data-mode="signup" role="tab" aria-selected="${signUp}">
+            ${icon('plus', 15)} Create Account
+          </button>
+        </div>
+
+        <!-- Persona Role Selector Cards -->
+        <div class="auth-role-selector">
+          <label class="auth-role-label">Choose Learning Persona:</label>
+          <div class="auth-role-grid">
+            <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child">
+              <span class="role-icon tone-green">${icon('smile', 16)}</span>
+              <span class="role-title">Child Learner</span>
+              <span class="role-tag">Parent Code</span>
+            </button>
+            <button type="button" class="auth-role-card ${isAdult ? 'is-selected' : ''}" data-action="auth-role-select" data-role="adult">
+              <span class="role-icon tone-blue">${icon('book', 16)}</span>
+              <span class="role-title">Adult Learner</span>
+              <span class="role-tag">Self-Paced</span>
+            </button>
+            <button type="button" class="auth-role-card ${isParent ? 'is-selected' : ''}" data-action="auth-role-select" data-role="parent">
+              <span class="role-icon tone-warm">${icon('heart', 16)}</span>
+              <span class="role-title">Parent/Guardian</span>
+              <span class="role-tag">Supervisor</span>
+            </button>
+            <button type="button" class="auth-role-card ${isEducator ? 'is-selected' : ''}" data-action="auth-role-select" data-role="educator">
+              <span class="role-icon tone-pink">${icon('school', 16)}</span>
+              <span class="role-title">Educator/Tutor</span>
+              <span class="role-tag">Teacher</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick 1-Click Persona Demo Bar -->
+        <div class="auth-quick-demo-bar">
+          <span class="quick-demo-title">⚡ 1-Click Interactive Demo Login:</span>
+          <div class="quick-demo-btns">
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="child" title="Fill as Child Learner">
+              ${icon('smile', 13)} Child
+            </button>
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="parent" title="Fill as Parent Guardian">
+              ${icon('heart', 13)} Parent
+            </button>
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="educator" title="Fill as Language Educator">
+              ${icon('school', 13)} Educator
+            </button>
+            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="adult" title="Fill as Adult Learner">
+              ${icon('book', 13)} Adult
+            </button>
+          </div>
+        </div>
+
+        <!-- Modern Auth Form -->
+        <form class="auth-form modern-auth-form" data-form="login">
+          <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
+
+          ${signUp ? `
+          <div class="form-group">
+            <label for="authName" class="form-label">Name or Learner Alias</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('smile', 17)}</span>
+              <input id="authName" type="text" name="name" class="form-input" autocomplete="name" placeholder="${isChild ? 'e.g. Ayo B. (Use nickname for safety)' : 'e.g. Samuel Owoyemi'}" required />
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="form-group">
+            <label for="authEmail" class="form-label">Email address or Username</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('user', 17)}</span>
+              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@idilewa.demo' : isEducator ? 'teacher@idilewa.demo' : isParent ? 'parent@idilewa.demo' : 'you@example.com'}" required />
+            </div>
+          </div>
+
+          ${isChild ? `
+          <div class="form-group consent-form-group">
+            <div class="form-label-row">
+              <label for="signinConsentCode" class="form-label">Parent-Approved Consent Code</label>
+              ${routeLink('consent', 'Get Parent Code ' + icon('arrow', 12), 'text-link text-link-small')}
+            </div>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('shield', 17)}</span>
+              <input id="signinConsentCode" type="text" name="consentCode" class="form-input" maxlength="12" autocomplete="off" placeholder="ID-123456" value="${activeGrant ? esc(state.consent.approvedCode) : ''}" required />
+              ${activeGrant ? `<span class="input-badge-verified">${icon('check', 13)} Active on Device</span>` : ''}
+            </div>
+            <p class="form-helper-text">${activeGrant ? 'Guardian approval is active on this browser.' : 'A parent or guardian must sign the consent form to generate this code.'}</p>
+          </div>
+          ` : ''}
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label for="authPassword" class="form-label">Password</label>
+              ${!signUp ? `<button class="forgot-link" type="button" data-action="forgot-password">Forgot password?</button>` : ''}
+            </div>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('lock', 17)}</span>
+              <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" minlength="8" placeholder="••••••••••••" required />
+              <button type="button" class="password-toggle-btn" data-action="toggle-password-visibility" aria-label="Toggle password visibility">
+                ${icon('eye', 16)}
+              </button>
+            </div>
+          </div>
+
+          ${signUp ? `
+          <label class="consent-check modern-consent-check">
+            <input type="checkbox" name="demoOnly" value="yes" required checked />
+            <span>I understand this is a prototype sandbox; no real passwords or sensitive details are saved.</span>
+          </label>
+          ` : `
+          <div class="form-options-row">
+            <label class="consent-check modern-consent-check">
+              <input type="checkbox" name="rememberMe" value="yes" checked />
+              <span>Remember this device</span>
+            </label>
+            <span class="auth-security-badge">${icon('shield', 12)} Protected Demo</span>
+          </div>
+          `}
+
+          <button class="button button-primary modern-auth-submit" type="submit">
+            <span>${signUp ? (isChild ? 'Validate Code & Create Child Space' : 'Create Supervised Space') : (isChild ? 'Check Code & Sign In' : 'Sign In to Learning Space')}</span>
+            ${icon('arrow', 16)}
+          </button>
+        </form>
+
+        <!-- Trust & Privacy Sandbox Note -->
+        <div class="auth-safe-note modern-auth-safe-note">
+          <span class="safe-note-icon">${icon('lock', 16)}</span>
+          <div>
+            <strong>Local Privacy-Preserving Sandbox</strong>
+            <span>All progress and lesson points are stored locally. Real credentials are never collected or transmitted.</span>
+          </div>
+        </div>
+
+        <div class="auth-separator"><span>or explore freely</span></div>
+
+        <div class="auth-alt-links">
+          ${routeLink('languages', 'Continue as Guest without signing in ' + icon('arrow', 14), 'button button-soft auth-guest-btn')}
+          <div class="auth-sub-links">
+            ${routeLink('consent', `${icon('heart', 13)} Parent & Guardian Consent Center`, 'text-link')}
+            ${routeLink('trainer', `${icon('mic', 13)} African Voice Trainer Studio`, 'text-link')}
+          </div>
+        </div>
+
+        <!-- 4-Layer Family-First Access Checks Section -->
+        <section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="4">
+          <div class="auth-layer-guide-heading">
+            <span class="section-kicker">Family-first access checks</span>
+            <h2 id="auth-layer-title">A clear route into learning.</h2>
+            <p>Access follows the learner’s age, guardian permission and the choice to keep exploring safely.</p>
+          </div>
+          <div class="auth-layer-guide-grid">
+            ${authLayers.map((layer, index) => `
+              <article class="auth-layer-card">
+                <span>0${index + 1}</span>
+                <div>
+                  <h3>${layer.title}</h3>
+                  <p>${layer.text}</p>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+      </main>
     </div>`;
+  }
+
+  const TEACHER_PROFILES = [
+    {
+      id: 'tola-demo', name: 'Tola A.', image: 'yoruba-educator-woman.jpg', language: 'Yorùbá',
+      focus: 'Everyday conversation & family phrases', tags: ['speaking'],
+      hours: 'Monday & Wednesday · 4:00–7:00 pm WAT', hoursSummary: '6 hours each week', learners: 36,
+      bio: 'A sample educator profile focused on warm, practical language practice for beginners. Profile details and numbers are illustrative placeholders for this prototype.'
+    },
+    {
+      id: 'kunle-demo', name: 'Kunle O.', image: 'yoruba-educator-man.jpg', language: 'Yorùbá',
+      focus: 'Stories, pronunciation & beginner coding', tags: ['story', 'coding'],
+      hours: 'Tuesday & Thursday · 5:00–7:00 pm WAT', hoursSummary: '4 hours each week', learners: 24,
+      bio: 'A sample educator profile combining story-led language learning with first steps in coding. Profile details and numbers are illustrative placeholders for this prototype.'
+    }
+  ];
+
+  const LEARNER_REQUESTS = [
+    { id: 'learner-a', label: 'Learner A.', language: 'Yorùbá', level: 'New learner', goal: 'Practice greetings and everyday family phrases.', preferred: 'Weekdays after school · 4:00–5:00 pm WAT', interest: 'Speaking with confidence' },
+    { id: 'learner-b', label: 'Learner B.', language: 'Yorùbá', level: 'Growing learner', goal: 'Listen to a short story and learn new words from it.', preferred: 'Saturday morning · 10:00–11:00 am WAT', interest: 'Stories & listening' },
+    { id: 'learner-c', label: 'Learner C.', language: 'Yorùbá', level: 'New learner', goal: 'Try a small coding activity with familiar language words.', preferred: 'Tuesday · 5:00–6:00 pm WAT', interest: 'Language + coding' }
+  ];
+
+  function makeConsentCode(prefix) {
+    let value = 0;
+    try {
+      const sample = new Uint32Array(1);
+      if (window.crypto && typeof window.crypto.getRandomValues === 'function') window.crypto.getRandomValues(sample);
+      else sample[0] = Math.floor(Math.random() * 0xffffffff);
+      value = sample[0] % 900000 + 100000;
+    } catch (_) { value = Math.floor(Math.random() * 900000) + 100000; }
+    return `${prefix}-${String(value).padStart(6, '0')}`;
+  }
+  function consentCodeIsActive() {
+    const grant = state.consent;
+    return !!(grant?.approved && grant.accountApproved && grant.approvedCode && Number(grant.expiresAt) > Date.now());
+  }
+  function tutorGrantIsActive(tutorId) {
+    const grant = state.consent;
+    return consentCodeIsActive() && !!(grant.tutorApproved && tutorId && grant.tutorId === tutorId);
+  }
+  function tutorSessionIsValid() {
+    const grant = state.consent;
+    return tutorGrantIsActive(grant.tutorId) && grant.tutorValidatedFor === grant.tutorId;
+  }
+  function startConsentRequest(tutorId = '') {
+    const alias = state.consent.learnerAlias || 'Young learner';
+    state.consent = {
+      ...defaults.consent,
+      requestCode: makeConsentCode('REQ'),
+      learnerAlias: alias,
+      tutorId: tutorId || '',
+      requestedAt: new Date().toISOString()
+    };
+    saveState();
   }
 
   function renderConnectTeachers() {
@@ -2522,117 +2869,22 @@ import confetti from 'canvas-confetti';
       </section><div class="connection-child-note">${icon('heart', 17)} A parent can approve one named tutor at a time. Any new tutor requires a new signed approval and code.</div></div>`;
   }
 
-    function renderConnectStudents() {
+  function renderConnectStudents() {
     const verified = tutorSessionIsValid();
     const grant = state.consent;
     const tutor = TEACHER_PROFILES.find((item) => item.id === grant.tutorId);
+    const samplePreview = `<details class="locked-sample-preview"><summary>Preview fictional learner cards (read-only)</summary><div class="learner-request-grid">${LEARNER_REQUESTS.map((learner) => `<article class="learner-request-card sample-locked"><div class="learner-card-head"><span class="learner-avatar">${icon('user', 21)}</span><span class="guardian-managed-tag">${icon('lock', 13)} Fictional sample</span></div><span class="teacher-language-tag">${esc(learner.language)} · ${esc(learner.level)}</span><h3>${esc(learner.label)}</h3><div class="learner-goal"><small>Example learning goal</small><p>${esc(learner.goal)}</p></div><div class="learner-request-meta"><span>${icon('sparkles', 14)} ${esc(learner.interest)}</span><span>${icon('calendar', 14)} Sample schedule</span></div><button class="button button-soft" type="button" disabled>Parent code required before assignment</button></article>`).join('')}</div></details>`;
     const tutorOptions = TEACHER_PROFILES.map((profile) => `<option value="${profile.id}" ${grant.tutorId === profile.id ? 'selected' : ''}>${esc(profile.name)} · ${esc(profile.language)}</option>`).join('');
-
-    return `<div class="container route-page connection-page connect-students-page">
-      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Students (Educator Portal)</strong></div>
-      
-      <section class="connection-teacher-hero">
-        <div>
-          <span class="section-kicker">For Certified Educators · 2-Factor Consent Engine</span>
-          <h1>Teach only after<br /><em>guardian approval.</em></h1>
-          <p>Every child–tutor pairing requires an automated Guardian Consent payload and a matching Code Pass before a classroom assignment opens.</p>
-          <div class="hero-actions">
-            ${routeLink('connect_teachers', 'View Teacher Directory ' + icon('arrow', 15), 'button button-outline')}
-            ${routeLink('consent', 'Parent Consent Portal ' + icon('shield', 15), 'button button-primary')}
-          </div>
-        </div>
-        <div class="connection-kids-image" style="background: radial-gradient(circle at 50% 50%, #eaf6ec 0%, #faf9f2 100%); border-radius: 24px; padding: 20px; border: 1px solid rgba(21,118,74,0.2);">
-          <div style="text-align: center; padding: 20px 0;">
-            <div style="font-size: 56px; margin-bottom: 8px;">🛡️</div>
-            <strong style="font-size: 1.2rem; color: #15764a; display: block;">Secure Two-Factor Safeguard</strong>
-            <small style="color: var(--muted);">Encrypted Code Pass required to access student profiles</small>
-          </div>
-        </div>
-      </section>
-
-      ${renderStepper(['1. Select Student & Click Connect', '2. Parent Reviews & Signs', '3. Parent Issues Code Pass', '4. Tutor Unlocks Assignment'], verified ? 3 : grant.requestCode ? 1 : 0)}
-
-      <!-- Tutor Validation Form -->
-      <section class="tutor-approval-workspace" style="margin: 28px 0;">
-        ${verified ? `
-          <article class="approved-assignment-card perspective-3d-card" style="border: 2px solid var(--green); background: #eaf6ec; border-radius: 20px; padding: 28px;">
-            <div class="approved-assignment-mark" style="font-size: 36px; margin-bottom: 10px;">🎉</div>
-            <span class="section-kicker" style="color: var(--green);">Connection Unlocked & Active</span>
-            <h2 style="margin: 6px 0;">Assigned Student: ${esc(grant.learnerAlias || 'Ọmọ Adéwálé')}</h2>
-            <p>Assigned Tutor: <strong>${esc(tutor?.name || 'Verified Educator')}</strong> · Guardian Signature Verified ✓</p>
-            <div class="assignment-scope-pill" style="margin: 12px 0;">${icon('shield', 15)} Anonymous Learner · Protected Supervised Space</div>
-            ${grant.assignmentAccepted ? `
-              <div style="background: #15764a; color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 700;">
-                ✓ Student Active in your Classroom · Ready for Yoruba & Coding Lessons!
-              </div>
-            ` : `
-              <button class="button button-primary" data-action="accept-assignment">Accept Assignment & Start Lesson ${icon('arrow', 15)}</button>
-            `}
-          </article>
-        ` : `
-          <form class="tutor-consent-verify-card perspective-3d-card" data-form="tutor-consent-check" style="background: var(--paper); border: 1.5px solid var(--line); border-radius: 24px; padding: 32px; box-shadow: 0 16px 40px rgba(0,0,0,0.06);">
-            <div>
-              <span class="section-kicker">Step 4 · Unlock Connection</span>
-              <h2>Validate Parent-Approved Code Pass</h2>
-              <p>Enter your educator profile and the 7-day Code Pass shared by the student's guardian.</p>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0;">
-              <div>
-                <label for="tutorIdentity" style="font-weight: 700; display: block; margin-bottom: 6px;">Your Tutor Profile:</label>
-                <select id="tutorIdentity" name="tutorId" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #c8ded0;" required>
-                  <option value="">Choose your profile</option>
-                  ${tutorOptions}
-                </select>
-              </div>
-              <div>
-                <label for="tutorConsentCode" style="font-weight: 700; display: block; margin-bottom: 6px;">Parent Code Pass (Access Token):</label>
-                <input id="tutorConsentCode" name="consentCode" type="text" placeholder="e.g. ID-123456" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #c8ded0; font-weight: 700;" required />
-              </div>
-            </div>
-            <button class="button button-primary" type="submit">Validate Code Pass & Unlock Student ${icon('shield', 15)}</button>
-          </form>
-        `}
-      </section>
-
-      <!-- Student Discovery Catalog (Available Students with 3D Avatar & Visible "Connect" CTA Button) -->
-      <section style="margin-top: 36px;">
-        <div class="section-heading">
-          <div>
-            <span class="section-kicker">Available Learners</span>
-            <h2>Available Student Requests</h2>
-            <p>Browse students seeking language and coding mentors. Click "Connect" to send a consent payload to their guardian.</p>
-          </div>
-        </div>
-
-        <div class="learner-request-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-          ${LEARNER_REQUESTS.map((learner, idx) => `
-            <article class="learner-request-card perspective-3d-card" style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <div class="learner-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                  <div style="width: 48px; height: 48px; border-radius: 50%; background: #eaf6ec; border: 2px solid #15764a; display: flex; align-items: center; justify-content: center; font-size: 24px;">
-                    ${idx % 2 === 0 ? '👦🏽' : '👧🏾'}
-                  </div>
-                  <span class="pill pill-mint">${esc(learner.language)} · ${esc(learner.level)}</span>
-                </div>
-                <h3 style="font-size: 1.25rem; margin: 0 0 6px;">${esc(learner.label)}</h3>
-                <div class="learner-goal" style="background: var(--cream); padding: 10px 14px; border-radius: 12px; margin: 10px 0;">
-                  <small style="font-weight: 700; color: var(--muted); display: block;">Learning Goal:</small>
-                  <p style="margin: 2px 0 0; font-size: 0.95rem;">${esc(learner.goal)}</p>
-                </div>
-                <div style="font-size: 0.9rem; color: var(--muted); margin-bottom: 16px;">
-                  <span>✨ Interest: <strong>${esc(learner.interest)}</strong></span>
-                </div>
-              </div>
-              
-              <!-- Direct Connect CTA Button -->
-              <button class="button button-primary" style="width: 100%; justify-content: center;" type="button" data-action="tutor-connect-student" data-alias="${esc(learner.label)}" data-lang="${esc(learner.language)}">
-                Connect with Student ${icon('arrow', 14)}
-              </button>
-            </article>
-          `).join('')}
-        </div>
-      </section>
-    </div>`;
+    const assignment = verified
+      ? `<article class="approved-assignment-card"><div class="approved-assignment-mark">${icon('check', 22)}</div><span class="section-kicker">Parent-approved assignment</span><h2>${esc(grant.learnerAlias || 'Young learner')}</h2><p>Assigned tutor: <strong>${esc(tutor?.name || 'Approved tutor')}</strong>. The guardian approved this specific pairing and signed the consent form.</p><div class="assignment-scope-pill">${icon('shield', 15)} Anonymous learner · no contact details</div>${grant.assignmentAccepted ? `<div class="assignment-active-note">${icon('check', 16)} Assignment accepted in this local demo. No lesson, message or booking is actually created.</div>` : `<button class="button button-primary" data-action="accept-assignment">Accept this approved demo assignment ${icon('arrow', 15)}</button>`}</article>`
+      : `<form class="tutor-consent-verify-card" data-form="tutor-consent-check"><div><span class="section-kicker">Required before teaching or connecting</span><h2>Validate the parent-approved code.</h2><p>A tutor may only open the learner’s anonymous assignment after the parent has signed the form, approved that tutor and shared the matching code.</p></div><label for="tutorIdentity">Your tutor profile<select id="tutorIdentity" name="tutorId" required><option value="">Choose your sample tutor profile</option>${tutorOptions}</select></label><label for="tutorConsentCode">Parent-approved consent code<input id="tutorConsentCode" name="consentCode" type="text" autocomplete="off" maxlength="12" placeholder="ID-123456" required /></label><button class="button button-primary" type="submit">Validate code & assignment ${icon('shield', 15)}</button><small>No code or parent approval means no learner profile, response, booking or teaching access.</small></form>`;
+    return `<div class="container route-page connection-page connect-students-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Students</strong></div>
+      <section class="connection-teacher-hero"><div><span class="section-kicker">For educators · safeguarding first</span><h1>Teach only after<br /><em>guardian approval.</em></h1><p>Every child–tutor pairing needs a signed parent consent form and a code that matches the assigned tutor before a learner can be accepted.</p><div class="hero-actions">${routeLink('connect_teachers', `Open family tutor directory ${icon('arrow', 15)}`, 'button button-outline')}${routeLink('consent', 'How consent works', 'text-link')}</div></div><div class="connection-kids-image"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in traditional Yorùbá attire sharing a language book" /><span>Safety and family permission come first.</span></div></section>
+      ${renderStepper(['Review request', 'Parent signs form', 'Validate tutor code', 'Accept assignment'], verified ? 3 : 0)}
+      <div class="connection-notice">${icon('shield', 17)} <div><strong>Four checks before a real lesson.</strong><span>Parent approval · signed form · code matches the assigned tutor · secure production verification. This offline prototype demonstrates the flow but cannot verify a real parent.</span></div></div>
+      <section class="tutor-approval-workspace">${assignment}</section>
+      ${!verified ? samplePreview : ''}
+      <div class="connection-child-note">${icon('lock', 17)} Tutor approvals are tutor-specific and expire after seven days in this demo. The stored local code is not a production credential.</div></div>`;
   }
 
   function renderConsent() {
@@ -2829,134 +3081,336 @@ import confetti from 'canvas-confetti';
       showToast("+25 XP Earned! Fluency Score: " + overall + "% ⭐⭐⭐", "success");
     }
 
-      function renderVoiceLessons(params = {}) {
-    const targetLang = state.translatorTarget || 'yo';
-    const inputText = state.translatorInput !== undefined ? state.translatorInput : 'Good morning, how are you today?';
-    const translationResult = translateText(inputText, targetLang);
-    const translatedText = state.translatorOutput !== undefined ? state.translatorOutput : translationResult.translated;
+    function renderTrainer(params) {
+      const activeLang = state.trainer.lang || "yoruba";
+      const activeLevel = state.trainer.level || "beginner";
+      const activeLessonId = state.trainer.activeLessonId || 1;
+      const speed = state.trainer.speed || 1.0;
 
-    const phrases = [
-      'Hello', 'Good morning', 'Good evening', 'Thank you', 'How are you', 'What is your name', 'My name is', 'I want to learn', 'Welcome', 'Peace', 'Family', 'Joy'
-    ];
+      const langData = TRAINER_CURRICULUM[activeLang] || TRAINER_CURRICULUM.yoruba;
+      const currentTierLessons = langData[activeLevel] || langData.beginner;
+      const activeLesson = currentTierLessons.find(l => l.id === activeLessonId) || currentTierLessons[0] || langData.beginner[0];
 
-    return `<div class="container route-page voice-lessons-page">
-      <div class="breadcrumbs">
-        ${routeLink('index', 'Home')}
-        <span>/</span>
-        <strong>Voice Lessons & Multi-Language Translation</strong>
-      </div>
+      const completedCount = Object.keys(state.trainer.completed || {}).length;
+      const avgScore = completedCount > 0 
+        ? Math.round(Object.values(state.trainer.completed).reduce((acc, v) => acc + (v.score || 90), 0) / completedCount) 
+        : 96;
 
-      <div class="voice-lessons-hero">
-        <span class="section-kicker">Voice Lessons & Live Multi-Language Translation</span>
-        <h1>Master African Tonal Speech & Translation</h1>
-        <p>Translate from English to Yorùbá, Igbo, and Hausa with live voice speech, 3D audio frequencies, tonal melody soundboard, and 60 lessons.</p>
-      </div>
-
-      <!-- Live Translation Studio -->
-      <div class="translation-studio-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <h2 style="margin: 0; font-size: 20px;">🗣️ Translation Studio (English ➔ African Languages)</h2>
-            <p style="margin: 2px 0 0; font-size: 13px; color: var(--muted);">Type or speak in English, translate to Yorùbá, Igbo, or Hausa, and click "Sọ / Voice" to speak aloud.</p>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label for="target-lang-select" style="font-size: 13px; font-weight: 700;">Target Language:</label>
-            <select id="target-lang-select" class="form-input" style="padding: 6px 12px; width: auto;" data-action="select-target-lang">
-              <option value="yo" ${targetLang === 'yo' ? 'selected' : ''}>Èdè Yorùbá (Yoruba)</option>
-              <option value="ig" ${targetLang === 'ig' ? 'selected' : ''}>Asụsụ Igbo (Igbo)</option>
-              <option value="ha" ${targetLang === 'ha' ? 'selected' : ''}>Harshen Hausa (Hausa)</option>
-            </select>
-          </div>
+      return `<div class="container route-page trainer-page">
+        <div class="breadcrumbs">
+          ${routeLink("index", "Home")}<span>/</span>
+          ${routeLink("languages", "Languages")}<span>/</span>
+          <strong>Voice African Language Trainer</strong>
         </div>
 
-        <div class="translation-studio-grid">
-          <!-- Box 1: English Input -->
-          <div class="translator-box">
-            <div class="translator-box-header">
-              <label for="translator-input" style="font-weight: 700; font-size: 14px;">🇬🇧 English Input</label>
-              <button class="button button-small button-outline" type="button" data-action="mic-translate" title="Speak into microphone">
-                🎙️ Mic Input
-              </button>
+        <section class="trainer-hero">
+          <div class="trainer-hero-copy">
+            <div class="trainer-hero-badge">
+              <span>${icon("headphones", 16)}</span>
+              <strong>VOICE AFRICAN LANGUAGE TRAINER MODEL</strong>
             </div>
-            <textarea id="translator-input" class="translator-textarea" placeholder="Type words or sentences in English...">${esc(inputText)}</textarea>
-            <div class="quick-phrase-row">
-              <span style="font-size: 11px; font-weight: 700; color: var(--muted); align-self: center;">Quick:</span>
-              ${phrases.slice(0, 6).map((p) => `<button class="quick-phrase-chip" type="button" data-action="quick-phrase" data-phrase="${p}">${p}</button>`).join('')}
-            </div>
-          </div>
-
-          <!-- Box 2: Target Language Output -->
-          <div class="translator-box">
-            <div class="translator-box-header">
-              <label for="translator-output" style="font-weight: 700; font-size: 14px;">
-                ${targetLang === 'yo' ? '🇳🇬 Èdè Yorùbá' : targetLang === 'ig' ? '🇳🇬 Asụsụ Igbo' : '🇳🇬 Harshen Hausa'} Output
-              </label>
-              <span style="font-size: 12px; color: var(--green-dark); font-weight: 600;">✓ Tonal Restoration Active</span>
-            </div>
-            <textarea id="translator-output" class="translator-textarea is-output" readonly>${esc(translatedText)}</textarea>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button class="button button-primary" type="button" id="voice-speak-btn" data-action="voice-speak-translated" data-lang="${targetLang}" data-text="${esc(translatedText)}">
-                🔊 Sọ / Voice (Speak Aloud)
-              </button>
-              <button class="button button-outline" type="button" data-action="save-voice-record" data-lang="${targetLang}" data-text="${esc(translatedText)}">
-                💾 Save Record
-              </button>
-              <button class="button button-outline" type="button" data-action="copy-translation" data-text="${esc(translatedText)}">
-                📋 Copy
-              </button>
+            <h1>Speak African Languages<br /><em>with 100% Native Tonal Fluency.</em></h1>
+            <p>Master authentic pitch accents, Do-Re-Mi tone melodies, and pronunciation for kids through 60 structured voice lessons across Beginner, Intermediate, and Advanced tiers.</p>
+            
+            <div class="trainer-stats-strip">
+              <div class="trainer-stat-pill">
+                <span class="stat-icon">⭐</span>
+                <div>
+                  <strong>${state.trainer.xp || 220} XP</strong>
+                  <small>Total Knowledge Points</small>
+                </div>
+              </div>
+              <div class="trainer-stat-pill">
+                <span class="stat-icon">🔥</span>
+                <div>
+                  <strong>${state.trainer.streak || 5} Days</strong>
+                  <small>Practice Streak</small>
+                </div>
+              </div>
+              <div class="trainer-stat-pill">
+                <span class="stat-icon">🎓</span>
+                <div>
+                  <strong>${completedCount} / 60</strong>
+                  <small>Lessons Completed</small>
+                </div>
+              </div>
+              <div class="trainer-stat-pill">
+                <span class="stat-icon">🎯</span>
+                <div>
+                  <strong>${avgScore}%</strong>
+                  <small>Average Pronunciation</small>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- 3D Audio Frequency Waveform Visualizer -->
-        <div class="voice-3d-visualizer-container">
-          <canvas id="voice-3d-visualizer" width="600" height="160"></canvas>
-          <div style="position: absolute; bottom: 8px; left: 16px; font-size: 11px; color: #86efac; font-family: monospace;">
-            3D Frequency Spectrum · Dò (220Hz) · Re (294Hz) · Mí (370Hz)
-          </div>
-        </div>
-      </div>
+          <div class="trainer-hero-visual">
+            <div class="trainer-interactive-disc">
+              <img src="./assets/listening-reader.jpg" alt="Child practicing African voice trainer" class="trainer-hero-img" />
+              <div class="trainer-orbit-ring" aria-hidden="true">
+                <span class="orbit-tone tone-high">High (Mí) ↗</span>
+                <span class="orbit-tone tone-mid">Mid (Re) →</span>
+                <span class="orbit-tone tone-low">Low (Dó) ↘</span>
+              </div>
+            </div>\n    </section>
 
-      <!-- Tone Melody Soundboard -->
-      <section style="margin-bottom: 32px;">
-        <div class="section-heading">
-          <div>
-            <span class="section-kicker">Interactive Tone Melody Soundboard</span>
-            <h2>African Tonal Pitch Soundboard</h2>
-            <p>Click the keys below to hear and practice the essential pitch frequencies: Low (Dò), Mid (Re), and High (Mí).</p>
+        <section class="trainer-language-selector-section">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">Step 1: Choose Your Language</span>
+              <h2>Select an African Language to Train</h2>
+            </div>
+            <span class="demo-badge">6 Living Languages Ready</span>
           </div>
-        </div>
+          <div class="trainer-lang-pills">
+            ${[
+              { id: "yoruba", name: "Yorùbá", flag: "🇳🇬 🇧🇯", glyph: "Ẹ", desc: "Tonal: Dó-Re-Mí" },
+              { id: "igbo", name: "Igbo", flag: "🇳🇬", glyph: "Ị", desc: "Tonal & Downstep" },
+              { id: "hausa", name: "Hausa", flag: "🇳🇬 🇳🇪", glyph: "H", desc: "Tonal & Vowel Cadence" },
+              { id: "swahili", name: "Kiswahili", flag: "🇰🇪 🇹🇿", glyph: "S", desc: "Bantu Melodic Stress" },
+              { id: "zulu", name: "isiZulu", flag: "🇿🇦", glyph: "Z", desc: "Clicks & Harmony" },
+              { id: "twi", name: "Twi / Akan", flag: "🇬🇭", glyph: "T", desc: "High & Low Tones" }
+            ].map(l => `
+              <button type="button" class="trainer-lang-btn ${activeLang === l.id ? "is-active" : ""}" data-action="trainer-set-lang" data-lang="${l.id}">
+                <span class="lang-flag">${l.flag}</span>
+                <span class="lang-info">
+                  <strong>${l.name}</strong>
+                  <small>${l.desc}</small>
+                </span>
+                <span class="lang-glyph">${l.glyph}</span>
+              </button>
+            `).join("")}
+          </div>
+        </section>
 
-        <div class="tone-soundboard-grid">
-          <div class="tone-key-card tone-high" data-action="play-tone-pitch" data-tone="high">
-            <span style="font-size: 24px;">🔔</span>
-            <strong style="font-size: 18px; color: #a16207;">Ó · Mí (High Tone)</strong>
-            <small>High Frequency (~370Hz) · Ákṣẹ́ntì Òkè (´)</small>
-            <span class="button button-small button-outline" style="margin-top: 6px;">Play Pitch (370Hz)</span>
+        <section class="trainer-level-tabs-section">
+          <div class="trainer-tabs-wrap">
+            <button type="button" class="trainer-level-tab tab-beginner ${activeLevel === "beginner" ? "is-active" : ""}" data-action="trainer-set-level" data-level="beginner">
+              <span class="level-indicator dot-green"></span>
+              <span class="level-label">
+                <strong>Beginner Tier</strong>
+                <small>Lessons 01 – 20 • Foundations & Daily Phrases</small>
+              </span>
+              <span class="level-badge">20 Lessons</span>
+            </button>
+
+            <button type="button" class="trainer-level-tab tab-intermediate ${activeLevel === "intermediate" ? "is-active" : ""}" data-action="trainer-set-level" data-level="intermediate">
+              <span class="level-indicator dot-yellow"></span>
+              <span class="level-label">
+                <strong>Intermediate Tier</strong>
+                <small>Lessons 21 – 40 • Talking Drum & Conversations</small>
+              </span>
+              <span class="level-badge">20 Lessons</span>
+            </button>
+
+            <button type="button" class="trainer-level-tab tab-advanced ${activeLevel === "advanced" ? "is-active" : ""}" data-action="trainer-set-level" data-level="advanced">
+              <span class="level-indicator dot-red"></span>
+              <span class="level-label">
+                <strong>Advanced Tier</strong>
+                <small>Lessons 41 – 60 • Classical Proverbs & Oríkì</small>
+              </span>
+              <span class="level-badge">20 Lessons</span>
+            </button>
           </div>
-          <div class="tone-key-card tone-mid" data-action="play-tone-pitch" data-tone="mid">
-            <span style="font-size: 24px;">🍃</span>
-            <strong style="font-size: 18px; color: #15764a;">O · Re (Mid Tone)</strong>
-            <small>Mid Frequency (~294Hz) · Normal baseline</small>
-            <span class="button button-small button-outline" style="margin-top: 6px;">Play Pitch (294Hz)</span>
+        </section>
+
+        <section class="trainer-studio-section" id="trainerStudio">
+          <div class="studio-card">
+            <div class="studio-top">
+              <div class="studio-meta">
+                <span class="lesson-num-badge">LESSON ${String(activeLesson.id).padStart(2, "0")}</span>
+                <span class="lesson-cat-badge">${activeLesson.category}</span>
+                <span class="difficulty-stars">
+                  ${"★".repeat(activeLesson.difficulty || 1)}${"☆".repeat(3 - (activeLesson.difficulty || 1))}
+                </span>
+              </div>
+              <div class="studio-speed-control">
+                <span class="speed-label">Playback Speed:</span>
+                <div class="speed-buttons">
+                  <button type="button" class="speed-btn ${speed === 0.75 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="0.75">0.75x Slow</button>
+                  <button type="button" class="speed-btn ${speed === 1.0 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="1.0">1.0x Normal</button>
+                  <button type="button" class="speed-btn ${speed === 1.25 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="1.25">1.25x Fast</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="studio-phrase-area">
+              <h2 class="studio-phrase-native">${activeLesson.phrase}</h2>
+              <div class="studio-phonetic">${activeLesson.phonetic}</div>
+              <div class="studio-translation">
+                <span>Meaning:</span> <strong>${activeLesson.translation}</strong>
+              </div>
+            </div>
+
+            <div class="studio-syllable-soundboard">
+              <div class="soundboard-header">
+                <span>${icon("sparkles", 15)} Interactive Syllable Pitch Soundboard (Click to hear exact tone frequencies):</span>
+              </div>
+              <div class="syllables-list">
+                ${(activeLesson.syllables || []).map((s, idx) => `
+                  <button type="button" class="syllable-sound-pill tone-${s.tone}" data-action="trainer-play-syllable" data-freq="${s.freq}" data-syllable="${s.text}" title="Tone: ${s.pitch} (${s.tone}) - Click to play">
+                    <span class="syllable-text">${s.text}</span>
+                    <span class="syllable-pitch">${s.pitch}</span>
+                    <span class="syllable-tone-tag">${s.tone}</span>
+                  </button>
+                `).join("")}
+              </div>
+              <div class="tone-pattern-guide">
+                <strong>Tone Pitch Melody:</strong> <code>${activeLesson.tonePattern}</code>
+              </div>
+            </div>
+
+            <div class="studio-cultural-tip">
+              <div class="tip-icon">${icon("leaf", 18)}</div>
+              <div class="tip-text">
+                <strong>Cultural Heritage Context:</strong>
+                <p>${activeLesson.culturalTip}</p>
+              </div>
+            </div>
+
+            <div class="studio-controls-panel">
+              <div class="studio-buttons-row">
+                <button type="button" class="btn-studio btn-play-native" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">
+                  ${icon("volume", 20)}
+                  <span>Listen to Native Voice (${speed}x)</span>
+                </button>
+
+                ${!state.trainer.isRecording ? `
+                  <button type="button" class="btn-studio btn-record-voice" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">
+                    ${icon("mic", 20)}
+                    <span>Record Your Voice & Analyze</span>
+                  </button>
+                ` : `
+                  <button type="button" class="btn-studio btn-stop-recording" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">
+                    <span class="recording-pulsar" aria-hidden="true"></span>
+                    <span>Stop & Evaluate Pronunciation</span>
+                  </button>
+                `}
+              </div>
+
+              <div class="studio-visualizer-box">
+                <canvas id="waveformCanvas" width="560" height="70"></canvas>
+                <div class="visualizer-hint">
+                  ${state.trainer.isRecording ? "🔴 Listening closely to your voice pitch... Speak clearly!" : "▶️ Click Listen to hear native speaker, or 🎤 Record to evaluate your pitch."}
+                </div>
+              </div>
+            </div>
+
+            ${state.trainer.analysis ? `
+              <div class="studio-analysis-result">
+                <div class="analysis-score-header">
+                  <div class="score-circle">
+                    <strong>${state.trainer.analysis.overall}%</strong>
+                    <small>Fluency Score</small>
+                  </div>
+                  <div class="score-details">
+                    <div class="score-stars">
+                      ${"★".repeat(state.trainer.analysis.stars)}${"☆".repeat(3 - state.trainer.analysis.stars)}
+                    </div>
+                    <h3>${state.trainer.analysis.stars === 3 ? "🎉 Flawless Native Pronunciation!" : state.trainer.analysis.stars === 2 ? "👏 Great Effort! Almost Native!" : "👍 Good Practice! Try again for 3 stars!"}</h3>
+                    <p>${state.trainer.analysis.feedback}</p>
+                  </div>
+                </div>
+
+                <div class="analysis-meters-grid">
+                  <div class="meter-card">
+                    <div class="meter-label">
+                      <span>Tonal Pitch Accuracy</span>
+                      <strong>${state.trainer.analysis.toneAccuracy}%</strong>
+                    </div>
+                    <div class="meter-bar"><div class="meter-fill fill-green" style="width: ${state.trainer.analysis.toneAccuracy}%"></div></div>
+                  </div>
+                  <div class="meter-card">
+                    <div class="meter-label">
+                      <span>Rhythm & Pacing</span>
+                      <strong>${state.trainer.analysis.rhythmScore}%</strong>
+                    </div>
+                    <div class="meter-bar"><div class="meter-fill fill-yellow" style="width: ${state.trainer.analysis.rhythmScore}%"></div></div>
+                  </div>
+                  <div class="meter-card">
+                    <div class="meter-label">
+                      <span>Articulation & Clarity</span>
+                      <strong>${state.trainer.analysis.clarityScore}%</strong>
+                    </div>
+                    <div class="meter-bar"><div class="meter-fill fill-blue" style="width: ${state.trainer.analysis.clarityScore}%"></div></div>
+                  </div>
+                </div>
+              </div>
+            ` : ""}
+
+            <div class="studio-nav-footer">
+              <button type="button" class="btn-nav-lesson" data-action="trainer-prev-lesson" ${activeLesson.id <= (activeLevel === "beginner" ? 1 : activeLevel === "intermediate" ? 21 : 41) ? "disabled" : ""}>
+                ${icon("arrow", 14)} Previous Lesson
+              </button>
+
+              <span class="lesson-counter-tag">Lesson ${activeLesson.id} of 60</span>
+
+              <button type="button" class="btn-nav-lesson" data-action="trainer-next-lesson" ${activeLesson.id >= (activeLevel === "beginner" ? 20 : activeLevel === "intermediate" ? 40 : 60) ? "disabled" : ""}>
+                Next Lesson ${icon("arrow", 14)}
+              </button>
+            </div>\n    </section>
+
+        <section class="trainer-curriculum-section">
+          <div class="section-heading">
+            <div>
+              <span class="section-kicker">${activeLevel.toUpperCase()} CURRICULUM</span>
+              <h2>All 20 Lessons in ${activeLevel.charAt(0).toUpperCase() + activeLevel.slice(1)} Tier</h2>
+              <p>Click on any lesson card to load it directly into the Voice Trainer Studio.</p>
+            </div>
+            <span class="demo-badge">${currentTierLessons.length} Audio Lessons</span>
           </div>
-          <div class="tone-key-card tone-low" data-action="play-tone-pitch" data-tone="low">
-            <span style="font-size: 24px;">🌊</span>
-            <strong style="font-size: 18px; color: #0284c7;">Ò · Dò (Low Tone)</strong>
-            <small>Low Frequency (~220Hz) · Ákṣẹ́ntì Ìsàlẹ̀ (&#96;)</small>
-            <span class="button button-small button-outline" style="margin-top: 6px;">Play Pitch (220Hz)</span>
+
+          <div class="trainer-lessons-grid">
+            ${currentTierLessons.map(lesson => {
+              const record = state.trainer.completed[lesson.id];
+              const isSelected = lesson.id === activeLesson.id;
+              return `
+                <article class="trainer-lesson-card ${isSelected ? "is-selected" : ""} ${record ? "is-completed" : ""}" data-action="trainer-select-lesson" data-id="${lesson.id}">
+                  <div class="lesson-card-top">
+                    <span class="lesson-card-num">#${String(lesson.id).padStart(2, "0")}</span>
+                    <span class="lesson-card-cat">${lesson.category}</span>
+                    ${record ? `
+                      <span class="lesson-card-status status-done">
+                        ${"★".repeat(record.stars)} ${record.score}%
+                      </span>
+                    ` : `
+                      <span class="lesson-card-status status-ready">Ready</span>
+                    `}
+                  </div>
+
+                  <h3 class="lesson-card-title">${lesson.title}</h3>
+                  <div class="lesson-card-phrase">${lesson.phrase}</div>
+                  <p class="lesson-card-translation">${lesson.translation}</p>
+
+                  <div class="lesson-card-footer">
+                    <span class="lesson-card-action">
+                      ${isSelected ? "Currently Practicing •" : "Practice Voice →"}
+                    </span>
+                    <span class="lesson-card-diff">${"★".repeat(lesson.difficulty || 1)}</span>
+                  </div>
+                </article>
+              `;
+            }).join("")}
           </div>
-        </div>
-      </section>
-    </div>`;
-  }
-  function renderTrainer(params) { return renderVoiceLessons(params); }
+        </section>
+
+        <section class="trainer-certificate-banner">
+          <div class="cert-icon-wrap">🎓</div>
+          <div class="cert-copy">
+            <h3>Earn Your African Voice Master Certificate</h3>
+            <p>Complete all 20 lessons in this tier with at least 85% accuracy to unlock your verified Idilewa Fluency Certificate for children.</p>
+          </div>
+          <button type="button" class="button button-primary" data-action="trainer-view-cert">
+            View Certificate Progress ${icon("arrow", 15)}
+          </button>
+        </section>
+      </div>`;
+    }
 
 
   function renderPage(page, params) {
     switch (page) {
-      case 'voice_lessons':
-      case 'trainer': return renderVoiceLessons(params);
+      case 'trainer': return renderTrainer(params);
       case 'index': return renderHome();
       case 'languages': return renderLanguages();
       case 'course': return renderCourse(params);
@@ -3130,7 +3584,7 @@ import confetti from 'canvas-confetti';
       else rewritten = rewritten.replace('<img', `<img alt="${esc(alt)}"`);
       return rewritten;
     });
-    if (slot === 0 && !['index', 'login', 'coding', 'trainer', 'voice_lessons', 'course', 'lesson', 'consent', 'connect_students', 'connect_teachers'].includes(page)) {
+    if (slot === 0 && !['coding', 'trainer', 'course', 'lesson'].includes(page)) {
       const filename = ROUTE_IMAGE_OVERRIDES[`${page}-1`] || `page-${page}-1.jpg`;
       const alt = routeImageAlt(page, 1);
       const visual = IMAGE_READY.has(filename)
@@ -3628,33 +4082,83 @@ import confetti from 'canvas-confetti';
     stage.addEventListener('mouseleave', onMouseLeave, { passive: true });
   }
 
-    let current3DHero = null;
-  let current3DVisualizer = null;
+  
+  function init3DScrollObserver() {
+    if (typeof IntersectionObserver === 'undefined') return;
 
-  function initPage3DEffects(page) {
-    if (current3DHero) { try { current3DHero.destroy(); } catch (_) {} current3DHero = null; }
-    if (current3DVisualizer) { try { current3DVisualizer.destroy(); } catch (_) {} current3DVisualizer = null; }
+    const targetSelectors = [
+      'section',
+      'article',
+      '.card',
+      '.feature-card',
+      '.lesson-card',
+      '.coding-card',
+      '.proverb-card',
+      '.oral-card',
+      '.stat-card',
+      '.pricing-card',
+      '.panel',
+      '.flowchart-step',
+      '.hero-quote',
+      '.hero-stage',
+      '.grid > div',
+      '.flex-col > div',
+      'form',
+      '.split-view',
+      '.cta-banner'
+    ];
 
-    const heroCanvasEl = document.getElementById('hero-3d-canvas');
-    if (heroCanvasEl) {
-      current3DHero = init3DHeroCanvas(heroCanvasEl);
-    }
+    const elements = document.querySelectorAll(targetSelectors.join(', '));
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, {
+      threshold: 0.06,
+      rootMargin: '0px 0px -30px 0px'
+    });
 
-    const visualizerEl = document.getElementById('voice-3d-visualizer');
-    if (visualizerEl) {
-      current3DVisualizer = init3DAudioVisualizer(visualizerEl);
-    }
+    elements.forEach((el) => {
+      if (el.closest('header') || el.closest('nav') || el.classList.contains('top-nav') || el.id === 'top') {
+        return;
+      }
+      
+      const rect = el.getBoundingClientRect();
+      el.classList.add('scroll-3d-reveal');
+      
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        setTimeout(() => el.classList.add('is-visible'), 40);
+      } else {
+        observer.observe(el);
+      }
+    });
 
-    const turtleCanvas = document.getElementById('yoruba-turtle-canvas');
-    if (turtleCanvas) {
-      const activeLesson = YORUBA_CODE_LESSONS.find((l) => l.id === state.yorubaLessonId) || YORUBA_CODE_LESSONS[0];
-      const initialCode = state.yorubaCode !== undefined ? state.yorubaCode : activeLesson.starterCode;
-      executeYorubaCode(initialCode, turtleCanvas);
-    }
+    // 3D Tilt for interactive cards
+    document.querySelectorAll('.card, .feature-card, .proverb-card, .lesson-card, .coding-card, .oral-card, .pricing-card').forEach((card) => {
+      if (card.dataset.tiltAttached) return;
+      card.dataset.tiltAttached = 'true';
+      
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+        card.style.transform = 'perspective(1000px) rotateX(' + rotateX.toFixed(2) + 'deg) rotateY(' + rotateY.toFixed(2) + 'deg) translateY(-4px) translateZ(10px)';
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
   }
 
-
-    function render() {
+  function render() {
     const { page, params } = parseLocation();
     if (params.lang && LANGUAGES.some((l) => l.id === params.lang)) state.currentLang = params.lang;
     if (params.level && ['beginner', 'intermediate', 'advanced', 'growing', 'fluent'].includes(params.level)) state.level = normalizeCourseLevel(params.level);
@@ -3663,49 +4167,11 @@ import confetti from 'canvas-confetti';
     const title = page === 'index' ? 'Preserving African culture. Promoting technology.' : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
     document.title = `${title} · Idilewa`;
     document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
-    
-    // Explicit 3D Hero Canvas Mount
     if (page === 'index') {
-      const heroEl = document.getElementById('hero3DCanvasWrap');
-      if (heroEl) {
-        init3DHeroCanvas(heroEl);
-      }
+      initHeroParallax();
+      initHeroCinematicVideoEngine();
     }
-
-    // Explicit 3D Auth Canvas Mount
-    if (page === 'login') {
-      const authEl = document.getElementById('auth3DCanvasWrap');
-      if (authEl) {
-        init3DAuthCanvas(authEl);
-      }
-    }
-
-    // Explicit 3D Coding Canvas Mount
-    if (page === 'coding') {
-      const codingEl = document.getElementById('coding3DCanvasWrap');
-      if (codingEl) {
-        init3DCodingCanvas(codingEl);
-      }
-      const turtleCanvas = document.getElementById('yoruba-turtle-canvas');
-      const editor = document.getElementById('yoruba-code-editor');
-      if (turtleCanvas && editor) {
-        executeYorubaCode(editor.value, turtleCanvas);
-      }
-    }
-
-    // Explicit 3D Voice Visualizer Mount
-    if (page === 'voice_lessons' || page === 'trainer') {
-      const visualizerCanvas = document.getElementById('voiceVisualizerCanvas');
-      if (visualizerCanvas) {
-        init3DAudioVisualizer(visualizerCanvas);
-      }
-    }
-
-    // Global 3D Elements & Tilt Mount
-    window.setTimeout(() => {
-      autoMount3DElements();
-      init3DTiltEngine();
-    }, 50);
+    init3DScrollObserver();
   }
 
   function showToast(message, tone = 'success') {
@@ -3794,21 +4260,6 @@ import confetti from 'canvas-confetti';
         const input = document.getElementById('aiHelperQuestion');
         if (input) input.value = el.dataset.prompt || '';
         answerAiPrompt(el.dataset.topic || 'general');
-        break;
-      }
-      case 'tutor-connect-student': {
-        const alias = el.dataset.alias || 'Young Learner';
-        startConsentRequest('');
-        state.consent.learnerAlias = alias;
-        showToast(`Connection request sent for ${alias}! Parent approval code: ${state.consent.requestCode}`, 'success');
-        navigate('consent');
-        break;
-      }
-      case 'logout-user': {
-        dbSignOut();
-        state.user = null;
-        showToast('You have signed out.', 'info');
-        navigate('login');
         break;
       }
       case 'start-consent-request': startConsentRequest(el.dataset.tutorId || ''); navigate('consent'); break;
@@ -4312,24 +4763,6 @@ import confetti from 'canvas-confetti';
   });
 
   document.addEventListener('input', (event) => {
-    if (event.target && event.target.id === 'translator-input') {
-      const val = event.target.value;
-      state.translatorInput = val;
-      const res = translateText(val, state.translatorTarget || 'yo');
-      const outEl = document.getElementById('translator-output');
-      if (outEl) outEl.value = res.translated;
-      state.translatorOutput = res.translated;
-    }
-    if (event.target && event.target.id === 'target-lang-select') {
-      state.translatorTarget = event.target.value;
-      const inputEl = document.getElementById('translator-input');
-      const val = inputEl ? inputEl.value : '';
-      const res = translateText(val, state.translatorTarget);
-      const outEl = document.getElementById('translator-output');
-      if (outEl) outEl.value = res.translated;
-      state.translatorOutput = res.translated;
-    }
-
     if (event.target && event.target.id === 'siteSearch') {
       const results = document.getElementById('searchResults');
       if (results) results.innerHTML = searchResults(event.target.value);
