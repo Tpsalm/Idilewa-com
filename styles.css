@@ -5361,3 +5361,687 @@ main, #main, .main-content, .page-container {
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   3D HERO STAGE & CODE IN YOUR LANGUAGE IDE (CODE PAGE)
+   ========================================================================== */
+
+/* 1. 3D Hero Stage */
+.c4k-3d-hero-stage {
+  position: relative;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #092c1d 0%, #0f4b32 40%, #173826 75%, #0b1f15 100%);
+  border: 1px solid rgba(220, 160, 40, 0.25);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  padding: 4rem 2.5rem 3.5rem;
+  margin-bottom: 3.5rem;
+  color: #ffffff;
+  transform-style: preserve-3d;
+}
+
+.c4k-3d-ambient-glow {
+  position: absolute;
+  top: -20%;
+  left: 30%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(220, 160, 40, 0.22) 0%, rgba(21, 118, 74, 0.3) 40%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  animation: ambientFloat 10s ease-in-out infinite alternate;
+}
+
+@keyframes ambientFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, 30px) scale(1.15); }
+}
+
+.c4k-3d-particles-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.c4k-floating-token {
+  position: absolute;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(220, 160, 40, 0.3);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fed7aa;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  animation: floatToken 7s ease-in-out infinite alternate;
+}
+
+.token-1 { top: 12%; left: 8%; animation-delay: 0s; color: #86efac; }
+.token-2 { top: 18%; right: 10%; animation-delay: 1.5s; color: #fde047; }
+.token-3 { bottom: 25%; left: 5%; animation-delay: 3s; color: #93c5fd; }
+.token-4 { bottom: 18%; right: 12%; animation-delay: 2.2s; color: #fca5a5; }
+.token-5 { top: 48%; right: 4%; animation-delay: 4s; color: #e9d5ff; }
+
+@keyframes floatToken {
+  0% { transform: perspective(600px) translateY(0px) rotateZ(-3deg) rotateX(0deg); }
+  50% { transform: perspective(600px) translateY(-14px) rotateZ(3deg) rotateX(6deg); }
+  100% { transform: perspective(600px) translateY(6px) rotateZ(-2deg) rotateX(-4deg); }
+}
+
+.c4k-hero-content-wrapper {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.c4k-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(220, 160, 40, 0.18);
+  border: 1px solid rgba(220, 160, 40, 0.45);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fef08a;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.c4k-3d-main-heading {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.c4k-3d-sub-lead {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 780px;
+  margin: 0 auto 2rem;
+  font-weight: 400;
+}
+
+.c4k-quick-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 2.75rem;
+}
+
+.c4k-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.c4k-nav-pill:hover, .c4k-nav-pill.active {
+  background: #dc9628;
+  border-color: #dc9628;
+  color: #18231d;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(220, 150, 40, 0.35);
+}
+
+/* 3D Hub Cards */
+.c4k-3d-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.c4k-3d-hub-card {
+  background: rgba(14, 52, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 1.75rem;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.c4k-3d-hub-card:hover {
+  transform: perspective(1000px) translateY(-8px) translateZ(16px) rotateX(2deg);
+  border-color: rgba(220, 160, 40, 0.6);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(220, 150, 40, 0.25);
+}
+
+.c4k-hub-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.c4k-hub-text h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.c4k-grade-tag {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #86efac;
+  margin-bottom: 0.6rem;
+}
+
+.c4k-desc {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.c4k-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fef08a;
+  transition: background 0.2s ease;
+}
+
+.c4k-3d-hub-card:hover .c4k-card-cta {
+  background: #dc9628;
+  color: #18231d;
+}
+
+/* 2. Code in Your Language IDE Section */
+.c4k-ide-section {
+  background: #0f1c15;
+  border: 1px solid rgba(220, 160, 40, 0.2);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  margin-bottom: 3.5rem;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.4);
+  color: #e2e8f0;
+}
+
+.c4k-ide-header-box {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+}
+
+.c4k-ide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  background: rgba(21, 118, 74, 0.3);
+  border: 1px solid rgba(21, 118, 74, 0.6);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #86efac;
+  margin-bottom: 0.75rem;
+}
+
+.c4k-ide-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.01em;
+}
+
+.c4k-ide-subtitle {
+  font-size: 1rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.c4k-ide-workspace {
+  background: #09120c;
+  border: 1px solid #1e3a29;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* IDE Toolbar */
+.c4k-ide-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #132418;
+  border-bottom: 1px solid #1e3a29;
+}
+
+.c4k-ide-lang-selector, .c4k-ide-preset-selector {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lang-tab {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lang-tab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.lang-tab.active {
+  background: #15764a;
+  border-color: #22c55e;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(34, 197, 94, 0.25);
+}
+
+.ide-preset-dropdown {
+  padding: 6px 12px;
+  background: #09120c;
+  border: 1px solid #285437;
+  border-radius: 8px;
+  color: #fef08a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Diacritics Bar */
+.c4k-ide-diacritics-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 18px;
+  background: #0d1a11;
+  border-bottom: 1px solid #183020;
+}
+
+.diacritic-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.diacritic-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #162a1c;
+  border: 1px solid #23472f;
+  color: #86efac;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.diacritic-btn:hover {
+  background: #22c55e;
+  color: #052e16;
+  transform: scale(1.1);
+}
+
+/* IDE Main Split */
+.c4k-ide-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 480px;
+}
+
+@media (max-width: 900px) {
+  .c4k-ide-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left: Editor Pane */
+.c4k-ide-editor-pane {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1e3a29;
+  background: #0a140d;
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #102015;
+  border-bottom: 1px solid #1e3a29;
+}
+
+.file-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.82rem;
+  color: #86efac;
+  font-weight: 600;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-ide-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #16a34a;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ide-run:hover {
+  background: #22c55e;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-ide-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #182e1f;
+  border: 1px solid #264a32;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-ide-secondary:hover {
+  background: #23472f;
+  color: #ffffff;
+}
+
+.editor-body {
+  display: flex;
+  flex: 1;
+  min-height: 280px;
+  position: relative;
+  background: #08100a;
+}
+
+.line-numbers {
+  padding: 14px 10px;
+  background: #060c07;
+  color: #475569;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid #16281b;
+  min-width: 40px;
+}
+
+.code-textarea {
+  flex: 1;
+  padding: 14px 14px;
+  background: transparent;
+  color: #f1f5f9;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  border: none;
+  outline: none;
+  resize: vertical;
+  min-height: 280px;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.editor-keywords-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #0d1a11;
+  border-top: 1px solid #183020;
+}
+
+.kw-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.kw-pill {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #162a1c;
+  border: 1px solid #23472f;
+  color: #fed7aa;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kw-pill:hover {
+  background: #dc9628;
+  color: #18231d;
+}
+
+/* Right: Output Pane */
+.c4k-ide-output-pane {
+  display: flex;
+  flex-direction: column;
+  background: #0a130c;
+}
+
+.output-tab-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.output-tab {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.output-tab.active {
+  background: #182e1f;
+  color: #86efac;
+}
+
+.btn-ide-clear {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid #264a32;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.btn-ide-clear:hover {
+  background: #1f3b28;
+  color: #fca5a5;
+}
+
+.output-body {
+  flex: 1;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+}
+
+.terminal-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-family: 'Fira Code', monospace;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #1e3a29;
+}
+
+.status-indicator {
+  color: #22c55e;
+}
+
+.status-runtime {
+  color: #94a3b8;
+}
+
+.status-xp {
+  color: #fde047;
+  font-weight: 700;
+}
+
+.terminal-logs {
+  flex: 1;
+  margin: 0;
+  padding: 10px;
+  background: #050b07;
+  border: 1px solid #142418;
+  border-radius: 8px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #86efac;
+  overflow-y: auto;
+  max-height: 220px;
+  white-space: pre-wrap;
+}
+
+.canvas-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #060c07;
+  border: 1px solid #183020;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.canvas-view.hide {
+  display: none;
+}
+
+#ide-graphic-canvas {
+  background: #0a150e;
+  border: 1px solid #23472f;
+  border-radius: 6px;
+  max-width: 100%;
+}
+
+.canvas-caption {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+/* Line-by-Line Explainer */
+.c4k-ide-explainer {
+  padding: 12px 14px;
+  background: #0e1d12;
+  border-top: 1px solid #1e3a29;
+}
+
+.explainer-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fef08a;
+  margin-bottom: 6px;
+}
+
+.explainer-content {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.explainer-step {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.explainer-step b {
+  color: #86efac;
+  font-family: 'Fira Code', monospace;
+}
