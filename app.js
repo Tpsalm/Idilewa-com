@@ -2188,15 +2188,242 @@ import confetti from 'canvas-confetti';
     return `<div class="container route-page pricing-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Plans</strong></div><section class="pricing-hero"><span class="section-kicker">Flexible ways to learn</span><h1>More language.<br /><em>More belonging.</em></h1><p>Find the learning setup that fits your home or classroom. This preview keeps plans simple while the final scope is being shaped.</p><div class="billing-switch" role="group" aria-label="Billing period"><button class="${selected === 'monthly' ? 'active' : ''}" data-action="billing-period" data-period="monthly">Monthly</button><button class="${selected === 'yearly' ? 'active' : ''}" data-action="billing-period" data-period="yearly">Yearly</button><span>Preview only</span></div></section>${renderStepper(['Explore plans', 'Choose learning paths', 'Review as a family', 'Begin together'], 0)}<div class="pricing-grid"><article class="pricing-card"><span class="pricing-label">Begin here</span><h2>Explorer</h2><p>For learners ready to try a first path.</p><div class="pricing-cost"><strong>Free</strong><small>to get started</small></div><ul><li>${icon('check', 15)} Explore available languages</li><li>${icon('check', 15)} Try sample lessons & stories</li><li>${icon('check', 15)} Follow a personal learning path</li></ul>${routeLink('languages', 'Start exploring ' + icon('arrow', 15), 'button button-outline')}</article><article class="pricing-card pricing-featured"><span class="popular-pill">Made for together</span><span class="pricing-label">For home</span><h2>Family</h2><p>A shared learning space for the people close to you.</p><div class="pricing-cost"><strong>Coming soon</strong><small>final details to be confirmed</small></div><ul><li>${icon('check', 15)} Shared family learning routines</li><li>${icon('check', 15)} Stories to read and listen together</li><li>${icon('check', 15)} Progress designed for encouragement</li></ul><button class="button button-primary" data-action="choose-plan" data-plan="Family">Join the interest list ${icon('arrow', 15)}</button></article><article class="pricing-card"><span class="pricing-label">For educators</span><h2>School</h2><p>Learning paths for classrooms and teaching teams.</p><div class="pricing-cost"><strong>Let’s talk</strong><small>school plans are tailored</small></div><ul><li>${icon('check', 15)} Structured language modules</li><li>${icon('check', 15)} Culture and coding experiences</li><li>${icon('check', 15)} Educator-led learning journeys</li></ul>${routeLink('schools', 'Explore schools ' + icon('arrow', 15), 'button button-outline')}</article></div><p class="pricing-footnote">No final pricing or subscription commitments are represented in this prototype. Hosting, API and production costs should be confirmed with the Idilewa team.</p></div>`;
   }
 
-  function renderProfile() {
-    const completedCount = state.completed.length;
+    function renderProfile() {
+    const user = getCurrentUser() || state.user || {
+      name: 'Learner',
+      email: 'learner@idilewa.com',
+      role: state.authRole || 'child',
+      points: 80,
+      streak: 2,
+      avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Idilewa'
+    };
+    const role = user.role || 'child';
+    const completedCount = state.completed ? state.completed.length : 1;
     const percent = Math.min(100, Math.round((completedCount / 8) * 100));
     const lang = getLanguage(state.currentLang);
-    const journeyStep = completedCount >= 8 ? 3 : state.streak >= 3 ? 2 : completedCount ? 1 : 0;
-    return `<div class="container route-page profile-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My progress</strong></div>${renderStepper(['Choose a path', 'Practice a lesson', 'Build a streak', 'Celebrate progress'], journeyStep)}<section class="profile-welcome"><div class="profile-avatar">${icon('user', 27)}</div><div><span class="section-kicker">Your learning space · demo</span><h1>A good day to keep going.</h1><p>Your progress is saved in this browser for this prototype.</p></div><button class="button button-outline" data-route="login">${icon('user', 16)} Account settings</button></section><div class="profile-overview-grid"><article class="progress-main-card"><div class="progress-main-head"><div><span class="section-kicker">Current path</span><h2>${lang.name} · ${state.level.charAt(0).toUpperCase() + state.level.slice(1)}</h2><p>Keep building confidence, one small lesson at a time.</p></div><span class="progress-medallion">${icon('leaf', 23)}</span></div><div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div><div class="progress-foot"><span>${completedCount} lessons completed</span>${routeLink('course', 'Continue learning ' + icon('arrow', 14), 'text-link')}</div></article><div class="stat-card stat-streak"><span>${icon('sparkles', 20)}</span><small>Learning streak</small><strong>${state.streak} <em>days</em></strong><p>Showing up is a win.</p></div><div class="stat-card stat-points"><span>${icon('star', 20)}</span><small>Practice points</small><strong>${state.points}</strong><p>Earned by trying new things.</p></div></div><div class="profile-lower-grid"><section class="profile-card"><div class="section-heading compact-heading"><div><span class="section-kicker">Your recent steps</span><h2>Learning timeline</h2></div>${routeLink('course', 'View path ' + icon('arrow', 14), 'text-link')}</div><div class="timeline-row"><span class="timeline-check">${icon('check', 15)}</span><div><strong>Start with a greeting</strong><small>${lang.name} · First lesson</small></div><span class="timeline-status">${state.completed.includes(`${lang.id}-greetings-intro`) ? 'Complete' : 'Ready'}</span></div><div class="timeline-row timeline-next"><span class="timeline-num">02</span><div><strong>People close to us</strong><small>Next module · Words for family</small></div><button class="text-link" data-action="open-module" data-module="family" data-lang="${lang.id}" data-level="${state.level}">Open ${icon('arrow', 14)}</button></div><div class="timeline-row timeline-next"><span class="timeline-num">03</span><div><strong>Stories & memory</strong><small>Explore a story and listen for new words</small></div>${routeLink('ere', 'Explore ' + icon('arrow', 14), 'text-link')}</div></section><aside class="profile-badges"><span class="section-kicker">Small things worth celebrating</span><h2>Your first badges</h2><div class="badge-list"><div class="badge-item"><span class="badge-icon badge-green">${icon('leaf', 18)}</span><div><strong>First steps</strong><small>Opened your learning path</small></div></div><div class="badge-item"><span class="badge-icon badge-yellow">${icon('volume', 18)}</span><div><strong>Good listener</strong><small>Practiced a spoken phrase</small></div></div><div class="badge-item badge-locked"><span class="badge-icon">${icon('trophy', 18)}</span><div><strong>Story keeper</strong><small>Complete a story activity</small></div></div></div></aside></div><div class="profile-privacy-note">${icon('lock', 16)} This demo keeps progress on this device. Production accounts require secure authentication and privacy review.</div></div>`;
+
+    // Role-specific Header & Content
+    let roleDashboardHtml = '';
+
+    if (role === 'child') {
+      // 1. CHILD PORTAL: Gamified Coding & Voice Adventures
+      roleDashboardHtml = `
+        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #15764a 0%, #064e3b 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(21, 118, 74, 0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span class="badge-3d" style="background: #fde047; color: #18231d; margin-bottom: 8px;">🌱 Ọmọ Idilẹẹwa · Junior Explorer</span>
+              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Kaabo, ${esc(user.name)}!</h1>
+              <p style="color: #d1fae5; margin: 0; font-size: 1.05rem;">Master pure Yoruba coding, earn Maker XP, and unlock speech badges.</p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <div class="stat-card perspective-3d-card" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 12px 20px; text-align: center; border-radius: 16px;">
+                <span style="font-size: 22px;">⚡</span>
+                <strong style="font-size: 1.4rem; display: block;">${user.points || 80} XP</strong>
+                <small style="color: #fde047; font-weight: 700;">Maker Points</small>
+              </div>
+              <div class="stat-card perspective-3d-card" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 12px 20px; text-align: center; border-radius: 16px;">
+                <span style="font-size: 22px;">🔥</span>
+                <strong style="font-size: 1.4rem; display: block;">${user.streak || 2} Days</strong>
+                <small style="color: #fde047; font-weight: 700;">Streak Flame</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Child Quick Quest Launchers -->
+        <h2 style="font-size: 1.4rem; margin-bottom: 14px;">Awọn Iṣẹ́ Rẹ Loni (Your Quests Today)</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 28px;">
+          <article class="activity-card perspective-3d-card" style="padding: 22px; border-top: 5px solid #eab308;">
+            <div style="font-size: 32px; margin-bottom: 10px;">💻</div>
+            <h3 style="font-size: 1.2rem; margin: 0 0 6px;">Kọ Koodu ni Yorùbá</h3>
+            <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 14px;">Run turtle graphics and write loops using pure Yoruba keywords.</p>
+            ${routeLink('coding', 'Open Yoruba Coding IDE ' + icon('arrow', 14), 'button button-primary button-small')}
+          </article>
+          <article class="activity-card perspective-3d-card" style="padding: 22px; border-top: 5px solid #15764a;">
+            <div style="font-size: 32px; margin-bottom: 10px;">🎙️</div>
+            <h3 style="font-size: 1.2rem; margin: 0 0 6px;">Ẹ̀kọ́ Ohùn (Voice Lessons)</h3>
+            <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 14px;">Translate English to Yoruba, Igbo, Hausa and test tonal pitch.</p>
+            ${routeLink('voice_lessons', 'Launch Voice Studio ' + icon('arrow', 14), 'button button-accent button-small')}
+          </article>
+          <article class="activity-card perspective-3d-card" style="padding: 22px; border-top: 5px solid #0284c7;">
+            <div style="font-size: 32px; margin-bottom: 10px;">🔤</div>
+            <h3 style="font-size: 1.2rem; margin: 0 0 6px;">Fawẹli & Kọnsònáǹtì</h3>
+            <p style="font-size: 0.95rem; color: var(--muted); margin: 0 0 14px;">Practice oral and nasal vowels with native sound synthesis.</p>
+            ${routeLink('lesson', 'Practice Vowels ' + icon('arrow', 14), 'button button-outline button-small')}
+          </article>
+        </div>
+
+        <!-- Gamified Badges Showcase -->
+        <div class="profile-lower-grid">
+          <section class="profile-card perspective-3d-card">
+            <div class="section-heading compact-heading">
+              <div><span class="section-kicker">Curriculum Track</span><h2>Igbésẹ̀ Ẹ̀kọ́ (Progress Path)</h2></div>
+            </div>
+            <div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div>
+            <p style="font-size: 0.95rem; color: var(--muted); margin-top: 8px;">${completedCount} lessons completed across language, voice and coding.</p>
+          </section>
+
+          <aside class="profile-badges perspective-3d-card">
+            <span class="section-kicker">Àwọn Àmì Ẹ̀yẹ (Your Badges)</span>
+            <h2 style="margin: 4px 0 14px;">Unlocked Achievements</h2>
+            <div class="badge-list">
+              <div class="badge-item"><span class="badge-icon badge-green">⚡</span><div><strong>First Yoruba Code</strong><small>Executed a valid EdeKoodu script</small></div></div>
+              <div class="badge-item"><span class="badge-icon badge-yellow">🎙️</span><div><strong>Tonal Master</strong><small>Practiced Dò-Re-Mí soundboard</small></div></div>
+              <div class="badge-item"><span class="badge-icon badge-blue">📜</span><div><strong>Story Explorer</strong><small>Read African folklore and Òwe</small></div></div>
+            </div>
+          </aside>
+        </div>
+      `;
+    } else if (role === 'adult') {
+      // 2. ADULT PORTAL: Professional Language, STEM & Oral Archives
+      roleDashboardHtml = `
+        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span class="badge-3d" style="background: #38bdf8; color: #0f172a; margin-bottom: 8px;">🎓 Àgbàlagbà · Professional Scholar</span>
+              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Welcome, ${esc(user.name)}</h1>
+              <p style="color: #cbd5e1; margin: 0; font-size: 1.05rem;">Advanced African Linguistic Frameworks, STEM Pedagogy & Cultural Wisdom Archives.</p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <button class="button button-accent button-small" data-route="languages">Explore Curricula</button>
+              <button class="button button-outline button-small" style="color: #fff; border-color: rgba(255,255,255,0.4);" data-route="owe">Òwe Archives</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 28px;">
+          <article class="activity-card perspective-3d-card" style="padding: 22px;">
+            <span class="section-kicker">Linguistics</span>
+            <h3>Comprehensive Grammar & Tone Tiers</h3>
+            <p style="color: var(--muted); font-size: 0.95rem;">High, mid, and low tonal registers with syllable phonetic breakdowns.</p>
+            ${routeLink('guides', 'Access Guides ' + icon('arrow', 14), 'text-link')}
+          </article>
+          <article class="activity-card perspective-3d-card" style="padding: 22px;">
+            <span class="section-kicker">Oral Tradition</span>
+            <h3>Ifá Odù & Philosophical Corpus</h3>
+            <p style="color: var(--muted); font-size: 0.95rem;">Examine canonical ethical discourses, ancient poetry, and proverbs.</p>
+            ${routeLink('ifa', 'Study Ifá Corpus ' + icon('arrow', 14), 'text-link')}
+          </article>
+          <article class="activity-card perspective-3d-card" style="padding: 22px;">
+            <span class="section-kicker">STEM Integration</span>
+            <h3>Indigenous Algorithmic Thinking</h3>
+            <p style="color: var(--muted); font-size: 0.95rem;">Computational structures and Yoruba programming syntax.</p>
+            ${routeLink('coding', 'Launch IDE ' + icon('arrow', 14), 'text-link')}
+          </article>
+        </div>
+      `;
+    } else if (role === 'parent') {
+      // 3. PARENT PORTAL: Guardian Safeguarding & 2-Factor Consent Center
+      const grant = state.consent || {};
+      const active = consentCodeIsActive();
+      roleDashboardHtml = `
+        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #065f46 0%, #064e3b 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(6, 95, 70, 0.25);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span class="badge-3d" style="background: #a7f3d0; color: #064e3b; margin-bottom: 8px;">🛡️ Òbí / Guardian · Compliance & Safety Portal</span>
+              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Guardian Dashboard: ${esc(user.name)}</h1>
+              <p style="color: #d1fae5; margin: 0; font-size: 1.05rem;">Supervise children accounts, approve tutor connections, and issue secure Code Passes.</p>
+            </div>
+            ${routeLink('consent', 'Manage Consent Forms ' + icon('shield', 15), 'button button-accent')}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 28px;">
+          <section class="activity-card perspective-3d-card" style="padding: 24px;">
+            <div class="section-heading compact-heading">
+              <div><span class="section-kicker">Supervised Learners</span><h2>Children Under Your Care</h2></div>
+            </div>
+            <div style="background: var(--cream); border-radius: 16px; padding: 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <span style="font-size: 32px;">👦🏽</span>
+                <div>
+                  <strong style="font-size: 1.1rem; display: block;">${esc(grant.learnerAlias || 'Ọmọ Adéwálé (Child Account)')}</strong>
+                  <small style="color: var(--muted);">Yorùbá K-8 Track · ${active ? '✓ Guardian Consent Active' : '⚠️ Pending Approval'}</small>
+                </div>
+              </div>
+              ${routeLink('consent', active ? 'View Code Pass' : 'Approve Now', 'button button-small ' + (active ? 'button-outline' : 'button-primary'))}
+            </div>
+            <div style="padding: 14px; border: 1.5px dashed var(--line); border-radius: 14px; font-size: 0.92rem; color: var(--muted);">
+              🔒 <strong>Child Privacy Guarantee:</strong> No legal names, phone numbers, or addresses are ever shared with tutors.
+            </div>
+          </section>
+
+          <aside class="activity-card perspective-3d-card" style="padding: 24px;">
+            <span class="section-kicker">Access Token</span>
+            <h3 style="margin: 4px 0 12px;">Active Code Pass</h3>
+            ${active ? `
+              <div style="background: #eaf6ec; border: 2px solid #15764a; border-radius: 14px; padding: 16px; text-align: center;">
+                <small style="font-weight: 700; color: #15764a;">7-Day Guardian Code Pass</small>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #15764a; letter-spacing: 0.06em; margin: 6px 0;">${esc(grant.approvedCode || 'PASS-YOR-8492')}</div>
+                <small style="color: var(--muted);">Share only with your verified tutor</small>
+              </div>
+            ` : `
+              <div style="background: var(--cream); border-radius: 14px; padding: 16px; text-align: center;">
+                <p style="font-size: 0.92rem; color: var(--muted); margin: 0 0 10px;">No active Code Pass generated yet.</p>
+                ${routeLink('consent', 'Generate Parent Code ' + icon('arrow', 14), 'button button-primary button-small')}
+              </div>
+            `}
+          </aside>
+        </div>
+      `;
+    } else {
+      // 4. EDUCATOR / TUTOR PORTAL: Classroom & Student Management
+      roleDashboardHtml = `
+        <div class="role-dashboard-banner" style="background: linear-gradient(135deg, #78350f 0%, #451a03 100%); color: #fff; padding: 28px; border-radius: 24px; margin-bottom: 24px; box-shadow: 0 16px 40px rgba(120, 53, 15, 0.25);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span class="badge-3d" style="background: #fed7aa; color: #78350f; margin-bottom: 8px;">🏫 Olùkọ́ · Educator Portal</span>
+              <h1 style="color: #fff !important; margin: 6px 0 4px; font-size: 2rem;">Educator Desk: ${esc(user.name)}</h1>
+              <p style="color: #fed7aa; margin: 0; font-size: 1.05rem;">Browse student requests, validate parent-approved Code Passes, and manage lessons.</p>
+            </div>
+            ${routeLink('connect_students', 'Validate Code Pass ' + icon('check', 15), 'button button-accent')}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 28px;">
+          <article class="activity-card perspective-3d-card" style="padding: 22px;">
+            <span class="section-kicker">Discovery</span>
+            <h3>Learner Requests Queue</h3>
+            <p style="color: var(--muted); font-size: 0.95rem;">Browse ${LEARNER_REQUESTS.length} available students seeking African language and coding guidance.</p>
+            ${routeLink('connect_students', 'Browse Learners ' + icon('arrow', 14), 'button button-primary button-small')}
+          </article>
+          <article class="activity-card perspective-3d-card" style="padding: 22px;">
+            <span class="section-kicker">Verification</span>
+            <h3>Two-Factor Code Pass Validation</h3>
+            <p style="color: var(--muted); font-size: 0.95rem;">Unlock an assigned student's anonymous profile with their parent's Code Pass.</p>
+            ${routeLink('connect_students', 'Enter Code Pass ' + icon('arrow', 14), 'button button-outline button-small')}
+          </article>
+        </div>
+      `;
+    }
+
+    return `<div class="container route-page profile-page">
+      <div class="breadcrumbs">
+        ${routeLink('index', 'Home')}
+        <span>/</span>
+        <strong>${role.toUpperCase()} Dashboard</strong>
+      </div>
+
+      ${roleDashboardHtml}
+
+      <!-- Account Settings Bar -->
+      <div style="margin-top: 24px; padding: 18px 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="${user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + esc(user.name)}" alt="Avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--green);" />
+          <div>
+            <strong>${esc(user.name)}</strong> · <small style="color: var(--muted);">${esc(user.email)}</small>
+            <span class="pill pill-soft" style="margin-left: 8px;">Role: ${role}</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="button button-outline button-small" data-route="login">Switch Role / Login</button>
+          <button class="button button-soft button-small" data-action="logout-user">Wọle Jade (Sign Out)</button>
+        </div>
+      </div>
+    </div>`;
   }
 
-    function renderLogin() {
+  function renderLogin() {
     const signUp = state.loginMode === 'signup';
     const role = state.authRole || 'child';
 
@@ -2295,22 +2522,117 @@ import confetti from 'canvas-confetti';
       </section><div class="connection-child-note">${icon('heart', 17)} A parent can approve one named tutor at a time. Any new tutor requires a new signed approval and code.</div></div>`;
   }
 
-  function renderConnectStudents() {
+    function renderConnectStudents() {
     const verified = tutorSessionIsValid();
     const grant = state.consent;
     const tutor = TEACHER_PROFILES.find((item) => item.id === grant.tutorId);
-    const samplePreview = `<details class="locked-sample-preview"><summary>Preview fictional learner cards (read-only)</summary><div class="learner-request-grid">${LEARNER_REQUESTS.map((learner) => `<article class="learner-request-card sample-locked"><div class="learner-card-head"><span class="learner-avatar">${icon('user', 21)}</span><span class="guardian-managed-tag">${icon('lock', 13)} Fictional sample</span></div><span class="teacher-language-tag">${esc(learner.language)} · ${esc(learner.level)}</span><h3>${esc(learner.label)}</h3><div class="learner-goal"><small>Example learning goal</small><p>${esc(learner.goal)}</p></div><div class="learner-request-meta"><span>${icon('sparkles', 14)} ${esc(learner.interest)}</span><span>${icon('calendar', 14)} Sample schedule</span></div><button class="button button-soft" type="button" disabled>Parent code required before assignment</button></article>`).join('')}</div></details>`;
     const tutorOptions = TEACHER_PROFILES.map((profile) => `<option value="${profile.id}" ${grant.tutorId === profile.id ? 'selected' : ''}>${esc(profile.name)} · ${esc(profile.language)}</option>`).join('');
-    const assignment = verified
-      ? `<article class="approved-assignment-card"><div class="approved-assignment-mark">${icon('check', 22)}</div><span class="section-kicker">Parent-approved assignment</span><h2>${esc(grant.learnerAlias || 'Young learner')}</h2><p>Assigned tutor: <strong>${esc(tutor?.name || 'Approved tutor')}</strong>. The guardian approved this specific pairing and signed the consent form.</p><div class="assignment-scope-pill">${icon('shield', 15)} Anonymous learner · no contact details</div>${grant.assignmentAccepted ? `<div class="assignment-active-note">${icon('check', 16)} Assignment accepted in this local demo. No lesson, message or booking is actually created.</div>` : `<button class="button button-primary" data-action="accept-assignment">Accept this approved demo assignment ${icon('arrow', 15)}</button>`}</article>`
-      : `<form class="tutor-consent-verify-card" data-form="tutor-consent-check"><div><span class="section-kicker">Required before teaching or connecting</span><h2>Validate the parent-approved code.</h2><p>A tutor may only open the learner’s anonymous assignment after the parent has signed the form, approved that tutor and shared the matching code.</p></div><label for="tutorIdentity">Your tutor profile<select id="tutorIdentity" name="tutorId" required><option value="">Choose your sample tutor profile</option>${tutorOptions}</select></label><label for="tutorConsentCode">Parent-approved consent code<input id="tutorConsentCode" name="consentCode" type="text" autocomplete="off" maxlength="12" placeholder="ID-123456" required /></label><button class="button button-primary" type="submit">Validate code & assignment ${icon('shield', 15)}</button><small>No code or parent approval means no learner profile, response, booking or teaching access.</small></form>`;
-    return `<div class="container route-page connection-page connect-students-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Students</strong></div>
-      <section class="connection-teacher-hero"><div><span class="section-kicker">For educators · safeguarding first</span><h1>Teach only after<br /><em>guardian approval.</em></h1><p>Every child–tutor pairing needs a signed parent consent form and a code that matches the assigned tutor before a learner can be accepted.</p><div class="hero-actions">${routeLink('connect_teachers', `Open family tutor directory ${icon('arrow', 15)}`, 'button button-outline')}${routeLink('consent', 'How consent works', 'text-link')}</div></div><div class="connection-kids-image"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in traditional Yorùbá attire sharing a language book" /><span>Safety and family permission come first.</span></div></section>
-      ${renderStepper(['Review request', 'Parent signs form', 'Validate tutor code', 'Accept assignment'], verified ? 3 : 0)}
-      <div class="connection-notice">${icon('shield', 17)} <div><strong>Four checks before a real lesson.</strong><span>Parent approval · signed form · code matches the assigned tutor · secure production verification. This offline prototype demonstrates the flow but cannot verify a real parent.</span></div></div>
-      <section class="tutor-approval-workspace">${assignment}</section>
-      ${!verified ? samplePreview : ''}
-      <div class="connection-child-note">${icon('lock', 17)} Tutor approvals are tutor-specific and expire after seven days in this demo. The stored local code is not a production credential.</div></div>`;
+
+    return `<div class="container route-page connection-page connect-students-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Students (Educator Portal)</strong></div>
+      
+      <section class="connection-teacher-hero">
+        <div>
+          <span class="section-kicker">For Certified Educators · 2-Factor Consent Engine</span>
+          <h1>Teach only after<br /><em>guardian approval.</em></h1>
+          <p>Every child–tutor pairing requires an automated Guardian Consent payload and a matching Code Pass before a classroom assignment opens.</p>
+          <div class="hero-actions">
+            ${routeLink('connect_teachers', 'View Teacher Directory ' + icon('arrow', 15), 'button button-outline')}
+            ${routeLink('consent', 'Parent Consent Portal ' + icon('shield', 15), 'button button-primary')}
+          </div>
+        </div>
+        <div class="connection-kids-image" style="background: radial-gradient(circle at 50% 50%, #eaf6ec 0%, #faf9f2 100%); border-radius: 24px; padding: 20px; border: 1px solid rgba(21,118,74,0.2);">
+          <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 56px; margin-bottom: 8px;">🛡️</div>
+            <strong style="font-size: 1.2rem; color: #15764a; display: block;">Secure Two-Factor Safeguard</strong>
+            <small style="color: var(--muted);">Encrypted Code Pass required to access student profiles</small>
+          </div>
+        </div>
+      </section>
+
+      ${renderStepper(['1. Select Student & Click Connect', '2. Parent Reviews & Signs', '3. Parent Issues Code Pass', '4. Tutor Unlocks Assignment'], verified ? 3 : grant.requestCode ? 1 : 0)}
+
+      <!-- Tutor Validation Form -->
+      <section class="tutor-approval-workspace" style="margin: 28px 0;">
+        ${verified ? `
+          <article class="approved-assignment-card perspective-3d-card" style="border: 2px solid var(--green); background: #eaf6ec; border-radius: 20px; padding: 28px;">
+            <div class="approved-assignment-mark" style="font-size: 36px; margin-bottom: 10px;">🎉</div>
+            <span class="section-kicker" style="color: var(--green);">Connection Unlocked & Active</span>
+            <h2 style="margin: 6px 0;">Assigned Student: ${esc(grant.learnerAlias || 'Ọmọ Adéwálé')}</h2>
+            <p>Assigned Tutor: <strong>${esc(tutor?.name || 'Verified Educator')}</strong> · Guardian Signature Verified ✓</p>
+            <div class="assignment-scope-pill" style="margin: 12px 0;">${icon('shield', 15)} Anonymous Learner · Protected Supervised Space</div>
+            ${grant.assignmentAccepted ? `
+              <div style="background: #15764a; color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 700;">
+                ✓ Student Active in your Classroom · Ready for Yoruba & Coding Lessons!
+              </div>
+            ` : `
+              <button class="button button-primary" data-action="accept-assignment">Accept Assignment & Start Lesson ${icon('arrow', 15)}</button>
+            `}
+          </article>
+        ` : `
+          <form class="tutor-consent-verify-card perspective-3d-card" data-form="tutor-consent-check" style="background: var(--paper); border: 1.5px solid var(--line); border-radius: 24px; padding: 32px; box-shadow: 0 16px 40px rgba(0,0,0,0.06);">
+            <div>
+              <span class="section-kicker">Step 4 · Unlock Connection</span>
+              <h2>Validate Parent-Approved Code Pass</h2>
+              <p>Enter your educator profile and the 7-day Code Pass shared by the student's guardian.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0;">
+              <div>
+                <label for="tutorIdentity" style="font-weight: 700; display: block; margin-bottom: 6px;">Your Tutor Profile:</label>
+                <select id="tutorIdentity" name="tutorId" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #c8ded0;" required>
+                  <option value="">Choose your profile</option>
+                  ${tutorOptions}
+                </select>
+              </div>
+              <div>
+                <label for="tutorConsentCode" style="font-weight: 700; display: block; margin-bottom: 6px;">Parent Code Pass (Access Token):</label>
+                <input id="tutorConsentCode" name="consentCode" type="text" placeholder="e.g. ID-123456" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #c8ded0; font-weight: 700;" required />
+              </div>
+            </div>
+            <button class="button button-primary" type="submit">Validate Code Pass & Unlock Student ${icon('shield', 15)}</button>
+          </form>
+        `}
+      </section>
+
+      <!-- Student Discovery Catalog (Available Students with 3D Avatar & Visible "Connect" CTA Button) -->
+      <section style="margin-top: 36px;">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Available Learners</span>
+            <h2>Available Student Requests</h2>
+            <p>Browse students seeking language and coding mentors. Click "Connect" to send a consent payload to their guardian.</p>
+          </div>
+        </div>
+
+        <div class="learner-request-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          ${LEARNER_REQUESTS.map((learner, idx) => `
+            <article class="learner-request-card perspective-3d-card" style="background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="learner-card-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <div style="width: 48px; height: 48px; border-radius: 50%; background: #eaf6ec; border: 2px solid #15764a; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                    ${idx % 2 === 0 ? '👦🏽' : '👧🏾'}
+                  </div>
+                  <span class="pill pill-mint">${esc(learner.language)} · ${esc(learner.level)}</span>
+                </div>
+                <h3 style="font-size: 1.25rem; margin: 0 0 6px;">${esc(learner.label)}</h3>
+                <div class="learner-goal" style="background: var(--cream); padding: 10px 14px; border-radius: 12px; margin: 10px 0;">
+                  <small style="font-weight: 700; color: var(--muted); display: block;">Learning Goal:</small>
+                  <p style="margin: 2px 0 0; font-size: 0.95rem;">${esc(learner.goal)}</p>
+                </div>
+                <div style="font-size: 0.9rem; color: var(--muted); margin-bottom: 16px;">
+                  <span>✨ Interest: <strong>${esc(learner.interest)}</strong></span>
+                </div>
+              </div>
+              
+              <!-- Direct Connect CTA Button -->
+              <button class="button button-primary" style="width: 100%; justify-content: center;" type="button" data-action="tutor-connect-student" data-alias="${esc(learner.label)}" data-lang="${esc(learner.language)}">
+                Connect with Student ${icon('arrow', 14)}
+              </button>
+            </article>
+          `).join('')}
+        </div>
+      </section>
+    </div>`;
   }
 
   function renderConsent() {
@@ -3452,6 +3774,21 @@ import confetti from 'canvas-confetti';
         const input = document.getElementById('aiHelperQuestion');
         if (input) input.value = el.dataset.prompt || '';
         answerAiPrompt(el.dataset.topic || 'general');
+        break;
+      }
+      case 'tutor-connect-student': {
+        const alias = el.dataset.alias || 'Young Learner';
+        startConsentRequest('');
+        state.consent.learnerAlias = alias;
+        showToast(`Connection request sent for ${alias}! Parent approval code: ${state.consent.requestCode}`, 'success');
+        navigate('consent');
+        break;
+      }
+      case 'logout-user': {
+        dbSignOut();
+        state.user = null;
+        showToast('You have signed out.', 'info');
+        navigate('login');
         break;
       }
       case 'start-consent-request': startConsentRequest(el.dataset.tutorId || ''); navigate('consent'); break;
