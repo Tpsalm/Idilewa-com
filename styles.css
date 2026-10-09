@@ -5755,3 +5755,453 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   border: 2px solid var(--green);
   object-fit: cover;
 }
+
+/* ==============================================================================
+   IDILEWA 3D & BOLD TYPOGRAPHY MODERNIZATION ENHANCEMENTS
+   ============================================================================== */
+
+/* 1. Universal Boldness, High-Contrast & Crisp Legibility */
+html, body {
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  color: #112017 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .heading-1, .heading-2, .heading-3 {
+  font-weight: 800 !important;
+  color: #0c1811 !important;
+  letter-spacing: -0.025em !important;
+}
+
+h1, .heading-1 {
+  font-size: clamp(2.2rem, 4.5vw, 3.5rem) !important;
+  line-height: 1.15 !important;
+}
+
+h2, .heading-2 {
+  font-size: clamp(1.75rem, 3.2vw, 2.4rem) !important;
+  line-height: 1.25 !important;
+}
+
+h3, .heading-3 {
+  font-size: 1.4rem !important;
+  font-weight: 750 !important;
+  line-height: 1.35 !important;
+}
+
+p, .hero-lede, .section-sub, .text-md, .text-lg, .hero-mantra {
+  font-size: 1.08rem !important;
+  line-height: 1.65 !important;
+  font-weight: 520 !important;
+  color: #1e3125 !important;
+}
+
+.hero-mantra {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  color: #15764a !important;
+  letter-spacing: -0.01em !important;
+}
+
+.eyebrow, .section-kicker, .c4k-eyebrow {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.button, .btn, .nav-link, .c4k-nav-pill, .c4k-band-pill, .yoruba-keyword-pill, .pill {
+  font-weight: 750 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.nav-link {
+  font-size: 1.02rem !important;
+  font-weight: 650 !important;
+}
+
+.nav-link.is-active {
+  font-weight: 800 !important;
+}
+
+.feature-title, .activity-heading-wrapper h6, .c4k-grade-desc, .lesson-title {
+  font-weight: 750 !important;
+  font-size: 1.18rem !important;
+  color: #0c1811 !important;
+}
+
+/* 2. 3D Interactive Elements & Card Depth */
+.perspective-3d-card {
+  transform-style: preserve-3d;
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.perspective-3d-card:hover {
+  box-shadow: 0 20px 40px rgba(21, 118, 74, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.card-3d-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  transition: opacity 0.2s ease;
+  opacity: 0;
+  z-index: 8;
+}
+
+/* 3D Hero Stage */
+.hero-3d-stage-container {
+  width: 100%;
+  height: 380px;
+  position: relative;
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 50%, rgba(234, 246, 236, 0.8) 0%, rgba(250, 249, 242, 0.4) 100%);
+  border: 1px solid rgba(21, 118, 74, 0.18);
+  box-shadow: 0 24px 60px rgba(21, 118, 74, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-3d-canvas-wrap {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+
+.hero-3d-canvas-wrap:active {
+  cursor: grabbing;
+}
+
+.hero-3d-floating-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 254, 250, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(21, 118, 74, 0.2);
+  font-size: 0.84rem;
+  font-weight: 750;
+  color: #15764a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.hero-3d-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #15764a;
+  box-shadow: 0 0 10px #15764a;
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* 3. Hero Quick Action Buttons */
+.hero-quick-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+  align-items: center;
+}
+
+.hero-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 750;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.hero-quick-btn-primary {
+  background: #15764a;
+  color: #ffffff !important;
+  border: 1px solid #15764a;
+}
+
+.hero-quick-btn-primary:hover {
+  background: #0f5937;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(21, 118, 74, 0.3);
+}
+
+.hero-quick-btn-accent {
+  background: #fde047;
+  color: #18231d !important;
+  border: 1px solid #eab308;
+}
+
+.hero-quick-btn-accent:hover {
+  background: #facc15;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(234, 179, 8, 0.3);
+}
+
+.hero-quick-btn-outline {
+  background: #fffefa;
+  color: #15764a !important;
+  border: 1.5px solid #15764a;
+}
+
+.hero-quick-btn-outline:hover {
+  background: #eaf6ec;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(21, 118, 74, 0.15);
+}
+
+/* 4. Streamlined, Sleek & Modern Auth Page */
+.auth-clean-wrapper {
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.auth-clean-card {
+  width: 100%;
+  max-width: 500px;
+  background: #fffefa;
+  border: 1px solid rgba(21, 118, 74, 0.22);
+  border-radius: 28px;
+  padding: 40px 36px;
+  box-shadow: 0 24px 64px rgba(21, 118, 74, 0.14), 0 4px 16px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-clean-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-clean-header h1 {
+  font-size: 2rem !important;
+  margin: 8px 0 6px !important;
+  font-weight: 800 !important;
+}
+
+.auth-clean-header p {
+  font-size: 1rem !important;
+  color: #4b5d52 !important;
+  margin: 0 !important;
+}
+
+.auth-tab-switch {
+  display: flex;
+  background: #eaf6ec;
+  padding: 5px;
+  border-radius: 999px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(21, 118, 74, 0.15);
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #2b3b32;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.auth-tab-btn.is-active {
+  background: #15764a;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(21, 118, 74, 0.25);
+}
+
+.auth-clean-field {
+  margin-bottom: 18px;
+}
+
+.auth-clean-field label {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: #112017;
+  margin-bottom: 6px;
+}
+
+.auth-clean-field input, .auth-clean-field select {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #c8ded0;
+  background: #faf9f2;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #112017;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.auth-clean-field input:focus, .auth-clean-field select:focus {
+  outline: none;
+  border-color: #15764a;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(21, 118, 74, 0.14);
+}
+
+.auth-role-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.auth-role-pill {
+  padding: 9px 12px;
+  border: 1.5px solid #c8ded0;
+  border-radius: 12px;
+  background: #faf9f2;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #2b3b32;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.18s ease;
+}
+
+.auth-role-pill.is-active {
+  border-color: #15764a;
+  background: #eaf6ec;
+  color: #15764a;
+  font-weight: 800;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: #15764a;
+  color: #ffffff;
+  border: none;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(21, 118, 74, 0.28);
+  margin-top: 10px;
+}
+
+.auth-submit-btn:hover {
+  background: #0f5937;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(21, 118, 74, 0.35);
+}
+
+.auth-demo-fill-btn {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 14px;
+  background: transparent;
+  color: #15764a;
+  border: 1.5px dashed #15764a;
+  font-size: 0.92rem;
+  font-weight: 750;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.18s ease;
+}
+
+.auth-demo-fill-btn:hover {
+  background: #eaf6ec;
+}
+
+/* 5. Code Page Restored Image Banner & Flowchart-First Order */
+.code-hero-banner {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  background: #18231d;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+.code-hero-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: brightness(0.85);
+}
+
+.code-hero-overlay-content {
+  position: relative;
+  z-index: 2;
+  padding: 36px 40px;
+  color: #ffffff;
+  max-width: 720px;
+}
+
+.code-hero-overlay-content .c4k-eyebrow {
+  color: #fde047 !important;
+}
+
+.code-hero-overlay-content h1 {
+  color: #ffffff !important;
+  font-size: clamp(2rem, 3.8vw, 3rem) !important;
+  margin: 10px 0 !important;
+}
+
+.code-hero-overlay-content p {
+  color: #f3f4f6 !important;
+  font-size: 1.15rem !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+}
+
+/* Responsive Polish */
+@media (max-width: 768px) {
+  html, body {
+    font-size: 16px !important;
+  }
+  .hero-3d-stage-container {
+    height: 300px;
+  }
+  .auth-clean-card {
+    padding: 28px 20px;
+  }
+  .code-hero-overlay-content {
+    padding: 24px 20px;
+  }
+}
