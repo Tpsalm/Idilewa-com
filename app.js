@@ -293,8 +293,8 @@
       questCommands: [], questTrail: [], questResult: '',
       ideLang: 'yoruba', idePresetId: 'hello_world',
       ideCode: '# Kí Ilé Ayé ní Èdè Yorùbá\njẹ́ orúkọ = "Ọmọ Yorùbá"\ntẹ_jade("Ẹ n lẹ́ o, " + orúkọ + "! Ẹ káàbọ̀ sí Idíléwà.")\ntẹ_jade("A n kọ́ koodu ní èdè abínibí wa lónìí! ✨")',
-      ideOutput: '> [Idilewa Engine v2.4]\n> Ẹ n lẹ́ o, Ọmọ Yorùbá! Ẹ káàbọ̀ sí Idíléwà.\n> A n kọ́ koodu ní èdè abínibí wa lónìí! ✨\n✓ Àṣeyọrí: Execution completed in 0.02ms (+15 Maker XP)',
-      ideTab: 'terminal', ideRuntime: '0.02ms', ideXp: 15
+      ideOutput: '> [Idilewa Engine v2.4 Online]\n> Ẹ n lẹ́ o, Ọmọ Yorùbá! Ẹ káàbọ̀ sí Idíléwà.\n> A n kọ́ koodu ní èdè abínibí wa lónìí! ✨\n✓ Àṣeyọrí: Execution completed in 0.02ms (+10 Maker XP)',
+      ideTab: 'terminal', ideRuntime: '0.02ms', ideXp: 10
     },
     trainer: {
       lang: 'yoruba',
@@ -2172,7 +2172,6 @@
         runner(customPrint);
         logs.push(...printBuffer);
       } else {
-        // Python simulation
         logs.push('Executing African STEAM Bilingual Studio:');
         logs.push('E ku aaro / Nnoo / Sannu / Hujambo Young African Innovator!');
         logs.push('✓ Empowering kids to code in Yorùbá 🌍');
@@ -2208,7 +2207,7 @@
       if (flow.category !== 'all' && lesson.category !== flow.category) return false;
       if (flow.lessonSearch) {
         const q = flow.lessonSearch.toLowerCase();
-        return lesson.title.toLowerCase().includes(q) || lesson.summary.toLowerCase().includes(q) || lesson.objective.toLowerCase().includes(q);
+        return lesson.title.toLowerCase().includes(q) || lesson.desc.toLowerCase().includes(q);
       }
       return true;
     });
@@ -2249,7 +2248,7 @@
 
           '<!-- 3 Interactive Grade Band 3D Hub Cards -->' +
           '<div class="c4k-3d-cards-grid" id="curriculum-bands">' +
-            '<div class="c4k-3d-hub-card card-k2" data-action="coding-jump-band" data-band="band-k2">' +
+            '<div class="c4k-3d-hub-card card-k2" data-action="coding-jump-band" data-band="Lower-Elementary">' +
               '<div class="c4k-card-3d-inner">' +
                 '<div class="c4k-hub-icon">🌱</div>' +
                 '<div class="c4k-hub-text">' +
@@ -2261,7 +2260,7 @@
               '</div>' +
             '</div>' +
 
-            '<div class="c4k-3d-hub-card card-g35" data-action="coding-jump-band" data-band="band-g35">' +
+            '<div class="c4k-3d-hub-card card-g35" data-action="coding-jump-band" data-band="Upper-Elementary">' +
               '<div class="c4k-card-3d-inner">' +
                 '<div class="c4k-hub-icon">🌿</div>' +
                 '<div class="c4k-hub-text">' +
@@ -2273,7 +2272,7 @@
               '</div>' +
             '</div>' +
 
-            '<div class="c4k-3d-hub-card card-g68" data-action="coding-jump-band" data-band="band-g68">' +
+            '<div class="c4k-3d-hub-card card-g68" data-action="coding-jump-band" data-band="Middle-School">' +
               '<div class="c4k-card-3d-inner">' +
                 '<div class="c4k-hub-icon">🚀</div>' +
                 '<div class="c4k-hub-text">' +
@@ -2289,159 +2288,94 @@
       '</section>' +
 
       '<!-- 2. Section: Lower Elementary (K-2) -->' +
-      '<section class="c4k-band-section scroll-3d-reveal" id="band-k2" aria-labelledby="heading-band-k2">' +
-        '<div class="c4k-band-header">' +
-          '<div class="c4k-band-pill pill-k2">Grade Band: K–2</div>' +
-          '<h2 class="heading-4" id="heading-band-k2">Lower Elementary (K – 2nd Grade)</h2>' +
-          '<p class="text-color-bright-overlay-60 text-lg">Foundational computational thinking through games, songs, storytelling and unplugged activities.</p>' +
-        '</div>' +
-        '<div class="c4k-infographic-box">' +
-          '<div class="c4k-infographic-header">' +
-            '<span class="c4k-infographic-tag">Interactive Diagram</span>' +
-            '<h3>K–2nd Grade STEAM & Robotics Pathway</h3>' +
-            '<p class="text-sm">Tap each step to view the core competency and cultural context.</p>' +
-          '</div>' +
-          '<div class="c4k-infographic-diagram">' +
-            C4K_INFOGRAPHIC_K2.map((step, idx) =>
-              '<div class="c4k-diagram-step">' +
-                '<div class="step-num-badge">' + (idx + 1) + '</div>' +
-                '<div class="step-title-row">' +
-                  '<span class="step-icon">' + esc(step.icon) + '</span>' +
-                  '<span class="step-label">' + esc(step.step) + '</span>' +
+      '<section id="Lower-Elementary" class="section-foundation-phase c4k-band-section scroll-3d-reveal">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 01 · Ages 5–8</span>' +
+                    '<h2 class="heading-4">Lower Elementary (K – 2nd Grade)</h2>' +
+                  '</div>' +
                 '</div>' +
-                '<p class="step-desc">' + esc(step.desc) + '</p>' +
-                '<div class="step-focus-badge">' + esc(step.focus) + '</div>' +
-              '</div>'
-            ).join('') +
+              '</div>' +
+            '</div>' +
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[0].grades.map((g) => renderCurriculumGradeCard(g, 'Lower-Elementary')).join('') +
+              '</div>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="c4k-modules-grid">' +
-          C4K_MODULES_K2.map((mod) =>
-            '<div class="c4k-module-card">' +
-              '<div class="c4k-module-header">' +
-                '<span class="c4k-module-tag">' + esc(mod.tag) + '</span>' +
-                '<h4 class="heading-5">' + esc(mod.title) + '</h4>' +
-              '</div>' +
-              '<p class="c4k-module-desc">' + esc(mod.desc) + '</p>' +
-              '<div class="c4k-module-points">' +
-                mod.points.map((pt) => '<div>' + icon('check', 14) + ' <span>' + esc(pt) + '</span></div>').join('') +
-              '</div>' +
-            '</div>'
-          ).join('') +
         '</div>' +
       '</section>' +
 
       '<!-- 3. Section: Upper Elementary (3-5) -->' +
-      '<section class="c4k-band-section scroll-3d-reveal" id="band-g35" aria-labelledby="heading-band-g35">' +
-        '<div class="c4k-band-header">' +
-          '<div class="c4k-band-pill pill-35">Grade Band: 3–5</div>' +
-          '<h2 class="heading-4" id="heading-band-g35">Upper Elementary (3rd – 5th Grade)</h2>' +
-          '<p class="text-color-bright-overlay-60 text-lg">Transitioning from block-based coding to text concepts, physical computing, and bilingual logic.</p>' +
-        '</div>' +
-        '<div class="c4k-infographic-box">' +
-          '<div class="c4k-infographic-header">' +
-            '<span class="c4k-infographic-tag">Interactive Flow</span>' +
-            '<h3>3rd–5th Grade STEAM & Physical Computing Infographic</h3>' +
-            '<p class="text-sm">Algorithmic thinking connected to traditional African arts, beadwork, and loom mathematics.</p>' +
-          '</div>' +
-          '<div class="c4k-infographic-diagram">' +
-            C4K_INFOGRAPHIC_35.map((step, idx) =>
-              '<div class="c4k-diagram-step">' +
-                '<div class="step-num-badge">' + (idx + 1) + '</div>' +
-                '<div class="step-title-row">' +
-                  '<span class="step-icon">' + esc(step.icon) + '</span>' +
-                  '<span class="step-label">' + esc(step.step) + '</span>' +
+      '<section id="Upper-Elementary" class="section-intermediate-phase c4k-band-section scroll-3d-reveal">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 02 · Ages 8–11</span>' +
+                    '<h2 class="heading-4">Upper Elementary (Grade 3 to 5)</h2>' +
+                  '</div>' +
                 '</div>' +
-                '<p class="step-desc">' + esc(step.desc) + '</p>' +
-                '<div class="step-focus-badge">' + esc(step.focus) + '</div>' +
-              '</div>'
-            ).join('') +
+              '</div>' +
+            '</div>' +
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[1].grades.map((g) => renderCurriculumGradeCard(g, 'Upper-Elementary')).join('') +
+              '</div>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="c4k-modules-grid">' +
-          C4K_MODULES_35.map((mod) =>
-            '<div class="c4k-module-card">' +
-              '<div class="c4k-module-header">' +
-                '<span class="c4k-module-tag">' + esc(mod.tag) + '</span>' +
-                '<h4 class="heading-5">' + esc(mod.title) + '</h4>' +
-              '</div>' +
-              '<p class="c4k-module-desc">' + esc(mod.desc) + '</p>' +
-              '<div class="c4k-module-points">' +
-                mod.points.map((pt) => '<div>' + icon('check', 14) + ' <span>' + esc(pt) + '</span></div>').join('') +
-              '</div>' +
-            '</div>'
-          ).join('') +
         '</div>' +
       '</section>' +
 
       '<!-- 4. Section: Middle School (6-8+) -->' +
-      '<section class="c4k-band-section scroll-3d-reveal" id="band-g68" aria-labelledby="heading-band-g68">' +
-        '<div class="c4k-band-header">' +
-          '<div class="c4k-band-pill pill-68">Grade Band: 6–8+</div>' +
-          '<h2 class="heading-4" id="heading-band-g68">Middle School (6th – 8th Grade+)</h2>' +
-          '<p class="text-color-bright-overlay-60 text-lg">Real-world coding, Python & JavaScript syntax, data storytelling, and African language tech tool building.</p>' +
-        '</div>' +
-        '<div class="c4k-infographic-box">' +
-          '<div class="c4k-infographic-header">' +
-            '<span class="c4k-infographic-tag">Roadmap</span>' +
-            '<h3>Middle School Computer Science & STEAM Roadmap</h3>' +
-            '<p class="text-sm">Building software tools, web pages, and IoT sensors inspired by indigenous African technology.</p>' +
-          '</div>' +
-          '<div class="c4k-infographic-diagram">' +
-            C4K_INFOGRAPHIC_68.map((step, idx) =>
-              '<div class="c4k-diagram-step">' +
-                '<div class="step-num-badge">' + (idx + 1) + '</div>' +
-                '<div class="step-title-row">' +
-                  '<span class="step-icon">' + esc(step.icon) + '</span>' +
-                  '<span class="step-label">' + esc(step.step) + '</span>' +
+      '<section id="Middle-School" class="section-senior-phase c4k-band-section scroll-3d-reveal">' +
+        '<div class="section-container">' +
+          '<div class="container-vertical align-center">' +
+            '<div class="activity-heading">' +
+              '<div class="category-heading-wrapper">' +
+                '<div class="category-heading-list">' +
+                  '<div class="category-heading-item">' +
+                    '<span class="section-kicker">Grade Band 03 · Ages 11–14+</span>' +
+                    '<h2 class="heading-4">Middle School (Grade 6 to 8+)</h2>' +
+                  '</div>' +
                 '</div>' +
-                '<p class="step-desc">' + esc(step.desc) + '</p>' +
-                '<div class="step-focus-badge">' + esc(step.focus) + '</div>' +
-              '</div>'
-            ).join('') +
+              '</div>' +
+            '</div>' +
+            '<div class="activities-list-wrapper">' +
+              '<div class="activities-list c4k-grades-grid">' +
+                CODE_CURRICULUM_BANDS[2].grades.map((g) => renderCurriculumGradeCard(g, 'Middle-School')).join('') +
+              '</div>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="c4k-modules-grid">' +
-          C4K_MODULES_68.map((mod) =>
-            '<div class="c4k-module-card">' +
-              '<div class="c4k-module-header">' +
-                '<span class="c4k-module-tag">' + esc(mod.tag) + '</span>' +
-                '<h4 class="heading-5">' + esc(mod.title) + '</h4>' +
-              '</div>' +
-              '<p class="c4k-module-desc">' + esc(mod.desc) + '</p>' +
-              '<div class="c4k-module-points">' +
-                mod.points.map((pt) => '<div>' + icon('check', 14) + ' <span>' + esc(pt) + '</span></div>').join('') +
-              '</div>' +
-            '</div>'
-          ).join('') +
         '</div>' +
       '</section>' +
 
-      '<!-- 5. Section: Free Lessons Teachers & Students Love -->' +
+      '<!-- 5. Section: Free Lessons -->' +
       '<section class="c4k-free-section scroll-3d-reveal" id="free-lessons" aria-labelledby="free-lessons-title">' +
         '<div class="c4k-free-header">' +
-          '<div class="c4k-free-badge">' + icon('sparkles', 16) + ' <span>30+ FREE LESSONS INCLUDED</span></div>' +
+          '<div class="c4k-free-badge">' + icon('sparkles', 16) + ' <span>30+ FREE STEAM LESSONS</span></div>' +
           '<h2 class="heading-2 c4k-free-title" id="free-lessons-title">Teach Computer Science Today</h2>' +
           '<p class="c4k-free-lead">Jump directly into ready-to-teach, standards-aligned STEAM lessons infused with Yoruba, Igbo, Hausa and African cultural concepts.</p>' +
         '</div>' +
 
-        '<!-- Filter Bar -->' +
         '<div class="c4k-filter-bar">' +
           '<div class="c4k-filter-group">' +
             '<span class="c4k-filter-label">Grade Band:</span>' +
             '<div class="c4k-filter-pills">' +
               '<button type="button" class="c4k-filter-pill ' + (flow.filter === 'all' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="all">All Bands</button>' +
               '<button type="button" class="c4k-filter-pill ' + (flow.filter === 'k2' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="k2">K–2</button>' +
-              '<button type="button" class="c4k-filter-pill ' + (flow.filter === 'g35' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="g35">3–5</button>' +
-              '<button type="button" class="c4k-filter-pill ' + (flow.filter === 'g68' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="g68">6–8+</button>' +
+              '<button type="button" class="c4k-filter-pill ' + (flow.filter === '35' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="35">3–5</button>' +
+              '<button type="button" class="c4k-filter-pill ' + (flow.filter === '68' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="68">6–8+</button>' +
             '</div>' +
-          '</div>' +
-          '<div class="c4k-filter-search">' +
-            '<input type="search" class="input c4k-search-input" placeholder="Search lessons by topic, standard or title..." value="' + esc(flow.lessonSearch || '') + '" data-action="coding-search-lessons" aria-label="Search STEAM lessons">' +
           '</div>' +
         '</div>' +
 
-        '<!-- Category Chips -->' +
         '<div class="c4k-category-chips">' +
           '<button type="button" class="c4k-cat-chip ' + (flow.category === 'all' ? 'is-active' : '') + '" data-action="coding-filter-category" data-cat="all">All Categories (' + C4K_FREE_LESSONS.length + ')</button>' +
           categories.map((cat) => {
@@ -2450,34 +2384,24 @@
           }).join('') +
         '</div>' +
 
-        '<!-- Free Lessons List -->' +
         '<div class="c4k-lessons-grid">' +
-          (filteredLessons.length ? filteredLessons.map((lesson) => {
-            const isCompleted = flow.completedLessons && flow.completedLessons.includes(lesson.id);
-            return '<article class="c4k-lesson-card ' + (isCompleted ? 'is-completed' : '') + '">' +
-              '<div class="c4k-lesson-top">' +
-                '<span class="c4k-lesson-band-tag tag-' + lesson.band + '">' + esc(lesson.grade) + '</span>' +
-                '<span class="c4k-lesson-cat-tag">' + esc(lesson.category) + '</span>' +
-                '<span class="c4k-lesson-time">' + icon('clock', 12) + ' ' + esc(lesson.duration) + '</span>' +
+          filteredLessons.map((lesson) => {
+            const completed = flow.completedLessons && flow.completedLessons.includes(lesson.id);
+            return '<div class="c4k-free-lesson-card ' + (completed ? 'is-completed' : '') + '">' +
+              '<div class="c4k-free-lesson-top">' +
+                '<span class="c4k-free-band-badge">' + esc(lesson.bandLabel) + '</span>' +
+                '<span class="c4k-free-cat-badge">' + esc(lesson.category) + '</span>' +
+                '<span class="c4k-free-duration">' + icon('clock', 12) + ' ' + esc(lesson.duration) + '</span>' +
               '</div>' +
-              '<h3 class="heading-5 c4k-lesson-title">' + esc(lesson.title) + '</h3>' +
-              '<p class="c4k-lesson-summary">' + esc(lesson.summary) + '</p>' +
-              '<div class="c4k-lesson-objective">' +
-                '<strong>' + icon('sparkles', 12) + ' Learning Goal:</strong> ' + esc(lesson.objective) +
-              '</div>' +
-              '<div class="c4k-lesson-cultural">' +
-                '<strong>🌍 Cultural Context:</strong> ' + esc(lesson.culturalContext) +
-              '</div>' +
-              '<div class="c4k-lesson-footer">' +
-                '<div class="c4k-lesson-tools">' +
-                  lesson.tools.map((t) => '<span class="tool-tag">' + esc(t) + '</span>').join('') +
-                '</div>' +
-                '<button type="button" class="button ' + (isCompleted ? 'button-secondary' : 'button-primary') + ' button-sm" data-action="coding-start-lesson" data-lesson-id="' + lesson.id + '">' +
-                  (isCompleted ? icon('check', 14) + ' Completed' : icon('play', 14) + ' Start Lesson') +
+              '<h3 class="heading-6 c4k-free-title-text">' + esc(lesson.title) + '</h3>' +
+              '<p class="text-s text-color-bright-overlay-80">' + esc(lesson.desc) + '</p>' +
+              '<div class="c4k-free-card-btn-row">' +
+                '<button type="button" class="button button-soft button-sm" data-action="coding-start-lesson" data-lesson-id="' + lesson.id + '">' +
+                  (completed ? icon('check', 14) + ' Review Lesson' : 'Open Lesson ' + icon('arrow', 14)) +
                 '</button>' +
               '</div>' +
-            '</article>';
-          }).join('') : '<div class="empty-state"><p>No lessons match your current filter. Try selecting "All Bands" or clearing the search.</p></div>') +
+            '</div>';
+          }).join('') +
         '</div>' +
       '</section>' +
 
@@ -2585,7 +2509,7 @@
                 '<div class="terminal-view ' + (flow.ideTab === 'canvas' ? 'hide' : '') + '" id="ide-terminal-view">' +
                   '<div class="terminal-status-bar">' +
                     '<span class="status-indicator">● Engine Online</span>' +
-                    '<span class="status-runtime" id="ide-status-runtime">Execution Time: ' + (flow.ideRuntime || '0.00ms') + '</span>' +
+                    '<span class="status-runtime" id="ide-status-runtime">Execution Time: ' + (flow.ideRuntime || '0.02ms') + '</span>' +
                     '<span class="status-xp" id="ide-status-xp">+' + (flow.ideXp || 10) + ' Maker XP</span>' +
                   '</div>' +
                   '<pre class="terminal-logs" id="ide-terminal-logs">' + esc(flow.ideOutput || '> [Idilewa Engine Ready]\nKọ koodu ki o tẹ "Ṣe Koodu (Run)" lati wo àbájáde.') + '</pre>' +
@@ -2613,16 +2537,28 @@
       '</section>' +
 
       '<!-- 7. Section: Subscription / Stay in the Loop -->' +
-      '<section class="c4k-newsletter-section scroll-3d-reveal" aria-labelledby="c4k-news-title">' +
-        '<div class="c4k-news-box background-color-primary">' +
-          '<div class="c4k-news-icon">' + icon('mail', 28) + '</div>' +
-          '<h3 class="heading-4-white" id="c4k-news-title">Stay in the Loop</h3>' +
-          '<p class="text-color-bright-overlay-80 max-width-480">Get free new monthly STEAM lessons, African language robotics guides, and workshop announcements directly in your inbox.</p>' +
-          '<form class="c4k-newsletter-form" data-submit="coding-subscribe">' +
-            '<input type="email" name="email" required placeholder="Enter your email address..." class="input c4k-input-white" aria-label="Your email for newsletter">' +
-            '<button type="submit" class="button button-accent">Subscribe Free</button>' +
-          '</form>' +
+      '<div class="section-footer-cta">' +
+        '<div class="section-container">' +
+          '<div class="c4k-subscribe-wrapper">' +
+            '<div class="c4k-subscribe-content">' +
+              '<span class="badge badge-curriculum-orange">Stay Connected</span>' +
+              '<h3 class="heading-3 c4k-sub-title">Get Free Monthly African STEAM Lessons</h3>' +
+              '<div class="text-lg text-color-bright-overlay-80 max-width-480">' +
+                'Join thousands of teachers and families getting culturally rich STEAM lesson plans, robotics challenges, and coding activities with African language roots.' +
+              '</div>' +
+              '<form class="c4k-subscribe-form" data-form="coding-subscribe">' +
+                '<input type="email" name="email" placeholder="Enter your school or guardian email…" required class="c4k-sub-input" />' +
+                '<button type="submit" class="footer-button c4k-sub-btn">' +
+                  '<span class="text-md bold">Sign Up ' + icon('arrow', 14) + '</span>' +
+                '</button>' +
+              '</form>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
+      '</div>' +
+
+      '<section class="code-safety-note">' +
+        icon('shield', 16) + ' This is an interactive learning environment: test your logic in Yorùbá, Igbo, Hausa, Swahili, and Python with real-time interpretation.' +
       '</section>' +
     '</div>';
   }
@@ -4384,6 +4320,8 @@
       '.flowchart-step',
       '.hero-quote',
       '.hero-stage',
+      '.c4k-3d-hero-stage',
+      '.c4k-ide-section',
       '.grid > div',
       '.flex-col > div',
       'form',
@@ -4400,7 +4338,7 @@
         }
       });
     }, {
-      threshold: 0.06,
+      threshold: 0.05,
       rootMargin: '0px 0px -30px 0px'
     });
 
@@ -4420,7 +4358,7 @@
     });
 
     // 3D Tilt for interactive cards
-    document.querySelectorAll('.card, .feature-card, .proverb-card, .lesson-card, .coding-card, .oral-card, .pricing-card').forEach((card) => {
+    document.querySelectorAll('.card, .feature-card, .proverb-card, .lesson-card, .c4k-3d-hub-card, .c4k-grade-card, .c4k-lesson-card').forEach((card) => {
       if (card.dataset.tiltAttached) return;
       card.dataset.tiltAttached = 'true';
       
@@ -4451,10 +4389,10 @@
     document.title = `${title} · Idilewa`;
     document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
     if (page === 'index') {
-      initHeroParallax();
-      initHeroCinematicVideoEngine();
-    }
-    init3DScrollObserver();
+    initHeroParallax();
+    initHeroCinematicVideoEngine();
+  }
+  init3DScrollObserver();
   }
 
   function showToast(message, tone = 'success') {
@@ -4554,7 +4492,7 @@
         const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
         state.coding.idePresetId = presets[0].id;
         state.coding.ideCode = presets[0].code;
-        state.coding.ideOutput = '> [Idilewa Engine Ready]\nKọ koodu ki o tẹ "Ṣe Koodu (Run)" lati wo àbájáde.';
+        state.coding.ideOutput = '> [Idilewa Engine Ready]\nSwitched to ' + lang.toUpperCase() + ' mode.';
         saveState(); render();
         showToast('Switched IDE to ' + lang.toUpperCase() + ' programming mode.');
         break;
