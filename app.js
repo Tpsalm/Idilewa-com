@@ -551,7 +551,7 @@ import confetti from 'canvas-confetti';
           <!-- 3D Interactive Hero Visual Stage -->
           <div class="hero-visual modern-hero-visual">
             <div class="hero-3d-stage-container" id="hero3DStage">
-              <div id="hero3DCanvasWrap" class="hero-3d-canvas-wrap" title="Drag to rotate 3D cultural artifact"></div>
+              <div id="hero3DCanvasWrap" class="hero-3d-canvas-wrap" data-3d-scene="hero" style="width: 100%; height: 100%; min-height: 340px;" title="Drag to rotate 3D cultural artifact"></div>
               <div class="hero-3d-floating-badge">
                 <span class="hero-3d-pulse-dot"></span>
                 <span>🪐 3D Gángan Drum & Glyphs · Grab & Rotate</span>
@@ -3130,7 +3130,7 @@ import confetti from 'canvas-confetti';
       else rewritten = rewritten.replace('<img', `<img alt="${esc(alt)}"`);
       return rewritten;
     });
-    if (slot === 0 && !['coding', 'trainer', 'course', 'lesson'].includes(page)) {
+    if (slot === 0 && !['index', 'login', 'coding', 'trainer', 'voice_lessons', 'course', 'lesson', 'consent', 'connect_students', 'connect_teachers'].includes(page)) {
       const filename = ROUTE_IMAGE_OVERRIDES[`${page}-1`] || `page-${page}-1.jpg`;
       const alt = routeImageAlt(page, 1);
       const visual = IMAGE_READY.has(filename)
@@ -3664,13 +3664,36 @@ import confetti from 'canvas-confetti';
     document.title = `${title} · Idilewa`;
     document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
     
-    // Auto Mount all 3D Elements on the page
-    window.setTimeout(() => {
-      autoMount3DElements();
-      init3DTiltEngine();
-    }, 40);
+    // Explicit 3D Hero Canvas Mount
+    if (page === 'index') {
+      const heroEl = document.getElementById('hero3DCanvasWrap');
+      if (heroEl) {
+        init3DHeroCanvas(heroEl);
+      }
+    }
 
-    // Mount 3D Audio Visualizer on Voice Lessons
+    // Explicit 3D Auth Canvas Mount
+    if (page === 'login') {
+      const authEl = document.getElementById('auth3DCanvasWrap');
+      if (authEl) {
+        init3DAuthCanvas(authEl);
+      }
+    }
+
+    // Explicit 3D Coding Canvas Mount
+    if (page === 'coding') {
+      const codingEl = document.getElementById('coding3DCanvasWrap');
+      if (codingEl) {
+        init3DCodingCanvas(codingEl);
+      }
+      const turtleCanvas = document.getElementById('yoruba-turtle-canvas');
+      const editor = document.getElementById('yoruba-code-editor');
+      if (turtleCanvas && editor) {
+        executeYorubaCode(editor.value, turtleCanvas);
+      }
+    }
+
+    // Explicit 3D Voice Visualizer Mount
     if (page === 'voice_lessons' || page === 'trainer') {
       const visualizerCanvas = document.getElementById('voiceVisualizerCanvas');
       if (visualizerCanvas) {
@@ -3678,14 +3701,11 @@ import confetti from 'canvas-confetti';
       }
     }
 
-    // Mount Yoruba Coding IDE Turtle Canvas
-    if (page === 'coding') {
-      const turtleCanvas = document.getElementById('yoruba-turtle-canvas');
-      const editor = document.getElementById('yoruba-code-editor');
-      if (turtleCanvas && editor) {
-        executeYorubaCode(editor.value, turtleCanvas);
-      }
-    }
+    // Global 3D Elements & Tilt Mount
+    window.setTimeout(() => {
+      autoMount3DElements();
+      init3DTiltEngine();
+    }, 50);
   }
 
   function showToast(message, tone = 'success') {

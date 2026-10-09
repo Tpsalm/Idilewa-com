@@ -10,7 +10,7 @@ function cleanPreviousScene(containerElement) {
   if (activeScenes.has(containerElement)) {
     const prev = activeScenes.get(containerElement);
     if (prev && typeof prev.destroy === 'function') {
-      prev.destroy();
+      try { prev.destroy(); } catch (_) {}
     }
     activeScenes.delete(containerElement);
   }
@@ -24,34 +24,37 @@ export function init3DHeroCanvas(containerElement) {
   if (!containerElement) return null;
   cleanPreviousScene(containerElement);
 
-  const width = containerElement.clientWidth || 360;
+  const width = containerElement.clientWidth || 380;
   const height = containerElement.clientHeight || 340;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-  camera.position.set(0, 0.5, 6.5);
+  camera.position.set(0, 0.4, 6.2);
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  renderer.domElement.style.display = 'block';
   containerElement.appendChild(renderer.domElement);
 
   // 3D Scene Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
   scene.add(ambientLight);
 
-  const mainLight = new THREE.DirectionalLight(0xfff7ed, 2.2);
+  const mainLight = new THREE.DirectionalLight(0xfff7ed, 2.4);
   mainLight.position.set(5, 8, 5);
   mainLight.castShadow = true;
   scene.add(mainLight);
 
-  const greenRimLight = new THREE.PointLight(0x15764a, 2.8, 12);
+  const greenRimLight = new THREE.PointLight(0x15764a, 3.2, 12);
   greenRimLight.position.set(-4, -2, 3);
   scene.add(greenRimLight);
 
-  const goldRimLight = new THREE.PointLight(0xf59e0b, 2.8, 12);
+  const goldRimLight = new THREE.PointLight(0xf59e0b, 3.2, 12);
   goldRimLight.position.set(4, -3, 2);
   scene.add(goldRimLight);
 
@@ -63,11 +66,11 @@ export function init3DHeroCanvas(containerElement) {
   const drumGroup = new THREE.Group();
 
   // Drum Body (Hourglass/Curved Cylinder)
-  const bodyGeo = new THREE.CylinderGeometry(0.75, 0.75, 1.8, 32, 10, true);
+  const bodyGeo = new THREE.CylinderGeometry(0.8, 0.8, 1.9, 32, 12, true);
   const posAttr = bodyGeo.attributes.position;
   for (let i = 0; i < posAttr.count; i++) {
     const y = posAttr.getY(i);
-    const scale = 0.65 + 0.35 * Math.pow(y / 0.9, 2);
+    const scale = 0.65 + 0.35 * Math.pow(y / 0.95, 2);
     posAttr.setX(i, posAttr.getX(i) * scale);
     posAttr.setZ(i, posAttr.getZ(i) * scale);
   }
@@ -75,8 +78,8 @@ export function init3DHeroCanvas(containerElement) {
 
   const woodMat = new THREE.MeshStandardMaterial({
     color: 0x8b4513,
-    roughness: 0.35,
-    metalness: 0.15,
+    roughness: 0.3,
+    metalness: 0.2,
   });
   const drumBody = new THREE.Mesh(bodyGeo, woodMat);
   drumGroup.add(drumBody);
@@ -84,31 +87,31 @@ export function init3DHeroCanvas(containerElement) {
   // Drum Membrane Tops (Leather Skins)
   const skinMat = new THREE.MeshStandardMaterial({
     color: 0xfde047,
-    roughness: 0.6,
-    metalness: 0.1,
+    roughness: 0.5,
+    metalness: 0.15,
   });
-  const topSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.1, 32), skinMat);
-  topSkin.position.y = 0.9;
+  const topSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.81, 0.81, 0.1, 32), skinMat);
+  topSkin.position.y = 0.95;
   drumGroup.add(topSkin);
 
-  const bottomSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.1, 32), skinMat);
-  bottomSkin.position.y = -0.9;
+  const bottomSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.81, 0.81, 0.1, 32), skinMat);
+  bottomSkin.position.y = -0.95;
   drumGroup.add(bottomSkin);
 
   // Brass Ring Hoops
   const brassMat = new THREE.MeshStandardMaterial({
     color: 0xf59e0b,
-    roughness: 0.2,
-    metalness: 0.9,
+    roughness: 0.15,
+    metalness: 0.95,
   });
-  const topRing = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.05, 16, 32), brassMat);
+  const topRing = new THREE.Mesh(new THREE.TorusGeometry(0.83, 0.05, 16, 32), brassMat);
   topRing.rotation.x = Math.PI / 2;
-  topRing.position.y = 0.9;
+  topRing.position.y = 0.95;
   drumGroup.add(topRing);
 
-  const bottomRing = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.05, 16, 32), brassMat);
+  const bottomRing = new THREE.Mesh(new THREE.TorusGeometry(0.83, 0.05, 16, 32), brassMat);
   bottomRing.rotation.x = Math.PI / 2;
-  bottomRing.position.y = -0.9;
+  bottomRing.position.y = -0.95;
   drumGroup.add(bottomRing);
 
   // Drum Leather Tension Ropes (12 vertical strings)
@@ -120,40 +123,40 @@ export function init3DHeroCanvas(containerElement) {
   const ropeCount = 12;
   for (let i = 0; i < ropeCount; i++) {
     const angle = (i / ropeCount) * Math.PI * 2;
-    const ropeGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.8, 8);
+    const ropeGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.9, 8);
     const rope = new THREE.Mesh(ropeGeo, ropeMat);
-    const rx = Math.cos(angle) * 0.7;
-    const rz = Math.sin(angle) * 0.7;
+    const rx = Math.cos(angle) * 0.75;
+    const rz = Math.sin(angle) * 0.75;
     rope.position.set(rx, 0, rz);
     drumGroup.add(rope);
   }
 
   // Emerald Gem Center Belt
   const gemBelt = new THREE.Mesh(
-    new THREE.TorusGeometry(0.55, 0.06, 16, 32),
+    new THREE.TorusGeometry(0.58, 0.07, 16, 32),
     new THREE.MeshStandardMaterial({
       color: 0x15764a,
       roughness: 0.1,
-      metalness: 0.8,
+      metalness: 0.85,
       emissive: 0x064e3b,
-      emissiveIntensity: 0.5,
+      emissiveIntensity: 0.6,
     })
   );
   gemBelt.rotation.x = Math.PI / 2;
   drumGroup.add(gemBelt);
 
-  drumGroup.rotation.z = 0.3;
+  drumGroup.rotation.z = 0.28;
   drumGroup.rotation.x = 0.2;
   masterGroup.add(drumGroup);
 
   // --- 3D FLOATING ORBITING CULTURAL RINGS & GLYPH PLATES ---
-  const outerRingGeo = new THREE.TorusGeometry(2.1, 0.04, 16, 64);
+  const outerRingGeo = new THREE.TorusGeometry(2.2, 0.045, 16, 64);
   const outerRingMat = new THREE.MeshStandardMaterial({
     color: 0x15764a,
     roughness: 0.2,
-    metalness: 0.85,
+    metalness: 0.9,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.85,
   });
   const outerRing = new THREE.Mesh(outerRingGeo, outerRingMat);
   outerRing.rotation.x = Math.PI / 2.5;
@@ -165,13 +168,13 @@ export function init3DHeroCanvas(containerElement) {
   const glyphSpheres = [];
 
   for (let i = 0; i < 4; i++) {
-    const gGeo = new THREE.IcosahedronGeometry(0.24, 2);
+    const gGeo = new THREE.IcosahedronGeometry(0.26, 2);
     const gMat = new THREE.MeshStandardMaterial({
       color: glyphColors[i],
-      roughness: 0.2,
-      metalness: 0.8,
+      roughness: 0.15,
+      metalness: 0.85,
       emissive: glyphColors[i],
-      emissiveIntensity: 0.3,
+      emissiveIntensity: 0.4,
     });
     const gMesh = new THREE.Mesh(gGeo, gMat);
     glyphGroup.add(gMesh);
@@ -210,10 +213,10 @@ export function init3DHeroCanvas(containerElement) {
   particleGeo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
 
   const particleMat = new THREE.PointsMaterial({
-    size: 0.12,
+    size: 0.14,
     vertexColors: true,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.9,
   });
   const particles = new THREE.Points(particleGeo, particleMat);
   masterGroup.add(particles);
@@ -240,16 +243,19 @@ export function init3DAuthCanvas(containerElement) {
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  renderer.domElement.style.display = 'block';
   containerElement.appendChild(renderer.domElement);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
   scene.add(ambientLight);
 
   const keyLight = new THREE.DirectionalLight(0xfde047, 2.5);
   keyLight.position.set(3, 4, 4);
   scene.add(keyLight);
 
-  const emeraldLight = new THREE.PointLight(0x15764a, 3, 10);
+  const emeraldLight = new THREE.PointLight(0x15764a, 3.2, 10);
   emeraldLight.position.set(-3, -2, 2);
   scene.add(emeraldLight);
 
@@ -288,7 +294,7 @@ export function init3DAuthCanvas(containerElement) {
   sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
   const sparkles = new THREE.Points(
     sparkGeo,
-    new THREE.PointsMaterial({ color: 0xfbbf24, size: 0.1, transparent: true, opacity: 0.9 })
+    new THREE.PointsMaterial({ color: 0xfbbf24, size: 0.12, transparent: true, opacity: 0.9 })
   );
   group.add(sparkles);
 
@@ -314,9 +320,12 @@ export function init3DCodingCanvas(containerElement) {
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  renderer.domElement.style.display = 'block';
   containerElement.appendChild(renderer.domElement);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.95);
   scene.add(ambient);
 
   const cyanLight = new THREE.PointLight(0x06b6d4, 3, 10);
@@ -377,9 +386,12 @@ export function init3DStoryCanvas(containerElement) {
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  renderer.domElement.style.display = 'block';
   containerElement.appendChild(renderer.domElement);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.95);
   scene.add(ambient);
 
   const warmLight = new THREE.PointLight(0xf59e0b, 3, 10);
@@ -407,9 +419,21 @@ export function init3DStoryCanvas(containerElement) {
 }
 
 /**
- * 5. Auto Mount Any 3D Element on Page by [data-3d-scene]
+ * 5. Auto Mount Any 3D Element on Page
  */
 export function autoMount3DElements() {
+  const heroEl = document.getElementById('hero3DCanvasWrap');
+  if (heroEl) init3DHeroCanvas(heroEl);
+
+  const authEl = document.getElementById('auth3DCanvasWrap');
+  if (authEl) init3DAuthCanvas(authEl);
+
+  const codingEl = document.getElementById('coding3DCanvasWrap');
+  if (codingEl) init3DCodingCanvas(codingEl);
+
+  const storyEl = document.getElementById('story3DCanvasWrap');
+  if (storyEl) init3DStoryCanvas(storyEl);
+
   const elements = document.querySelectorAll('[data-3d-scene]');
   elements.forEach((el) => {
     const sceneType = el.getAttribute('data-3d-scene');
@@ -479,8 +503,8 @@ function setupOrbitControls(container, masterGroup, glyphs, drum, ring, particle
     if (glyphs && glyphs.length) {
       glyphs.forEach((sphere, idx) => {
         const angle = clock * 0.8 + (idx / 4) * Math.PI * 2;
-        sphere.position.x = Math.cos(angle) * 2.1;
-        sphere.position.z = Math.sin(angle) * 2.1;
+        sphere.position.x = Math.cos(angle) * 2.2;
+        sphere.position.z = Math.sin(angle) * 2.2;
         sphere.position.y = Math.sin(clock * 1.5 + idx) * 0.35;
         sphere.rotation.y += 0.02;
       });
@@ -496,13 +520,11 @@ function setupOrbitControls(container, masterGroup, glyphs, drum, ring, particle
   animate();
 
   const onResize = () => {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    if (w && h) {
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
+    const w = container.clientWidth || 360;
+    const h = container.clientHeight || 340;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
   };
   window.addEventListener('resize', onResize);
 
@@ -580,13 +602,11 @@ function setupSimpleOrbit(container, masterGroup, m1, m2, m3, m4, renderer, scen
   animate();
 
   const onResize = () => {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    if (w && h) {
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
+    const w = container.clientWidth || 340;
+    const h = container.clientHeight || 240;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
   };
   window.addEventListener('resize', onResize);
 
