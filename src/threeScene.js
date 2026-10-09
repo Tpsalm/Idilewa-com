@@ -26,7 +26,7 @@ export function init3DHeroCanvas(containerElement) {
   containerElement.appendChild(renderer.domElement);
 
   // 3D Scene Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
   scene.add(ambientLight);
 
   const mainLight = new THREE.DirectionalLight(0xfff7ed, 2.2);
@@ -34,11 +34,11 @@ export function init3DHeroCanvas(containerElement) {
   mainLight.castShadow = true;
   scene.add(mainLight);
 
-  const greenRimLight = new THREE.PointLight(0x15764a, 2.5, 12);
+  const greenRimLight = new THREE.PointLight(0x15764a, 2.8, 12);
   greenRimLight.position.set(-4, -2, 3);
   scene.add(greenRimLight);
 
-  const goldRimLight = new THREE.PointLight(0xf59e0b, 2.5, 12);
+  const goldRimLight = new THREE.PointLight(0xf59e0b, 2.8, 12);
   goldRimLight.position.set(4, -3, 2);
   scene.add(goldRimLight);
 
@@ -51,7 +51,6 @@ export function init3DHeroCanvas(containerElement) {
 
   // Drum Body (Hourglass/Curved Cylinder)
   const bodyGeo = new THREE.CylinderGeometry(0.75, 0.75, 1.8, 32, 10, true);
-  // Pinch the cylinder waist to make authentic talking drum shape
   const posAttr = bodyGeo.attributes.position;
   for (let i = 0; i < posAttr.count; i++) {
     const y = posAttr.getY(i);
@@ -174,10 +173,10 @@ export function init3DHeroCanvas(containerElement) {
   const colArr = new Float32Array(particleCount * 3);
 
   const colorsPalette = [
-    new THREE.Color(0xf59e0b), // Amber Gold
-    new THREE.Color(0x15764a), // Emerald Green
-    new THREE.Color(0x38bdf8), // Sky Blue
-    new THREE.Color(0xfbbf24), // Bright Yellow
+    new THREE.Color(0xf59e0b),
+    new THREE.Color(0x15764a),
+    new THREE.Color(0x38bdf8),
+    new THREE.Color(0xfbbf24),
   ];
 
   for (let i = 0; i < particleCount; i++) {
@@ -206,116 +205,374 @@ export function init3DHeroCanvas(containerElement) {
   const particles = new THREE.Points(particleGeo, particleMat);
   masterGroup.add(particles);
 
-  // --- MOUSE & TOUCH PARALLAX INTERACTION ---
-  let targetRotX = 0;
-  let targetRotY = 0;
-  let curRotX = 0;
-  let curRotY = 0;
-  let isDragging = false;
-  let prevMouseX = 0;
-  let prevMouseY = 0;
+  // Mouse & Touch Parallax Interaction
+  setupOrbitControls(containerElement, masterGroup, glyphSpheres, drumGroup, outerRing, particles, renderer, scene, camera);
 
-  const onPointerDown = (e) => {
+  return renderer;
+}
+
+/**
+ * 2. 3D Auth Stage (Sacred African Shield & Glowing Gateway Key)
+ */
+export function init3DAuthCanvas(containerElement) {
+  if (!containerElement) return null;
+
+  containerElement.innerHTML = '';
+  const width = containerElement.clientWidth || 340;
+  const height = containerElement.clientHeight || 260;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  camera.position.set(0, 0, 5.8);
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  containerElement.appendChild(renderer.domElement);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+  scene.add(ambientLight);
+
+  const keyLight = new THREE.DirectionalLight(0xfde047, 2.5);
+  keyLight.position.set(3, 4, 4);
+  scene.add(keyLight);
+
+  const emeraldLight = new THREE.PointLight(0x15764a, 3, 10);
+  emeraldLight.position.set(-3, -2, 2);
+  scene.add(emeraldLight);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // 3D Sacred Shield / Torus Crest
+  const torusKnot = new THREE.Mesh(
+    new THREE.TorusKnotGeometry(0.9, 0.28, 80, 16),
+    new THREE.MeshStandardMaterial({
+      color: 0x15764a,
+      roughness: 0.2,
+      metalness: 0.85,
+    })
+  );
+  group.add(torusKnot);
+
+  // Center Golden Key Core
+  const coreJewel = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.6, 2),
+    new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      roughness: 0.15,
+      metalness: 0.95,
+      emissive: 0x78350f,
+      emissiveIntensity: 0.4,
+    })
+  );
+  group.add(coreJewel);
+
+  // Orbiting Golden Rings
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(1.6, 0.03, 16, 48),
+    new THREE.MeshStandardMaterial({ color: 0xfde047, metalness: 0.9, roughness: 0.2 })
+  );
+  ring.rotation.x = Math.PI / 3;
+  group.add(ring);
+
+  // Orbiting Sparkles
+  const sparkGeo = new THREE.BufferGeometry();
+  const sparkCount = 45;
+  const sparkPos = new Float32Array(sparkCount * 3);
+  for (let i = 0; i < sparkCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const r = 1.3 + Math.random() * 1.2;
+    sparkPos[i * 3] = Math.cos(theta) * r;
+    sparkPos[i * 3 + 1] = (Math.random() - 0.5) * 2;
+    sparkPos[i * 3 + 2] = Math.sin(theta) * r;
+  }
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+  const sparkles = new THREE.Points(
+    sparkGeo,
+    new THREE.PointsMaterial({ color: 0xfbbf24, size: 0.1, transparent: true, opacity: 0.9 })
+  );
+  group.add(sparkles);
+
+  setupSimpleOrbit(containerElement, group, torusKnot, coreJewel, ring, sparkles, renderer, scene, camera);
+  return renderer;
+}
+
+/**
+ * 3. 3D Coding Stage (Yoruba Hologram Code Cube & Cyber Matrix)
+ */
+export function init3DCodingCanvas(containerElement) {
+  if (!containerElement) return null;
+
+  containerElement.innerHTML = '';
+  const width = containerElement.clientWidth || 360;
+  const height = containerElement.clientHeight || 280;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  camera.position.set(0, 0, 5.5);
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  containerElement.appendChild(renderer.domElement);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  scene.add(ambient);
+
+  const cyanLight = new THREE.PointLight(0x06b6d4, 3, 10);
+  cyanLight.position.set(3, 3, 3);
+  scene.add(cyanLight);
+
+  const greenLight = new THREE.PointLight(0x10b981, 3, 10);
+  greenLight.position.set(-3, -3, 3);
+  scene.add(greenLight);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // Outer Wireframe Hologram Cube
+  const cubeWire = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 1.5, 1.5),
+    new THREE.MeshStandardMaterial({
+      color: 0x10b981,
+      wireframe: true,
+      roughness: 0.1,
+      metalness: 0.9,
+    })
+  );
+  group.add(cubeWire);
+
+  // Inner Solid Crystal
+  const crystal = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(0.7, 1),
+    new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      roughness: 0.2,
+      metalness: 0.85,
+      emissive: 0x0e7490,
+      emissiveIntensity: 0.5,
+    })
+  );
+  group.add(crystal);
+
+  // Gyroscope Axis Rings
+  const axisRing1 = new THREE.Mesh(
+    new THREE.TorusGeometry(1.3, 0.03, 16, 48),
+    new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2 })
+  );
+  group.add(axisRing1);
+
+  const axisRing2 = new THREE.Mesh(
+    new THREE.TorusGeometry(1.45, 0.03, 16, 48),
+    new THREE.MeshStandardMaterial({ color: 0x15764a, metalness: 0.9, roughness: 0.2 })
+  );
+  axisRing2.rotation.x = Math.PI / 2;
+  group.add(axisRing2);
+
+  setupSimpleOrbit(containerElement, group, cubeWire, crystal, axisRing1, axisRing2, renderer, scene, camera);
+  return renderer;
+}
+
+/**
+ * 4. 3D Story & Culture Stage (Ancient Drum, Cowrie Shell & Magic Story Orb)
+ */
+export function init3DStoryCanvas(containerElement) {
+  if (!containerElement) return null;
+
+  containerElement.innerHTML = '';
+  const width = containerElement.clientWidth || 360;
+  const height = containerElement.clientHeight || 280;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  camera.position.set(0, 0, 5.5);
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  containerElement.appendChild(renderer.domElement);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+  scene.add(ambient);
+
+  const warmLight = new THREE.PointLight(0xf59e0b, 3, 10);
+  warmLight.position.set(3, 4, 3);
+  scene.add(warmLight);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // 3D Ancient Torus Knot
+  const knot = new THREE.Mesh(
+    new THREE.TorusKnotGeometry(0.85, 0.25, 70, 16, 2, 3),
+    new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.25, metalness: 0.8 })
+  );
+  group.add(knot);
+
+  // 3D Glowing Core
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 32, 32),
+    new THREE.MeshStandardMaterial({ color: 0x15764a, emissive: 0x064e3b, emissiveIntensity: 0.6, roughness: 0.1 })
+  );
+  group.add(core);
+
+  setupSimpleOrbit(containerElement, group, knot, core, null, null, renderer, scene, camera);
+  return renderer;
+}
+
+/**
+ * 5. Auto Mount Any 3D Element on Page by [data-3d-scene]
+ */
+export function autoMount3DElements() {
+  const elements = document.querySelectorAll('[data-3d-scene]');
+  elements.forEach((el) => {
+    if (el.__mounted3D) return;
+    el.__mounted3D = true;
+
+    const sceneType = el.getAttribute('data-3d-scene');
+    if (sceneType === 'hero' || sceneType === 'drum') {
+      init3DHeroCanvas(el);
+    } else if (sceneType === 'auth' || sceneType === 'shield') {
+      init3DAuthCanvas(el);
+    } else if (sceneType === 'coding' || sceneType === 'cube') {
+      init3DCodingCanvas(el);
+    } else if (sceneType === 'story' || sceneType === 'culture') {
+      init3DStoryCanvas(el);
+    } else {
+      init3DHeroCanvas(el);
+    }
+  });
+}
+
+/**
+ * Helper: Setup Parallax and Mouse Orbit
+ */
+function setupOrbitControls(container, masterGroup, glyphs, drum, ring, particles, renderer, scene, camera) {
+  let targetRotX = 0, targetRotY = 0, curRotX = 0, curRotY = 0;
+  let isDragging = false, prevX = 0, prevY = 0;
+
+  const onDown = (e) => {
     isDragging = true;
-    prevMouseX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
-    prevMouseY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    prevX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    prevY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
   };
 
-  const onPointerMove = (e) => {
+  const onMove = (e) => {
     const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
     const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-
     if (isDragging) {
-      const deltaX = clientX - prevMouseX;
-      const deltaY = clientY - prevMouseY;
-      targetRotY += deltaX * 0.008;
-      targetRotX += deltaY * 0.008;
-      prevMouseX = clientX;
-      prevMouseY = clientY;
+      targetRotY += (clientX - prevX) * 0.008;
+      targetRotX += (clientY - prevY) * 0.008;
+      prevX = clientX;
+      prevY = clientY;
     } else {
-      const rect = containerElement.getBoundingClientRect();
-      const nx = (clientX - rect.left) / rect.width - 0.5;
-      const ny = (clientY - rect.top) / rect.height - 0.5;
-      targetRotY = nx * 0.8;
-      targetRotX = -ny * 0.6;
+      const rect = container.getBoundingClientRect();
+      targetRotY = ((clientX - rect.left) / rect.width - 0.5) * 0.8;
+      targetRotX = -((clientY - rect.top) / rect.height - 0.5) * 0.6;
     }
   };
 
-  const onPointerUp = () => {
-    isDragging = false;
-  };
+  const onUp = () => { isDragging = false; };
 
-  containerElement.addEventListener('mousedown', onPointerDown);
-  containerElement.addEventListener('mousemove', onPointerMove);
-  window.addEventListener('mouseup', onPointerUp);
-  containerElement.addEventListener('touchstart', onPointerDown, { passive: true });
-  containerElement.addEventListener('touchmove', onPointerMove, { passive: true });
-  window.addEventListener('touchend', onPointerUp);
+  container.addEventListener('mousedown', onDown);
+  container.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  container.addEventListener('touchstart', onDown, { passive: true });
+  container.addEventListener('touchmove', onMove, { passive: true });
+  window.addEventListener('touchend', onUp);
 
-  let animId = null;
   let clock = 0;
-
   const animate = () => {
-    animId = requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
     clock += 0.02;
 
-    // Smooth inertia interpolation
     curRotX += (targetRotX - curRotX) * 0.06;
     curRotY += (targetRotY - curRotY) * 0.06;
 
     masterGroup.rotation.y = curRotY + Math.sin(clock * 0.5) * 0.15;
     masterGroup.rotation.x = curRotX + Math.cos(clock * 0.4) * 0.1;
 
-    drumGroup.rotation.y += 0.01;
-    outerRing.rotation.z += 0.005;
+    if (drum) drum.rotation.y += 0.01;
+    if (ring) ring.rotation.z += 0.005;
 
-    // Orbit glyph spheres
-    glyphSpheres.forEach((sphere, idx) => {
-      const angle = clock * 0.8 + (idx / 4) * Math.PI * 2;
-      sphere.position.x = Math.cos(angle) * 2.1;
-      sphere.position.z = Math.sin(angle) * 2.1;
-      sphere.position.y = Math.sin(clock * 1.5 + idx) * 0.35;
-      sphere.rotation.y += 0.02;
-    });
+    if (glyphs && glyphs.length) {
+      glyphs.forEach((sphere, idx) => {
+        const angle = clock * 0.8 + (idx / 4) * Math.PI * 2;
+        sphere.position.x = Math.cos(angle) * 2.1;
+        sphere.position.z = Math.sin(angle) * 2.1;
+        sphere.position.y = Math.sin(clock * 1.5 + idx) * 0.35;
+        sphere.rotation.y += 0.02;
+      });
+    }
 
-    particles.rotation.y -= 0.003;
-    particles.rotation.x += 0.002;
+    if (particles) {
+      particles.rotation.y -= 0.003;
+      particles.rotation.x += 0.002;
+    }
 
     renderer.render(scene, camera);
   };
-
   animate();
+}
 
-  const handleResize = () => {
-    const w = containerElement.clientWidth;
-    const h = containerElement.clientHeight;
-    if (w && h) {
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+function setupSimpleOrbit(container, masterGroup, m1, m2, m3, m4, renderer, scene, camera) {
+  let targetRotX = 0, targetRotY = 0, curRotX = 0, curRotY = 0;
+  let isDragging = false, prevX = 0, prevY = 0;
+
+  const onDown = (e) => {
+    isDragging = true;
+    prevX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    prevY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+  };
+
+  const onMove = (e) => {
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+    if (isDragging) {
+      targetRotY += (clientX - prevX) * 0.008;
+      targetRotX += (clientY - prevY) * 0.008;
+      prevX = clientX;
+      prevY = clientY;
+    } else {
+      const rect = container.getBoundingClientRect();
+      targetRotY = ((clientX - rect.left) / rect.width - 0.5) * 0.8;
+      targetRotX = -((clientY - rect.top) / rect.height - 0.5) * 0.6;
     }
   };
 
-  window.addEventListener('resize', handleResize);
+  const onUp = () => { isDragging = false; };
 
-  return {
-    destroy: () => {
-      if (animId) cancelAnimationFrame(animId);
-      containerElement.removeEventListener('mousedown', onPointerDown);
-      containerElement.removeEventListener('mousemove', onPointerMove);
-      window.removeEventListener('mouseup', onPointerUp);
-      containerElement.removeEventListener('touchstart', onPointerDown);
-      containerElement.removeEventListener('touchmove', onPointerMove);
-      window.removeEventListener('touchend', onPointerUp);
-      window.removeEventListener('resize', handleResize);
-      renderer.dispose();
-      containerElement.innerHTML = '';
-    },
+  container.addEventListener('mousedown', onDown);
+  container.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  container.addEventListener('touchstart', onDown, { passive: true });
+  container.addEventListener('touchmove', onMove, { passive: true });
+  window.addEventListener('touchend', onUp);
+
+  let clock = 0;
+  const animate = () => {
+    requestAnimationFrame(animate);
+    clock += 0.02;
+
+    curRotX += (targetRotX - curRotX) * 0.06;
+    curRotY += (targetRotY - curRotY) * 0.06;
+
+    masterGroup.rotation.y = curRotY + Math.sin(clock * 0.5) * 0.15;
+    masterGroup.rotation.x = curRotX + Math.cos(clock * 0.4) * 0.1;
+
+    if (m1) m1.rotation.y += 0.012;
+    if (m2) m2.rotation.x -= 0.01;
+    if (m3) m3.rotation.z += 0.008;
+    if (m4) m4.rotation.y -= 0.005;
+
+    renderer.render(scene, camera);
   };
+  animate();
 }
 
 /**
- * 2. 3D Audio Visualizer (Waveform Sphere & Frequency Rings)
+ * 6. 3D Audio Visualizer (Waveform Sphere & Frequency Rings)
  */
 export function init3DAudioVisualizer(canvasElement) {
   if (!canvasElement) return null;
@@ -345,7 +602,6 @@ export function init3DAudioVisualizer(canvasElement) {
 
   for (let i = 0; i < barCount; i++) {
     const geo = new THREE.CylinderGeometry(0.07, 0.07, 1.2, 16);
-    // Dò (Blue), Re (Green), Mí (Amber/Gold)
     const col = i < 4 ? 0x0284c7 : i < 9 ? 0x15764a : 0xf59e0b;
     const mat = new THREE.MeshStandardMaterial({
       color: col,
@@ -361,7 +617,6 @@ export function init3DAudioVisualizer(canvasElement) {
     bars.push(mesh);
   }
 
-  // Waveform Orbiting Ring
   const ringGeo = new THREE.TorusGeometry(1.8, 0.03, 16, 64);
   const ringMat = new THREE.MeshStandardMaterial({
     color: 0x15764a,
@@ -409,12 +664,8 @@ export function init3DAudioVisualizer(canvasElement) {
   animate();
 
   return {
-    setPitch: (pitch) => {
-      activePitch = pitch;
-    },
-    setSpeaking: (speaking) => {
-      isSpeaking = speaking;
-    },
+    setPitch: (pitch) => { activePitch = pitch; },
+    setSpeaking: (speaking) => { isSpeaking = speaking; },
     destroy: () => {
       if (animId) cancelAnimationFrame(animId);
       renderer.dispose();
@@ -423,16 +674,15 @@ export function init3DAudioVisualizer(canvasElement) {
 }
 
 /**
- * 3. Global 3D Interactive Card Tilt Engine (Perspective 3D Hover & Glare)
+ * 7. Global 3D Interactive Card Tilt Engine (Perspective 3D Hover & Glare)
  */
 export function init3DTiltEngine() {
-  const cards = document.querySelectorAll('.feature-card, .activity-card, .language-card, .c4k-hub-card, .yoruba-editor-card, .auth-box, .stat-card, .proverb-card, .plan-card');
+  const cards = document.querySelectorAll('.feature-card, .activity-card, .language-card, .c4k-hub-card, .yoruba-editor-card, .auth-clean-card, .stat-card, .proverb-card, .plan-card, .code-hero-3d-card, .vowels-3d-card');
 
   cards.forEach((card) => {
     if (card.__tiltInitialized) return;
     card.__tiltInitialized = true;
 
-    // Add perspective CSS classes if missing
     card.classList.add('perspective-3d-card');
 
     let glare = card.querySelector('.card-3d-glare');
@@ -449,8 +699,8 @@ export function init3DTiltEngine() {
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
 
-      const rotateX = ((y - centerY) / centerY) * -10; // degrees
-      const rotateY = ((x - centerX) / centerX) * 10;
+      const rotateX = ((y - centerY) / centerY) * -9;
+      const rotateY = ((x - centerX) / centerX) * 9;
 
       card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.025, 1.025, 1.025) translateZ(8px)`;
 

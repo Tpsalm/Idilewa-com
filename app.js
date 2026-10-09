@@ -3,7 +3,7 @@ import { supabase, signUp as dbSignUp, signIn as dbSignIn, signOut as dbSignOut,
 import { YORUBA_KEYWORDS, YORUBA_COLOR_MAP, YORUBA_CODE_LESSONS, transpileYorubaToJS, executeYorubaCode, speakYorubaTerm } from './src/yorubaCodeEngine.js';
 import { translateText, speakText, playTonePitch, DICTIONARY } from './src/translationEngine.js';
 import { ORAL_VOWELS, NASAL_VOWELS, CONSONANTS, TONE_MARKS } from './src/vowelsConsonantsData.js';
-import { init3DHeroCanvas, init3DAudioVisualizer, init3DTiltEngine } from './src/threeScene.js';
+import { init3DHeroCanvas, init3DAuthCanvas, init3DCodingCanvas, init3DStoryCanvas, init3DAudioVisualizer, init3DTiltEngine, autoMount3DElements } from './src/threeScene.js';
 import confetti from 'canvas-confetti';
 
 (() => {
@@ -1858,13 +1858,18 @@ import confetti from 'canvas-confetti';
         <strong>K-8 Coding & IDE fun Àwọn Ọmọdé</strong>
       </div>
 
-      <!-- Restored Image Banner Header (No Green Container) -->
-      <header class="code-hero-banner">
-        <img class="code-hero-bg-img" src="./assets/code-kids.jpg" alt="African kids learning programming" />
-        <div class="code-hero-overlay-content">
-          <span class="c4k-eyebrow">${icon('sparkles', 16)} IDÍLẸ́WÀ CODE FOR KIDS · K-8 STEAM CURRICULUM</span>
-          <h1>Kọ Koodu ni Èdè Yorùbá</h1>
-          <p>Learn computational thinking, algorithmic flowcharts, and 100% pure Yoruba coding with Turtle graphics.</p>
+      <!-- 3D Interactive Coding Hero Stage (No Static Image Box) -->
+      <header class="coding-3d-hero-stage">
+        <div style="max-width: 580px; z-index: 2;">
+          <span class="c4k-eyebrow" style="color: #6ee7b7 !important;">${icon('sparkles', 16)} IDÍLẸ́WÀ 3D CODE FOR KIDS · K-8 STEAM</span>
+          <h1 style="color: #ffffff !important; margin: 10px 0;">Kọ Koodu ni Èdè Yorùbá</h1>
+          <p style="color: #d1fae5 !important; font-size: 1.15rem; margin: 0;">Learn algorithmic flowcharts and 100% pure Yoruba coding with 3D Holographic Matrix and Turtle graphics.</p>
+        </div>
+        <div class="coding-3d-canvas-wrap" id="coding3DCanvasWrap" data-3d-scene="coding" title="Drag to rotate 3D coding cube">
+          <div class="hero-3d-floating-badge" style="bottom: 8px;">
+            <span class="hero-3d-pulse-dot"></span>
+            <span>⚡ 3D Hologram Cube · Drag to Rotate</span>
+          </div>
         </div>
       </header>
 
@@ -1977,12 +1982,26 @@ import confetti from 'canvas-confetti';
   }
 
   function renderStories() {
-    const stories = [
-      { title: 'The story that travelled', desc: 'A family story told, remembered and shared again.', image: 'story-grandmother.jpg', tag: 'Oral tradition', lang: 'Yorùbá · English', tone: 'peach' },
-      { title: 'Words from the garden', desc: 'Notice new words as a small garden begins to grow.', image: 'yoruba-kids-culture.jpg', tag: 'Read together', lang: 'Beginner · 5 min', tone: 'mint' },
-      { title: 'A team of little builders', desc: 'Follow two friends as they solve a puzzle with code.', image: 'code-kids.jpg', tag: 'Code & create', lang: 'English + Yorùbá', tone: 'blue' }
-    ];
-    return `<div class="container route-page stories-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories</strong></div><section class="stories-hero"><div><span class="section-kicker">Stories & imagination</span><h1>Some things are best<br /><em>shared as a story.</em></h1><p>Read, listen and notice the words, voices and moments that bring a story to life.</p>${routeLink('ere_game', `Try a story game ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('story')}</div><div class="stories-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a folktale with two children" /><span class="story-image-chip">${icon('headphones', 16)} Listen together</span></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 0)}<div class="stories-topline"><div><span class="section-kicker">The story shelf</span><h2>Pick up where curiosity takes you.</h2></div><div class="story-filter">${icon('filter', 15)} Stories for everyone</div></div><div class="story-grid">${stories.map((s, i) => `<article class="story-card"><a class="story-card-image story-card-art story-card-art-${i + 1}" href="#/ere_game" data-route="ere_game" aria-label="Open story: ${esc(s.title)}"><span class="story-card-art-icon" aria-hidden="true">${icon(i === 0 ? 'book' : i === 1 ? 'quote' : 'music', 34)}</span><span class="story-card-tag">${s.tag}</span><span class="story-card-number">0${i + 1}</span></a><div class="story-card-body"><span class="story-language">${s.lang}</span><h3>${s.title}</h3><p>${s.desc}</p><div class="story-card-actions"><a class="text-link" href="#/ere_game" data-route="ere_game">Read & listen ${icon('arrow', 14)}</a><button class="save-button ${state.saved.includes(s.title) ? 'is-saved' : ''}" aria-label="Save ${s.title}" data-action="save-item" data-item="${esc(s.title)}">${icon('bookmark', 17)}</button></div></div></article>`).join('')}</div><section class="stories-bottom"><div><span class="section-kicker">More than a story</span><h2>Explore the voices behind the words.</h2><p>Discover oral genres, proverbs and language audio.</p></div><div class="stories-bottom-links">${routeLink('oral', 'Oral traditions ' + icon('arrow', 14), 'button button-outline')}${routeLink('voices', 'Voice library ' + icon('arrow', 14), 'button button-soft')}</div></section></div>`;
+    return `<div class="container route-page stories-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories & Culture</strong></div>
+      
+      <!-- 3D Story Stage -->
+      <div class="story-3d-hero-stage">
+        <div id="story3DCanvasWrap" style="width: 100%; height: 100%;" data-3d-scene="story" title="Drag to rotate 3D ancient drum & magic story orb"></div>
+        <div class="hero-3d-floating-badge">
+          <span class="hero-3d-pulse-dot"></span>
+          <span>📜 3D Ancient Yoruba Lore Orb · Drag to Rotate</span>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Oral Tradition & Folklore</span>
+          <h1>African Stories, Riddles & Folktales</h1>
+          <p>Immerse yourself in rich West African oral history, ancestral wisdom, and interactive cultural games.</p>
+        </div>
+      </div>
+    </div>`;
   }
 
   function renderStoryGame() {
@@ -2190,10 +2209,18 @@ import confetti from 'canvas-confetti';
 
       <div class="auth-clean-wrapper">
         <div class="auth-clean-card perspective-3d-card">
+          <!-- 3D Interactive Sacred Shield Stage -->
+          <div class="auth-3d-stage">
+            <div id="auth3DCanvasWrap" class="auth-3d-canvas-wrap" data-3d-scene="auth" style="width: 100%; height: 100%;" title="Drag to rotate 3D sacred key & shield"></div>
+            <div class="hero-3d-floating-badge" style="bottom: 10px;">
+              <span class="hero-3d-pulse-dot"></span>
+              <span>🛡️ 3D Cultural Gateway · Drag to Rotate</span>
+            </div>
+          </div>
+
           <div class="auth-clean-header">
-            <span class="brand-glyph" style="font-size: 32px; display: inline-block; margin-bottom: 4px;">È</span>
             <h1>${signUp ? 'Ṣẹda Akọọlẹ Titun' : 'Kaabo! Wọle si Idilẹẹwa'}</h1>
-            <p>${signUp ? 'Create your personalized cultural & coding profile' : 'Enter your email and password to access your dashboard'}</p>
+            <p>${signUp ? 'Create your personalized cultural & coding profile' : 'Enter your email and password to enter the 3D home portal'}</p>
           </div>
 
           <!-- Clean Tab Switcher -->
@@ -3315,13 +3342,11 @@ import confetti from 'canvas-confetti';
     document.title = `${title} · Idilewa`;
     document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
     
-    // Mount 3D Hero Canvas on Home Page
-    if (page === 'index') {
-      const hero3DContainer = document.getElementById('hero3DCanvasWrap');
-      if (hero3DContainer) {
-        init3DHeroCanvas(hero3DContainer);
-      }
-    }
+    // Auto Mount all 3D Elements on the page
+    window.setTimeout(() => {
+      autoMount3DElements();
+      init3DTiltEngine();
+    }, 40);
 
     // Mount 3D Audio Visualizer on Voice Lessons
     if (page === 'voice_lessons' || page === 'trainer') {
@@ -3331,7 +3356,7 @@ import confetti from 'canvas-confetti';
       }
     }
 
-    // Mount Yoruba Coding IDE Canvas
+    // Mount Yoruba Coding IDE Turtle Canvas
     if (page === 'coding') {
       const turtleCanvas = document.getElementById('yoruba-turtle-canvas');
       const editor = document.getElementById('yoruba-code-editor');
@@ -3339,11 +3364,6 @@ import confetti from 'canvas-confetti';
         executeYorubaCode(editor.value, turtleCanvas);
       }
     }
-
-    // Apply Global 3D Interactive Card Tilt
-    window.setTimeout(() => {
-      init3DTiltEngine();
-    }, 50);
   }
 
   function showToast(message, tone = 'success') {
