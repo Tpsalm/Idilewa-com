@@ -262,6 +262,21 @@ export async function saveVoiceRecord({ userId, text, targetLang, audioScore, pi
 
   voiceList.unshift(record);
   setLocalItem(LOCAL_STORAGE_KEY_VOICE, voiceList);
+
+  if (supabase && userId && !userId.startsWith('usr_')) {
+    try {
+      await supabase.from('voice_submissions').insert({
+        user_id: userId,
+        text,
+        target_lang: targetLang,
+        audio_score: audioScore,
+        pitch_hz: pitchHz,
+        lesson_id: lessonId,
+        created_at: record.createdAt,
+      });
+    } catch (_) {}
+  }
+
   return record;
 }
 
