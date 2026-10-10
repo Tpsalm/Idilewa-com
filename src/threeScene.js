@@ -6,6 +6,34 @@ import * as THREE from 'three';
 
 const activeScenes = new Map();
 
+
+export function isWebGLAvailable() {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+  } catch (_) {
+    return false;
+  }
+}
+
+export function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+export function renderFallbackVisual(containerElement, label = 'Idilewa Cultural Artifact') {
+  if (!containerElement) return;
+  containerElement.innerHTML = `
+    <div class="webgl-fallback-stage" role="img" aria-label="${label}">
+      <div class="webgl-fallback-ambient" aria-hidden="true"></div>
+      <div class="webgl-fallback-icon" aria-hidden="true">🥁</div>
+      <div class="webgl-fallback-text">
+        <strong>${label}</strong>
+        <small>Warm cultural learning space · WebGL fallback active</small>
+      </div>
+    </div>
+  `;
+}
+
 function cleanPreviousScene(containerElement) {
   if (activeScenes.has(containerElement)) {
     const prev = activeScenes.get(containerElement);
@@ -23,6 +51,10 @@ function cleanPreviousScene(containerElement) {
 export function init3DHeroCanvas(containerElement) {
   if (!containerElement) return null;
   cleanPreviousScene(containerElement);
+  if (!isWebGLAvailable()) {
+    renderFallbackVisual(containerElement, '3D African Talking Drum & Living Glyphs');
+    return { destroy: () => { containerElement.innerHTML = ''; } };
+  }
 
   const width = containerElement.clientWidth || 380;
   const height = containerElement.clientHeight || 340;
@@ -35,7 +67,7 @@ export function init3DHeroCanvas(containerElement) {
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.domElement.style.width = '100%';
   renderer.domElement.style.height = '100%';
   renderer.domElement.style.display = 'block';
@@ -232,6 +264,10 @@ export function init3DHeroCanvas(containerElement) {
 export function init3DAuthCanvas(containerElement) {
   if (!containerElement) return null;
   cleanPreviousScene(containerElement);
+  if (!isWebGLAvailable()) {
+    renderFallbackVisual(containerElement, 'Sacred African Shield & Gateway');
+    return { destroy: () => { containerElement.innerHTML = ''; } };
+  }
 
   const width = containerElement.clientWidth || 340;
   const height = containerElement.clientHeight || 220;
@@ -309,6 +345,10 @@ export function init3DAuthCanvas(containerElement) {
 export function init3DCodingCanvas(containerElement) {
   if (!containerElement) return null;
   cleanPreviousScene(containerElement);
+  if (!isWebGLAvailable()) {
+    renderFallbackVisual(containerElement, 'Indigenous Yoruba STEAM Hologram');
+    return { destroy: () => { containerElement.innerHTML = ''; } };
+  }
 
   const width = containerElement.clientWidth || 340;
   const height = containerElement.clientHeight || 280;
@@ -375,6 +415,10 @@ export function init3DCodingCanvas(containerElement) {
 export function init3DStoryCanvas(containerElement) {
   if (!containerElement) return null;
   cleanPreviousScene(containerElement);
+  if (!isWebGLAvailable()) {
+    renderFallbackVisual(containerElement, 'Living Story Orb & Oral Traditions');
+    return { destroy: () => { containerElement.innerHTML = ''; } };
+  }
 
   const width = containerElement.clientWidth || 360;
   const height = containerElement.clientHeight || 280;
@@ -517,16 +561,28 @@ function setupOrbitControls(container, masterGroup, glyphs, drum, ring, particle
 
     renderer.render(scene, camera);
   };
-  animate();
+  if (prefersReducedMotion()) {
+    renderer.render(scene, camera);
+  } else {
+    animate();
+  }
 
   const onResize = () => {
     const w = container.clientWidth || 360;
     const h = container.clientHeight || 340;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    if (w > 0 && h > 0) {
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
   };
   window.addEventListener('resize', onResize);
+
+  let resizeObserver = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => onResize());
+    resizeObserver.observe(container);
+  }
 
   return {
     destroy: () => {
@@ -538,6 +594,9 @@ function setupOrbitControls(container, masterGroup, glyphs, drum, ring, particle
       container.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onUp);
       window.removeEventListener('resize', onResize);
+      if (resizeObserver) {
+        try { resizeObserver.disconnect(); } catch (_) {}
+      }
       renderer.dispose();
       container.innerHTML = '';
     }
@@ -599,7 +658,11 @@ function setupSimpleOrbit(container, masterGroup, m1, m2, m3, m4, renderer, scen
 
     renderer.render(scene, camera);
   };
-  animate();
+  if (prefersReducedMotion()) {
+    renderer.render(scene, camera);
+  } else {
+    animate();
+  }
 
   const onResize = () => {
     const w = container.clientWidth || 340;
@@ -732,6 +795,7 @@ export function init3DAudioVisualizer(canvasElement) {
  * 7. Global 3D Interactive Card Tilt Engine (Perspective 3D Hover & Glare)
  */
 export function init3DTiltEngine() {
+  if (prefersReducedMotion()) return;
   const cards = document.querySelectorAll('.feature-card, .activity-card, .language-card, .c4k-hub-card, .yoruba-editor-card, .auth-clean-card, .stat-card, .proverb-card, .plan-card, .code-hero-3d-card, .vowels-3d-card, .teacher-profile-card, .learner-request-card, .role-portal-card');
 
   cards.forEach((card) => {

@@ -1,9 +1,50 @@
+import * as THREE from 'three';
+import {
+  init3DHeroCanvas,
+  init3DAuthCanvas,
+  init3DCodingCanvas,
+  init3DStoryCanvas,
+  init3DAudioVisualizer,
+  init3DTiltEngine,
+  autoMount3DElements,
+  isWebGLAvailable,
+  prefersReducedMotion
+} from './src/threeScene.js';
+import {
+  DICTIONARY,
+  translateText,
+  speakText,
+  playTonePitch
+} from './src/translationEngine.js';
+import {
+  ORAL_VOWELS,
+  NASAL_VOWELS,
+  CONSONANTS,
+  TONE_MARKS
+} from './src/vowelsConsonantsData.js';
+import {
+  YORUBA_KEYWORDS,
+  YORUBA_COLOR_MAP,
+  YORUBA_CODE_LESSONS,
+  executeYorubaCode,
+  transpileYorubaToJS,
+  speakYorubaTerm
+} from './src/yorubaCodeEngine.js';
+import {
+  supabase,
+  signUp as supabaseSignUp,
+  signIn as supabaseSignIn,
+  saveProgress as supabaseSaveProgress,
+  saveCodeSubmission as supabaseSubmitCode
+} from './src/supabaseClient.js';
+
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
 (() => {
   'use strict';
 
   const ROUTES = [
     'trainer',
+    'voice_lessons',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'course',
     'ere', 'ere_game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
@@ -70,6 +111,19 @@
   };
 
   const PAGE_META = {
+    voice_lessons: {
+      title: 'Master African Tonal Pitch with Interactive Voice Practice.',
+      eyebrow: 'Voice African Language Trainer',
+      desc: 'Interactive speech studio with pitch detection, tone melody soundboards, and voice synthesis across 6 African languages and 60 lessons.',
+      icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
+      active: 0, flow: ['Select Language', 'Hear Native Tones', 'Record & Analyze', 'Earn Certificate'],
+      cta: 'Open Voice Studio', ctaRoute: 'trainer',
+      cards: [
+        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
+        { title: 'Speech Evaluation', text: 'Prototype pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
+        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'trainer', tone: 'blue' }
+      ]
+    },
     trainer: {
       title: 'Master African Tonal Pitch with Real-Time Voice AI.',
       eyebrow: 'Voice African Language Trainer',
@@ -239,7 +293,7 @@
   ];
 
   const NAV_GROUPS = {
-    trainer: 'trainer',
+    trainer: 'trainer', voice_lessons: 'trainer',
     languages: 'learn', course: 'learn', lesson: 'learn', kids: 'learn', individuals: 'learn',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
     owe_detail: 'read', owe_story: 'read', owe_reflection: 'read', voices: 'read',
@@ -256,6 +310,7 @@
   LABELS.connect_students = 'Connect with Students'; LABELS.connect_teachers = 'Connect with Teachers';
   LABELS.consent = 'Parent & guardian consent';
     LABELS.trainer = 'Voice African Language Trainer';
+  LABELS.voice_lessons = 'Voice African Language Trainer';
 
   const defaults = {
     currentLang: 'yoruba',
@@ -484,85 +539,146 @@
             </div>
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
+          <!-- Hero Visual: 3D Talking Drum (Default Active Centerpiece) & Living Family View Switcher -->
           <div class="hero-visual modern-hero-visual" id="heroVisualStage">
             <div class="hero-ambient-glow" aria-hidden="true"></div>
-            <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language & cultural learning preview" id="heroPhotoWrap">
-              <div class="hero-photo-frame">
-                <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
-                <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
-                <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
-                <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
-                <div class="cinematic-jewelry-glints" aria-hidden="true">
-                  <span class="jewelry-glint j1" style="left: 54.2%; top: 48.5%;"></span>
-                  <span class="jewelry-glint j2" style="left: 56.5%; top: 44.2%;"></span>
-                  <span class="jewelry-glint j3" style="left: 52.8%; top: 22.8%;"></span>
-                  <span class="jewelry-glint j4" style="left: 33.6%; top: 62.4%;"></span>
-                </div>
-                <div class="cinematic-lens-flare" aria-hidden="true"></div>
-                <div class="hero-vignette-overlay" aria-hidden="true"></div>
-                <div class="cinematic-live-badge" aria-label="4K Ultra-HD Cinematic Video Stream">
-                  <span class="cinematic-pulse-dot"></span>
-                  <span class="cinematic-badge-text">4K CINEMATIC VIDEO · LIVE</span>
+            
+            <div class="hero-visual-stage-inner">
+              <div class="hero-visual-switcher" role="tablist" aria-label="Hero visual display mode">
+                <button type="button" class="hero-switch-btn is-active" id="btnShow3D" data-action="hero-show-3d" role="tab" aria-selected="true">
+                  <span>🥁 3D Talking Drum &amp; Glyphs</span>
+                </button>
+                <button type="button" class="hero-switch-btn" id="btnShowPhoto" data-action="hero-show-photo" role="tab" aria-selected="false">
+                  <span>📸 Living Family View</span>
+                </button>
+              </div>
+
+              <!-- 3D Interactive Talking Drum Stage (Visible By Default on Page Load) -->
+              <div class="hero-3d-stage-container" id="hero3DStageWrap" style="display: block; width: 100%; position: relative;">
+                <div id="hero3DCanvasWrap" class="hero-3d-canvas-wrap" data-3d-scene="hero" title="Drag to rotate 3D African Gángan Drum and living glyphs" aria-label="Interactive 3D African Talking Drum and orbiting Yoruba glyphs"></div>
+                <div class="hero-3d-floating-badge">
+                  <span class="hero-3d-pulse-dot"></span>
+                  <span>🪐 3D Gángan Drum &amp; Glyphs · Drag &amp; Rotate · Three.js</span>
                 </div>
               </div>
 
-              <!-- Live Interactive Floating Hotspots Layer -->
-              <div class="hero-floating-elements-layer">
-                <!-- 1. Floating Top Badge: Listen & speak -->
-                <button type="button" class="hero-interactive-hotspot hotspot-listen" data-action="hero-listen-speak" title="Listen &amp; speak African Greetings (Click for Voice Tour)" aria-label="Listen &amp; speak African Greetings">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-live-eq" aria-hidden="true">
-                    <span class="bar b1"></span>
-                    <span class="bar b2"></span>
-                    <span class="bar b3"></span>
-                  </span>
-                </button>
-
-                <!-- 2. Floating Card 1: Yorùbá (Ẹ káàrọ̀) -->
-                <button type="button" class="hero-interactive-hotspot hotspot-yoruba" data-action="hero-play-greeting" data-lang="yoruba" data-phrase="Ẹ káàárọ̀" data-translation="Good morning" title="Click to hear Yorùbá: Ẹ káàárọ̀ (Good morning)" aria-label="Yorùbá greeting: Ẹ káàárọ̀, Good morning">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                </button>
-
-                <!-- 3. Floating Card 2: Hausa (Sannu) -->
-                <button type="button" class="hero-interactive-hotspot hotspot-hausa" data-action="hero-play-greeting" data-lang="hausa" data-phrase="Sannu" data-translation="Good morning" title="Click to hear Hausa: Sannu (Good morning)" aria-label="Hausa greeting: Sannu, Good morning">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                </button>
-
-                <!-- 4. Floating Card 3: Igbo (Ndewo) -->
-                <button type="button" class="hero-interactive-hotspot hotspot-igbo" data-action="hero-play-greeting" data-lang="igbo" data-phrase="Ndewo" data-translation="Good morning" title="Click to hear Igbo: Ndewo (Good morning)" aria-label="Igbo greeting: Ndewo, Good morning">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                </button>
-
-                <!-- 5. Floating Card 4: Swahili (Habari) -->
-                <button type="button" class="hero-interactive-hotspot hotspot-swahili" data-action="hero-play-greeting" data-lang="swahili" data-phrase="Habari" data-translation="Good morning" title="Click to hear Swahili: Habari (Good morning)" aria-label="Swahili greeting: Habari, Good morning">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                </button>
-
-                <!-- 6. Floating Top-Right: Learn with joy Sun Sticker -->
-                <a href="#/languages" data-route="languages" class="hero-interactive-hotspot hotspot-sun" title="Learn African Languages with Joy" aria-label="Learn African Languages with Joy">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-sun-glow" aria-hidden="true"></span>
-                </a>
-
-                <!-- 7. Floating Middle-Right: Stories that stay Pill -->
-                <a href="#/ere" data-route="ere" class="hero-interactive-hotspot hotspot-stories" title="Explore African Stories &amp; Folktales" aria-label="Explore African Stories &amp; Folktales">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  <span class="hotspot-shimmer-bar" aria-hidden="true"></span>
-                </a>
-
-                <!-- 8. Floating Bottom Motto Card -->
-                <button type="button" class="hero-interactive-hotspot hotspot-motto" data-action="hero-motto-click" title="Click to see Idilewa daily learning motto" aria-label="Idilewa learning motto">
-                  <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                </button>
+              <!-- 2D Photographic & Greeting Hotspots View (Hidden By Default) -->
+              <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap" style="display: none;">
+                <div class="hero-photo-frame">
+                  <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
+                  <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
+                  <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
+                  <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
+                  <div class="cinematic-jewelry-glints" aria-hidden="true">
+                    <span class="jewelry-glint j1" style="left: 54.2%; top: 48.5%;"></span>
+                    <span class="jewelry-glint j2" style="left: 56.5%; top: 44.2%;"></span>
+                    <span class="jewelry-glint j3" style="left: 52.8%; top: 22.8%;"></span>
+                    <span class="jewelry-glint j4" style="left: 33.6%; top: 62.4%;"></span>
+                  </div>
+                  <div class="cinematic-lens-flare" aria-hidden="true"></div>
+                  <div class="hero-vignette-overlay" aria-hidden="true"></div>
+                  <div class="cinematic-live-badge" aria-label="4K Ultra-HD Living Studio">
+                    <span class="cinematic-pulse-dot"></span>
+                    <span>Living Studio</span>
+                  </div>
+                </div>
+                <div class="hero-interactive-hotspots-container" aria-label="Interactive Audio Learning Hotspots">
+                  <button type="button" class="hero-interactive-hotspot hotspot-yoruba" data-action="hero-play-greeting" data-lang="yoruba" data-phrase="Ẹ káàárọ̀" data-translation="Good morning" title="Click to hear Yorùbá: Ẹ káàárọ̀ (Good morning)" aria-label="Yorùbá greeting: Ẹ káàárọ̀, Good morning">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="hero-interactive-hotspot hotspot-hausa" data-action="hero-play-greeting" data-lang="hausa" data-phrase="Sannu" data-translation="Good morning" title="Click to hear Hausa: Sannu (Good morning)" aria-label="Hausa greeting: Sannu, Good morning">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="hero-interactive-hotspot hotspot-igbo" data-action="hero-play-greeting" data-lang="igbo" data-phrase="Ndewo" data-translation="Good morning" title="Click to hear Igbo: Ndewo (Good morning)" aria-label="Igbo greeting: Ndewo, Good morning">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="hero-interactive-hotspot hotspot-swahili" data-action="hero-play-greeting" data-lang="swahili" data-phrase="Habari" data-translation="Good morning" title="Click to hear Swahili: Habari (Good morning)" aria-label="Swahili greeting: Habari, Good morning">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
+                  </button>
+                  <a href="#/languages" data-route="languages" class="hero-interactive-hotspot hotspot-sun" title="Learn African Languages with Joy" aria-label="Learn African Languages with Joy">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                    <span class="hotspot-sun-glow" aria-hidden="true"></span>
+                  </a>
+                  <a href="#/ere" data-route="ere" class="hero-interactive-hotspot hotspot-stories" title="Explore African Stories &amp; Folktales" aria-label="Explore African Stories &amp; Folktales">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                    <span class="hotspot-shimmer-bar" aria-hidden="true"></span>
+                  </a>
+                  <button type="button" class="hero-interactive-hotspot hotspot-motto" data-action="hero-motto-click" title="Click to see Idilewa daily learning motto" aria-label="Idilewa learning motto">
+                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
+      </section>
+
+      <!-- 3D Scroll Visual Journey across 5 Pillars of Idilewa -->
+      <section class="container section visual-journey-3d-section scroll-3d-reveal" id="visual-journey">
+        <div class="section-heading text-center">
+          <div>
+            <span class="section-kicker">Scroll-Driven Learning Journey · Living Knowledge</span>
+            <h2>Five Pathways to Keep Language &amp; Culture Close</h2>
+            <p>From your first spoken greeting to authentic tone melody, living proverbs, oral stories, and K–8 computational thinking.</p>
+          </div>
+        </div>
+        <div class="visual-journey-timeline">
+          <!-- Pillar 1: Language Discovery -->
+          <div class="journey-card-3d tone-mint scroll-3d-reveal">
+            <div class="journey-3d-step-badge">Pillar 01 · Èdè</div>
+            <div class="journey-3d-content">
+              <span class="journey-3d-glyph">È</span>
+              <h3>Language &amp; Everyday Speech</h3>
+              <p>Step-by-step foundation in Yorùbá, Igbo, Hausa, or Swahili with greetings, vocabulary, and guided levels.</p>
+              ${routeLink('languages', `Choose a Language ${icon('arrow', 14)}`, 'button button-small button-primary')}
+            </div>
+          </div>
+          <!-- Pillar 2: Voice & Tone Studio -->
+          <div class="journey-card-3d tone-yellow scroll-3d-reveal">
+            <div class="journey-3d-step-badge">Pillar 02 · Ohùn</div>
+            <div class="journey-3d-content">
+              <span class="journey-3d-glyph">♫</span>
+              <h3>Voice &amp; Tonal Melody</h3>
+              <p>Hear and practice Dó-Re-Mí tones with our interactive syllable pitch soundboard and 60 audio lessons.</p>
+              ${routeLink('trainer', `${icon('mic', 13)} Voice Studio ${icon('arrow', 14)}`, 'button button-small button-accent')}
+            </div>
+          </div>
+          <!-- Pillar 3: Oral Culture & Proverbs -->
+          <div class="journey-card-3d tone-peach scroll-3d-reveal">
+            <div class="journey-3d-step-badge">Pillar 03 · Òwe &amp; Oríkì</div>
+            <div class="journey-3d-content">
+              <span class="journey-3d-glyph">“</span>
+              <h3>Oral Traditions &amp; Context</h3>
+              <p>Praise poetry, ancestral proverbs, and guided reflections honoring community permission and attribution.</p>
+              ${routeLink('oral', `Explore Traditions ${icon('arrow', 14)}`, 'button button-small button-primary')}
+            </div>
+          </div>
+          <!-- Pillar 4: Storytelling -->
+          <div class="journey-card-3d tone-pink scroll-3d-reveal">
+            <div class="journey-3d-step-badge">Pillar 04 · Ìtàn</div>
+            <div class="journey-3d-content">
+              <span class="journey-3d-glyph">📖</span>
+              <h3>Stories That Travel</h3>
+              <p>Intergenerational storytelling, family picture books, and audio-first reading with comprehension checks.</p>
+              ${routeLink('ere', `Read &amp; Listen ${icon('arrow', 14)}`, 'button button-small button-primary')}
+            </div>
+          </div>
+          <!-- Pillar 5: K-8 Code & STEAM -->
+          <div class="journey-card-3d tone-blue scroll-3d-reveal">
+            <div class="journey-3d-step-badge">Pillar 05 · Koodu</div>
+            <div class="journey-3d-content">
+              <span class="journey-3d-glyph">&lt;/&gt;</span>
+              <h3>Indigenous STEAM &amp; Code</h3>
+              <p>K-8 computational thinking in African languages. Unplugged logic for K–2, turtle geometry for 3–5, full syntax for 6–8.</p>
+              ${routeLink('coding', `Code for Kids ${icon('arrow', 14)}`, 'button button-small button-primary')}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="container section section-start">
@@ -686,7 +802,37 @@
     const soon = plannedLanguages.map((l) => `<button type="button" class="soon-language" data-action="notify-language" data-lang="${l.id}"><span class="soon-glyph">${l.glyph}</span><span class="soon-copy"><strong>${l.name}</strong><small>${l.region}</small></span><span class="soon-badge">${state.interested.includes(l.id) ? 'Saved' : 'Coming soon'}</span></button>`).join('');
     return `<div class="container route-page language-page">
       <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><span>Learn</span><span>/</span><strong>Languages</strong></div>
-      <section class="language-page-hero"><div class="language-page-copy"><span class="section-kicker">The first step is yours</span><h1>Find a language<br /><em>that feels like home.</em></h1><p>Choose an available language path. Each is built to grow with you—from a first greeting to stories, culture and more.</p><div class="language-page-badges"><span>${icon('shield', 16)} Designed to grow</span><span>${icon('volume', 16)} Listen as you learn</span></div></div><div class="language-page-art"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in beautiful Yorùbá attire reading together" /><div class="art-note">Words connect us <span>✦</span></div>\n    </section>
+      <section class="language-page-hero"><div class="language-page-copy"><span class="section-kicker">The first step is yours</span><h1>Find a language<br /><em>that feels like home.</em></h1><p>Choose an available language path. Each is built to grow with you—from a first greeting to stories, culture and more.</p><div class="language-page-badges"><span>${icon('shield', 16)} Designed to grow</span><span>${icon('volume', 16)} Listen as you learn</span></div></div><div class="language-page-art"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in beautiful Yorùbá attire reading together" /><div class="art-note">Words connect us <span>✦</span></div>
+      </div>
+      <section class="language-alphabet-section scroll-3d-reveal" style="margin: 28px 0; background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px;">
+        <div class="section-heading" style="margin-bottom: 16px;">
+          <div>
+            <span class="section-kicker">Interactive Yoruba Soundboard</span>
+            <h2>Fáwẹ́lì (Vowels), Kọ́nsónáǹtì &amp; Àmì Ohùn (Tonal Accents)</h2>
+            <p>Click any vowel or tone to hear its pronunciation and pitch frequency.</p>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+          ${[
+            { char: 'A', tone: 'Re (Mid)', word: 'Agbàdo (Corn)', freq: 293 },
+            { char: 'E', tone: 'Re (Mid)', word: 'Epo (Oil)', freq: 293 },
+            { char: 'Ẹ', tone: 'Re (Mid)', word: 'Ẹja (Fish)', freq: 293 },
+            { char: 'I', tone: 'Re (Mid)', word: 'Irin (Metal)', freq: 293 },
+            { char: 'O', tone: 'Re (Mid)', word: 'Omi (Water)', freq: 293 },
+            { char: 'Ọ', tone: 'Re (Mid)', word: 'Ọ̀bẹ (Knife)', freq: 293 },
+            { char: 'U', tone: 'Re (Mid)', word: 'Úra (Grace)', freq: 293 }
+          ].map((v) => `
+            <button type="button" class="button button-small button-outline" data-action="trainer-play-syllable" data-freq="${v.freq}" data-tone="re" title="${v.word}" style="display: flex; gap: 6px; align-items: center;">
+              <strong>${v.char}</strong> <small style="color: var(--muted);">${v.word}</small>
+            </button>
+          `).join('')}
+        </div>
+        <div style="display: flex; gap: 12px; font-size: 13px; color: var(--ink-soft); flex-wrap: wrap;">
+          <span><strong>Òkè (High / Mí):</strong> 370Hz ↗</span>
+          <span><strong>Àárín (Mid / Re):</strong> 294Hz →</span>
+          <span><strong>Ìsàlẹ̀ (Low / Dò):</strong> 220Hz ↘</span>
+        </div>
+      </section>\n    </section>
       <section class="trainer-callout-banner">
         <div class="callout-icon">${icon('mic', 24)}</div>
         <div class="callout-content">
@@ -2222,6 +2368,7 @@
       '<!-- 1. 3D Animated African STEAM Hologram Stage (Replaces old static green container) -->' +
       '<section class="c4k-3d-hero-stage scroll-3d-reveal" id="code-hero-stage">' +
         '<div class="c4k-3d-ambient-glow" aria-hidden="true"></div>' +
+        '<div id="coding3DCanvasWrap" class="c4k-3d-canvas-wrap" data-3d-scene="coding" aria-label="Interactive 3D Yoruba Hologram Code Cube"></div>' +
         '<div class="c4k-3d-particles-container" id="c4k-particles" aria-hidden="true">' +
           '<div class="c4k-floating-token token-1">{ ÈdèKoodu }</div>' +
           '<div class="c4k-floating-token token-2">tẹ_jade("Ẹ n lẹ́")</div>' +
@@ -3629,6 +3776,7 @@
 
   function renderPage(page, params) {
     switch (page) {
+      case 'voice_lessons':
       case 'trainer': return renderTrainer(params);
       case 'index': return renderHome();
       case 'languages': return renderLanguages();
@@ -4252,7 +4400,7 @@
   function initHeroParallax() {
     const stage = document.getElementById('heroVisualStage');
     const wrap = document.getElementById('heroPhotoWrap');
-    if (!stage || !wrap) return;
+    if (!stage || !wrap || typeof stage.addEventListener !== 'function') return;
 
     let targetRotX = 0;
     let targetRotY = 0;
@@ -4389,10 +4537,26 @@
     document.title = `${title} · Idilewa`;
     document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
     if (page === 'index') {
-    initHeroParallax();
-    initHeroCinematicVideoEngine();
-  }
-  init3DScrollObserver();
+      initHeroParallax();
+      initHeroCinematicVideoEngine();
+      const heroCanvas = document.getElementById('hero3DCanvasWrap');
+      if (heroCanvas) init3DHeroCanvas(heroCanvas);
+    } else if (page === 'trainer' || page === 'voice_lessons') {
+      const audioCanvas = document.getElementById('waveformCanvas');
+      if (audioCanvas) init3DAudioVisualizer(audioCanvas);
+    } else if (page === 'coding') {
+      const codingCanvas = document.getElementById('coding3DCanvasWrap');
+      if (codingCanvas) init3DCodingCanvas(codingCanvas);
+    } else if (page === 'ere' || page === 'oral') {
+      const storyCanvas = document.getElementById('story3DCanvasWrap');
+      if (storyCanvas) init3DStoryCanvas(storyCanvas);
+    } else if (page === 'login' || page === 'consent') {
+      const authCanvas = document.getElementById('auth3DCanvasWrap');
+      if (authCanvas) init3DAuthCanvas(authCanvas);
+    }
+    autoMount3DElements();
+    init3DTiltEngine();
+    init3DScrollObserver();
   }
 
   function showToast(message, tone = 'success') {
@@ -4473,6 +4637,30 @@
   function handleAction(action, el) {
     const lang = el.dataset.lang;
     switch (action) {
+      case 'hero-show-photo': {
+        const photoWrap = document.getElementById('heroPhotoWrap');
+        const stage3d = document.getElementById('hero3DStageWrap');
+        const btnPhoto = document.getElementById('btnShowPhoto');
+        const btn3d = document.getElementById('btnShow3D');
+        if (photoWrap) photoWrap.style.display = 'block';
+        if (stage3d) stage3d.style.display = 'none';
+        if (btnPhoto) { btnPhoto.classList.add('is-active'); btnPhoto.setAttribute('aria-selected', 'true'); }
+        if (btn3d) { btn3d.classList.remove('is-active'); btn3d.setAttribute('aria-selected', 'false'); }
+        break;
+      }
+      case 'hero-show-3d': {
+        const photoWrap = document.getElementById('heroPhotoWrap');
+        const stage3d = document.getElementById('hero3DStageWrap');
+        const btnPhoto = document.getElementById('btnShowPhoto');
+        const btn3d = document.getElementById('btnShow3D');
+        if (photoWrap) photoWrap.style.display = 'none';
+        if (stage3d) stage3d.style.display = 'block';
+        if (btn3d) { btn3d.classList.add('is-active'); btn3d.setAttribute('aria-selected', 'true'); }
+        if (btnPhoto) { btnPhoto.classList.remove('is-active'); btnPhoto.setAttribute('aria-selected', 'false'); }
+        const canvasWrap = document.getElementById('hero3DCanvasWrap');
+        if (canvasWrap) init3DHeroCanvas(canvasWrap);
+        break;
+      }
       case 'toggle-menu': toggleMobileMenu(); break;
       case 'open-search': openSearch(); break;
       case 'close-modal': document.getElementById('modal-root').innerHTML = ''; break;
@@ -4896,6 +5084,8 @@
       }
       case 'trainer-play-syllable': {
         const freq = parseFloat(el.dataset.freq) || 293;
+        const tone = el.dataset.tone || 're';
+        try { playTonePitch(tone); } catch (_) {}
         playToneSound(freq, 0.35, 'triangle');
         el.classList.add('is-active-pitch');
         setTimeout(() => el.classList.remove('is-active-pitch'), 350);
@@ -4907,8 +5097,10 @@
         const currentTierLessons = langData[state.trainer.level] || langData.beginner;
         const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
         if (activeLesson) {
+          const lCode = state.trainer.lang === 'yoruba' ? 'yo' : state.trainer.lang === 'igbo' ? 'ig' : state.trainer.lang === 'hausa' ? 'ha' : 'en';
+          try { speakText(activeLesson.phrase, lCode); } catch (_) {}
           playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables);
-          showToast(`Playing native voice (${state.trainer.speed || 1.0}x)`);
+          showToast(`Playing voice (${state.trainer.speed || 1.0}x) · Browser speech synthesis sample`);
         }
         break;
       }

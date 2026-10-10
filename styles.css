@@ -6045,3 +6045,360 @@ main, #main, .main-content, .page-container {
   color: #86efac;
   font-family: 'Fira Code', monospace;
 }
+
+/* ==========================================================================
+   IDILEWA 3D VISUAL JOURNEY & 3D ARTIFACT STAGES (WCAG Accessible & Responsive)
+   ========================================================================== */
+
+/* 1. Visual Journey 3D Five-Pillar Section */
+.visual-journey-3d-section {
+  padding: 48px 0;
+  margin-top: 24px;
+}
+
+.visual-journey-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 32px;
+}
+
+.journey-card-3d {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.journey-card-3d:hover {
+  transform: perspective(1000px) translateY(-6px) translateZ(8px);
+  box-shadow: 0 18px 45px rgba(21, 118, 74, 0.12);
+  border-color: rgba(21, 118, 74, 0.28);
+}
+
+.journey-card-3d.tone-mint { background: linear-gradient(180deg, var(--paper) 0%, var(--mint) 100%); }
+.journey-card-3d.tone-yellow { background: linear-gradient(180deg, var(--paper) 0%, var(--yellow) 100%); }
+.journey-card-3d.tone-peach { background: linear-gradient(180deg, var(--paper) 0%, var(--peach) 100%); }
+.journey-card-3d.tone-pink { background: linear-gradient(180deg, var(--paper) 0%, var(--pink) 100%); }
+.journey-card-3d.tone-blue { background: linear-gradient(180deg, var(--paper) 0%, var(--blue) 100%); }
+
+.journey-3d-step-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--green-dark);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(21, 118, 74, 0.16);
+  padding: 4px 10px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.journey-3d-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--green-dark);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(25, 57, 38, 0.06);
+  margin-bottom: 14px;
+}
+
+.journey-3d-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.journey-3d-content p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0 0 18px 0;
+}
+
+/* 2. 3D Canvas Stage Mount Wrappers */
+.hero-visual-stage-inner {
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-3d-stage-container,
+.hero-3d-artifact-stage,
+.c4k-3d-canvas-wrap,
+.story-3d-canvas-wrap,
+.auth-3d-canvas-wrap {
+  width: 100%;
+  position: relative;
+  border-radius: var(--radius-lg, 28px);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 48%, rgba(234, 246, 236, 0.75) 0%, rgba(255, 254, 250, 0.98) 78%);
+  border: 1.5px solid rgba(21, 118, 74, 0.2);
+  box-shadow: 0 25px 60px -15px rgba(21, 118, 74, 0.2), 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-3d-stage-container:active,
+.hero-3d-artifact-stage:active,
+.c4k-3d-canvas-wrap:active,
+.story-3d-canvas-wrap:active,
+.auth-3d-canvas-wrap:active {
+  cursor: grabbing;
+}
+
+.hero-3d-stage-container,
+.hero-3d-artifact-stage {
+  min-height: 380px;
+  height: 440px;
+}
+
+.hero-3d-canvas-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-3d-floating-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(21, 118, 74, 0.22);
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green-dark, #0c5737);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.hero-3d-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: heroPulse 2s infinite;
+}
+
+@keyframes heroPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.c4k-3d-canvas-wrap {
+  min-height: 280px;
+  height: 300px;
+  margin: 18px 0;
+}
+
+.story-3d-canvas-wrap {
+  min-height: 260px;
+  height: 280px;
+  margin: 18px 0;
+}
+
+.auth-3d-canvas-wrap {
+  min-height: 200px;
+  height: 220px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .hero-3d-stage-container,
+  .hero-3d-artifact-stage {
+    height: 350px;
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-3d-stage-container,
+  .hero-3d-artifact-stage {
+    height: 300px;
+    min-height: 280px;
+  }
+  .hero-3d-floating-badge {
+    font-size: 11px;
+    padding: 5px 12px;
+    bottom: 10px;
+  }
+}
+
+/* 3. Hero Visual Switcher Tabs (Photo / 3D Artifact) */
+.hero-visual-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.hero-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--cream);
+  border: 1px solid var(--line);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hero-switch-btn.is-active {
+  background: var(--green-dark);
+  color: #ffffff;
+  border-color: var(--green-dark);
+}
+
+.hero-switch-btn:hover:not(.is-active) {
+  background: var(--mint);
+  border-color: var(--green);
+}
+
+/* 4. WebGL Fallback Card */
+.webgl-fallback-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: radial-gradient(circle at center, rgba(234, 246, 236, 0.8) 0%, rgba(250, 249, 242, 0.6) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.webgl-fallback-ambient {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(21, 118, 74, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.webgl-fallback-icon {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.webgl-fallback-text strong {
+  display: block;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.webgl-fallback-text small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* 5. Prototype Status Disclosure Badges */
+.prototype-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--line);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-top: 8px;
+}
+
+.prototype-status-pill .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+/* 6. Comprehensive Accessibility: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .scroll-3d-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .perspective-3d-card,
+  .card, .feature-card, .proverb-card, .lesson-card, .coding-card, .oral-card, .stat-card, .pricing-card, .journey-card-3d {
+    transform: none !important;
+    transition: none !important;
+    box-shadow: var(--shadow-soft) !important;
+  }
+  .card-3d-glare {
+    display: none !important;
+  }
+  .scroll-3d-float,
+  .cinematic-living-image,
+  .cinematic-video-canvas,
+  .cinematic-golden-hour-rays,
+  .jewelry-glint {
+    animation: none !important;
+  }
+}
