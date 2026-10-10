@@ -618,8 +618,8 @@ import {
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
       </section>
 
-      <!-- 3D Scroll Visual Journey across 5 Pillars of Idilewa -->
-      <section class="container section visual-journey-3d-section scroll-3d-reveal" id="visual-journey">
+      <!-- 5 Pathways Learning Cards (Five Pillars of Idilewa) -->
+      <section class="container section visual-journey-3d-section" id="visual-journey">
         <div class="section-heading text-center">
           <div>
             <span class="section-kicker">Scroll-Driven Learning Journey · Living Knowledge</span>
@@ -629,53 +629,102 @@ import {
         </div>
         <div class="visual-journey-timeline">
           <!-- Pillar 1: Language Discovery -->
-          <div class="journey-card-3d tone-mint scroll-3d-reveal">
-            <div class="journey-3d-step-badge">Pillar 01 · Èdè</div>
-            <div class="journey-3d-content">
+          <div class="journey-card-3d tone-mint">
+            <div class="journey-card-header">
+              <div class="journey-3d-step-badge">Pillar 01 · Èdè</div>
               <span class="journey-3d-glyph">È</span>
+            </div>
+            <div class="journey-3d-content">
               <h3>Language &amp; Everyday Speech</h3>
               <p>Step-by-step foundation in Yorùbá, Igbo, Hausa, or Swahili with greetings, vocabulary, and guided levels.</p>
-              ${routeLink('languages', `Choose a Language ${icon('arrow', 14)}`, 'button button-small button-primary')}
+              <ul class="journey-highlights" aria-label="Key features">
+                <li><span>✓</span> 4 African Languages with Native Audio</li>
+                <li><span>✓</span> Daily Vocabulary &amp; Conversational Phrases</li>
+                <li><span>✓</span> Beginner, Intermediate &amp; Fluent Tracks</li>
+              </ul>
+            </div>
+            <div class="journey-card-action">
+              ${routeLink('languages', `Choose a Language ${icon('arrow', 15)}`, 'button button-primary')}
             </div>
           </div>
+
           <!-- Pillar 2: Voice & Tone Studio -->
-          <div class="journey-card-3d tone-yellow scroll-3d-reveal">
-            <div class="journey-3d-step-badge">Pillar 02 · Ohùn</div>
-            <div class="journey-3d-content">
+          <div class="journey-card-3d tone-yellow">
+            <div class="journey-card-header">
+              <div class="journey-3d-step-badge">Pillar 02 · Ohùn</div>
               <span class="journey-3d-glyph">♫</span>
+            </div>
+            <div class="journey-3d-content">
               <h3>Voice &amp; Tonal Melody</h3>
               <p>Hear and practice Dó-Re-Mí tones with our interactive syllable pitch soundboard and 60 audio lessons.</p>
-              ${routeLink('trainer', `${icon('mic', 13)} Voice Studio ${icon('arrow', 14)}`, 'button button-small button-accent')}
+              <ul class="journey-highlights" aria-label="Key features">
+                <li><span>✓</span> Real-Time Pitch Detection &amp; Scoring</li>
+                <li><span>✓</span> High, Mid &amp; Low Tone Marks</li>
+                <li><span>✓</span> 60 Audio Lessons Across 6 Dialects</li>
+              </ul>
+            </div>
+            <div class="journey-card-action">
+              ${routeLink('trainer', `${icon('mic', 15)} Open Voice Studio ${icon('arrow', 15)}`, 'button button-accent')}
             </div>
           </div>
+
           <!-- Pillar 3: Oral Culture & Proverbs -->
-          <div class="journey-card-3d tone-peach scroll-3d-reveal">
-            <div class="journey-3d-step-badge">Pillar 03 · Òwe &amp; Oríkì</div>
-            <div class="journey-3d-content">
+          <div class="journey-card-3d tone-peach">
+            <div class="journey-card-header">
+              <div class="journey-3d-step-badge">Pillar 03 · Òwe &amp; Oríkì</div>
               <span class="journey-3d-glyph">“</span>
+            </div>
+            <div class="journey-3d-content">
               <h3>Oral Traditions &amp; Context</h3>
               <p>Praise poetry, ancestral proverbs, and guided reflections honoring community permission and attribution.</p>
-              ${routeLink('oral', `Explore Traditions ${icon('arrow', 14)}`, 'button button-small button-primary')}
+              <ul class="journey-highlights" aria-label="Key features">
+                <li><span>✓</span> 100+ Curated African Proverbs (Òwe)</li>
+                <li><span>✓</span> Ancestral Lineage &amp; Family Poetry (Oríkì)</li>
+                <li><span>✓</span> Cultural Context &amp; Reflection Prompts</li>
+              </ul>
+            </div>
+            <div class="journey-card-action">
+              ${routeLink('oral', `Explore Traditions ${icon('arrow', 15)}`, 'button button-primary')}
             </div>
           </div>
+
           <!-- Pillar 4: Storytelling -->
-          <div class="journey-card-3d tone-pink scroll-3d-reveal">
-            <div class="journey-3d-step-badge">Pillar 04 · Ìtàn</div>
-            <div class="journey-3d-content">
+          <div class="journey-card-3d tone-pink">
+            <div class="journey-card-header">
+              <div class="journey-3d-step-badge">Pillar 04 · Ìtàn</div>
               <span class="journey-3d-glyph">📖</span>
+            </div>
+            <div class="journey-3d-content">
               <h3>Stories That Travel</h3>
               <p>Intergenerational storytelling, family picture books, and audio-first reading with comprehension checks.</p>
-              ${routeLink('ere', `Read &amp; Listen ${icon('arrow', 14)}`, 'button button-small button-primary')}
+              <ul class="journey-highlights" aria-label="Key features">
+                <li><span>✓</span> Illustrated Folktales &amp; Audiobooks</li>
+                <li><span>✓</span> Bilingual Read-Along with Highlighting</li>
+                <li><span>✓</span> Comprehension Quizzes &amp; Word Games</li>
+              </ul>
+            </div>
+            <div class="journey-card-action">
+              ${routeLink('ere', `Read &amp; Listen Stories ${icon('arrow', 15)}`, 'button button-primary')}
             </div>
           </div>
+
           <!-- Pillar 5: K-8 Code & STEAM -->
-          <div class="journey-card-3d tone-blue scroll-3d-reveal">
-            <div class="journey-3d-step-badge">Pillar 05 · Koodu</div>
-            <div class="journey-3d-content">
+          <div class="journey-card-3d tone-blue">
+            <div class="journey-card-header">
+              <div class="journey-3d-step-badge">Pillar 05 · Koodu</div>
               <span class="journey-3d-glyph">&lt;/&gt;</span>
+            </div>
+            <div class="journey-3d-content">
               <h3>Indigenous STEAM &amp; Code</h3>
               <p>K-8 computational thinking in African languages. Unplugged logic for K–2, turtle geometry for 3–5, full syntax for 6–8.</p>
-              ${routeLink('coding', `Code for Kids ${icon('arrow', 14)}`, 'button button-small button-primary')}
+              <ul class="journey-highlights" aria-label="Key features">
+                <li><span>✓</span> Code in Yorùbá (ṣe, ti, fun, pada)</li>
+                <li><span>✓</span> Unplugged Quests &amp; Turtle Graphics</li>
+                <li><span>✓</span> Interactive In-Browser Live IDE</li>
+              </ul>
+            </div>
+            <div class="journey-card-action">
+              ${routeLink('coding', `Code for Kids ${icon('arrow', 15)}`, 'button button-primary')}
             </div>
           </div>
         </div>
