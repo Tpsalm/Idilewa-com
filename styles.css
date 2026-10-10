@@ -4474,42 +4474,62 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 
 /* 5. Free Lessons Section & Filter Hub */
 .c4k-free-lessons-section {
-  padding: 50px 0 60px;
-  background: #fbfdfa;
-  border-radius: 28px;
-  margin: 30px 0;
-  border: 1px solid #e4ece3;
+  padding: 60px 0 70px;
+  background: transparent;
+  width: 100%;
+  margin: 36px 0;
 }
 
-.c4k-free-lessons-section .activity-heading {
+.c4k-free-header {
   text-align: center;
-  max-width: 700px;
-  margin: 0 auto 30px;
+  max-width: 780px;
+  margin: 0 auto 36px;
+}
+
+.c4k-free-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(21, 118, 74, 0.1);
+  border: 1.5px solid rgba(21, 118, 74, 0.25);
+  color: #0c5737;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
 }
 
 .c4k-free-title {
-  font-size: clamp(26px, 3.5vw, 36px);
+  font-size: clamp(32px, 4.2vw, 48px);
   font-weight: 900;
   color: #0c5737;
-  margin: 4px 0 8px;
+  margin: 6px 0 14px;
+  line-height: 1.15;
 }
 
 .text-sub-heading-free-lessons {
-  font-size: 15px;
-  color: #435649;
-  line-height: 1.55;
+  font-size: clamp(17px, 1.8vw, 21px);
+  color: #2e3d34;
+  line-height: 1.6;
   margin: 0 auto;
+  font-weight: 500;
 }
 
 /* Filter Box */
 .c4k-filter-box {
   background: #ffffff;
   border: 1.5px solid #d9e6d7;
-  border-radius: 20px;
-  padding: 22px 26px;
+  border-radius: 22px;
+  padding: 24px 28px;
   width: 100%;
-  margin-bottom: 30px;
-  box-shadow: 0 8px 24px rgba(12, 87, 55, 0.06);
+  margin-bottom: 34px;
+  box-shadow: 0 10px 30px rgba(12, 87, 55, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .c4k-filter-header {
@@ -4518,33 +4538,32 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   align-items: center;
   gap: 18px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
 }
 
 .c4k-filter-band-pills {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .filter-description {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 850;
   color: #0c5737;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   margin-right: 4px;
 }
 
 .c4k-band-pill {
   background: #f1f7f0;
-  border: 1px solid #d0e0cf;
-  padding: 7px 14px;
-  border-radius: 10px;
-  font-size: 12.5px;
+  border: 1.5px solid #d0e0cf;
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 750;
-  color: #334438;
+  color: #27372e;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -4559,57 +4578,34 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   background: #15764a;
   color: #ffffff;
   border-color: #15764a;
-  box-shadow: 0 4px 12px rgba(21, 118, 74, 0.25);
-}
-
-.c4k-search-wrap {
-  flex: 1;
-  min-width: 220px;
-  max-width: 320px;
-}
-
-.c4k-search-wrap input {
-  width: 100%;
-  padding: 8px 14px;
-  border-radius: 10px;
-  border: 1.5px solid #d0e0cf;
-  font-size: 13px;
-  background: #fafcfa;
-  color: #17241c;
-  transition: all 0.2s ease;
-}
-
-.c4k-search-wrap input:focus {
-  outline: none;
-  border-color: #15764a;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(21, 118, 74, 0.14);
+  font-weight: 850;
+  box-shadow: 0 4px 14px rgba(21, 118, 74, 0.28);
 }
 
 .c4k-category-chips-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
   padding-top: 14px;
   border-top: 1px solid #edf4eb;
 }
 
 .c4k-category-chips-row .cat-label {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 850;
-  color: #637568;
+  color: #526357;
   margin-right: 4px;
 }
 
 .c4k-cat-chip {
   background: #f7faf6;
-  border: 1px solid #e1ece0;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #435649;
+  border: 1.5px solid #e1ece0;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  color: #334438;
   cursor: pointer;
   transition: all 0.18s ease;
 }
@@ -4625,52 +4621,40 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   color: #0c5737;
   border-color: #e5b347;
   font-weight: 850;
-  box-shadow: 0 2px 8px rgba(246, 200, 95, 0.3);
-}
-
-.c4k-filter-status-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-  font-size: 12px;
+  box-shadow: 0 3px 10px rgba(246, 200, 95, 0.35);
 }
 
 .c4k-count-badge {
+  font-size: 13.5px;
   font-weight: 750;
   color: #15764a;
-}
-
-.c4k-reset-btn {
-  font-size: 12px;
-  font-weight: 750;
-  color: #ef4444;
-  cursor: pointer;
 }
 
 /* Free Lessons Grid & Cards */
 .c4k-free-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 28px;
   width: 100%;
 }
 
 .c4k-lesson-card {
   background: #ffffff;
   border: 1.5px solid #e1ebd9;
-  border-radius: 18px;
+  border-radius: 22px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: all 0.24s ease;
-  box-shadow: 0 4px 14px rgba(12, 87, 55, 0.04);
+  justify-content: space-between;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 30px rgba(12, 87, 55, 0.06);
+  position: relative;
 }
 
 .c4k-lesson-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
   border-color: #15764a;
-  box-shadow: 0 14px 30px rgba(21, 118, 74, 0.12);
+  box-shadow: 0 20px 48px rgba(21, 118, 74, 0.15);
 }
 
 .c4k-lesson-card.is-completed-lesson {
@@ -4678,18 +4662,12 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   background: #fcfefc;
 }
 
-.c4k-lesson-card .free-lessons-card-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 .c4k-lesson-card .activity-card-image-wrapper {
   position: relative;
   width: 100%;
-  height: 170px;
+  height: 195px;
   overflow: hidden;
-  background: #f1f7f0;
+  background: #eef6ed;
 }
 
 .c4k-lesson-card .lesson-card-image {
@@ -4705,128 +4683,163 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 
 .c4k-card-category-pill {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
   z-index: 2;
-  background: rgba(12, 87, 55, 0.88);
+  background: rgba(12, 87, 55, 0.92);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #ffffff;
-  padding: 4px 9px;
-  border-radius: 6px;
-  font-size: 10.5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.03em;
 }
 
+.c4k-card-band-pill {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #0c5737;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  border: 1px solid rgba(12, 87, 55, 0.2);
+}
+
 .c4k-card-done-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
   background: #10b981;
   color: #ffffff;
-  padding: 4px 9px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 11.5px;
   font-weight: 850;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
 }
 
-.c4k-lesson-card .free-lessons-card-content-wrapper-copy-copy {
-  padding: 20px;
+.c4k-lesson-card-body {
+  padding: 24px 22px;
   display: flex;
   flex-direction: column;
   flex: 1;
+  justify-content: space-between;
 }
 
-.c4k-lesson-card .activity-card-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.c4k-lesson-card .free-lessons-cards-heading {
-  font-size: 16px;
-  font-weight: 850;
-  color: #0c5737;
-  margin: 0 0 8px;
-  line-height: 1.3;
-}
-
-.inline-text-row {
+.c4k-lesson-meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 750;
+  color: #526357;
   margin-bottom: 10px;
-  flex-wrap: wrap;
 }
 
 .c4k-grades-badge {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 800;
   color: #15764a;
   background: #eaf6ec;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
-.c4k-band-tag {
-  font-size: 11px;
-  color: #637568;
-}
-
-.c4k-lesson-card .paragraph-3 {
-  font-size: 13px;
-  color: #435649;
-  line-height: 1.5;
-  margin: 0 0 12px;
-  flex: 1;
+.free-lessons-cards-heading {
+  font-size: 20px;
+  font-weight: 850;
+  color: #0c5737;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
 }
 
 .c4k-bilingual-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #fff8e8;
-  border: 1px solid #f6c85f;
-  padding: 4px 10px;
+  gap: 7px;
+  background: #edf7ee;
+  border: 1px solid #cce5cf;
   border-radius: 8px;
-  font-size: 11px;
-  color: #854d0e;
+  padding: 5px 11px;
+  font-size: 12.5px;
   font-weight: 750;
-  margin-bottom: 14px;
+  color: #0c5737;
+  margin-bottom: 12px;
   width: fit-content;
+}
+
+.c4k-lesson-desc {
+  font-size: 15px;
+  color: #37473d;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.c4k-card-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: #15764a;
+}
+
+.c4k-card-highlights li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.4;
+}
+
+.c4k-card-highlights li .hl-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #15764a;
+  font-size: 11px;
+  font-weight: 900;
+  flex-shrink: 0;
 }
 
 .c4k-card-actions {
   margin-top: auto;
 }
 
-.button-free-lessons-cards {
+.c4k-start-btn {
   width: 100%;
-  background: #15764a;
-  color: #ffffff;
-  border: 1px solid #15764a;
-  padding: 9px 16px;
-  border-radius: 10px;
-  font-size: 13px;
+  min-height: 48px;
+  font-size: 15px;
   font-weight: 800;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
+  border-radius: 12px;
   justify-content: center;
-  gap: 6px;
+  text-align: center;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(21, 118, 74, 0.15);
 }
 
-.button-free-lessons-cards:hover {
+.c4k-start-btn:hover {
   background: #0c5737;
   border-color: #0c5737;
   transform: translateY(-2px);

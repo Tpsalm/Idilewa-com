@@ -1924,44 +1924,38 @@ import {
 
   function renderFreeLessonCards(lessons) {
     if (!lessons.length) {
-      return '<div class="c4k-empty-lessons"><span class="empty-icon">' + icon('search', 28) + '</span><h3>No lessons matched your search or filters</h3><p>Try resetting the category filter or searching for terms like “Robotics”, “Scratch”, “Circuits”, “Variables” or “Binary”.</p><button type="button" class="button button-soft" data-action="coding-filter-band" data-band="all">Reset All Filters</button></div>';
+      return '<div class="c4k-empty-lessons"><span class="empty-icon">' + icon('search', 32) + '</span><h3>No lessons matched your search or filters</h3><p>Try resetting the category filter or choosing “All Bands”.</p><button type="button" class="button button-primary button-sm" data-action="coding-filter-band" data-band="all">Reset All Filters</button></div>';
     }
 
     return lessons.map((lesson) => {
-      const isDone = state.coding.completedLessons.includes(lesson.id);
+      const isDone = state.coding.completedLessons && state.coding.completedLessons.includes(lesson.id);
       const langKey = CODE_COPY[state.coding.helperLanguage] ? state.coding.helperLanguage : 'yoruba';
       const bilingualTerm = lesson.bilingual[langKey] || lesson.bilingual.yoruba || 'Kóòdù';
-      return '<div class="activity-card c4k-lesson-card ' + (isDone ? 'is-completed-lesson' : '') + '" data-lesson-id="' + lesson.id + '">' +
-        '<div class="free-lessons-card-wrapper">' +
-          '<div class="activity-card-image-wrapper">' +
-            '<div class="activity-image">' +
-              '<img src="' + lesson.image + '" loading="lazy" alt="' + esc(lesson.title) + '" class="lesson-card-image" />' +
-              '<span class="c4k-card-category-pill">' + esc(lesson.category) + '</span>' +
-              (isDone ? '<span class="c4k-card-done-badge">' + icon('check', 14) + ' Completed</span>' : '') +
-            '</div>' +
+      const highlightsHtml = (lesson.highlights || []).slice(0, 3).map((h) => '<li><span class="hl-check">✓</span> <span>' + esc(h) + '</span></li>').join('');
+
+      return '<div class="c4k-lesson-card ' + (isDone ? 'is-completed-lesson' : '') + '" data-lesson-id="' + lesson.id + '">' +
+        '<div class="activity-card-image-wrapper">' +
+          '<img src="' + lesson.image + '" loading="lazy" alt="' + esc(lesson.title) + '" class="lesson-card-image" />' +
+          '<span class="c4k-card-category-pill">' + esc(lesson.category) + '</span>' +
+          '<span class="c4k-card-band-pill">' + esc(lesson.bandLabel) + '</span>' +
+          (isDone ? '<span class="c4k-card-done-badge">' + icon('check', 14) + ' Completed</span>' : '') +
+        '</div>' +
+        '<div class="c4k-lesson-card-body">' +
+          '<div class="c4k-lesson-meta-row">' +
+            '<span class="c4k-lesson-duration">' + icon('clock', 13) + ' ' + esc(lesson.duration) + '</span>' +
+            '<span class="c4k-grades-badge">' + icon('smile', 13) + ' Grades ' + esc(lesson.grades) + '</span>' +
           '</div>' +
-          '<div class="free-lessons-card-content-wrapper-copy-copy">' +
-            '<div class="activity-card-content">' +
-              '<div class="activity-card-header-wrapper">' +
-                '<h6 class="free-lessons-cards-heading">' + esc(lesson.title) + '</h6>' +
-              '</div>' +
-              '<div class="inline-text-row">' +
-                '<span class="c4k-grades-badge">' + icon('smile', 13) + ' Grades: ' + esc(lesson.grades) + '</span>' +
-                '<span class="c4k-band-tag">' + esc(lesson.bandLabel) + '</span>' +
-              '</div>' +
-              '<div class="div-block-5">' +
-                '<p class="paragraph-3">' + esc(lesson.desc) + '</p>' +
-              '</div>' +
-              '<div class="c4k-bilingual-chip" title="Bilingual concept in selected African language">' +
-                '<span class="chip-lang">' + icon('globe', 12) + '</span>' +
-                '<span class="chip-text">' + esc(bilingualTerm) + '</span>' +
-              '</div>' +
-              '<div class="c4k-card-actions">' +
-                '<button type="button" class="button-free-lessons-cards" data-action="coding-start-lesson" data-lesson-id="' + lesson.id + '">' +
-                  (isDone ? 'Review Lesson' : 'Start Lesson') + ' ' + icon('arrow', 14) +
-                '</button>' +
-              '</div>' +
-            '</div>' +
+          '<h3 class="free-lessons-cards-heading">' + esc(lesson.title) + '</h3>' +
+          '<div class="c4k-bilingual-chip" title="Bilingual concept in selected African language">' +
+            '<span class="chip-lang">' + icon('globe', 13) + '</span>' +
+            '<span class="chip-text">' + esc(bilingualTerm) + '</span>' +
+          '</div>' +
+          '<p class="c4k-lesson-desc">' + esc(lesson.desc) + '</p>' +
+          (highlightsHtml ? '<ul class="c4k-card-highlights" aria-label="Key concepts">' + highlightsHtml + '</ul>' : '') +
+          '<div class="c4k-card-actions">' +
+            '<button type="button" class="button button-primary button-full c4k-start-btn" data-action="coding-start-lesson" data-lesson-id="' + lesson.id + '">' +
+              (isDone ? icon('check', 15) + ' Review Lesson' : 'Open Lesson ' + icon('arrow', 15)) +
+            '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -2553,51 +2547,40 @@ import {
       '</section>' +
 
       '<!-- 5. Section: Free Lessons -->' +
-      '<section class="c4k-free-section scroll-3d-reveal" id="free-lessons" aria-labelledby="free-lessons-title">' +
-        '<div class="c4k-free-header">' +
+      '<!-- 5. Section: Free Lessons (Teach Computer Science Today) in Cards -->' +
+      '<section class="c4k-free-lessons-section" id="free-lessons" aria-labelledby="free-lessons-title">' +
+        '<div class="c4k-free-header text-center">' +
           '<div class="c4k-free-badge">' + icon('sparkles', 16) + ' <span>30+ FREE STEAM LESSONS</span></div>' +
-          '<h2 class="heading-2 c4k-free-title" id="free-lessons-title">Teach Computer Science Today</h2>' +
-          '<p class="c4k-free-lead">Jump directly into ready-to-teach, standards-aligned STEAM lessons infused with Yoruba, Igbo, Hausa and African cultural concepts.</p>' +
+          '<h2 class="c4k-free-title" id="free-lessons-title">Teach Computer Science Today</h2>' +
+          '<p class="text-sub-heading-free-lessons">Jump directly into ready-to-teach, standards-aligned STEAM lessons infused with Yoruba, Igbo, Hausa and African cultural concepts.</p>' +
         '</div>' +
 
-        '<div class="c4k-filter-bar">' +
-          '<div class="c4k-filter-group">' +
-            '<span class="c4k-filter-label">Grade Band:</span>' +
-            '<div class="c4k-filter-pills">' +
-              '<button type="button" class="c4k-filter-pill ' + (flow.filter === 'all' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="all">All Bands</button>' +
-              '<button type="button" class="c4k-filter-pill ' + (flow.filter === 'k2' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="k2">K–2</button>' +
-              '<button type="button" class="c4k-filter-pill ' + (flow.filter === '35' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="35">3–5</button>' +
-              '<button type="button" class="c4k-filter-pill ' + (flow.filter === '68' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="68">6–8+</button>' +
+        '<div class="c4k-filter-box">' +
+          '<div class="c4k-filter-header">' +
+            '<div class="c4k-filter-band-pills">' +
+              '<span class="filter-description">Grade Band:</span>' +
+              '<button type="button" class="c4k-band-pill ' + (flow.filter === 'all' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="all">All Bands</button>' +
+              '<button type="button" class="c4k-band-pill ' + (flow.filter === 'k2' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="k2">K–2 Lower Elementary</button>' +
+              '<button type="button" class="c4k-band-pill ' + (flow.filter === '35' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="35">3–5 Upper Elementary</button>' +
+              '<button type="button" class="c4k-band-pill ' + (flow.filter === '68' ? 'is-active' : '') + '" data-action="coding-filter-band" data-band="68">6–8+ Middle School</button>' +
             '</div>' +
+            '<div class="c4k-count-badge">' +
+              '<span>Showing <strong>' + filteredLessons.length + '</strong> of ' + C4K_FREE_LESSONS.length + ' free STEAM lessons</span>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="c4k-category-chips-row">' +
+            '<span class="cat-label">Category:</span>' +
+            '<button type="button" class="c4k-cat-chip ' + (flow.category === 'all' ? 'is-active' : '') + '" data-action="coding-filter-category" data-cat="all">All Categories (' + C4K_FREE_LESSONS.length + ')</button>' +
+            categories.map((cat) => {
+              const count = C4K_FREE_LESSONS.filter((l) => l.category === cat).length;
+              return '<button type="button" class="c4k-cat-chip ' + (flow.category === cat ? 'is-active' : '') + '" data-action="coding-filter-category" data-cat="' + esc(cat) + '">' + esc(cat) + ' (' + count + ')</button>';
+            }).join('') +
           '</div>' +
         '</div>' +
 
-        '<div class="c4k-category-chips">' +
-          '<button type="button" class="c4k-cat-chip ' + (flow.category === 'all' ? 'is-active' : '') + '" data-action="coding-filter-category" data-cat="all">All Categories (' + C4K_FREE_LESSONS.length + ')</button>' +
-          categories.map((cat) => {
-            const count = C4K_FREE_LESSONS.filter((l) => l.category === cat).length;
-            return '<button type="button" class="c4k-cat-chip ' + (flow.category === cat ? 'is-active' : '') + '" data-action="coding-filter-category" data-cat="' + esc(cat) + '">' + esc(cat) + ' (' + count + ')</button>';
-          }).join('') +
-        '</div>' +
-
-        '<div class="c4k-lessons-grid">' +
-          filteredLessons.map((lesson) => {
-            const completed = flow.completedLessons && flow.completedLessons.includes(lesson.id);
-            return '<div class="c4k-free-lesson-card ' + (completed ? 'is-completed' : '') + '">' +
-              '<div class="c4k-free-lesson-top">' +
-                '<span class="c4k-free-band-badge">' + esc(lesson.bandLabel) + '</span>' +
-                '<span class="c4k-free-cat-badge">' + esc(lesson.category) + '</span>' +
-                '<span class="c4k-free-duration">' + icon('clock', 12) + ' ' + esc(lesson.duration) + '</span>' +
-              '</div>' +
-              '<h3 class="heading-6 c4k-free-title-text">' + esc(lesson.title) + '</h3>' +
-              '<p class="text-s text-color-bright-overlay-80">' + esc(lesson.desc) + '</p>' +
-              '<div class="c4k-free-card-btn-row">' +
-                '<button type="button" class="button button-soft button-sm" data-action="coding-start-lesson" data-lesson-id="' + lesson.id + '">' +
-                  (completed ? icon('check', 14) + ' Review Lesson' : 'Open Lesson ' + icon('arrow', 14)) +
-                '</button>' +
-              '</div>' +
-            '</div>';
-          }).join('') +
+        '<div class="c4k-free-grid">' +
+          renderFreeLessonCards(filteredLessons) +
         '</div>' +
       '</section>' +
 
