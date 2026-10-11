@@ -45,6 +45,7 @@ import {
   const ROUTES = [
     'trainer',
     'voice_lessons',
+    'curriculum',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'course',
     'ere', 'ere_game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
@@ -135,6 +136,32 @@ import {
         { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
         { title: 'Speech Evaluation', text: 'Real-time pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
         { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'trainer', tone: 'blue' }
+      ]
+    },
+    curriculum: {
+      title: 'The Code for Kids Curriculum · K-8 Indigenous STEAM.',
+      eyebrow: 'Indigenous STEAM Curriculum',
+      desc: 'Standards-aligned STEAM lessons infused with Yoruba, Igbo, Hausa and African cultural concepts from Kindergarten to Grade 8.',
+      icon: 'layers', image: 'code-kids.jpg', imageAlt: 'African students exploring STEAM and coding curriculum',
+      active: 0, flow: ['Choose Grade Band', 'Explore Concepts', 'Teach Lesson', 'Code Live'],
+      cta: 'Open Code Studio', ctaRoute: 'coding',
+      cards: [
+        { title: 'Lower Elementary', text: 'Visual Block Patterns & African Cultural Storytelling (K–2).', icon: 'sparkles', route: 'curriculum', tone: 'mint' },
+        { title: 'Upper Elementary', text: 'Algorithmic Decision Trees & Yoruba Logic Syntax (3–5).', icon: 'layers', route: 'curriculum', tone: 'peach' },
+        { title: 'Middle School', text: 'Full Indigenous Syntax, Physical Computing & Web (6–8+).', icon: 'code', route: 'coding', tone: 'blue' }
+      ]
+    },
+    coding: {
+      title: 'Kọ Koodu ní Èdè Rẹ · Code in Your Language.',
+      eyebrow: 'Interactive Bilingual Studio',
+      desc: 'Write and test computer programs in Yorùbá, Igbo, Hausa, Swahili, and Python with live compiler terminal output.',
+      icon: 'code', image: 'code-kids.jpg', imageAlt: 'Children coding in African languages',
+      active: 1, flow: ['Select Language', 'Load Preset', 'Write Code', 'Execute Live'],
+      cta: 'View Curriculum', ctaRoute: 'curriculum',
+      cards: [
+        { title: 'Yorùbá Syntax', text: 'Code with tẹ_jade, jẹ́, bí, and kò_bá_jẹ́.', icon: 'code', route: 'coding', tone: 'mint' },
+        { title: 'Multi-Lingual', text: 'Supports Yorùbá, Igbo, Hausa, Swahili, and Python.', icon: 'globe', route: 'coding', tone: 'yellow' },
+        { title: 'Canvas Turtle', text: 'Interactive Adire geometric graphics and shapes.', icon: 'sparkles', route: 'coding', tone: 'blue' }
       ]
     },
     about: {
@@ -284,32 +311,36 @@ import {
 
   const NAV = [
     { label: 'Home', route: 'index', group: 'home' },
-    { label: 'Learn', route: 'languages', group: 'learn' },
+    { label: 'Curriculum', route: 'curriculum', group: 'curriculum' },
+    { label: 'Code in Your Language', route: 'coding', group: 'code' },
     { label: 'Voice Trainer', route: 'trainer', group: 'trainer' },
     { label: 'Read & listen', route: 'oral', group: 'read' },
-    { label: 'Code', route: 'coding', group: 'code' },
     { label: 'Stories', route: 'ere', group: 'stories' },
     { label: 'About', route: 'about', group: 'about' }
   ];
 
   const NAV_GROUPS = {
+    curriculum: 'curriculum',
+    coding: 'code',
     trainer: 'trainer', voice_lessons: 'trainer',
-    languages: 'learn', course: 'learn', lesson: 'learn', kids: 'learn', individuals: 'learn',
+    languages: 'curriculum', course: 'curriculum', lesson: 'curriculum', kids: 'curriculum', individuals: 'curriculum',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
     owe_detail: 'read', owe_story: 'read', owe_reflection: 'read', voices: 'read',
     connect_students: 'about', connect_teachers: 'about', consent: 'about',
-    coding: 'code', ere: 'stories', ere_game: 'stories', ifa: 'culture', ifa_odu: 'culture',
+    ere: 'stories', ere_game: 'stories', ifa: 'culture', ifa_odu: 'culture',
     about: 'about', method: 'about', schools: 'about', tutor: 'about',
     guides: 'culture', human: 'culture', keepers: 'culture'
   };
 
   const LABELS = Object.fromEntries(ROUTES.map((r) => [r, r === 'index' ? 'Home' : r.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())]));
-  LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note'; LABELS.coding = 'Coding for kids';
+  LABELS.curriculum = 'K-8 STEAM Curriculum';
+  LABELS.coding = 'Code in Your Language';
+  LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note';
   LABELS.owe_add = 'Share a proverb'; LABELS.owe_detail = 'Owe · translation & meaning';
   LABELS.owe_story = 'Owe · moral story'; LABELS.owe_reflection = 'Owe · reflection';
   LABELS.connect_students = 'Connect with Students'; LABELS.connect_teachers = 'Connect with Teachers';
   LABELS.consent = 'Parent & guardian consent';
-    LABELS.trainer = 'Voice African Language Trainer';
+  LABELS.trainer = 'Voice African Language Trainer';
   LABELS.voice_lessons = 'Voice African Language Trainer';
 
   const defaults = {
@@ -435,7 +466,8 @@ import {
       return { page: ROUTES.includes(defaultPage) ? defaultPage : 'index', params: {} };
     }
     const [path, query = ''] = hash.split('?');
-    const page = path.split('/')[0] || 'index';
+    let page = path.split('/')[0] || 'index';
+    if (page === 'languages' || page === 'learn') page = 'curriculum';
     return { page: ROUTES.includes(page) ? page : 'base', params: Object.fromEntries(new URLSearchParams(query)) };
   }
 
@@ -482,13 +514,13 @@ import {
   function renderMobileNav(page) {
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
-      { route: 'languages', label: 'Learn', ico: 'book' },
+      { route: 'curriculum', label: 'Curriculum', ico: 'book' },
+      { route: 'coding', label: 'Code', ico: 'code' },
       { route: 'trainer', label: 'Trainer', ico: 'mic' },
       { route: 'ere', label: 'Stories', ico: 'quote' },
-      { route: 'coding', label: 'Code', ico: 'code' },
       { route: 'profile', label: 'Progress', ico: 'user' }
     ];
-    document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route || (item.route === 'languages' && ['course', 'lesson'].includes(page)) ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
+    document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
   }
 
   function renderFooter() {
@@ -498,7 +530,7 @@ import {
           <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
           <p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p>
         </div>
-        <div class="footer-links"><h3>Learn</h3>${routeLink('languages', 'Choose a language')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}${routeLink('coding', 'Code in your language')}</div>
+        <div class="footer-links"><h3>Curriculum</h3>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</div>
         <div class="footer-links"><h3>Discover</h3>${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
         <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('base', 'Explore all pages')}</div>
       </div>
@@ -510,10 +542,10 @@ import {
 
   function renderHome() {
     const featureCards = [
-      { title: 'Learn languages', desc: 'Speak, listen, read and practice.', icon: 'globe', route: 'languages', tone: 'blue', tag: 'Start here', image: 'page-languages-1.jpg' },
+      { title: 'K–8 STEAM Curriculum', desc: 'Standards-aligned lessons infused with African culture.', icon: 'layers', route: 'curriculum', tone: 'blue', tag: 'Curriculum', image: 'page-languages-1.jpg' },
+      { title: 'Code in your language', desc: 'Interactive bilingual coding studio for kids.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Interactive IDE', image: 'code-kids.jpg' },
       { title: 'African Voice Trainer', desc: 'Real-time pitch scoring & tone feedback for 6 African languages.', icon: 'mic', route: 'trainer', tone: 'mint', tag: 'Interactive AI Studio', image: 'listening-reader.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
-      { title: 'Code in your language', desc: 'Explore technology, side by side.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Create', image: 'code-kids.jpg' },
       { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
       { title: 'Connect with Students', desc: 'A respectful space for educators to meet learners.', icon: 'people', route: 'connect_students', tone: 'peach', tag: 'For educators', image: 'african-kids-friends.jpg' },
       { title: 'Connect with Teachers', desc: 'Browse educator profiles, learning hours and experience.', icon: 'school', route: 'connect_teachers', tone: 'lilac', tag: 'For learners', image: 'yoruba-educator-man.jpg' }
@@ -533,8 +565,8 @@ import {
             <p class="hero-mantra">Learn. Speak. Code. Create. Belong.</p>
             <p class="hero-lede">A joyful place to learn a language, hear the stories behind it and imagine what you can create next.</p>
             <div class="hero-actions">
-              ${routeLink('languages', `Start learning ${icon('arrow', 17)}`, 'button button-primary')}
-              ${routeLink('trainer', `${icon('mic', 16)} Voice Trainer`, 'button button-accent')}
+              ${routeLink('curriculum', `Explore Curriculum ${icon('arrow', 17)}`, 'button button-primary')}
+              ${routeLink('coding', `${icon('code', 16)} Code Studio`, 'button button-accent')}
               ${routeLink('about', `${icon('play', 15)} Our story`, 'button button-outline')}
             </div>
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
@@ -2115,11 +2147,11 @@ import {
     yoruba: [
       {
         id: 'hello_world',
-        title: '🌟 Kí Ilé Ayé (Hello World)',
+        title: '☀️ Kí Ilé Ayé (Hello World)',
         filename: 'kí_ilé_ayé.yoruba',
         code: '# Kí Ilé Ayé ní Èdè Yorùbá\njẹ́ orúkọ = "Ọmọ Yorùbá"\ntẹ_jade("Ẹ n lẹ́ o, " + orúkọ + "! Ẹ káàbọ̀ sí Idíléwà.")\ntẹ_jade("A n kọ́ koodu ní èdè abínibí wa lónìí! ✨")',
         explainer: [
-          '<b>jẹ́ orúkọ = "Ọmọ Yorùbá"</b>: Ṣẹda apo ifipamọ (variable) ti a pe ni "orúkọ".',
+          '<b>jẹ́ orúkọ = "Ọmọ Yorùbá"</b>: Ṣẹ̀dá apo ifipamọ (variable) ti a pe ni "orúkọ".',
           '<b>tẹ_jade(...)</b>: Fi ọ̀rọ̀ ikini ati orúkọ han lori iboju / terminal.'
         ]
       },
@@ -2129,9 +2161,9 @@ import {
         filename: 'ate_isiro.yoruba',
         code: '# Àtẹ Ìṣirò Kẹta (Multiplication Table 3)\njẹ́ nọmba = 3\ntẹ_jade("Àtẹ Ìṣirò Fún Nọmba " + nọmba + ":")\n\nfún i = 1 dé 5 {\n    jẹ́ àbájáde = nọmba * i\n    tẹ_jade(nọmba + " x " + i + " = " + àbájáde)\n}',
         explainer: [
-          '<b>jẹ́ nọmba = 3</b>: Nọmba ti a fẹ ṣe àtẹ ìṣirò fún.',
-          '<b>fún i = 1 dé 5 { ... }</b>: Tun iṣiro ṣe lati 1 de 5 leralera (for loop).',
-          '<b>jẹ́ àbájáde = nọmba * i</b>: Ṣe iṣiro isodipúpọ.'
+          '<b>jẹ́ nọmba = 3</b>: Nọmba tí a fẹ́ ṣe àtẹ ìṣirò fún.',
+          '<b>fún i = 1 dé 5 { ... }</b>: Tún ìṣirò ṣe láti 1 dé 5 léraléra (for loop).',
+          '<b>jẹ́ àbájáde = nọmba * i</b>: Ṣe ìṣirò ìsọdipúpọ̀.'
         ]
       },
       {
@@ -2140,8 +2172,8 @@ import {
         filename: 'iwa_omoluwabi.yoruba',
         code: '# Èrò Ọmọlúwàbí (Decision Tree Logic)\njẹ́ iwa_rere = òótọ́\njẹ́ akitiyan = 85\n\nbí iwa_rere == òótọ́ {\n    tẹ_jade("Ọmọlúwàbí gidi ni ọ́! Ìwà rere lẹṣọ́ ènìyàn.")\n    bí akitiyan >= 80 {\n        tẹ_jade("Àkíyèsí: Ọpọlọ pípé ati akitiyan gíga! (+25 XP) 🌟")\n    }\n} kò_bá_jẹ́ {\n    tẹ_jade("Ẹ jẹ́ ká fi ìwà rere ṣètò gbogbo ìgbésẹ̀ wa.")\n}',
         explainer: [
-          '<b>bí iwa_rere == òótọ́ { ... }</b>: Ṣayẹwo boya ipo jẹ otitọ (if conditional).',
-          '<b>kò_bá_jẹ́ { ... }</b>: Ti kò ba ri bẹẹ (else).'
+          '<b>bí iwa_rere == òótọ́ { ... }</b>: Ṣàyẹ̀wò bóyá ipò jẹ́ òtítọ́ (if conditional).',
+          '<b>kò_bá_jẹ́ { ... }</b>: Tí kò bá rí bẹ́ẹ̀ (else).'
         ]
       },
       {
@@ -2150,9 +2182,9 @@ import {
         filename: 'aworan_irawo.yoruba',
         code: '# Fa Ìràwọ̀ ati Onígun Adire lori Canvas\nbẹ̀rẹ̀_àwòrán()\nyi_awo("ofeefe")\nfa_irawo(180, 120, 5, 50, 22)\n\nyi_awo("alawọ-ewe")\nkọ_ọ̀rọ̀("Ìràwọ̀ Idíléwà STEAM 🚀", 80, 240)',
         explainer: [
-          '<b>bẹ̀rẹ̀_àwòrán()</b>: Nu iboju ki o bẹrẹ aworan tuntun.',
-          '<b>yi_awo("ofeefe")</b>: Yi awọ pen si ofeefe (yellow/gold).',
-          '<b>fa_irawo(...)</b>: Fa irawo to lẹwa pẹlu igun 5 lori canvas.'
+          '<b>bẹ̀rẹ̀_àwòrán()</b>: Nu ìbòjú kí o bẹ̀rẹ̀ àwòrán tuntun.',
+          '<b>yi_awo("ofeefe")</b>: Yí àwọ̀ pen sí ofeefe (yellow/gold).',
+          '<b>fa_irawo(...)</b>: Fa ìràwọ̀ tí ó lẹ́wà pẹ̀lú igun 5 lórí canvas.'
         ]
       },
       {
@@ -2161,8 +2193,8 @@ import {
         filename: 'isiro_ojo_ori.yoruba',
         code: '# Ìṣirò Ọjọ́-orí ati Ipò Ẹkọ STEAM\njẹ́ ọdún_ìbí = 2016\njẹ́ ọdún_yìí = 2026\njẹ́ ọjọ́_orí = ọdún_yìí - ọdún_ìbí\n\ntẹ_jade("Ọjọ́-orí rẹ jẹ́ ọdún: " + ọjọ́_orí)\nbí ọjọ́_orí >= 10 {\n    tẹ_jade("Ipò: Upper Elementary / Middle School African Innovator! 🚀")\n} kò_bá_jẹ́ {\n    tẹ_jade("Ipò: Lower Elementary STEAM Seedling! 🌱")\n}',
         explainer: [
-          '<b>jẹ́ ọjọ́_orí = ọdún_yìí - ọdún_ìbí</b>: Ṣe iṣiro iyatọ laarin ọdun meji.',
-          '<b>bí ... kò_bá_jẹ́</b>: Pin ọmọ si ipele ẹkọ to tọ.'
+          '<b>jẹ́ ọjọ́_orí = ọdún_yìí - ọdún_ìbí</b>: Ṣe ìṣirò ìyàtọ̀ láàárín ọdún méjì.',
+          '<b>bí ... kò_bá_jẹ́</b>: Pín ọmọ sí ìpele ẹ̀kọ́ tí ó tọ́.'
         ]
       }
     ],
@@ -2176,6 +2208,25 @@ import {
           '<b>ka aha = "..."</b>: Mepụta aha nchekwa (variable).',
           '<b>dee(...)</b>: Dee ma gosipụta ozi na kọmputa.'
         ]
+      },
+      {
+        id: 'multiplication_igbo',
+        title: '🔢 Tebụl Mụbaa (Multiplication 1-5)',
+        filename: 'tebul_mubaa.igbo',
+        code: '# Tebụl Mụbaa n\'Asụsụ Igbo\nka onuogugu = 4\ndee("Tebụl Mụbaa maka " + onuogugu + ":")\n\nmaka i = 1 ruo 5 {\n    ka azịza = onuogugu * i\n    dee(onuogugu + " x " + i + " = " + azịza)\n}',
+        explainer: [
+          '<b>ka onuogugu = 4</b>: Nọmba a ga-eji mụbaa.',
+          '<b>maka i = 1 ruo 5</b>: Mee ya ugboro ise (loop).'
+        ]
+      },
+      {
+        id: 'decision_tree_igbo',
+        title: '💡 Amamihe na Eziokwu (Wisdom & Logic)',
+        filename: 'eziokwu.igbo',
+        code: '# Ihe Nzuzo na Amamihe\nka eziokwu_di = eziokwu\nka akara = 90\n\nọ bụrụ na eziokwu_di == eziokwu {\n    dee("Eziokwu na-eweta nkwanye ùgwù!")\n    ọ bụrụ na akara >= 80 {\n        dee("Ihe Nrite: Akara kachasị elu! (+25 XP) 🌟")\n    }\n} ọzọ {\n    dee("Kwuo eziokwu n\'oge niile.")\n}',
+        explainer: [
+          '<b>ọ bụrụ na ... ọzọ</b>: Nhọrọ dabere na ọnọdụ (conditional logic).'
+        ]
       }
     ],
     hausa: [
@@ -2187,6 +2238,24 @@ import {
         explainer: [
           '<b>sanya suna = "..."</b>: Ƙirƙiri sabon ma\'aji (variable).',
           '<b>buga(...)</b>: Buga saƙo a allon kwamfuta.'
+        ]
+      },
+      {
+        id: 'multiplication_hausa',
+        title: '🔢 Teburin Lissafi (Multiplication Table)',
+        filename: 'lissafi.hausa',
+        code: '# Teburin Lissafi a Harshen Hausa\nsanya lamba = 5\nbuga("Teburin Lissafi Na " + lamba + ":")\n\ndon i = 1 zuwa 5 {\n    sanya sakamako = lamba * i\n    buga(lamba + " x " + i + " = " + sakamako)\n}',
+        explainer: [
+          '<b>don i = 1 zuwa 5</b>: Maimaita lissafi sau 5.'
+        ]
+      },
+      {
+        id: 'decision_tree_hausa',
+        title: '💡 Hankali da Gaskiya (Wisdom & Decision)',
+        filename: 'gaskiya.hausa',
+        code: '# Hukunci a Harshen Hausa\nsanya mai_gaskiya = gaskiya\nsanya maki = 88\n\nidan mai_gaskiya == gaskiya {\n    buga("Gaskiya dokin karfe ce!")\n    idan maki >= 80 {\n        buga("Lambar Yabo: Kokari mai kyau! (+25 XP) 🌟")\n    }\n} in ba haka ba {\n    buga("Ka rike gaskiya a kowane lokaci.")\n}',
+        explainer: [
+          '<b>idan ... in ba haka ba</b>: Bincika sharadi (if/else).'
         ]
       }
     ],
@@ -2200,6 +2269,24 @@ import {
           '<b>weka jina = "..."</b>: Tenga nafasi ya kumbukumbu (variable).',
           '<b>andika(...)</b>: Andika ujumbe kwenye kiolesura cha kodi.'
         ]
+      },
+      {
+        id: 'multiplication_swahili',
+        title: '🔢 Jedwali la Kuzidisha (Multiplication Table)',
+        filename: 'kuzidisha.swahili',
+        code: '# Jedwali la Kuzidisha kwa Kiswahili\nweka nambari = 6\nandika("Jedwali la Nambari " + nambari + ":")\n\nkwa i = 1 hadi 5 {\n    weka jibu = nambari * i\n    andika(nambari + " x " + i + " = " + jibu)\n}',
+        explainer: [
+          '<b>kwa i = 1 hadi 5</b>: Kurudia hesabu (loop).'
+        ]
+      },
+      {
+        id: 'decision_tree_swahili',
+        title: '💡 Hekima na Uamuzi (Wisdom & Logic)',
+        filename: 'hekima.swahili',
+        code: '# Maamuzi kwa Kiswahili\nweka uaminifu = kweli\nweka alama = 85\n\nkama uaminifu == kweli {\n    andika("Uaminifu ni msingi thabiti wa maisha!")\n    kama alama >= 80 {\n        andika("Hongera: Matokeo bora ya STEAM! (+25 XP) 🌟")\n    }\n} vinginevyo {\n    andika("Zingatia uaminifu na bidii.")\n}',
+        explainer: [
+          '<b>kama ... vinginevyo</b>: Masharti ya uamuzi (if/else).'
+        ]
       }
     ],
     python: [
@@ -2212,40 +2299,89 @@ import {
           '<b>for lang in languages:</b>: Loop through each indigenous African language.',
           '<b>print(...)</b>: Output formatted strings to terminal.'
         ]
+      },
+      {
+        id: 'math_python',
+        title: '🔢 African STEAM Math Calculator',
+        filename: 'calculator.py',
+        code: '# African STEAM Math Calculator\nnum1 = 12\nnum2 = 8\ntotal = num1 + num2\nproduct = num1 * num2\n\nprint("STEAM Innovation Hub Calculations:")\nprint(f"Sum of {num1} + {num2} = {total}")\nprint(f"Product of {num1} x {num2} = {product}")\nif total >= 20:\n    print("✓ Threshold reached: Super Junior Engineer! 🚀")',
+        explainer: [
+          '<b>total = num1 + num2</b>: Mathematical arithmetic.',
+          '<b>if total >= 20:</b>: Conditional evaluation.'
+        ]
+      },
+      {
+        id: 'loop_python',
+        title: '🚀 Rocket Countdown & STEAM Greetings',
+        filename: 'countdown.py',
+        code: '# African Satellite STEAM Launch\nhub = "Idilewa African Space & STEAM Lab"\nprint(f"Initiating launch sequence from {hub}...")\n\nfor count in [5, 4, 3, 2, 1]:\n    print(f"T-minus {count} seconds...")\n\nprint("🚀 Blast off! Empowering Africa\'s next tech innovators!")',
+        explainer: [
+          '<b>for count in [5, 4, 3, 2, 1]:</b>: Countdown sequence loop.',
+          '<b>print(...)</b>: Terminal output.'
+        ]
       }
     ]
   };
 
-  // Execute Native African Code / Yoruba Code Script
+  // Robust Native African Code & Python Interpreter for Kids
   function runIdeInterpreter(code, lang, canvasEl) {
     const logs = [];
     const startTime = performance.now();
     let hasCanvasDraw = false;
 
+    let ctx = null;
+    if (canvasEl && canvasEl.getContext) {
+      ctx = canvasEl.getContext('2d');
+    }
+
     try {
       if (lang === 'yoruba') {
         let js = code;
+        js = js.replace(/#.*$/gm, (m) => '// ' + m.slice(1));
+        const strings = [];
+        js = js.replace(/(["'])(?:\\.|(?!\1)[^\r\n\\\'])*\1/g, (match) => {
+          strings.push(match);
+          return '___STR_' + (strings.length - 1) + '___';
+        });
 
-        // Strip comments
-        js = js.replace(/#[^\n]*/g, '');
+        const ID_PAT = '[a-zA-Z0-9_$À-ž\\u1E00-\\u1EFF\\u0300-\\u036F]+';
 
-        // Setup custom print buffer
+        js = js.replace(/(^|[\s;({])(tẹ_jade|te_jade|kọ|ko|print|console\.log)\s*\(/g, '$1__print(');
+        js = new RegExp('(^|[\\s;({])(jẹ́|je|jẹ)\\s+(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $3 =');
+        js = new RegExp('(^|[\\n;])\\s*(?!let\\b|const\\b|var\\b|if\\b|for\\b|while\\b|function\\b|return\\b)(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = js.replace(/(^|[\s;({])(bí_kò_bá_jẹ́|bi_ko_ba_je)\s*/g, '$1else if ');
+        js = js.replace(/(^|[\s;({])(kò_bá_jẹ́|ko_ba_je)\s*/g, '$1else ');
+        js = js.replace(/(^|[\s;({])(bí|bi)\s+/g, '$1if (');
+        js = js.replace(/if\s*\(([^\{]+)\{/g, (match, cond) => {
+          let clean = cond.trim();
+          if (!clean.endsWith(')')) clean += ')';
+          return 'if (' + clean + ' {';
+        });
+        js = new RegExp('(^|[\\s;({])(fún|fun)\\s+(' + ID_PAT + ')\\s*=\\s*([0-9]+)\\s*(dé|de)\\s*([0-9]+)\\s*\\{', 'g')[Symbol.replace](js, '$1for (let $3 = $4; $3 <= $6; $3++) {');
+        js = js.replace(/(^|[\s;({])(níwọ̀n_ìgbà|niwon_igba)\s+([^\{]+)\{/g, (m, p, kw, cond) => p + 'while (' + cond.trim() + ') {');
+        js = new RegExp('(^|[\\s;({])(iṣẹ́|ise)\\s+(' + ID_PAT + ')\\s*\\(', 'g')[Symbol.replace](js, '$1function $3(');
+        js = js.replace(/(^|[\s;({])(padà|pada)\s+/g, '$1return ');
+
+        js = js.replace(/(^|[\s;({])(òótọ́|ooto)([\s;)\]},]|$)/g, '$1true$3');
+        js = js.replace(/(^|[\s;({])(irọ́|iro)([\s;)\]},]|$)/g, '$1false$3');
+        js = js.replace(/(^|[\s;({])(òfo|ofo)([\s;)\]},]|$)/g, '$1null$3');
+
+        // Canvas Turtle helpers
+        js = js.replace(/(^|[\s;({])(bẹ̀rẹ̀_àwòrán|bere_aworan)\s*\(/g, '$1__initCanvas(');
+        js = js.replace(/(^|[\s;({])(yi_awo)\s*\(/g, '$1__setColor(');
+        js = js.replace(/(^|[\s;({])(fa_irawo)\s*\(/g, '$1__drawStar(');
+        js = js.replace(/(^|[\s;({])(kọ_ọ̀rọ̀|ko_oro)\s*\(/g, '$1__drawText(');
+
+        js = js.replace(/___STR_(\d+)___/g, (match, idx) => strings[Number(idx)]);
+
         const printBuffer = [];
-        const customPrint = (...args) => {
-          printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        };
-
-        // Canvas context helpers
-        let ctx = null;
-        if (canvasEl) {
-          ctx = canvasEl.getContext('2d');
-        }
+        const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
 
         const customInitCanvas = () => {
           hasCanvasDraw = true;
-          if (ctx) {
+          if (ctx && canvasEl) {
             ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-            ctx.fillStyle = '#0a150e';
+            ctx.fillStyle = '#07130b';
             ctx.fillRect(0, 0, canvasEl.width, canvasEl.height);
             ctx.strokeStyle = '#22c55e';
             ctx.fillStyle = '#22c55e';
@@ -2257,21 +2393,14 @@ import {
           hasCanvasDraw = true;
           if (!ctx) return;
           const colorMap = {
-            'pupa': '#ef4444',
-            'red': '#ef4444',
-            'alawọ_ewe': '#22c55e',
-            'alawọ-ewe': '#22c55e',
-            'green': '#22c55e',
-            'bulu': '#38bdf8',
-            'blue': '#38bdf8',
-            'ofeefe': '#facc15',
-            'yellow': '#facc15',
-            'osan': '#fb923c',
-            'orange': '#fb923c',
-            'funfun': '#ffffff',
-            'white': '#ffffff'
+            pupa: '#ef4444', red: '#ef4444',
+            alawọ_ewe: '#22c55e', 'alawọ-ewe': '#22c55e', green: '#22c55e',
+            bulu: '#38bdf8', blue: '#38bdf8',
+            ofeefe: '#facc15', yellow: '#facc15',
+            osan: '#fb923c', orange: '#fb923c',
+            funfun: '#ffffff', white: '#ffffff'
           };
-          const hex = colorMap[color.toLowerCase()] || color;
+          const hex = colorMap[String(color || '').toLowerCase()] || color;
           ctx.strokeStyle = hex;
           ctx.fillStyle = hex;
         };
@@ -2283,7 +2412,6 @@ import {
           let x = cx;
           let y = cy;
           const step = Math.PI / spikes;
-
           ctx.beginPath();
           ctx.moveTo(cx, cy - outerRadius);
           for (let i = 0; i < spikes; i++) {
@@ -2291,7 +2419,6 @@ import {
             y = cy + Math.sin(rot) * outerRadius;
             ctx.lineTo(x, y);
             rot += step;
-
             x = cx + Math.cos(rot) * innerRadius;
             y = cy + Math.sin(rot) * innerRadius;
             ctx.lineTo(x, y);
@@ -2310,70 +2437,214 @@ import {
           ctx.fillText(text, x, y);
         };
 
-        // Transpile Keywords
-        js = js.replace(/\b(jẹ́|je)\s+([a-zA-Z_\u00C0-\u024F][a-zA-Z0-9_\u00C0-\u024F]*)/g, 'let $2');
-        js = js.replace(/\b(tẹ_jade|te_jade|kọ|ko)\s*\((.*?)\)/g, '__print($2)');
-        js = js.replace(/\b(bí|bi)\s+(.*?)\s*\{/g, 'if ($2) {');
-        js = js.replace(/\b(kò_bá_jẹ́|ko_ba_je)\s*\{/g, 'else {');
-        js = js.replace(/\b(fún|fun)\s+([a-zA-Z_\u00C0-\u024F][a-zA-Z0-9_\u00C0-\u024F]*)\s*=\s*(\d+)\s*(dé|de)\s*(\d+)\s*\{/g, 'for (let $2 = $3; $2 <= $5; $2++) {');
-        js = js.replace(/\b(òótọ́|ooto)\b/g, 'true');
-        js = js.replace(/\b(irọ́|iro)\b/g, 'false');
-
-        // Canvas command transpiles
-        js = js.replace(/\b(bẹ̀rẹ̀_àwòrán|bere_aworan)\s*\(\)/g, '__initCanvas()');
-        js = js.replace(/\b(yi_awo)\s*\((.*?)\)/g, '__setColor($2)');
-        js = js.replace(/\b(fa_irawo)\s*\((.*?)\)/g, '__drawStar($2)');
-        js = js.replace(/\b(kọ_ọ̀rọ̀|ko_oro)\s*\((.*?)\)/g, '__drawText($2)');
-
-        // Execute JS in controlled sandbox
         const runner = new Function('__print', '__initCanvas', '__setColor', '__drawStar', '__drawText', js);
         runner(customPrint, customInitCanvas, customSetColor, customDrawStar, customDrawText);
+        logs.push(...printBuffer);
 
-        logs.push(...printBuffer);
-        if (logs.length === 0 && !hasCanvasDraw) {
-          logs.push('✓ Koodu ti ṣiṣẹ́ laisi aṣiṣe (Executed successfully).');
-        }
       } else if (lang === 'igbo') {
-        let js = code.replace(/#[^\n]*/g, '');
+        let js = code;
+        js = js.replace(/#.*$/gm, (m) => '// ' + m.slice(1));
+        const strings = [];
+        js = js.replace(/(["'])(?:\\.|(?!\1)[^\r\n\\\'])*\1/g, (m) => { strings.push(m); return '___STR_' + (strings.length - 1) + '___'; });
+        const ID_PAT = '[a-zA-Z0-9_$À-ž\\u1E00-\\u1EFF\\u0300-\\u036F]+';
+
+        js = js.replace(/(^|[\s;({])(dee|kwaa|print|console\.log)\s*\(/g, '$1__print(');
+        js = new RegExp('(^|[\\s;({])ka\\s+(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = new RegExp('(^|[\\n;])\\s*(?!let\\b|const\\b|var\\b|if\\b|for\\b|while\\b|function\\b|return\\b)(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = js.replace(/(^|[\s;({])(ọ bụrụ na|oburu na)\s+/g, '$1if (');
+        js = js.replace(/if\s*\(([^\{]+)\{/g, (match, cond) => {
+          let clean = cond.trim();
+          if (!clean.endsWith(')')) clean += ')';
+          return 'if (' + clean + ' {';
+        });
+        js = js.replace(/(^|[\s;({])(ọzọ|ozo)\s*\{/g, '$1else {');
+        js = new RegExp('(^|[\\s;({])maka\\s+(' + ID_PAT + ')\\s*=\\s*([0-9]+)\\s*(ruo|de)\\s*([0-9]+)\\s*\\{', 'g')[Symbol.replace](js, '$1for (let $2 = $3; $2 <= $5; $2++) {');
+        js = js.replace(/(^|[\s;({])eziokwu([\s;)\]},]|$)/g, '$1true$2');
+        js = js.replace(/(^|[\s;({])(ụgha|ugha)([\s;)\]},]|$)/g, '$1false$2');
+        js = js.replace(/___STR_(\d+)___/g, (m, idx) => strings[Number(idx)]);
+
         const printBuffer = [];
-        const customPrint = (...args) => printBuffer.push(args.join(' '));
-        js = js.replace(/\bka\s+([a-zA-Z0-9_]+)/g, 'let $1');
-        js = js.replace(/\bdee\s*\((.*?)\)/g, '__print($1)');
+        const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
         const runner = new Function('__print', js);
         runner(customPrint);
         logs.push(...printBuffer);
+
       } else if (lang === 'hausa') {
-        let js = code.replace(/#[^\n]*/g, '');
+        let js = code;
+        js = js.replace(/#.*$/gm, (m) => '// ' + m.slice(1));
+        const strings = [];
+        js = js.replace(/(["'])(?:\\.|(?!\1)[^\r\n\\\'])*\1/g, (m) => { strings.push(m); return '___STR_' + (strings.length - 1) + '___'; });
+        const ID_PAT = '[a-zA-Z0-9_$À-ž\\u1E00-\\u1EFF\\u0300-\\u036F]+';
+
+        js = js.replace(/(^|[\s;({])(buga|rubuta|print|console\.log)\s*\(/g, '$1__print(');
+        js = new RegExp('(^|[\\s;({])sanya\\s+(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = new RegExp('(^|[\\n;])\\s*(?!let\\b|const\\b|var\\b|if\\b|for\\b|while\\b|function\\b|return\\b)(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = js.replace(/(^|[\s;({])idan\s+/g, '$1if (');
+        js = js.replace(/if\s*\(([^\{]+)\{/g, (match, cond) => {
+          let clean = cond.trim();
+          if (!clean.endsWith(')')) clean += ')';
+          return 'if (' + clean + ' {';
+        });
+        js = js.replace(/(^|[\s;({])(in ba haka ba)\s*\{/g, '$1else {');
+        js = new RegExp('(^|[\\s;({])don\\s+(' + ID_PAT + ')\\s*=\\s*([0-9]+)\\s*(zuwa)\\s*([0-9]+)\\s*\\{', 'g')[Symbol.replace](js, '$1for (let $2 = $3; $2 <= $5; $2++) {');
+        js = js.replace(/(^|[\s;({])gaskiya([\s;)\]},]|$)/g, '$1true$2');
+        js = js.replace(/(^|[\s;({])karya([\s;)\]},]|$)/g, '$1false$2');
+        js = js.replace(/___STR_(\d+)___/g, (m, idx) => strings[Number(idx)]);
+
         const printBuffer = [];
-        const customPrint = (...args) => printBuffer.push(args.join(' '));
-        js = js.replace(/\bsanya\s+([a-zA-Z0-9_]+)/g, 'let $1');
-        js = js.replace(/\bbuga\s*\((.*?)\)/g, '__print($1)');
+        const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
         const runner = new Function('__print', js);
         runner(customPrint);
         logs.push(...printBuffer);
+
       } else if (lang === 'swahili') {
-        let js = code.replace(/#[^\n]*/g, '');
+        let js = code;
+        js = js.replace(/#.*$/gm, (m) => '// ' + m.slice(1));
+        const strings = [];
+        js = js.replace(/(["'])(?:\\.|(?!\1)[^\r\n\\\'])*\1/g, (m) => { strings.push(m); return '___STR_' + (strings.length - 1) + '___'; });
+        const ID_PAT = '[a-zA-Z0-9_$À-ž\\u1E00-\\u1EFF\\u0300-\\u036F]+';
+
+        js = js.replace(/(^|[\s;({])(andika|chapisha|print|console\.log)\s*\(/g, '$1__print(');
+        js = new RegExp('(^|[\\s;({])weka\\s+(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = new RegExp('(^|[\\n;])\\s*(?!let\\b|const\\b|var\\b|if\\b|for\\b|while\\b|function\\b|return\\b)(' + ID_PAT + ')\\s*=', 'g')[Symbol.replace](js, '$1let $2 =');
+        js = js.replace(/(^|[\s;({])kama\s+/g, '$1if (');
+        js = js.replace(/if\s*\(([^\{]+)\{/g, (match, cond) => {
+          let clean = cond.trim();
+          if (!clean.endsWith(')')) clean += ')';
+          return 'if (' + clean + ' {';
+        });
+        js = js.replace(/(^|[\s;({])vinginevyo\s*\{/g, '$1else {');
+        js = new RegExp('(^|[\\s;({])kwa\\s+(' + ID_PAT + ')\\s*=\\s*([0-9]+)\\s*(hadi)\\s*([0-9]+)\\s*\\{', 'g')[Symbol.replace](js, '$1for (let $2 = $3; $2 <= $5; $2++) {');
+        js = js.replace(/(^|[\s;({])kweli([\s;)\]},]|$)/g, '$1true$2');
+        js = js.replace(/(^|[\s;({])si kweli([\s;)\]},]|$)/g, '$1false$2');
+        js = js.replace(/___STR_(\d+)___/g, (m, idx) => strings[Number(idx)]);
+
         const printBuffer = [];
-        const customPrint = (...args) => printBuffer.push(args.join(' '));
-        js = js.replace(/\bweka\s+([a-zA-Z0-9_]+)/g, 'let $1');
-        js = js.replace(/\bandika\s*\((.*?)\)/g, '__print($1)');
+        const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
         const runner = new Function('__print', js);
         runner(customPrint);
         logs.push(...printBuffer);
+
       } else {
-        logs.push('Executing African STEAM Bilingual Studio:');
-        logs.push('E ku aaro / Nnoo / Sannu / Hujambo Young African Innovator!');
-        logs.push('✓ Empowering kids to code in Yorùbá 🌍');
-        logs.push('✓ Empowering kids to code in Igbo 🌍');
-        logs.push('✓ Empowering kids to code in Hausa 🌍');
-        logs.push('✓ Empowering kids to code in Swahili 🌍');
+        // Python / JS Engine for Kids
+        let js = code;
+        js = js.replace(/f(["'])((?:(?!\1)[^\\]|\\.)*)\1/g, (match, quote, str) => {
+          const interpolated = str.replace(/\{([^{}]+)\}/g, '${$1}');
+          return '`' + interpolated.replace(/`/g, '\\`') + '`';
+        });
+        js = js.replace(/#.*$/gm, (m) => '// ' + m.slice(1));
+
+        const lines = js.split('\n');
+        const transformedLines = [
+          'function range(start, stop, step) {',
+          '  if (stop === undefined) { stop = start; start = 0; }',
+          '  step = step || 1;',
+          '  const res = [];',
+          '  if (step > 0) { for (let i = start; i < stop; i += step) res.push(i); }',
+          '  else { for (let i = start; i > stop; i += step) res.push(i); }',
+          '  return res;',
+          '}'
+        ];
+
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          line = line.replace(/(^|[\s;])print\s*\(/g, '$1__print(');
+          line = line.replace(/(^|[\s;])console\.log\s*\(/g, '$1__print(');
+
+          // Support Python def function
+          const defMatch = line.match(/^(\s*)def\s+([a-zA-Z_]\w*)\s*\(([^)]*)\):(\s*)$/);
+          if (defMatch) {
+            const indent = defMatch[1];
+            const fnName = defMatch[2];
+            const params = defMatch[3];
+            line = indent + 'function ' + fnName + '(' + params + ') {';
+            let j = i + 1;
+            const bodyIndentLen = indent.length + 2;
+            while (j < lines.length && (lines[j].trim() === '' || lines[j].search(/\S/) >= bodyIndentLen)) {
+              j++;
+            }
+            lines.splice(j, 0, indent + '}');
+          }
+
+          // Support Python for in
+          const forMatch = line.match(/^(\s*)for\s+([a-zA-Z_]\w*)\s+in\s+([^:]+):(\s*)$/);
+          if (forMatch) {
+            const indent = forMatch[1];
+            const varName = forMatch[2];
+            const iterable = forMatch[3].trim();
+            line = indent + 'for (let ' + varName + ' of ' + iterable + ') {';
+            let j = i + 1;
+            const bodyIndentLen = indent.length + 2;
+            while (j < lines.length && (lines[j].trim() === '' || lines[j].search(/\S/) >= bodyIndentLen)) {
+              j++;
+            }
+            lines.splice(j, 0, indent + '}');
+          }
+
+          // Support Python if / elif / else
+          const elifMatch = line.match(/^(\s*)elif\s+([^:]+):(\s*)$/);
+          if (elifMatch) {
+            const indent = elifMatch[1];
+            const cond = elifMatch[2].trim();
+            line = indent + '} else if (' + cond + ') {';
+          } else {
+            const ifMatch = line.match(/^(\s*)if\s+([^:]+):(\s*)$/);
+            if (ifMatch) {
+              const indent = ifMatch[1];
+              const cond = ifMatch[2].trim();
+              line = indent + 'if (' + cond + ') {';
+              let j = i + 1;
+              const bodyIndentLen = indent.length + 2;
+              while (j < lines.length && (lines[j].trim() === '' || lines[j].search(/\S/) >= bodyIndentLen)) {
+                j++;
+              }
+              lines.splice(j, 0, indent + '}');
+            }
+            const elseMatch = line.match(/^(\s*)else:(\s*)$/);
+            if (elseMatch) {
+              const indent = elseMatch[1];
+              line = indent + '} else {';
+            }
+          }
+
+          const assignMatch = line.match(/^(\s*)([a-zA-Z_]\w*)\s*=\s*(.+)$/);
+          if (assignMatch && !assignMatch[1].includes('let') && !assignMatch[1].includes('const')) {
+            line = assignMatch[1] + 'let ' + assignMatch[2] + ' = ' + assignMatch[3];
+          }
+
+          transformedLines.push(line);
+        }
+        js = transformedLines.join('\n');
+
+        const printBuffer = [];
+        const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+        const runner = new Function('__print', js);
+        runner(customPrint);
+        logs.push(...printBuffer);
       }
     } catch (err) {
       logs.push('❌ Aṣiṣe Koodu (Syntax Error): ' + err.message);
     }
 
     const duration = (performance.now() - startTime).toFixed(2);
+    const hasError = logs.some(l => l.startsWith('❌'));
+    let formattedOutput = '';
+    if (hasError) {
+      formattedOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n' +
+        logs.map(l => l.startsWith('❌') ? l : '> ' + l).join('\n') +
+        '\n✗ Àkíyèsí: Atunṣe nilo (Check code syntax to earn Maker XP)';
+    } else if (logs.length > 0) {
+      formattedOutput = '> [Idilewa Engine v2.4 Online]\n' +
+        logs.map(l => '> ' + l).join('\n') +
+        '\n✓ Àṣeyọrí: Execution completed in ' + duration + 'ms (+10 Maker XP)';
+    } else if (hasCanvasDraw) {
+      formattedOutput = '> [Idilewa Engine v2.4 Online]\n> [Canvas Graphic Rendered]\n✓ Àṣeyọrí: Execution completed in ' + duration + 'ms (+10 Maker XP)';
+    } else {
+      formattedOutput = '> [Idilewa Engine v2.4 Online]\n> ✓ Koodu ti ṣiṣẹ́ laisi aṣiṣe (Executed successfully).\n✓ Àṣeyọrí: Execution completed in ' + duration + 'ms (+10 Maker XP)';
+    }
+
     return {
+      output: formattedOutput,
       logs: logs.join('\n'),
       duration,
       hasCanvasDraw
@@ -2381,14 +2652,200 @@ import {
   }
 
 
+  // ==========================================
+  // RENDER: CODE IN YOUR LANGUAGE (IDE STANDALONE)
+  // ==========================================
   function renderCoding() {
     const flow = state.coding;
-    const localeId = CODE_COPY[flow.helperLanguage] ? flow.helperLanguage : 'yoruba';
-    const copy = codeTextFor(localeId);
     const ideLang = flow.ideLang || 'yoruba';
     const presetsForLang = IDE_PRESETS[ideLang] || IDE_PRESETS.yoruba;
     const currentPreset = presetsForLang.find((p) => p.id === flow.idePresetId) || presetsForLang[0];
     const ideCode = flow.ideCode !== undefined ? flow.ideCode : currentPreset.code;
+
+    const keywordsByLang = {
+      yoruba: [
+        { label: 'tẹ_jade', snippet: 'tẹ_jade("")' },
+        { label: 'jẹ́', snippet: 'jẹ́ orúkọ = ""' },
+        { label: 'bí', snippet: 'bí ipo == òótọ́ {\n    \n}' },
+        { label: 'kò_bá_jẹ́', snippet: 'kò_bá_jẹ́ {\n    \n}' },
+        { label: 'fún', snippet: 'fún i = 1 dé 5 {\n    \n}' },
+        { label: 'bẹ̀rẹ̀_àwòrán', snippet: 'bẹ̀rẹ̀_àwòrán()\nyi_awo("ofeefe")' }
+      ],
+      igbo: [
+        { label: 'dee', snippet: 'dee("")' },
+        { label: 'ka', snippet: 'ka aha = ""' },
+        { label: 'ọ bụrụ na', snippet: 'ọ bụrụ na ipo == eziokwu {\n    \n}' },
+        { label: 'ọzọ', snippet: 'ọzọ {\n    \n}' },
+        { label: 'maka', snippet: 'maka i = 1 ruo 5 {\n    \n}' },
+        { label: 'kwaa', snippet: 'kwaa("")' }
+      ],
+      hausa: [
+        { label: 'buga', snippet: 'buga("")' },
+        { label: 'sanya', snippet: 'sanya suna = ""' },
+        { label: 'idan', snippet: 'idan sharadi == gaskiya {\n    \n}' },
+        { label: 'in ba haka ba', snippet: 'in ba haka ba {\n    \n}' },
+        { label: 'don', snippet: 'don i = 1 zuwa 5 {\n    \n}' },
+        { label: 'rubuta', snippet: 'rubuta("")' }
+      ],
+      swahili: [
+        { label: 'andika', snippet: 'andika("")' },
+        { label: 'weka', snippet: 'weka jina = ""' },
+        { label: 'kama', snippet: 'kama hali == kweli {\n    \n}' },
+        { label: 'vinginevyo', snippet: 'vinginevyo {\n    \n}' },
+        { label: 'kwa', snippet: 'kwa i = 1 hadi 5 {\n    \n}' },
+        { label: 'chapisha', snippet: 'chapisha("")' }
+      ],
+      python: [
+        { label: 'print', snippet: 'print("")' },
+        { label: 'for in', snippet: 'for item in items:\n    print(item)' },
+        { label: 'if else', snippet: 'if condition:\n    print("True")\nelse:\n    print("False")' },
+        { label: 'def', snippet: 'def greet(name):\n    return f"Hello {name}"' },
+        { label: 'range', snippet: 'for i in range(1, 6):\n    print(i)' },
+        { label: 'list', snippet: 'items = ["Yoruba", "Igbo", "Hausa", "Swahili"]' }
+      ]
+    };
+    const kwList = keywordsByLang[ideLang] || keywordsByLang.yoruba;
+
+    const initialOutput = flow.ideOutput || (
+      '> [Idilewa Engine v2.4 Online - ' + ideLang.toUpperCase() + ']\n' +
+      '> Kọ koodu ki o tẹ "Ṣe Koodu (Run)" lati wo àbájáde.'
+    );
+
+    return '<div class="container route-page coding-page c4k-redesigned-page ide-fullscreen-page">' +
+      '<!-- Interactive Bilingual Studio (Only this fills the Code page) -->' +
+      '<section class="c4k-ide-section ide-main-standalone" id="code-ide" aria-labelledby="ide-title">' +
+        '<div class="c4k-ide-header-box">' +
+          '<div class="c4k-ide-badge">' +
+            '<span class="badge-code-icon">&lt;/&gt;</span> <span>INTERACTIVE BILINGUAL STUDIO</span>' +
+          '</div>' +
+          '<h1 id="ide-title" class="c4k-ide-title">' +
+            'Kọ Koodu ní Èdè Rẹ · Code in Your Language' +
+          '</h1>' +
+          '<p class="c4k-ide-subtitle">' +
+            'Write and test computer programs in Yorùbá, Igbo, Hausa, Swahili, and Python. Experience live code compilation, instant terminal output, and visual canvas graphics!' +
+          '</p>' +
+        '</div>' +
+
+        '<div class="c4k-ide-workspace">' +
+          '<!-- Top Control Bar -->' +
+          '<div class="c4k-ide-toolbar">' +
+            '<div class="c4k-ide-lang-selector">' +
+              '<span class="toolbar-label">Èdè / Language:</span>' +
+              '<button type="button" class="lang-tab ' + (ideLang === 'yoruba' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="yoruba">🇳🇬 Èdè Yorùbá</button>' +
+              '<button type="button" class="lang-tab ' + (ideLang === 'igbo' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="igbo">🇳🇬 Asụsụ Igbo</button>' +
+              '<button type="button" class="lang-tab ' + (ideLang === 'hausa' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="hausa">🇳🇬 Harshen Hausa</button>' +
+              '<button type="button" class="lang-tab ' + (ideLang === 'swahili' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="swahili">🇰🇪 Kiswahili</button>' +
+              '<button type="button" class="lang-tab ' + (ideLang === 'python' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="python">🐍 Python / JS</button>' +
+            '</div>' +
+
+            '<div class="c4k-ide-preset-selector">' +
+              '<span class="toolbar-label">Àpẹẹrẹ Ẹkọ / Preset:</span>' +
+              '<select class="ide-preset-dropdown" data-action="ide-select-preset" aria-label="Select Code Preset">' +
+                presetsForLang.map((p) => '<option value="' + p.id + '" ' + (p.id === currentPreset.id ? 'selected' : '') + '>' + esc(p.title) + '</option>').join('') +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+
+          '<!-- Yoruba Diacritics Accent Bar -->' +
+          '<div class="c4k-ide-diacritics-bar">' +
+            '<span class="diacritic-label">Àmì Ohùn Yorùbá:</span>' +
+            ['á', 'à', 'é', 'è', 'ẹ́', 'ẹ̀', 'í', 'ì', 'ó', 'ò', 'ọ́', 'ọ̀', 'ú', 'ù', 'ṣ'].map((char) =>
+              '<button type="button" class="diacritic-btn" data-action="ide-insert-char" data-char="' + char + '" title="Insert ' + char + '">' + char + '</button>'
+            ).join('') +
+          '</div>' +
+
+          '<!-- Split: Code Area (Left) & Output Area (Right) -->' +
+          '<div class="c4k-ide-split">' +
+            '<!-- Left: Code Area (Editor) -->' +
+            '<div class="c4k-ide-editor-pane">' +
+              '<div class="pane-header">' +
+                '<div class="file-tab">' +
+                  '<span class="file-icon">' + icon('code', 14) + '</span>' +
+                  '<span class="file-name" id="ide-filename">' + esc(currentPreset.filename) + '</span>' +
+                '</div>' +
+                '<div class="editor-actions">' +
+                  '<button type="button" class="btn-ide-run" data-action="ide-run-code">' +
+                    icon('play', 14) + ' <span>Ṣe Koodu (Run)</span>' +
+                  '</button>' +
+                  '<button type="button" class="btn-ide-secondary" data-action="ide-reset-code" title="Reset Code">' +
+                    icon('refresh', 14) + ' <span>Tún Bẹ̀rẹ̀</span>' +
+                  '</button>' +
+                  '<button type="button" class="btn-ide-secondary" data-action="ide-copy-code" title="Copy Code">' +
+                    icon('check', 14) + ' <span>Ṣe Àdàkọ</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>' +
+
+              '<div class="editor-body">' +
+                '<div class="line-numbers" id="ide-line-numbers">' +
+                  ideCode.split('\n').map((_, i) => '<div>' + (i + 1) + '</div>').join('') +
+                '</div>' +
+                '<textarea class="code-textarea" id="ide-code-input" spellcheck="false" placeholder="Kọ koodu rẹ síbí...">' + esc(ideCode) + '</textarea>' +
+              '</div>' +
+
+              '<!-- Quick keyword snippets -->' +
+              '<div class="editor-keywords-bar">' +
+                '<span class="kw-label">Aṣẹ Koodu:</span>' +
+                kwList.map(kw => '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="' + esc(kw.snippet) + '">' + esc(kw.label) + '</button>').join('') +
+              '</div>' +
+            '</div>' +
+
+            '<!-- Right: Output Area -->' +
+            '<div class="c4k-ide-output-pane">' +
+              '<div class="pane-header">' +
+                '<div class="output-tab-switcher">' +
+                  '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? '' : 'active') + '" data-action="ide-switch-tab" data-tab="terminal">' +
+                    '💻 Àbájáde Terminal (Console)' +
+                  '</button>' +
+                  '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="canvas">' +
+                    '🎨 Ìbòjú Àwòrán (Canvas)' +
+                  '</button>' +
+                '</div>' +
+                '<button type="button" class="btn-ide-clear" data-action="ide-clear-output" title="Clear output">' +
+                  'Nu Iboju' +
+                '</button>' +
+              '</div>' +
+
+              '<div class="output-body">' +
+                '<!-- Terminal View -->' +
+                '<div class="terminal-view ' + (flow.ideTab === 'canvas' ? 'hide' : '') + '" id="ide-terminal-view">' +
+                  '<div class="terminal-status-bar">' +
+                    '<span class="status-indicator">● Engine Online</span>' +
+                    '<span class="status-runtime" id="ide-status-runtime">Execution Time: ' + (flow.ideRuntime || '0.02ms') + '</span>' +
+                    '<span class="status-xp" id="ide-status-xp">+' + (flow.ideXp || 10) + ' Maker XP</span>' +
+                  '</div>' +
+                  '<pre class="terminal-logs" id="ide-terminal-logs">' + esc(initialOutput) + '</pre>' +
+                '</div>' +
+
+                '<!-- Canvas View -->' +
+                '<div class="canvas-view ' + (flow.ideTab === 'canvas' ? '' : 'hide') + '" id="ide-canvas-view">' +
+                  '<canvas id="ide-graphic-canvas" width="400" height="260"></canvas>' +
+                  '<div class="canvas-caption">Graphic Turtle & Shapes Renderer</div>' +
+                '</div>' +
+              '</div>' +
+
+              '<!-- Line-by-Line Educational Explainer -->' +
+              '<div class="c4k-ide-explainer" id="ide-explainer-box">' +
+                '<div class="explainer-title">' +
+                  icon('sparkles', 14) + ' <span>Ètò Ẹ̀kọ́ & Ìtumọ̀ / Concept Breakdown:</span>' +
+                '</div>' +
+                '<div class="explainer-content" id="ide-explainer-content">' +
+                  (currentPreset.explainer ? currentPreset.explainer.map((step) => '<div class="explainer-step">' + step + '</div>').join('') : '<p>Execute code to view conceptual breakdown.</p>') +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>' +
+    '</div>';
+  }
+
+
+  // ==========================================
+  // RENDER: CURRICULUM (GRADE BANDS & FREE LESSONS)
+  // ==========================================
+  function renderCurriculum() {
+    const flow = state.coding;
 
     // Filter free lessons
     const filteredLessons = C4K_FREE_LESSONS.filter((lesson) => {
@@ -2403,12 +2860,12 @@ import {
 
     const categories = Array.from(new Set(C4K_FREE_LESSONS.map((l) => l.category)));
 
-    return '<div class="container route-page coding-page c4k-redesigned-page">' +
+    return '<div class="container route-page curriculum-page c4k-redesigned-page">' +
       '<div class="breadcrumbs">' +
-        routeLink('index', 'Home') + '<span>/</span><strong>Coding for kids</strong>' +
+        routeLink('index', 'Home') + '<span>/</span><strong>Curriculum & STEAM Lessons</strong>' +
       '</div>' +
 
-      '<!-- 1. 3D Animated African STEAM Hologram Stage (Replaces old static green container) -->' +
+      '<!-- 1. 3D Animated African STEAM Hologram Stage -->' +
       '<section class="c4k-3d-hero-stage scroll-3d-reveal" id="code-hero-stage">' +
         '<div class="c4k-3d-ambient-glow" aria-hidden="true"></div>' +
         '<div id="coding3DCanvasWrap" class="c4k-3d-canvas-wrap" data-3d-scene="coding" aria-label="Interactive 3D Yoruba Hologram Code Cube"></div>' +
@@ -2432,8 +2889,8 @@ import {
           '<!-- Quick Jump Action Pills -->' +
           '<div class="c4k-quick-pills-row">' +
             '<button type="button" class="c4k-nav-pill active" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
-            '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="code-ide">' + icon('code', 14) + ' Code in Your Language IDE</button>' +
             '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
+            routeLink('coding', icon('code', 14) + ' Code in Your Language IDE', 'c4k-nav-pill') +
           '</div>' +
 
           '<!-- 3 Interactive Grade Band 3D Hub Cards -->' +
@@ -2546,7 +3003,6 @@ import {
         '</div>' +
       '</section>' +
 
-      '<!-- 5. Section: Free Lessons -->' +
       '<!-- 5. Section: Free Lessons (Teach Computer Science Today) in Cards -->' +
       '<section class="c4k-free-lessons-section" id="free-lessons" aria-labelledby="free-lessons-title">' +
         '<div class="c4k-free-header text-center">' +
@@ -2584,138 +3040,16 @@ import {
         '</div>' +
       '</section>' +
 
-      '<!-- 6. Section: Code in Your Language (Kọ Koodu ní Èdè Rẹ) IDE (Replaces old second container) -->' +
-      '<section class="c4k-ide-section scroll-3d-reveal" id="code-ide" aria-labelledby="ide-title">' +
-        '<div class="c4k-ide-header-box">' +
-          '<div class="c4k-ide-badge">' +
-            icon('code', 16) + ' <span>INTERACTIVE BILINGUAL STUDIO</span>' +
-          '</div>' +
-          '<h2 id="ide-title" class="c4k-ide-title">' +
-            'Kọ Koodu ní Èdè Rẹ · Code in Your Language' +
-          '</h2>' +
-          '<p class="c4k-ide-subtitle">' +
-            'Write and test computer programs in Yorùbá, Igbo, Hausa, Swahili, and Python. Experience live code compilation, instant terminal output, and visual canvas graphics!' +
-          '</p>' +
+      '<!-- Call to Action Banner: Jump to Code Studio -->' +
+      '<div class="curriculum-ide-cta-banner">' +
+        '<div class="curriculum-ide-cta-content">' +
+          '<h3>Ready to code in your language?</h3>' +
+          '<p>Experience live compilation in Yorùbá, Igbo, Hausa, Swahili, and Python in our interactive bilingual studio.</p>' +
         '</div>' +
+        routeLink('coding', 'Launch Code Studio ' + icon('arrow', 15), 'curriculum-ide-cta-btn') +
+      '</div>' +
 
-        '<div class="c4k-ide-workspace">' +
-          '<!-- Top Control Bar -->' +
-          '<div class="c4k-ide-toolbar">' +
-            '<div class="c4k-ide-lang-selector">' +
-              '<span class="toolbar-label">Èdè / Language:</span>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'yoruba' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="yoruba">🇳🇬 Èdè Yorùbá</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'igbo' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="igbo">🇳🇬 Asụsụ Igbo</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'hausa' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="hausa">🇳🇬 Harshen Hausa</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'swahili' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="swahili">🇰🇪 Kiswahili</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'python' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="python">🐍 Python / JS</button>' +
-            '</div>' +
-
-            '<div class="c4k-ide-preset-selector">' +
-              '<span class="toolbar-label">Àpẹẹrẹ Ẹkọ / Preset:</span>' +
-              '<select class="ide-preset-dropdown" data-action="ide-select-preset" aria-label="Select Code Preset">' +
-                presetsForLang.map((p) => '<option value="' + p.id + '" ' + (p.id === currentPreset.id ? 'selected' : '') + '>' + esc(p.title) + '</option>').join('') +
-              '</select>' +
-            '</div>' +
-          '</div>' +
-
-          '<!-- Yoruba Diacritics Accent Bar -->' +
-          '<div class="c4k-ide-diacritics-bar">' +
-            '<span class="diacritic-label">Àmì Ohùn Yorùbá:</span>' +
-            ['á', 'à', 'é', 'è', 'ẹ́', 'ẹ̀', 'í', 'ì', 'ó', 'ò', 'ọ́', 'ọ̀', 'ú', 'ù', 'ṣ'].map((char) =>
-              '<button type="button" class="diacritic-btn" data-action="ide-insert-char" data-char="' + char + '" title="Insert ' + char + '">' + char + '</button>'
-            ).join('') +
-          '</div>' +
-
-          '<!-- Split: Code Area (Left) & Output Area (Right) -->' +
-          '<div class="c4k-ide-split">' +
-            '<!-- Left: Code Area (Editor) -->' +
-            '<div class="c4k-ide-editor-pane">' +
-              '<div class="pane-header">' +
-                '<div class="file-tab">' +
-                  '<span class="file-icon">' + icon('code', 14) + '</span>' +
-                  '<span class="file-name" id="ide-filename">' + esc(currentPreset.filename) + '</span>' +
-                '</div>' +
-                '<div class="editor-actions">' +
-                  '<button type="button" class="btn-ide-run" data-action="ide-run-code">' +
-                    icon('play', 14) + ' <span>Ṣe Koodu (Run)</span>' +
-                  '</button>' +
-                  '<button type="button" class="btn-ide-secondary" data-action="ide-reset-code" title="Reset Code">' +
-                    icon('refresh', 14) + ' <span>Tún Bẹ̀rẹ̀</span>' +
-                  '</button>' +
-                  '<button type="button" class="btn-ide-secondary" data-action="ide-copy-code" title="Copy Code">' +
-                    icon('check', 14) + ' <span>Ṣe Àdàkọ</span>' +
-                  '</button>' +
-                '</div>' +
-              '</div>' +
-
-              '<div class="editor-body">' +
-                '<div class="line-numbers" id="ide-line-numbers">' +
-                  ideCode.split('\n').map((_, i) => '<div>' + (i + 1) + '</div>').join('') +
-                '</div>' +
-                '<textarea class="code-textarea" id="ide-code-input" spellcheck="false" placeholder="Kọ koodu rẹ síbí...">' + esc(ideCode) + '</textarea>' +
-              '</div>' +
-
-              '<!-- Quick keyword snippets -->' +
-              '<div class="editor-keywords-bar">' +
-                '<span class="kw-label">Aṣẹ Koodu:</span>' +
-                '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="tẹ_jade(\"\")">tẹ_jade</button>' +
-                '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="jẹ́ orúkọ = \"\"">jẹ́</button>' +
-                '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="bí ipo == òótọ́ {\n    \n}">bí</button>' +
-                '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="kò_bá_jẹ́ {\n    \n}">kò_bá_jẹ́</button>' +
-                '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="fún i = 1 dé 5 {\n    \n}">fún</button>' +
-                '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="bẹ̀rẹ̀_àwòrán()\nyi_awo(\"ofeefe\")">bẹ̀rẹ̀_àwòrán</button>' +
-              '</div>' +
-            '</div>' +
-
-            '<!-- Right: Output Area -->' +
-            '<div class="c4k-ide-output-pane">' +
-              '<div class="pane-header">' +
-                '<div class="output-tab-switcher">' +
-                  '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? '' : 'active') + '" data-action="ide-switch-tab" data-tab="terminal">' +
-                    '💻 Àbájáde Terminal (Console)' +
-                  '</button>' +
-                  '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="canvas">' +
-                    '🎨 Ìbòjú Àwòrán (Canvas)' +
-                  '</button>' +
-                '</div>' +
-                '<button type="button" class="btn-ide-clear" data-action="ide-clear-output" title="Clear output">' +
-                  'Nu Iboju' +
-                '</button>' +
-              '</div>' +
-
-              '<div class="output-body">' +
-                '<!-- Terminal View -->' +
-                '<div class="terminal-view ' + (flow.ideTab === 'canvas' ? 'hide' : '') + '" id="ide-terminal-view">' +
-                  '<div class="terminal-status-bar">' +
-                    '<span class="status-indicator">● Engine Online</span>' +
-                    '<span class="status-runtime" id="ide-status-runtime">Execution Time: ' + (flow.ideRuntime || '0.02ms') + '</span>' +
-                    '<span class="status-xp" id="ide-status-xp">+' + (flow.ideXp || 10) + ' Maker XP</span>' +
-                  '</div>' +
-                  '<pre class="terminal-logs" id="ide-terminal-logs">' + esc(flow.ideOutput || '> [Idilewa Engine Ready]\nKọ koodu ki o tẹ "Ṣe Koodu (Run)" lati wo àbájáde.') + '</pre>' +
-                '</div>' +
-
-                '<!-- Canvas View -->' +
-                '<div class="canvas-view ' + (flow.ideTab === 'canvas' ? '' : 'hide') + '" id="ide-canvas-view">' +
-                  '<canvas id="ide-graphic-canvas" width="400" height="260"></canvas>' +
-                  '<div class="canvas-caption">Graphic Turtle & Shapes Renderer</div>' +
-                '</div>' +
-              '</div>' +
-
-              '<!-- Line-by-Line Educational Explainer -->' +
-              '<div class="c4k-ide-explainer" id="ide-explainer-box">' +
-                '<div class="explainer-title">' +
-                  icon('sparkles', 14) + ' <span>Ètò Ẹ̀kọ́ & Ìtumọ̀ / Concept Breakdown:</span>' +
-                '</div>' +
-                '<div class="explainer-content" id="ide-explainer-content">' +
-                  (currentPreset.explainer ? currentPreset.explainer.map((step) => '<div class="explainer-step">' + step + '</div>').join('') : '<p>Execute code to view conceptual breakdown.</p>') +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</section>' +
-
-      '<!-- 7. Section: Subscription / Stay in the Loop -->' +
+      '<!-- Section: Subscription / Stay in the Loop -->' +
       '<div class="section-footer-cta">' +
         '<div class="section-container">' +
           '<div class="c4k-subscribe-wrapper">' +
@@ -2735,10 +3069,6 @@ import {
           '</div>' +
         '</div>' +
       '</div>' +
-
-      '<section class="code-safety-note">' +
-        icon('shield', 16) + ' This is an interactive learning environment: test your logic in Yorùbá, Igbo, Hausa, Swahili, and Python with real-time interpretation.' +
-      '</section>' +
     '</div>';
   }
 
@@ -3811,7 +4141,9 @@ import {
       case 'voice_lessons':
       case 'trainer': return renderTrainer(params);
       case 'index': return renderHome();
-      case 'languages': return renderLanguages();
+      case 'languages':
+      case 'learn':
+      case 'curriculum': return renderCurriculum();
       case 'course': return renderCourse(params);
       case 'lesson': return renderLesson(params);
       case 'coding': return renderCoding();
@@ -4567,7 +4899,13 @@ import {
     renderMobileNav(page);
     const title = page === 'index' ? 'Preserving African culture. Promoting technology.' : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
     document.title = `${title} · Idilewa`;
-    document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
+    if (page === 'coding') {
+      document.body.dataset.page = 'coding';
+      document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}`;
+    } else {
+      delete document.body.dataset.page;
+      document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
+    }
     if (page === 'index') {
       initHeroParallax();
       initHeroCinematicVideoEngine();
@@ -4576,7 +4914,7 @@ import {
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const audioCanvas = document.getElementById('waveformCanvas');
       if (audioCanvas) init3DAudioVisualizer(audioCanvas);
-    } else if (page === 'coding') {
+    } else if (page === 'coding' || page === 'curriculum') {
       const codingCanvas = document.getElementById('coding3DCanvasWrap');
       if (codingCanvas) init3DCodingCanvas(codingCanvas);
     } else if (page === 'ere' || page === 'oral') {
@@ -4707,28 +5045,51 @@ import {
       case 'consent-signup': state.loginMode = 'signup'; saveState(); navigate('login'); break;
       
       case 'ide-set-lang': {
-        const lang = target.dataset.lang || 'yoruba';
+        const lang = el.dataset.lang || 'yoruba';
         state.coding.ideLang = lang;
         const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
         state.coding.idePresetId = presets[0].id;
         state.coding.ideCode = presets[0].code;
-        state.coding.ideOutput = '> [Idilewa Engine Ready]\nSwitched to ' + lang.toUpperCase() + ' mode.';
-        saveState(); render();
-        showToast('Switched IDE to ' + lang.toUpperCase() + ' programming mode.');
+        state.coding.ideOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n> Loaded: ' + presets[0].title + '\n> Click "Ṣe Koodu (Run)" to execute.';
+        saveState();
+        render();
+        showToast('Switched IDE to ' + lang.toUpperCase() + ' mode.');
         break;
       }
       case 'ide-select-preset': {
-        const presetId = target.value;
+        const presetId = el.value;
         state.coding.idePresetId = presetId;
-        const presets = IDE_PRESETS[state.coding.ideLang || 'yoruba'] || IDE_PRESETS.yoruba;
+        const lang = state.coding.ideLang || 'yoruba';
+        const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
         const p = presets.find((item) => item.id === presetId) || presets[0];
         state.coding.ideCode = p.code;
-        state.coding.ideOutput = '> [Idilewa Engine Ready]\nLoaded ' + p.title;
-        saveState(); render();
+        state.coding.ideOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n> Loaded: ' + p.title + '\n> Click "Ṣe Koodu (Run)" to execute.';
+
+        const textarea = document.getElementById('ide-code-input');
+        if (textarea) textarea.value = p.code;
+        const fnEl = document.getElementById('ide-filename');
+        if (fnEl) fnEl.textContent = p.filename;
+        const lineGutter = document.getElementById('ide-line-numbers');
+        if (lineGutter) {
+          const count = p.code.split('\n').length;
+          lineGutter.innerHTML = Array.from({ length: count }, (_, i) => '<div>' + (i + 1) + '</div>').join('');
+        }
+        const termLogs = document.getElementById('ide-terminal-logs');
+        if (termLogs) termLogs.textContent = state.coding.ideOutput;
+
+        const explainerContent = document.getElementById('ide-explainer-content');
+        if (explainerContent) {
+          explainerContent.innerHTML = p.explainer
+            ? p.explainer.map((step) => '<div class="explainer-step">' + step + '</div>').join('')
+            : '<p>Execute code to view conceptual breakdown.</p>';
+        }
+
+        saveState();
+        showToast('Loaded preset: ' + p.title);
         break;
       }
       case 'ide-insert-char': {
-        const char = target.dataset.char || '';
+        const char = el.dataset.char || '';
         const textarea = document.getElementById('ide-code-input');
         if (textarea) {
           const start = textarea.selectionStart;
@@ -4738,11 +5099,16 @@ import {
           textarea.selectionStart = textarea.selectionEnd = start + char.length;
           textarea.focus();
           state.coding.ideCode = textarea.value;
+          const lineGutter = document.getElementById('ide-line-numbers');
+          if (lineGutter) {
+            const count = textarea.value.split('\n').length;
+            lineGutter.innerHTML = Array.from({ length: count }, (_, i) => '<div>' + (i + 1) + '</div>').join('');
+          }
         }
         break;
       }
       case 'ide-insert-snippet': {
-        const snippet = target.dataset.snippet || '';
+        const snippet = el.dataset.snippet || '';
         const textarea = document.getElementById('ide-code-input');
         if (textarea) {
           const start = textarea.selectionStart;
@@ -4752,6 +5118,11 @@ import {
           textarea.selectionStart = textarea.selectionEnd = start + snippet.length;
           textarea.focus();
           state.coding.ideCode = textarea.value;
+          const lineGutter = document.getElementById('ide-line-numbers');
+          if (lineGutter) {
+            const count = textarea.value.split('\n').length;
+            lineGutter.innerHTML = Array.from({ length: count }, (_, i) => '<div>' + (i + 1) + '</div>').join('');
+          }
         }
         break;
       }
@@ -4762,49 +5133,110 @@ import {
         const lang = state.coding.ideLang || 'yoruba';
         const canvas = document.getElementById('ide-graphic-canvas');
         const result = runIdeInterpreter(code, lang, canvas);
-        state.coding.ideOutput = result.logs;
+        state.coding.ideOutput = result.output;
         state.coding.ideRuntime = result.duration + 'ms';
         state.coding.ideXp = (state.coding.ideXp || 0) + 10;
         if (result.hasCanvasDraw) {
           state.coding.ideTab = 'canvas';
         }
-        saveState(); render();
-        showToast('Code executed successfully! +10 XP', 'success');
+
+        // Direct in-place DOM updates so canvas & editor focus are NOT destroyed!
+        const termLogs = document.getElementById('ide-terminal-logs');
+        if (termLogs) termLogs.textContent = result.output;
+        const runtimeEl = document.getElementById('ide-status-runtime');
+        if (runtimeEl) runtimeEl.textContent = 'Execution Time: ' + result.duration + 'ms';
+        const xpEl = document.getElementById('ide-status-xp');
+        if (xpEl) xpEl.textContent = '+' + state.coding.ideXp + ' Maker XP';
+
+        const termView = document.getElementById('ide-terminal-view');
+        const canvasView = document.getElementById('ide-canvas-view');
+        const termTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="terminal"]');
+        const canvasTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="canvas"]');
+
+        if (result.hasCanvasDraw) {
+          termView?.classList.add('hide');
+          canvasView?.classList.remove('hide');
+          termTabBtn?.classList.remove('active');
+          canvasTabBtn?.classList.add('active');
+        } else {
+          canvasView?.classList.add('hide');
+          termView?.classList.remove('hide');
+          canvasTabBtn?.classList.remove('active');
+          termTabBtn?.classList.add('active');
+        }
+
+        saveState();
+        showToast('Code executed successfully! +10 Maker XP', 'success');
         break;
       }
       case 'ide-reset-code': {
-        const presets = IDE_PRESETS[state.coding.ideLang || 'yoruba'] || IDE_PRESETS.yoruba;
+        const lang = state.coding.ideLang || 'yoruba';
+        const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
         const p = presets.find((item) => item.id === state.coding.idePresetId) || presets[0];
         state.coding.ideCode = p.code;
-        state.coding.ideOutput = '> Code reset to default sample.';
-        saveState(); render();
+        state.coding.ideOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n> Code reset to default sample: ' + p.title;
+
+        const textarea = document.getElementById('ide-code-input');
+        if (textarea) textarea.value = p.code;
+        const lineGutter = document.getElementById('ide-line-numbers');
+        if (lineGutter) {
+          const count = p.code.split('\n').length;
+          lineGutter.innerHTML = Array.from({ length: count }, (_, i) => '<div>' + (i + 1) + '</div>').join('');
+        }
+        const termLogs = document.getElementById('ide-terminal-logs');
+        if (termLogs) termLogs.textContent = state.coding.ideOutput;
+
+        saveState();
         showToast('Code reset to default.');
         break;
       }
       case 'ide-copy-code': {
         const textarea = document.getElementById('ide-code-input');
         const code = textarea ? textarea.value : (state.coding.ideCode || '');
-        navigator.clipboard?.writeText(code).then(() => {
-          showToast('Code copied to clipboard!', 'success');
-        }).catch(() => {
-          showToast('Failed to copy code.', 'error');
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(() => {
+            showToast('Code copied to clipboard!', 'success');
+          }).catch(() => {
+            showToast('Failed to copy code.', 'error');
+          });
+        } else {
+          showToast('Code copied!', 'success');
+        }
         break;
       }
       case 'ide-switch-tab': {
-        const tab = target.dataset.tab || 'terminal';
+        const tab = el.dataset.tab || 'terminal';
         state.coding.ideTab = tab;
-        saveState(); render();
+        const termView = document.getElementById('ide-terminal-view');
+        const canvasView = document.getElementById('ide-canvas-view');
+        const termTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="terminal"]');
+        const canvasTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="canvas"]');
+
+        if (tab === 'canvas') {
+          termView?.classList.add('hide');
+          canvasView?.classList.remove('hide');
+          termTabBtn?.classList.remove('active');
+          canvasTabBtn?.classList.add('active');
+        } else {
+          canvasView?.classList.add('hide');
+          termView?.classList.remove('hide');
+          canvasTabBtn?.classList.remove('active');
+          termTabBtn?.classList.add('active');
+        }
+        saveState();
         break;
       }
       case 'ide-clear-output': {
-        state.coding.ideOutput = '> Output cleared.';
+        state.coding.ideOutput = '> [Idilewa Engine v2.4 Online]\n> Iboju ti mọ́ (Console cleared).';
+        const termLogs = document.getElementById('ide-terminal-logs');
+        if (termLogs) termLogs.textContent = state.coding.ideOutput;
         const canvas = document.getElementById('ide-graphic-canvas');
-        if (canvas) {
+        if (canvas && canvas.getContext) {
           const ctx = canvas.getContext('2d');
           ctx?.clearRect(0, 0, canvas.width, canvas.height);
         }
-        saveState(); render();
+        saveState();
+        showToast('Console output cleared.');
         break;
       }
 
@@ -5205,6 +5637,7 @@ import {
       }
       case 'coding-jump-band': {
         const bandId = el.dataset.band || el.dataset['band'];
+        if (bandId === 'code-ide') { navigate('coding'); return; }
         const target = document.getElementById(bandId);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
@@ -5292,6 +5725,7 @@ import {
 
   document.addEventListener('change', (event) => {
     const el = event.target;
+    if (el.matches('[data-action="ide-select-preset"]')) { handleAction('ide-select-preset', el); return; }
     if (el.matches('[data-action="level-select"]')) navigate('course', { lang: state.currentLang, level: el.value });
     if (el.matches('[data-action="pair-language"]')) { state.currentLang = el.value; saveState(); render(); }
     if (el.matches('#codeHelperLanguage')) { if (CODE_COPY[el.value]) state.coding.helperLanguage = el.value; saveState(); render(); }
