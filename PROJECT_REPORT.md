@@ -16,7 +16,7 @@ The product brings several learning modes into one web experience:
 - A K-8 coding and STEAM space that connects programming ideas to African languages and cultural examples.
 - Learner progress and family/tutor discovery concepts, with parent consent as a prerequisite for child-tutor connections.
 
-The repository is best understood as a rich interactive prototype, not a fully deployed learning service. Its user interface and many demonstrations are implemented in a client-side application. Local browser state powers much of the experience. A Supabase client and database schema are also present, but the HTML entry pages load `app.js`, and that file does not import the Supabase client or the separate translation, Yoruba-code, phoneme-data, and Three.js modules. Production authentication, safeguarding, real tutor communication, reviewed language media, and reliable server-side learner records therefore remain work to complete.
+The repository is best understood as a rich interactive prototype with a growing server-backed boundary, not a fully deployed learning service. The shared client application integrates Supabase Auth and separate translation, Yoruba-code, phoneme-data, and Three.js modules. Sign-up/sign-in require configured Supabase Auth. The Code page supports local African-language lessons and browser-based web previews; additional compiler runtimes require the Vercel API routes and a configured private Judge0 CE service. Production safeguarding, real tutor communication, reviewed language media, and durable learner records remain work to complete.
 
 ## 2. Product Intent
 
@@ -82,7 +82,7 @@ The Vite configuration includes **36 HTML entry files**. Most files are small sh
 | `schools.html` / `schools` | Audience page for schools and educators. Describes use in classroom learning, curriculum structure, cultural context, and an interest form. The form is preview-only and does not send details. |
 | `tutor.html` / `tutor` | General editorial page introducing tutor-led learning, guided conversation, cultural context, and learning-path continuity. It is informational; the actual sample directory is `connect_teachers`. |
 | `profile.html` / `profile` | Learner progress dashboard concept. Shows current language/level, completion progress, a learning streak, points, and a timeline. The page explicitly describes progress as saved in the current browser for the prototype. |
-| `login.html` / `login` | Sign-in/create-account interface with persona selection (child, adult, parent, educator), form states, and consent-oriented child flow. The active app's auth actions are demo behavior; they do not use the separate Supabase client module. |
+| `login.html` / `login` | Simplified sign-in/create-account interface with persona selection (child, adult, parent, educator) and consent-oriented child flow. Auth uses Supabase Auth only when its public URL and anon key are configured; otherwise account submission is disabled and guest exploration remains available. |
 | `pricing.html` / `pricing` | Plans preview with monthly/yearly selection and Explorer/Family-style plan concepts. The page calls out that final scope/details are not set; it does not implement a live subscription or payment service. |
 
 ### B. Voice, language sound, and pronunciation
@@ -119,7 +119,7 @@ The trainer UI includes six language choices (Yorùbá, Igbo, Hausa, Kiswahili, 
 
 | Entry / route | Purpose and current experience |
 |---|---|
-| `coding.html` / `coding` | K-8 Code for Kids/STEAM experience. Shows K-2, grades 3-5, and grades 6-8 curriculum bands; a code-in-your-language IDE concept; and a searchable/filterable free-lesson catalog. Includes code challenges, output/feedback, points, and saved client-side state. |
+| `coding.html` / `coding` | K-8 Code for Kids/STEAM experience. Shows K-2, grades 3-5, and grades 6-8 curriculum bands; code-in-your-language lessons; browser-based HTML/CSS/JavaScript previews; and an IDE that can discover and run installed runtimes through the Vercel API and private Judge0 CE. Compiler availability depends on the deployed runner configuration. |
 | `about.html` / `about` | Product story: culture, community language, oral tradition, and technology belong together. Shared editorial layout with cards to related areas. |
 | `method.html` / `method` | Learning-method overview that connects listening, practice, and cultural context. Describes a clear progression from language through lesson; links to voice, practice, and oral culture. |
 | `connect_teachers.html` / `connect_teachers` | Family/learner-facing sample tutor directory. Filters illustrative educator profiles and teaching focus; requires a guardian-approved code before a demo introduction request. The page expressly says profiles/schedules are sample data and no booking or message is sent. |
@@ -180,15 +180,16 @@ The HTML shells use `#fbfcf8` as their theme-color metadata. This is close to, b
 
 - A separate `src/translationEngine.js` includes a small English-to-Yorùbá/Igbo/Hausa dictionary and word lexicons, browser speech synthesis, and Web Audio tone generation.
 - `src/vowelsConsonantsData.js` defines oral vowels, nasal vowels, consonants, and tone examples.
-- The actual app's trainer UI and `app.js` contain their own trainer curriculum and event behavior. The separate translation/audio-data modules are not imported by the HTML app entry as currently wired.
+- The actual app's trainer UI and `app.js` contain their own trainer curriculum and event behavior. The shared app imports the translation and sound-reference modules, but the trainer still uses its own lesson data.
 - Browser audio and speech support varies by platform and installed voices. Browser speech output should not be described as a verified native recording.
 
 ### Coding and STEAM
 
 - The interface includes a K-8 curriculum concept, grade-band cards, free lesson search/category/grade filters, IDE-like input/output, and challenge completion feedback.
 - `src/yorubaCodeEngine.js` separately defines Yoruba keyword aliases, color words, lesson examples, transpilation, code execution, and a Yoruba-term speech helper.
-- `app.js` contains its own coding page and state/interaction code; it does not import `yorubaCodeEngine.js`. The running UI should therefore be assessed by its actual challenge logic, not assumed to execute all capabilities of the separate engine module.
-- Three.js is a declared dependency and `src/threeScene.js` contains scene helpers, but the HTML shell only loads `app.js`; the separate 3D helper module is not imported there.
+- `app.js` imports `yorubaCodeEngine.js` and runs the selected African-language interpreter in a sandboxed preview. HTML/CSS/JavaScript use a sandboxed iframe; compiler runtimes call the Vercel API and private Judge0 CE service.
+- Compiler execution is not available from a static GitHub Pages deployment. Browser-preview execution is not equivalent to a hardened remote sandbox; production runner resource limits and access restrictions must be configured on Judge0 as well as at the API boundary.
+- `app.js` imports the Three.js scene helpers in `src/threeScene.js`; WebGL availability and reduced-motion preferences still determine rendered behavior.
 
 ### Culture, stories, and contribution
 
@@ -212,7 +213,7 @@ The HTML shells use `#fbfcf8` as their theme-color metadata. This is close to, b
 - CSS in `styles.css` provides global tokens, responsive layout, components, and route-specific styling.
 - Vite is the development server and multi-page build tool (`npm run dev`, `npm run build`, `npm run preview`).
 - `vite.config.ts` enumerates the HTML entry points; production output is written to `dist/`.
-- JavaScript package type is ES modules, but the main `app.js` is a self-invoking application and does not import the separate `src/` modules.
+- JavaScript package type is ES modules; the main `app.js` imports relevant `src/` feature modules and is bundled by Vite.
 
 ### Main project files
 
@@ -220,7 +221,8 @@ The HTML shells use `#fbfcf8` as their theme-color metadata. This is close to, b
 |---|---|
 | `app.js` | Main route renderer, shared navigation, app state, event delegation, page markup, modal logic, and most prototype interactions. |
 | `styles.css` | Shared palette, typography, layout, page designs, responsive rules, and motion/visual effects. |
-| `src/supabaseClient.js` | Separate Supabase auth/profile/progress/code/voice client with browser local-storage fallback. It is not imported by `app.js`. |
+| `src/supabaseClient.js` | Supabase Auth integration and data helpers. Auth requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; learning progress continues to use local app state unless separately wired to remote persistence. |
+| `api/code/` | Vercel serverless routes for installed-runtime discovery and bounded code execution through a private Judge0 CE service. |
 | `supabase_schema.sql` | Proposed PostgreSQL tables, triggers, indexes, and row-level security policies for profiles, progress, code submissions, voice submissions, and community proverbs. |
 | `src/translationEngine.js` | Separate phrase dictionary, word lexicons, browser speech synthesis, approximate phonetics, and tone oscillator. |
 | `src/vowelsConsonantsData.js` | Yoruba vowel, nasal vowel, consonant, and tone reference data. |
@@ -229,14 +231,14 @@ The HTML shells use `#fbfcf8` as their theme-color metadata. This is close to, b
 | `assets/` and `public/assets/` | Images, icons, and other static media used by the interface and build. |
 | `vite.config.ts` | Multi-page entry list and relative base configuration. |
 | `vercel.json` | Deployment-related configuration exists; deployment behavior should be verified against its current contents and hosting setup. |
-| `README.md` | Currently only a minimal project-name stub; it does not yet serve as full setup or product documentation. |
+| `README.md` | Product overview, local setup, IDE/auth environment configuration, and static-host versus Vercel runtime boundaries. |
 | `scratch/` | Development experiments, inspection scripts, and redesign/debugging artifacts; not the main runtime product. |
 
 ### State and data boundaries
 
 - The main app saves its demo state under the browser key `idilewa-demo-state`.
-- The separate Supabase module uses local storage for user, progress, code, and voice records, and can attempt remote calls if initialized.
-- The main `app.js` does not import that module, so adding Supabase configuration alone does not make the visible app use the remote data path.
+- Supabase Auth handles configured sign-in/sign-up; the main app's learning state is still stored in browser state unless a feature is explicitly connected to remote persistence.
+- The Vercel compiler API uses server-only `JUDGE0_URL` and optional `JUDGE0_AUTH_TOKEN` settings. Keep Judge0 private and enforce execution quotas at the runner as well as at the API boundary.
 - `supabase_schema.sql` contains public profile reads (`USING (true)`) and user-scoped policies for several other tables. The schema is a starting point and needs a security review before real child data is stored.
 - Local browser state can be edited, cleared, shared on a device, or lost; it is not an identity, consent, or authorization boundary.
 

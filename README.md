@@ -126,7 +126,7 @@ All 36 HTML entries declared in `vite.config.ts` are supported:
 | | `#/guides` (`guides.html`) | Living culture guides: greetings, naming traditions, customs, and festivals. |
 | | `#/human` (`human.html`) | People and community portal highlighting educators and culture bearers. |
 | | `#/keepers` (`keepers.html`) | Culture keepers page foregrounding attribution, privacy, and community agency. |
-| **Coding & STEAM** | `#/coding` (`coding.html`) | Code for Kids (K–8): K–2, 3–5, and 6–8 bands, Yoruba code IDE, turtle canvas, free lesson catalog. |
+| **Coding & STEAM** | `#/coding` (`coding.html`) | Code for Kids (K–8): grade bands, African-language coding lessons, browser HTML/CSS/JavaScript previews, and additional compiler runtimes when the private runner is configured. |
 | **Community & Safety**| `#/about` (`about.html`) | Origin story and philosophy of Idilewa. |
 | | `#/method` (`method.html`) | Pedagogical progression connecting listening, cultural context, and practice. |
 | | `#/connect_teachers` (`connect_teachers.html`)| Sample tutor directory requiring parent-approved code (demo-only, no live bookings). |
@@ -139,7 +139,7 @@ All 36 HTML entries declared in `vite.config.ts` are supported:
 
 To ensure transparency and protect learner privacy:
 1. **Speech Recognition & Fluency:** Audio playback utilizes Web Speech API and Web Audio synthesizer tone generators. Voice evaluation is a prototype scoring demonstration and does not claim certified native speech AI. Authentic media requires fluent native speaker verification.
-2. **Authentication & Data Storage:** User profiles, lesson completion, and proverb contributions are stored locally in the browser (`localStorage`). Supabase is integrated as a demonstration client with local offline fallback. No unverified child data is transmitted to third-party backends.
+2. **Authentication & Data Storage:** Much of the prototype's learning progress and contributions are stored in the current browser. Sign-in/sign-up uses Supabase Auth only when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured; account submission is otherwise disabled. Supabase Auth configuration alone does not make every learning record server-persistent.
 3. **Child Safeguarding & Consent:** The guardian consent flow is an interactive UX demonstration. Local browser codes do not constitute legal identity verification. Live tutoring requires production identity governance and background checks.
 4. **Payments & Subscriptions:** Pricing cards are preview concepts only. No live financial transactions or payment gateways are configured.
 5. **Cultural Attribution:** Proverbs, Oríkì, and Ifá introductions are educational overviews and explicitly emphasize community permission, speaker context, and oral attribution.
@@ -168,6 +168,23 @@ Open `http://localhost:5173` in your browser.
 npm run build
 ```
 Vite bundles all 36 HTML entry points and compiles assets to the `dist/` directory.
+
+### IDE and authentication services
+
+The Code page runs Yorùbá/Igbo/Hausa/Kiswahili lessons and HTML, CSS, and JavaScript previews in the browser. Additional compiler languages are available only when the app is deployed with its Vercel API routes and a reachable private Judge0 CE service. The API reports installed languages rather than promising that every allowlisted runtime is installed.
+
+Configure these values in `.env.local` for the Vite client and in the Vercel project environment settings for production:
+
+```dotenv
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
+JUDGE0_URL=https://your-private-judge0-service.example
+JUDGE0_AUTH_TOKEN=your-private-runner-token
+```
+
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are public client configuration; enforce access with Supabase Auth policies and database row-level security. `JUDGE0_URL` and `JUDGE0_AUTH_TOKEN` are server-side secrets and must never use the `VITE_` prefix or be placed in browser code. Keep Judge0 private and configure execution time and memory limits.
+
+Use `vercel dev` to exercise the Vercel API routes locally; plain `npm run dev` serves the Vite front end and does not provide `/api/code/*`. GitHub Pages can host the static front end, but not these API routes, so compiler languages and configured Supabase sign-in require the Vercel deployment. Treat GitHub Pages as a static preview unless its workflow is intentionally migrated.
 
 ### Preview Production Build
 ```bash

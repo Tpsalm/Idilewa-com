@@ -17,9 +17,11 @@ try {
 } catch (err) {
   console.warn('[Idilewa DB] Supabase client initialization fallback to local storage:', err);
 }
+export const isSupabaseConfigured = Boolean(
+  import.meta.env?.VITE_SUPABASE_URL && import.meta.env?.VITE_SUPABASE_ANON_KEY
+);
 
 const LOCAL_STORAGE_KEY_USER = 'idilewa_auth_user';
-const LOCAL_STORAGE_KEY_USERS = 'idilewa_db_users';
 const LOCAL_STORAGE_KEY_PROGRESS = 'idilewa_db_progress';
 const LOCAL_STORAGE_KEY_CODE = 'idilewa_db_code';
 const LOCAL_STORAGE_KEY_VOICE = 'idilewa_db_voice';
@@ -39,135 +41,62 @@ function setLocalItem(key, value) {
   } catch (_) {}
 }
 
-export async function signUp({ email, password, name, role = 'child', consentCode = '' }) {
+export async function signUp({ email, password, name, role = 'child' }) {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Authentication is not configured. Set the Supabase URL and anon key before creating accounts.');
+  }
   const normalizedEmail = email.toLowerCase().trim();
   const userName = name || normalizedEmail.split('@')[0];
-
-  let supabaseUser = null;
-  let supabaseError = null;
-
-  if (supabase) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: {
-            name: userName,
-            role,
-            consentCode,
-            avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userName)}`,
-          },
-        },
-      });
-      if (error) {
-        supabaseError = error.message;
-      } else if (data?.user) {
-        supabaseUser = data.user;
-        // Optionally insert profile to profiles table
-        try {
-          await supabase.from('profiles').upsert({
-            id: data.user.id,
-            email: normalizedEmail,
-            name: userName,
-            role,
-            consent_code: consentCode,
-            updated_at: new Date().toISOString(),
-          });
-        } catch (_) {}
-      }
-    } catch (e) {
-      supabaseError = e.message;
-    }
-  }
-
-  // Fallback / local store
-  const localUsers = getLocalItem(LOCAL_STORAGE_KEY_USERS, []);
-  const existing = localUsers.find((u) => u.email === normalizedEmail);
-
-  if (existing && !supabaseUser) {
-    throw new Error('Imeeli yii ti wa ni lilo tẹlẹ (This email is already registered).');
-  }
+  const { data, error } = await supabase.auth.signUp({
+    email: normalizedEmail,
+    password,
+    options: { data: { name: userName, role } },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.user) throw new Error('The authentication service did not return an account.');
 
   const userRecord = {
-    id: supabaseUser?.id || 'usr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: data.user.id,
     email: normalizedEmail,
     name: userName,
     role,
-    consentCode,
-    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(userName)}`,
-    createdAt: new Date().toISOString(),
-    points: 50,
-    streak: 1,
+    avatar: '',
+    createdAt: data.user.created_at || new Date().toISOString(),
+    points: 0,
+    streak: 0,
   };
-
-  if (!existing) {
-    localUsers.push({ ...userRecord, passwordHash: btoa(password) });
-    setLocalItem(LOCAL_STORAGE_KEY_USERS, localUsers);
-  }
-
-  setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
-  return { user: userRecord, error: null };
+  if (data.session) setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
+  return { user: userRecord, session: data.session, error: null };
 }
 
 export async function signIn({ email, password }) {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Authentication is not configured. Set the Supabase URL and anon key before signing in.');
+  }
   const normalizedEmail = email.toLowerCase().trim();
-  let supabaseUser = null;
-
-  if (supabase) {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      });
-      if (!error && data?.user) {
-        supabaseUser = data.user;
-      }
-    } catch (_) {}
-  }
-
-  const localUsers = getLocalItem(LOCAL_STORAGE_KEY_USERS, []);
-  const localMatch = localUsers.find((u) => u.email === normalizedEmail);
-
-  if (!supabaseUser && !localMatch) {
-    // Quick demo convenience: allow any valid email/password in demo mode
-    const demoUser = {
-      id: 'usr_' + Date.now().toString(36),
-      email: normalizedEmail,
-      name: normalizedEmail.split('@')[0],
-      role: 'child',
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(normalizedEmail)}`,
-      createdAt: new Date().toISOString(),
-      points: 40,
-      streak: 1,
-    };
-    localUsers.push({ ...demoUser, passwordHash: btoa(password) });
-    setLocalItem(LOCAL_STORAGE_KEY_USERS, localUsers);
-    setLocalItem(LOCAL_STORAGE_KEY_USER, demoUser);
-    return { user: demoUser, error: null };
-  }
-
-  const user = supabaseUser
-    ? {
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0],
-        role: supabaseUser.user_metadata?.role || 'child',
-        avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(supabaseUser.email || '')}`,
-        points: 100,
-        streak: 2,
-      }
-    : localMatch;
-
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.user || !data.session) throw new Error('The authentication service did not return a signed-in session.');
+  const user = {
+    id: data.user.id,
+    email: data.user.email,
+    name: data.user.user_metadata?.name || data.user.email?.split('@')[0],
+    role: data.user.user_metadata?.role || 'adult',
+    avatar: data.user.user_metadata?.avatar_url || '',
+    points: 0,
+    streak: 0,
+  };
   setLocalItem(LOCAL_STORAGE_KEY_USER, user);
-  return { user, error: null };
+  return { user, session: data.session, error: null };
 }
 
 export async function signOut() {
   if (supabase) {
-    try {
-      await supabase.auth.signOut();
-    } catch (_) {}
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
   }
   localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
   return true;

@@ -32,10 +32,7 @@ import {
 } from './src/yorubaCodeEngine.js';
 import {
   supabase,
-  signUp as supabaseSignUp,
-  signIn as supabaseSignIn,
-  saveProgress as supabaseSaveProgress,
-  saveCodeSubmission as supabaseSubmitCode
+  isSupabaseConfigured
 } from './src/supabaseClient.js';
 
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
@@ -139,8 +136,8 @@ import {
       ]
     },
     curriculum: {
-      title: 'The Code for Kids Curriculum · K-8 Indigenous STEAM.',
-      eyebrow: 'Indigenous STEAM Curriculum',
+      title: 'Curriculum',
+      eyebrow: 'Curriculum',
       desc: 'Standards-aligned STEAM lessons infused with Yoruba, Igbo, Hausa and African cultural concepts from Kindergarten to Grade 8.',
       icon: 'layers', image: 'code-kids.jpg', imageAlt: 'African students exploring STEAM and coding curriculum',
       active: 0, flow: ['Choose Grade Band', 'Explore Concepts', 'Teach Lesson', 'Code Live'],
@@ -333,7 +330,7 @@ import {
   };
 
   const LABELS = Object.fromEntries(ROUTES.map((r) => [r, r === 'index' ? 'Home' : r.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())]));
-  LABELS.curriculum = 'K-8 STEAM Curriculum';
+  LABELS.curriculum = 'Curriculum';
   LABELS.coding = 'Code in Your Language';
   LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note';
   LABELS.owe_add = 'Share a proverb'; LABELS.owe_detail = 'Owe · translation & meaning';
@@ -1327,6 +1324,88 @@ import {
       default: return `// ${tech.name}\nconsole.log("${g}");`;
     }
   }
+
+  const IDE_RUNNER_LANGUAGES = [
+    'python', 'java', 'c', 'cpp', 'csharp', 'go', 'rust', 'ruby', 'php', 'kotlin',
+    'swift', 'typescript', 'r', 'lua', 'perl', 'haskell', 'scala', 'bash', 'pascal',
+    'fortran', 'cobol', 'dart', 'elixir', 'erlang', 'clojure', 'fsharp', 'prolog',
+    'ada', 'objective-c', 'sql'
+  ];
+  const IDE_LANGUAGE_EXTENSIONS = {
+    yoruba: 'yoruba', igbo: 'igbo', hausa: 'hausa', swahili: 'swahili',
+    javascript: 'js', typescript: 'ts', cpp: 'cpp', csharp: 'cs',
+    'objective-c': 'm', python: 'py', java: 'java', c: 'c', go: 'go',
+    rust: 'rs', ruby: 'rb', php: 'php', kotlin: 'kt', swift: 'swift',
+    r: 'r', lua: 'lua', perl: 'pl', haskell: 'hs', scala: 'scala',
+    bash: 'sh', pascal: 'pas', fortran: 'f90', cobol: 'cbl', dart: 'dart',
+    elixir: 'ex', erlang: 'erl', clojure: 'clj', fsharp: 'fs',
+    prolog: 'pl', ada: 'adb', sql: 'sql', html: 'html', css: 'css'
+  };
+  const IDE_LOCAL_LANGUAGES = [
+    { id: 'yoruba', name: 'Yorùbá' },
+    { id: 'igbo', name: 'Igbo' },
+    { id: 'hausa', name: 'Hausa' },
+    { id: 'swahili', name: 'Kiswahili' },
+    { id: 'html', name: 'HTML' },
+    { id: 'css', name: 'CSS' },
+    { id: 'javascript', name: 'JavaScript' }
+  ];
+  const IDE_REMOTE_LANGUAGE_OPTIONS = IDE_RUNNER_LANGUAGES
+    .map((id) => ({ id, name: CODE_PATHS.find((language) => language.id === id)?.name || id }));
+
+  function getIdePresets(languageId) {
+    if (IDE_PRESETS[languageId]) return IDE_PRESETS[languageId];
+    const language = CODE_PATHS.find((item) => item.id === languageId);
+    if (!language) return IDE_PRESETS.yoruba;
+    const extension = IDE_LANGUAGE_EXTENSIONS[languageId] || 'txt';
+    const code = languageId === 'html'
+      ? '<!doctype html>\n<h1>Hello from Idilewa!</h1>\n<p>Edit this page and run it to see your changes.</p>'
+      : languageId === 'css'
+        ? 'body {\n  font-family: system-ui, sans-serif;\n  color: #15764a;\n}\n\nh1 {\n  letter-spacing: 0.02em;\n}'
+        : sampleCodeFor(language, 'Hello from Idilewa!');
+    return [{
+      id: `hello_world_${languageId}`,
+      title: 'Hello world',
+      filename: `main.${extension}`,
+      code,
+      explainer: ['Edit the starter program, then choose Run to see its output.']
+    }];
+  }
+
+  function initializeIdeRuntimes() {
+    const selector = document.getElementById('ide-language-select');
+    const status = document.getElementById('ide-language-status');
+    if (!selector || selector.dataset.runtimeLookupStarted) return;
+    selector.dataset.runtimeLookupStarted = 'true';
+
+    fetch('/api/code/languages', { headers: { Accept: 'application/json' } })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.error || 'The private runner is not configured on this host.');
+        if (!Array.isArray(result?.languages)) {
+          throw new Error('Compiler-language discovery is unavailable on this host. Deploy with Vercel to enable the private compiler.');
+        }
+        return result.languages;
+      })
+      .then((languages) => {
+        const available = new Set(languages.map((language) => language.id));
+        selector.querySelectorAll('option[data-runner-language]').forEach((option) => {
+          option.disabled = !available.has(option.value);
+        });
+        if (status) {
+          status.textContent = `${available.size} private language runtime${available.size === 1 ? '' : 's'} available.`;
+        }
+      })
+      .catch((error) => {
+        selector.querySelectorAll('option[data-runner-language]').forEach((option) => {
+          option.disabled = true;
+        });
+        if (status) {
+          status.textContent = `${error.message} Browser languages and African-language lessons remain available.`;
+        }
+      });
+  }
+
   const codeTextFor = (languageId) => CODE_COPY[languageId] || CODE_COPY.yoruba;
 
   const CODE_CURRICULUM_BANDS = [
@@ -2324,7 +2403,7 @@ import {
   };
 
   // Robust Native African Code & Python Interpreter for Kids
-  function runIdeInterpreter(code, lang, canvasEl) {
+  async function runIdeInterpreter(code, lang, canvasEl) {
     const logs = [];
     const startTime = performance.now();
     let hasCanvasDraw = false;
@@ -2437,9 +2516,10 @@ import {
           ctx.fillText(text, x, y);
         };
 
-        const runner = new Function('__print', '__initCanvas', '__setColor', '__drawStar', '__drawText', js);
-        runner(customPrint, customInitCanvas, customSetColor, customDrawStar, customDrawText);
-        logs.push(...printBuffer);
+        const result = await executeTransformedIdeCode(document.getElementById('ide-preview-frame'), js);
+        logs.push(...(result.logs || []));
+        hasCanvasDraw = Boolean(result.canvasDrawn);
+        if (result.error) logs.push('❌ ' + result.error);
 
       } else if (lang === 'igbo') {
         let js = code;
@@ -2465,9 +2545,10 @@ import {
 
         const printBuffer = [];
         const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        const runner = new Function('__print', js);
-        runner(customPrint);
-        logs.push(...printBuffer);
+        const result = await executeTransformedIdeCode(document.getElementById('ide-preview-frame'), js);
+        logs.push(...(result.logs || []));
+        hasCanvasDraw = Boolean(result.canvasDrawn);
+        if (result.error) logs.push('❌ ' + result.error);
 
       } else if (lang === 'hausa') {
         let js = code;
@@ -2493,9 +2574,10 @@ import {
 
         const printBuffer = [];
         const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        const runner = new Function('__print', js);
-        runner(customPrint);
-        logs.push(...printBuffer);
+        const result = await executeTransformedIdeCode(document.getElementById('ide-preview-frame'), js);
+        logs.push(...(result.logs || []));
+        hasCanvasDraw = Boolean(result.canvasDrawn);
+        if (result.error) logs.push('❌ ' + result.error);
 
       } else if (lang === 'swahili') {
         let js = code;
@@ -2521,9 +2603,10 @@ import {
 
         const printBuffer = [];
         const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        const runner = new Function('__print', js);
-        runner(customPrint);
-        logs.push(...printBuffer);
+        const result = await executeTransformedIdeCode(document.getElementById('ide-preview-frame'), js);
+        logs.push(...(result.logs || []));
+        hasCanvasDraw = Boolean(result.canvasDrawn);
+        if (result.error) logs.push('❌ ' + result.error);
 
       } else {
         // Python / JS Engine for Kids
@@ -2618,9 +2701,10 @@ import {
 
         const printBuffer = [];
         const customPrint = (...args) => printBuffer.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
-        const runner = new Function('__print', js);
-        runner(customPrint);
-        logs.push(...printBuffer);
+        const result = await executeTransformedIdeCode(document.getElementById('ide-preview-frame'), js);
+        logs.push(...(result.logs || []));
+        hasCanvasDraw = Boolean(result.canvasDrawn);
+        if (result.error) logs.push('❌ ' + result.error);
       }
     } catch (err) {
       logs.push('❌ Aṣiṣe Koodu (Syntax Error): ' + err.message);
@@ -2647,10 +2731,238 @@ import {
       output: formattedOutput,
       logs: logs.join('\n'),
       duration,
-      hasCanvasDraw
+      hasCanvasDraw,
+      hasError
     };
   }
 
+  function getPreviewPolicy() {
+    return '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' \'unsafe-eval\'; style-src \'unsafe-inline\'; img-src data: blob:; connect-src \'none\'; form-action \'none\'; object-src \'none\'; base-uri \'none\'; worker-src \'none\'">';
+  }
+
+  function createPreviewDocument(language, code) {
+    const policy = getPreviewPolicy();
+    if (language === 'html') {
+      return `<!doctype html>${policy}${code}`;
+    }
+    if (language === 'css') {
+      return `<!doctype html><html><head>${policy}<style>
+        body { margin: 0; padding: 24px; font-family: system-ui, sans-serif; }
+        ${code}
+      </style></head><body><main><h1>CSS preview</h1><p>Your styles are applied to this sample page.</p><button>Try a button</button></main></body></html>`;
+    }
+
+    const bootstrap = `<script>
+      const send = (data) => parent.postMessage({ type: 'idilewa-ide-result', ...data }, '*');
+      window.__ideCanvasDrawn = false;
+      const stringify = (value) => {
+        if (typeof value === 'string') return value;
+        try { return JSON.stringify(value); } catch { return String(value); }
+      };
+      addEventListener('message', (event) => {
+        if (event.source !== parent || event.data?.type !== 'idilewa-ide-run') return;
+        const logs = [];
+        const log = (...values) => logs.push(values.map(stringify).join(' '));
+        console.log = log;
+        console.info = log;
+        console.warn = (...values) => logs.push('Warning: ' + values.map(stringify).join(' '));
+        console.error = (...values) => logs.push('Error: ' + values.map(stringify).join(' '));
+        let error = '';
+        try { (0, eval)(event.data.code); } catch (caught) { error = String(caught?.message || caught); }
+        send({ logs, error, canvasDrawn: Boolean(window.__ideCanvasDrawn), done: true });
+      });
+    </script>`;
+    return `<!doctype html><html><head>${policy}${bootstrap}<style>
+      body { margin: 0; padding: 16px; color: #18231d; font: 14px system-ui, sans-serif; }
+      #ide-output-canvas { display: none; width: 100%; max-width: 400px; background: #07130b; }
+    </style></head><body><p>Run code to see its output.</p><canvas id="ide-output-canvas" width="400" height="260"></canvas></body></html>`;
+  }
+
+  function runJavaScriptInPreview(frame, code) {
+    return new Promise((resolve, reject) => {
+      const handleMessage = (event) => {
+        if (event.source !== frame.contentWindow || event.data?.type !== 'idilewa-ide-result') return;
+        window.removeEventListener('message', handleMessage);
+        window.clearTimeout(timeout);
+        resolve(event.data);
+      };
+      const timeout = window.setTimeout(() => {
+        window.removeEventListener('message', handleMessage);
+        frame.srcdoc = `<!doctype html><html><head>${getPreviewPolicy()}</head><body><p>Execution stopped after 5 seconds.</p></body></html>`;
+        reject(new Error('JavaScript execution timed out after 5 seconds.'));
+      }, 5_000);
+      window.addEventListener('message', handleMessage);
+      frame.onload = () => frame.contentWindow?.postMessage({ type: 'idilewa-ide-run', code }, '*');
+      frame.srcdoc = createPreviewDocument('javascript', code);
+    });
+  }
+
+  async function executeTransformedIdeCode(frame, code) {
+    const helpers = `
+      const __print = (...values) => console.log(...values);
+      const __initCanvas = () => {
+        const canvas = document.getElementById('ide-output-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.style.display = 'block';
+        canvas.hidden = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#07130b';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#22c55e';
+        ctx.fillStyle = '#22c55e';
+        ctx.lineWidth = 3;
+        window.__ideCanvasDrawn = true;
+      };
+      const __setColor = (color) => {
+        const canvas = document.getElementById('ide-output-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.style.display = 'block';
+        const colors = {
+          pupa: '#ef4444', red: '#ef4444', alawọ_ewe: '#22c55e',
+          'alawọ-ewe': '#22c55e', green: '#22c55e', bulu: '#38bdf8',
+          blue: '#38bdf8', ofeefe: '#facc15', yellow: '#facc15',
+          osan: '#fb923c', orange: '#fb923c', funfun: '#ffffff', white: '#ffffff'
+        };
+        ctx.strokeStyle = colors[String(color || '').toLowerCase()] || color;
+        ctx.fillStyle = ctx.strokeStyle;
+        window.__ideCanvasDrawn = true;
+      };
+      const __drawStar = (cx, cy, spikes = 5, outerRadius = 40, innerRadius = 18) => {
+        const canvas = document.getElementById('ide-output-canvas');
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+        let rotation = Math.PI / 2 * 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+          ctx.lineTo(cx + Math.cos(rotation) * outerRadius, cy + Math.sin(rotation) * outerRadius);
+          rotation += Math.PI / spikes;
+          ctx.lineTo(cx + Math.cos(rotation) * innerRadius, cy + Math.sin(rotation) * innerRadius);
+          rotation += Math.PI / spikes;
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fill();
+        window.__ideCanvasDrawn = true;
+      };
+      const __drawText = (text, x = 20, y = 30) => {
+        const canvas = document.getElementById('ide-output-canvas');
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText(text, x, y);
+        window.__ideCanvasDrawn = true;
+      };
+    `;
+    return runJavaScriptInPreview(frame, `${helpers}\n${code}`);
+  }
+
+  function showIdeOutput(tab, output) {
+    state.coding.ideTab = tab;
+    state.coding.ideOutput = output;
+    const terminalView = document.getElementById('ide-terminal-view');
+    const canvasView = document.getElementById('ide-canvas-view');
+    const previewView = document.getElementById('ide-preview-view');
+    const terminalTab = document.querySelector('[data-action="ide-switch-tab"][data-tab="terminal"]');
+    const canvasTab = document.querySelector('[data-action="ide-switch-tab"][data-tab="canvas"]');
+    const previewTab = document.querySelector('[data-action="ide-switch-tab"][data-tab="preview"]');
+    terminalView?.classList.toggle('hide', tab !== 'terminal');
+    canvasView?.classList.toggle('hide', tab !== 'canvas');
+    previewView?.classList.toggle('hide', tab !== 'preview');
+    terminalTab?.classList.toggle('active', tab === 'terminal');
+    canvasTab?.classList.toggle('active', tab === 'canvas');
+    previewTab?.classList.toggle('active', tab === 'preview');
+    const terminal = document.getElementById('ide-terminal-logs');
+    if (terminal) terminal.textContent = output;
+  }
+
+  async function runRemoteIdeCode(code, language) {
+    const button = document.querySelector('[data-action="ide-run-code"]');
+    const terminal = document.getElementById('ide-terminal-logs');
+    const status = document.querySelector('.status-indicator');
+    if (button) button.disabled = true;
+    if (status) status.textContent = '● Private runner working';
+    showIdeOutput('terminal', '> Sending code to the private compiler…');
+
+    try {
+      const response = await fetch('/api/code/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ language, code }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(result?.error || 'The private compiler is not available on this host.');
+      }
+
+      const output = [
+        `> ${language.toUpperCase()} · ${result.status}`,
+        result.stdout,
+        result.stderr,
+      ].filter(Boolean).join('\n') || '> Program completed without output.';
+      showIdeOutput('terminal', output);
+      state.coding.ideRuntime = result.time || '—';
+      if (result.accepted) state.coding.ideXp = (state.coding.ideXp || 0) + 10;
+      const runtime = document.getElementById('ide-status-runtime');
+      const xp = document.getElementById('ide-status-xp');
+      if (runtime) runtime.textContent = `Execution Time: ${state.coding.ideRuntime}`;
+      if (xp) xp.textContent = `+${state.coding.ideXp || 0} Maker XP`;
+      if (status) status.textContent = result.accepted ? '● Execution complete' : '● Execution finished with errors';
+      saveState();
+      showToast(result.accepted ? 'Program ran successfully.' : `Program finished: ${result.status}.`, result.accepted ? 'success' : 'error');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'The private compiler could not run this code.';
+      showIdeOutput('terminal', `> Runner error\n${message}`);
+      if (status) status.textContent = '● Runner unavailable';
+      showToast(message, 'error');
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function runBrowserIdeCode(code, language) {
+    const frame = document.getElementById('ide-preview-frame');
+    const button = document.querySelector('[data-action="ide-run-code"]');
+    const status = document.querySelector('.status-indicator');
+    if (!frame) {
+      showToast('The preview area is unavailable. Reload the Code page and try again.', 'error');
+      return;
+    }
+    if (button) button.disabled = true;
+    if (status) status.textContent = '● Running in isolated preview';
+    try {
+      let output = '> Preview updated. Your code is running in an isolated browser frame.';
+      if (language === 'javascript') {
+        const result = await runJavaScriptInPreview(frame, code);
+        output = result.error
+          ? `> JavaScript error\n${result.error}${result.logs?.length ? `\n${result.logs.join('\n')}` : ''}`
+          : result.logs?.length
+            ? result.logs.join('\n')
+            : '> JavaScript ran successfully with no console output.';
+        if (!result.error) state.coding.ideXp = (state.coding.ideXp || 0) + 10;
+      } else {
+        frame.srcdoc = createPreviewDocument(language, code);
+        state.coding.ideXp = (state.coding.ideXp || 0) + 10;
+      }
+
+      state.coding.ideRuntime = 'browser';
+      showIdeOutput(language === 'javascript' ? 'terminal' : 'preview', output);
+      const runtime = document.getElementById('ide-status-runtime');
+      const xp = document.getElementById('ide-status-xp');
+      if (runtime) runtime.textContent = 'Execution Time: browser';
+      if (xp) xp.textContent = `+${state.coding.ideXp || 0} Maker XP`;
+      if (status) status.textContent = output.startsWith('> JavaScript error') ? '● Execution error' : '● Preview ready';
+      saveState();
+      showToast(output.startsWith('> JavaScript error') ? 'JavaScript returned an error.' : 'Code ran in the isolated preview.', output.startsWith('> JavaScript error') ? 'error' : 'success');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'The preview could not run this code.';
+      showIdeOutput('terminal', `> Preview error\n${message}`);
+      if (status) status.textContent = '● Execution error';
+      showToast(message, 'error');
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
 
   // ==========================================
   // RENDER: CODE IN YOUR LANGUAGE (IDE STANDALONE)
@@ -2658,7 +2970,7 @@ import {
   function renderCoding() {
     const flow = state.coding;
     const ideLang = flow.ideLang || 'yoruba';
-    const presetsForLang = IDE_PRESETS[ideLang] || IDE_PRESETS.yoruba;
+    const presetsForLang = getIdePresets(ideLang);
     const currentPreset = presetsForLang.find((p) => p.id === flow.idePresetId) || presetsForLang[0];
     const ideCode = flow.ideCode !== undefined ? flow.ideCode : currentPreset.code;
 
@@ -2722,7 +3034,7 @@ import {
             'Kọ Koodu ní Èdè Rẹ · Code in Your Language' +
           '</h1>' +
           '<p class="c4k-ide-subtitle">' +
-            'Write and test computer programs in Yorùbá, Igbo, Hausa, Swahili, and Python. Experience live code compilation, instant terminal output, and visual canvas graphics!' +
+          'Learn in Yorùbá, Igbo, Hausa, and Kiswahili. Build HTML, CSS, and JavaScript in your browser, or connect a private compiler for Python and 29 more programming languages.' +
           '</p>' +
         '</div>' +
 
@@ -2730,12 +3042,19 @@ import {
           '<!-- Top Control Bar -->' +
           '<div class="c4k-ide-toolbar">' +
             '<div class="c4k-ide-lang-selector">' +
-              '<span class="toolbar-label">Èdè / Language:</span>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'yoruba' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="yoruba">🇳🇬 Èdè Yorùbá</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'igbo' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="igbo">🇳🇬 Asụsụ Igbo</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'hausa' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="hausa">🇳🇬 Harshen Hausa</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'swahili' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="swahili">🇰🇪 Kiswahili</button>' +
-              '<button type="button" class="lang-tab ' + (ideLang === 'python' ? 'active' : '') + '" data-action="ide-set-lang" data-lang="python">🐍 Python / JS</button>' +
+              '<label class="toolbar-label" for="ide-language-select">Programming language:</label>' +
+              '<select id="ide-language-select" class="ide-preset-dropdown" aria-describedby="ide-language-status">' +
+                '<optgroup label="Learn in an African language">' +
+                  IDE_LOCAL_LANGUAGES.slice(0, 4).map((language) => '<option value="' + language.id + '" ' + (language.id === ideLang ? 'selected' : '') + '>' + esc(language.name) + '</option>').join('') +
+                '</optgroup>' +
+                '<optgroup label="Web · runs in this browser">' +
+                  IDE_LOCAL_LANGUAGES.slice(4).map((language) => '<option value="' + language.id + '" ' + (language.id === ideLang ? 'selected' : '') + '>' + esc(language.name) + '</option>').join('') +
+                '</optgroup>' +
+                '<optgroup label="Compiler · private Judge0 runner">' +
+                  IDE_REMOTE_LANGUAGE_OPTIONS.map((language) => '<option value="' + language.id + '" data-runner-language ' + (language.id === ideLang ? 'selected' : 'disabled') + '>' + esc(language.name) + '</option>').join('') +
+                '</optgroup>' +
+              '</select>' +
+              '<small id="ide-language-status" class="ide-language-status" role="status">Checking private language runtimes…</small>' +
             '</div>' +
 
             '<div class="c4k-ide-preset-selector">' +
@@ -2794,8 +3113,11 @@ import {
             '<div class="c4k-ide-output-pane">' +
               '<div class="pane-header">' +
                 '<div class="output-tab-switcher">' +
-                  '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? '' : 'active') + '" data-action="ide-switch-tab" data-tab="terminal">' +
+                  '<button type="button" class="output-tab ' + (flow.ideTab === 'terminal' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="terminal">' +
                     '💻 Àbájáde Terminal (Console)' +
+                  '</button>' +
+                  '<button type="button" class="output-tab ' + (flow.ideTab === 'preview' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="preview">' +
+                    '🖥️ Preview' +
                   '</button>' +
                   '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="canvas">' +
                     '🎨 Ìbòjú Àwòrán (Canvas)' +
@@ -2808,9 +3130,9 @@ import {
 
               '<div class="output-body">' +
                 '<!-- Terminal View -->' +
-                '<div class="terminal-view ' + (flow.ideTab === 'canvas' ? 'hide' : '') + '" id="ide-terminal-view">' +
+                '<div class="terminal-view ' + (flow.ideTab === 'terminal' ? '' : 'hide') + '" id="ide-terminal-view">' +
                   '<div class="terminal-status-bar">' +
-                    '<span class="status-indicator">● Engine Online</span>' +
+                    '<span class="status-indicator">● Engine ready</span>' +
                     '<span class="status-runtime" id="ide-status-runtime">Execution Time: ' + (flow.ideRuntime || '0.02ms') + '</span>' +
                     '<span class="status-xp" id="ide-status-xp">+' + (flow.ideXp || 10) + ' Maker XP</span>' +
                   '</div>' +
@@ -2821,6 +3143,9 @@ import {
                 '<div class="canvas-view ' + (flow.ideTab === 'canvas' ? '' : 'hide') + '" id="ide-canvas-view">' +
                   '<canvas id="ide-graphic-canvas" width="400" height="260"></canvas>' +
                   '<div class="canvas-caption">Graphic Turtle & Shapes Renderer</div>' +
+                '</div>' +
+                '<div class="preview-view ' + (flow.ideTab === 'preview' ? '' : 'hide') + '" id="ide-preview-view">' +
+                  '<iframe id="ide-preview-frame" title="Code preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>' +
                 '</div>' +
               '</div>' +
 
@@ -2862,7 +3187,7 @@ import {
 
     return '<div class="container route-page curriculum-page c4k-redesigned-page">' +
       '<div class="breadcrumbs">' +
-        routeLink('index', 'Home') + '<span>/</span><strong>Curriculum & STEAM Lessons</strong>' +
+        routeLink('index', 'Home') + '<span>/</span><strong>Curriculum</strong>' +
       '</div>' +
 
       '<!-- 1. 3D Animated African STEAM Hologram Stage -->' +
@@ -2881,7 +3206,7 @@ import {
           '<div class="c4k-badge-pill">' +
             icon('sparkles', 16) + ' <span>IDÍLẸ́WÀ CODE FOR KIDS · K-8 INDIGENOUS STEAM CURRICULUM</span>' +
           '</div>' +
-          '<h1 class="c4k-3d-main-heading">The Code for Kids Curriculum</h1>' +
+          '<h1 class="c4k-3d-main-heading">Curriculum</h1>' +
           '<p class="c4k-3d-sub-lead">' +
             'From Kindergarten to Grade 8 · Engaging STEAM, Algorithmic Thinking & Indigenous Language Coding for Young African Innovators.' +
           '</p>' +
@@ -3281,6 +3606,7 @@ import {
     const isEducator = role === 'educator';
     const isParent = role === 'parent';
     const isAdult = role === 'adult';
+    const authConfigured = isSupabaseConfigured && Boolean(supabase);
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
     const authLayers = [
@@ -3348,9 +3674,9 @@ import {
         </div>
 
         <div class="auth-header-block">
-          <span class="section-kicker">${signUp ? 'Join the Idilewa Family' : 'Welcome Back'}</span>
-          <h1 class="auth-title">${signUp ? 'Start Your Heritage Journey' : 'Sign In to Your Space'}</h1>
-          <p class="auth-subtitle">${signUp ? 'Create a personalized learning space for yourself or your family.' : 'Continue practicing languages, voice training, and coding.'}</p>
+          <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
+          <h1 class="auth-title">${signUp ? 'Create your account' : 'Welcome back'}</h1>
+          <p class="auth-subtitle">${signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
@@ -3390,25 +3716,6 @@ import {
           </div>
         </div>
 
-        <!-- Quick 1-Click Persona Demo Bar -->
-        <div class="auth-quick-demo-bar">
-          <span class="quick-demo-title">⚡ 1-Click Interactive Demo Login:</span>
-          <div class="quick-demo-btns">
-            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="child" title="Fill as Child Learner">
-              ${icon('smile', 13)} Child
-            </button>
-            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="parent" title="Fill as Parent Guardian">
-              ${icon('heart', 13)} Parent
-            </button>
-            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="educator" title="Fill as Language Educator">
-              ${icon('school', 13)} Educator
-            </button>
-            <button type="button" class="quick-demo-chip" data-action="quick-demo-login" data-role="adult" title="Fill as Adult Learner">
-              ${icon('book', 13)} Adult
-            </button>
-          </div>
-        </div>
-
         <!-- Modern Auth Form -->
         <form class="auth-form modern-auth-form" data-form="login">
           <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
@@ -3424,10 +3731,10 @@ import {
           ` : ''}
 
           <div class="form-group">
-            <label for="authEmail" class="form-label">Email address or Username</label>
+            <label for="authEmail" class="form-label">Email address</label>
             <div class="input-with-icon">
               <span class="input-icon">${icon('user', 17)}</span>
-              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@idilewa.demo' : isEducator ? 'teacher@idilewa.demo' : isParent ? 'parent@idilewa.demo' : 'you@example.com'}" required />
+              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" required />
             </div>
           </div>
 
@@ -3463,7 +3770,7 @@ import {
           ${signUp ? `
           <label class="consent-check modern-consent-check">
             <input type="checkbox" name="demoOnly" value="yes" required checked />
-            <span>I understand this is a prototype sandbox; no real passwords or sensitive details are saved.</span>
+            <span>I agree to create an Idilewa account. Child account approval is a local prototype check and is not production safeguarding.</span>
           </label>
           ` : `
           <div class="form-options-row">
@@ -3475,7 +3782,7 @@ import {
           </div>
           `}
 
-          <button class="button button-primary modern-auth-submit" type="submit">
+          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured ? '' : 'disabled'}>
             <span>${signUp ? (isChild ? 'Validate Code & Create Child Space' : 'Create Supervised Space') : (isChild ? 'Check Code & Sign In' : 'Sign In to Learning Space')}</span>
             ${icon('arrow', 16)}
           </button>
@@ -3485,8 +3792,8 @@ import {
         <div class="auth-safe-note modern-auth-safe-note">
           <span class="safe-note-icon">${icon('lock', 16)}</span>
           <div>
-            <strong>Local Privacy-Preserving Sandbox</strong>
-            <span>All progress and lesson points are stored locally. Real credentials are never collected or transmitted.</span>
+            <strong>${authConfigured ? 'Your account is protected by Supabase Auth' : 'Account service is not configured'}</strong>
+            <span>${authConfigured ? 'Your password is sent to Supabase over HTTPS. Never reuse a password from another account.' : 'Add the Supabase URL and public anon key to the deployment environment to enable sign up and sign in. You can still explore as a guest.'}</span>
           </div>
         </div>
 
@@ -4902,6 +5209,7 @@ import {
     if (page === 'coding') {
       document.body.dataset.page = 'coding';
       document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}`;
+      initializeIdeRuntimes();
     } else {
       delete document.body.dataset.page;
       document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
@@ -5047,10 +5355,11 @@ import {
       case 'ide-set-lang': {
         const lang = el.dataset.lang || 'yoruba';
         state.coding.ideLang = lang;
-        const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
+        const presets = getIdePresets(lang);
         state.coding.idePresetId = presets[0].id;
         state.coding.ideCode = presets[0].code;
         state.coding.ideOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n> Loaded: ' + presets[0].title + '\n> Click "Ṣe Koodu (Run)" to execute.';
+        state.coding.ideTab = 'terminal';
         saveState();
         render();
         showToast('Switched IDE to ' + lang.toUpperCase() + ' mode.');
@@ -5060,7 +5369,7 @@ import {
         const presetId = el.value;
         state.coding.idePresetId = presetId;
         const lang = state.coding.ideLang || 'yoruba';
-        const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
+        const presets = getIdePresets(lang);
         const p = presets.find((item) => item.id === presetId) || presets[0];
         state.coding.ideCode = p.code;
         state.coding.ideOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n> Loaded: ' + p.title + '\n> Click "Ṣe Koodu (Run)" to execute.';
@@ -5131,47 +5440,44 @@ import {
         const code = textarea ? textarea.value : (state.coding.ideCode || '');
         state.coding.ideCode = code;
         const lang = state.coding.ideLang || 'yoruba';
+        if (IDE_RUNNER_LANGUAGES.includes(lang)) {
+          runRemoteIdeCode(code, lang);
+          break;
+        }
+        if (['html', 'css', 'javascript'].includes(lang)) {
+          runBrowserIdeCode(code, lang);
+          break;
+        }
         const canvas = document.getElementById('ide-graphic-canvas');
-        const result = runIdeInterpreter(code, lang, canvas);
-        state.coding.ideOutput = result.output;
-        state.coding.ideRuntime = result.duration + 'ms';
-        state.coding.ideXp = (state.coding.ideXp || 0) + 10;
-        if (result.hasCanvasDraw) {
-          state.coding.ideTab = 'canvas';
-        }
-
-        // Direct in-place DOM updates so canvas & editor focus are NOT destroyed!
-        const termLogs = document.getElementById('ide-terminal-logs');
-        if (termLogs) termLogs.textContent = result.output;
-        const runtimeEl = document.getElementById('ide-status-runtime');
-        if (runtimeEl) runtimeEl.textContent = 'Execution Time: ' + result.duration + 'ms';
-        const xpEl = document.getElementById('ide-status-xp');
-        if (xpEl) xpEl.textContent = '+' + state.coding.ideXp + ' Maker XP';
-
-        const termView = document.getElementById('ide-terminal-view');
-        const canvasView = document.getElementById('ide-canvas-view');
-        const termTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="terminal"]');
-        const canvasTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="canvas"]');
-
-        if (result.hasCanvasDraw) {
-          termView?.classList.add('hide');
-          canvasView?.classList.remove('hide');
-          termTabBtn?.classList.remove('active');
-          canvasTabBtn?.classList.add('active');
-        } else {
-          canvasView?.classList.add('hide');
-          termView?.classList.remove('hide');
-          canvasTabBtn?.classList.remove('active');
-          termTabBtn?.classList.add('active');
-        }
-
-        saveState();
-        showToast('Code executed successfully! +10 Maker XP', 'success');
+        const button = document.querySelector('[data-action="ide-run-code"]');
+        const status = document.querySelector('.status-indicator');
+        if (button) button.disabled = true;
+        if (status) status.textContent = '● Running in isolated preview';
+        runIdeInterpreter(code, lang, canvas).then((result) => {
+          state.coding.ideOutput = result.output;
+          state.coding.ideRuntime = result.duration + 'ms';
+          if (!result.hasError) state.coding.ideXp = (state.coding.ideXp || 0) + 10;
+          showIdeOutput(result.hasCanvasDraw ? 'preview' : 'terminal', result.output);
+          const runtimeEl = document.getElementById('ide-status-runtime');
+          if (runtimeEl) runtimeEl.textContent = 'Execution Time: ' + result.duration + 'ms';
+          const xpEl = document.getElementById('ide-status-xp');
+          if (xpEl) xpEl.textContent = '+' + (state.coding.ideXp || 0) + ' Maker XP';
+          if (status) status.textContent = result.hasError ? '● Execution error' : '● Execution complete';
+          saveState();
+          showToast(result.hasError ? 'Review the error output and try again.' : 'Code executed successfully! +10 Maker XP', result.hasError ? 'error' : 'success');
+        }).catch((error) => {
+          const message = error instanceof Error ? error.message : 'The code could not be run.';
+          showIdeOutput('terminal', `> Execution error\n${message}`);
+          if (status) status.textContent = '● Execution error';
+          showToast(message, 'error');
+        }).finally(() => {
+          if (button) button.disabled = false;
+        });
         break;
       }
       case 'ide-reset-code': {
         const lang = state.coding.ideLang || 'yoruba';
-        const presets = IDE_PRESETS[lang] || IDE_PRESETS.yoruba;
+        const presets = getIdePresets(lang);
         const p = presets.find((item) => item.id === state.coding.idePresetId) || presets[0];
         state.coding.ideCode = p.code;
         state.coding.ideOutput = '> [Idilewa Engine v2.4 Online - ' + lang.toUpperCase() + ']\n> Code reset to default sample: ' + p.title;
@@ -5206,23 +5512,8 @@ import {
       }
       case 'ide-switch-tab': {
         const tab = el.dataset.tab || 'terminal';
-        state.coding.ideTab = tab;
-        const termView = document.getElementById('ide-terminal-view');
-        const canvasView = document.getElementById('ide-canvas-view');
-        const termTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="terminal"]');
-        const canvasTabBtn = document.querySelector('[data-action="ide-switch-tab"][data-tab="canvas"]');
-
-        if (tab === 'canvas') {
-          termView?.classList.add('hide');
-          canvasView?.classList.remove('hide');
-          termTabBtn?.classList.remove('active');
-          canvasTabBtn?.classList.add('active');
-        } else {
-          canvasView?.classList.add('hide');
-          termView?.classList.remove('hide');
-          canvasTabBtn?.classList.remove('active');
-          termTabBtn?.classList.add('active');
-        }
+        if (!['terminal', 'canvas', 'preview'].includes(tab)) break;
+        showIdeOutput(tab, state.coding.ideOutput || '');
         saveState();
         break;
       }
@@ -5487,32 +5778,6 @@ import {
         }
         break;
       }
-      case 'quick-demo-login': {
-        const role = el.dataset.role || 'child';
-        state.authRole = role;
-        state.loginMode = 'signin';
-        if (role === 'child') {
-          if (!state.consent.approvedCode) {
-            state.consent.approved = true;
-            state.consent.approvedCode = 'ID-842910';
-            state.consent.accountApproved = true;
-            state.consent.learnerAlias = 'Ayo B.';
-            state.consent.expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
-          }
-        }
-        saveState();
-        render();
-        const emailInput = document.getElementById('authEmail');
-        const passInput = document.getElementById('authPassword');
-        const consentInput = document.getElementById('signinConsentCode');
-        const nameInput = document.getElementById('authName');
-        if (emailInput) emailInput.value = role === 'child' ? 'ayo.learner@idilewa.demo' : role === 'parent' ? 'kemi.parent@idilewa.demo' : role === 'educator' ? 'tola.teacher@idilewa.demo' : 'funke.adult@idilewa.demo';
-        if (passInput) passInput.value = '••••••••IdilewaDemo';
-        if (consentInput && state.consent.approvedCode) consentInput.value = state.consent.approvedCode;
-        if (nameInput) nameInput.value = role === 'child' ? 'Ayo B.' : role === 'parent' ? 'Mrs. Kemi B.' : role === 'educator' ? 'Tola A.' : 'Funke O.';
-        showToast(`⚡ Loaded demo credentials for ${role === 'child' ? 'Child Learner (Ayo)' : role === 'parent' ? 'Parent Guardian (Mrs. Kemi)' : role === 'educator' ? 'Educator (Tola)' : 'Adult Learner'}`, 'success');
-        break;
-      }
       case 'forgot-password': openModal('Password reset', 'Password reset will be available when secure account services are connected. Do not use a real password in this prototype.'); break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
       case 'trainer-set-lang': {
@@ -5726,6 +5991,10 @@ import {
   document.addEventListener('change', (event) => {
     const el = event.target;
     if (el.matches('[data-action="ide-select-preset"]')) { handleAction('ide-select-preset', el); return; }
+    if (el.matches('#ide-language-select')) {
+      handleAction('ide-set-lang', { dataset: { lang: el.value } });
+      return;
+    }
     if (el.matches('[data-action="level-select"]')) navigate('course', { lang: state.currentLang, level: el.value });
     if (el.matches('[data-action="pair-language"]')) { state.currentLang = el.value; saveState(); render(); }
     if (el.matches('#codeHelperLanguage')) { if (CODE_COPY[el.value]) state.coding.helperLanguage = el.value; saveState(); render(); }
@@ -5778,7 +6047,7 @@ import {
     }
   });
 
-  document.addEventListener('submit', (event) => {
+  document.addEventListener('submit', async (event) => {
     const form = event.target;
     const type = form.dataset.form;
     if (!type) return;
@@ -5889,40 +6158,51 @@ import {
     } else if (type === 'login') {
       const accountType = String(data.get('accountType') || state.authRole || 'child');
       const email = String(data.get('email') || '').trim();
-      if (state.loginMode === 'signup') {
-        if (accountType === 'child') {
-          const code = String(data.get('consentCode') || '').trim().toUpperCase();
-          if (!consentCodeIsActive() || !state.consent.accountApproved || code !== state.consent.approvedCode) {
-            showToast('A parent-signed consent form and valid code are required before a child can continue.', 'error');
-            navigate('consent'); return;
-          }
-          state.consent.childVerified = true; saveState(); render();
-          showToast(`Parent approval validated for ${email || 'child'}. Supervised space ready!`, 'success');
-          navigate('profile'); return;
-        }
-        showToast(`Account created for ${email || 'learner'}. Welcome to your Idilewa space!`, 'success');
-        navigate('profile'); return;
-      }
       if (accountType === 'child') {
         const code = String(data.get('consentCode') || '').trim().toUpperCase();
         if (!consentCodeIsActive() || !state.consent.accountApproved || code !== state.consent.approvedCode) {
-          showToast('A parent-approved consent code is required before a child can sign in.', 'error');
+          showToast('A current parent approval code is required for this local prototype flow.', 'error');
           navigate('consent'); return;
         }
-        state.consent.childVerified = true; saveState();
-        showToast(`Welcome back, Ayo! Parent approval verified.`, 'success');
-        navigate('profile'); return;
       }
-      if (accountType === 'educator') {
-        showToast(`Welcome back, Educator! Connected to teaching dashboard.`, 'success');
-        navigate('connect_teachers'); return;
+      if (!isSupabaseConfigured || !supabase) {
+        showToast('Account authentication is not configured on this deployment. Continue as a guest.', 'error');
+        return;
       }
-      if (accountType === 'parent') {
-        showToast(`Welcome back, Guardian! Supervised family space active.`, 'success');
-        navigate('consent'); return;
+
+      const password = String(data.get('password') || '');
+      try {
+        if (state.loginMode === 'signup') {
+          const name = String(data.get('name') || '').trim();
+          const { data: authData, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { name, role: accountType } },
+          });
+          if (error) throw error;
+          if (!authData?.user) throw new Error('The authentication service did not return an account.');
+          if (!authData.session) {
+            state.loginMode = 'signin';
+            render();
+            showToast('Account created. Check your email to confirm it, then sign in.', 'success');
+            return;
+          }
+        } else {
+          const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          if (!authData?.user || !authData.session) throw new Error('The authentication service did not return a signed-in session.');
+        }
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Account authentication failed. Try again.', 'error');
+        return;
       }
-      showToast(`Welcome back! Loading your learning journey...`, 'success');
-      navigate('profile');
+
+      if (accountType === 'child') {
+        state.consent.childVerified = true;
+        saveState();
+      }
+      showToast(state.loginMode === 'signup' ? 'Your Idilewa account is ready.' : 'Signed in successfully.', 'success');
+      navigate(accountType === 'educator' ? 'connect_teachers' : accountType === 'parent' ? 'consent' : 'profile');
     } else if (type === 'interest') {
       showToast('Thanks for your interest. This prototype does not send or store contact details.');
       form.reset();
@@ -5942,4 +6222,3 @@ import {
   window.addEventListener('hashchange', render);
   render();
 })();
-
