@@ -268,7 +268,7 @@ export function init3DCodeRobotGlyphs(containerElement) {
   const height = containerElement.clientHeight || 420;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-  camera.position.set(0, 0, 7.6);
+  camera.position.set(0, 0, 6.4);
 
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
   renderer.setSize(width, height);
@@ -290,21 +290,37 @@ export function init3DCodeRobotGlyphs(containerElement) {
   const orbitGroup = new THREE.Group();
   scene.add(orbitGroup);
 
-  const orbitRing = new THREE.Mesh(
-    new THREE.TorusGeometry(2.55, 0.018, 8, 120),
-    new THREE.MeshBasicMaterial({ color: 0x37a878, transparent: true, opacity: 0.38 })
-  );
-  orbitRing.scale.y = 0.62;
-  orbitRing.rotation.x = 0.16;
-  orbitGroup.add(orbitRing);
-
-  const innerRing = new THREE.Mesh(
-    new THREE.TorusGeometry(2.05, 0.012, 8, 100),
-    new THREE.MeshBasicMaterial({ color: 0xe6ac3c, transparent: true, opacity: 0.28 })
-  );
-  innerRing.scale.y = 0.72;
-  innerRing.rotation.z = -0.22;
-  orbitGroup.add(innerRing);
+  let animationId = null;
+  let elapsed = 0;
+  let pointerX = 0;
+  let pointerY = 0;
+  let resizeObserver = null;
+  let destroyed = false;
+  let robotTexture = null;
+  let robotGeometry = null;
+  let robotMaterial = null;
+  let robotPlane = null;
+  const robotImage = stageElement.querySelector('.c4k-code-robot-artwork img');
+  const onRobotImageLoad = () => {
+    if (destroyed || !robotImage?.naturalWidth || !robotImage.naturalHeight) return;
+    robotTexture = new THREE.Texture(robotImage);
+    robotTexture.colorSpace = THREE.SRGBColorSpace;
+    robotTexture.needsUpdate = true;
+    const robotHeight = 4.2;
+    const robotWidth = robotHeight * (robotImage.naturalWidth / robotImage.naturalHeight);
+    robotGeometry = new THREE.PlaneGeometry(robotWidth, robotHeight);
+    robotMaterial = new THREE.MeshBasicMaterial({ map: robotTexture, side: THREE.DoubleSide });
+    robotPlane = new THREE.Mesh(robotGeometry, robotMaterial);
+    robotPlane.position.z = 0.08;
+    scene.add(robotPlane);
+    stageElement.setAttribute('data-3d-robot-ready', 'true');
+    if (prefersReducedMotion()) renderer.render(scene, camera);
+  };
+  if (robotImage?.complete && robotImage.naturalWidth) {
+    onRobotImageLoad();
+  } else {
+    robotImage?.addEventListener('load', onRobotImageLoad);
+  }
 
   const glyphSpecs = [
     { text: '</>', color: 0x087e9b },
@@ -380,13 +396,6 @@ export function init3DCodeRobotGlyphs(containerElement) {
   );
   scene.add(particles);
 
-  let animationId = null;
-  let elapsed = 0;
-  let pointerX = 0;
-  let pointerY = 0;
-  let resizeObserver = null;
-  let destroyed = false;
-
   const renderFrame = () => {
     animationId = null;
     if (destroyed || !containerElement.isConnected) {
@@ -396,8 +405,11 @@ export function init3DCodeRobotGlyphs(containerElement) {
     elapsed += 0.016;
     orbitGroup.rotation.y = Math.sin(elapsed * 0.35) * 0.08 + pointerX * 0.035;
     orbitGroup.rotation.x = Math.cos(elapsed * 0.3) * 0.045 + pointerY * 0.025;
-    orbitRing.rotation.z += 0.0018;
-    innerRing.rotation.z -= 0.0012;
+    if (robotPlane) {
+      robotPlane.position.y = Math.sin(elapsed * 0.75) * 0.055;
+      robotPlane.rotation.y = Math.sin(elapsed * 0.38) * 0.095 + pointerX * 0.12;
+      robotPlane.rotation.x = Math.cos(elapsed * 0.42) * 0.035 - pointerY * 0.08;
+    }
     glyphs.forEach((glyph) => {
       const phase = elapsed * 0.72 + glyph.userData.orbitOffset;
       const aspectScale = Math.min(1, Math.max(0.68, containerElement.clientWidth / Math.max(containerElement.clientHeight, 1)));
@@ -440,6 +452,7 @@ export function init3DCodeRobotGlyphs(containerElement) {
     if (animationId !== null) cancelAnimationFrame(animationId);
     stageElement.removeEventListener('pointermove', onPointerMove);
     stageElement.removeEventListener('pointerleave', onPointerLeave);
+    robotImage?.removeEventListener('load', onRobotImageLoad);
     window.removeEventListener('resize', onResize);
     resizeObserver?.disconnect();
     scene.traverse((object) => {
@@ -455,6 +468,7 @@ export function init3DCodeRobotGlyphs(containerElement) {
     renderer.dispose();
     renderer.domElement.remove();
     stageElement.removeAttribute('data-webgl-ready');
+    stageElement.removeAttribute('data-3d-robot-ready');
     if (activeScenes.get(containerElement)?.destroy === destroy) activeScenes.delete(containerElement);
   };
 
@@ -472,6 +486,10 @@ export function init3DCodeRobotGlyphs(containerElement) {
     glyphs.forEach((glyph, index) => {
       glyph.position.set(glyph.userData.side * 2.3, glyph.userData.row * 0.82, 0);
     });
+    if (robotPlane) {
+      robotPlane.position.set(0, 0, 0.08);
+      robotPlane.rotation.set(0, 0, 0);
+    }
     renderer.render(scene, camera);
   } else {
     renderFrame();

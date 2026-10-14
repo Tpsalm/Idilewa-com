@@ -491,7 +491,7 @@ import {
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="brand-copy"><span class="brand-word">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span>
+          <span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span>
         </a>
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
@@ -524,7 +524,7 @@ import {
     return `<footer class="site-footer">
       <div class="container footer-main">
         <div class="footer-brand-block">
-          <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
+          <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
           <p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p>
         </div>
         <div class="footer-links"><h3>Curriculum</h3>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</div>

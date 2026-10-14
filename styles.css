@@ -64,8 +64,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .brand-mark span:nth-child(1) { height: 11px; }
 .brand-mark span:nth-child(2) { height: 19px; }
 .brand-mark span:nth-child(3) { height: 14px; }
-.brand-copy { display: flex; flex-direction: column; line-height: 1.08; }
-.brand-word { color: var(--green-dark); font-size: 22px; letter-spacing: -.9px; font-weight: 800; }
+.brand-copy { display: flex; flex-direction: column; line-height: 1.08; perspective: 440px; transform-style: preserve-3d; }
+.brand-word { position: relative; display: inline-block; color: var(--green-dark); font-size: 22px; letter-spacing: -.9px; font-weight: 800; text-shadow: 0 1px 0 rgba(6, 69, 38, .28); transform-style: preserve-3d; animation: brandLogoRotate 8s ease-in-out infinite; }
+.brand-word::after { position: absolute; inset: 0; z-index: -1; content: attr(data-depth); color: #dc9628; text-shadow: 0 1px 0 #b77a20, 0 2px 0 #a86d1a, 0 3px 0 #8f5e1b; transform: translateZ(-4px); pointer-events: none; }
+@keyframes brandLogoRotate { 0%, 100% { transform: rotateY(-10deg) rotateX(2deg); } 50% { transform: rotateY(10deg) rotateX(-2deg); } }
+@media (prefers-reduced-motion: reduce) { .brand-word { animation: none; transform: none; } }
 .brand-caption { color: #77837a; font-size: 9px; letter-spacing: .2px; font-weight: 550; margin-top: 4px; }
 .desktop-nav { margin-left: auto; display: flex; align-items: center; gap: clamp(15px, 2.1vw, 28px); white-space: nowrap; }
 .nav-link { color: #59665e; font-size: 12px; font-weight: 650; position: relative; padding: 29px 0 26px; transition: color .18s ease; }
@@ -5444,36 +5447,13 @@ main, #main, .main-content, .page-container {
   height: clamp(360px, 40vw, 460px);
   margin: 0 auto 1.5rem;
   overflow: hidden;
-  border: 1px solid rgba(21, 118, 74, 0.24);
-  border-radius: 30px;
-  background:
-    radial-gradient(ellipse at 50% 52%, rgba(255, 255, 255, 0.98) 0 20%, rgba(237, 249, 240, 0.82) 48%, rgba(222, 240, 228, 0.72) 100%),
-    linear-gradient(135deg, #f8fff9 0%, #e8f5eb 52%, #fff8e6 100%);
-  box-shadow: 0 22px 55px -28px rgba(14, 91, 55, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.92);
-}
-
-.c4k-code-robot-stage::before,
-.c4k-code-robot-stage::after {
-  position: absolute;
-  inset: 12% 11%;
-  z-index: -1;
-  border: 1px solid rgba(21, 118, 74, 0.12);
-  border-radius: 50%;
-  content: "";
-  pointer-events: none;
-  transform: rotate(-12deg);
-}
-
-.c4k-code-robot-stage::after {
-  inset: 21% 18%;
-  border-color: rgba(220, 150, 40, 0.18);
-  transform: rotate(18deg);
+  background: transparent;
 }
 
 .code-robot-glyph-canvas {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -5534,18 +5514,28 @@ main, #main, .main-content, .page-container {
   height: auto;
   max-width: none;
   margin: 0;
-  filter: drop-shadow(0 18px 24px rgba(9, 53, 34, 0.2));
+  filter: drop-shadow(0 16px 22px rgba(9, 53, 34, 0.14));
 }
 
 .c4k-code-robot-stage .c4k-code-robot-artwork img {
   width: auto;
   height: 100%;
   max-width: calc(100% - 36px);
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  border-radius: 22px;
+  border: 0;
+  border-radius: 0;
   object-fit: contain;
   object-position: center;
-  transform: translateZ(32px);
+  transform: perspective(900px) rotateY(-3deg);
+  animation: codeRobotIdle3d 6s ease-in-out infinite alternate;
+}
+
+.c4k-code-robot-stage[data-3d-robot-ready="true"] .c4k-code-robot-artwork {
+  visibility: hidden;
+}
+
+@keyframes codeRobotIdle3d {
+  from { transform: perspective(900px) translate3d(0, 1px, 0) rotateY(-3deg) rotateX(1deg); }
+  to { transform: perspective(900px) translate3d(0, -3px, 5px) rotateY(3deg) rotateX(-1deg); }
 }
 
 .c4k-curriculum-photo img,
@@ -6685,7 +6675,6 @@ body[data-page="coding"] {
   .c4k-code-robot-stage {
     height: clamp(320px, 90vw, 370px);
     margin-bottom: 1.25rem;
-    border-radius: 24px;
   }
 
   .c4k-code-robot-stage .c4k-code-robot-artwork {
@@ -6713,7 +6702,8 @@ body[data-page="coding"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .code-robot-glyph-fallback span {
+  .code-robot-glyph-fallback span,
+  .c4k-code-robot-stage .c4k-code-robot-artwork img {
     animation: none;
   }
 }
