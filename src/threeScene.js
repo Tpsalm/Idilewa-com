@@ -258,6 +258,227 @@ export function init3DHeroCanvas(containerElement) {
   return instance;
 }
 
+export function init3DCodeRobotGlyphs(containerElement) {
+  if (!containerElement) return null;
+  cleanPreviousScene(containerElement);
+  if (!isWebGLAvailable()) return null;
+
+  const stageElement = containerElement.closest('.c4k-code-robot-stage') || containerElement;
+  const width = containerElement.clientWidth || 760;
+  const height = containerElement.clientHeight || 420;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+  camera.position.set(0, 0, 7.6);
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  renderer.domElement.style.display = 'block';
+  containerElement.appendChild(renderer.domElement);
+  stageElement.setAttribute('data-webgl-ready', 'true');
+
+  scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+  const emeraldLight = new THREE.PointLight(0x16a365, 3.5, 12);
+  emeraldLight.position.set(-3, 2, 4);
+  scene.add(emeraldLight);
+  const goldLight = new THREE.PointLight(0xf5b942, 3, 12);
+  goldLight.position.set(3, -2, 3);
+  scene.add(goldLight);
+
+  const orbitGroup = new THREE.Group();
+  scene.add(orbitGroup);
+
+  const orbitRing = new THREE.Mesh(
+    new THREE.TorusGeometry(2.55, 0.018, 8, 120),
+    new THREE.MeshBasicMaterial({ color: 0x37a878, transparent: true, opacity: 0.38 })
+  );
+  orbitRing.scale.y = 0.62;
+  orbitRing.rotation.x = 0.16;
+  orbitGroup.add(orbitRing);
+
+  const innerRing = new THREE.Mesh(
+    new THREE.TorusGeometry(2.05, 0.012, 8, 100),
+    new THREE.MeshBasicMaterial({ color: 0xe6ac3c, transparent: true, opacity: 0.28 })
+  );
+  innerRing.scale.y = 0.72;
+  innerRing.rotation.z = -0.22;
+  orbitGroup.add(innerRing);
+
+  const glyphSpecs = [
+    { text: '</>', color: 0x087e9b },
+    { text: '{ }', color: 0x16834d },
+    { text: 'JS', color: 0xe4a82f },
+    { text: 'PY', color: 0x167fa2 },
+    { text: 'CSS', color: 0x16834d },
+    { text: 'HTML', color: 0xd88c21 }
+  ];
+  const glyphs = glyphSpecs.map(({ text, color }, index) => {
+    const token = new THREE.Group();
+    const coin = new THREE.Mesh(
+      new THREE.SphereGeometry(0.31, 24, 18),
+      new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.24,
+        metalness: 0.74,
+        emissive: color,
+        emissiveIntensity: 0.22
+      })
+    );
+    token.add(coin);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = '#ffffff';
+      context.font = '800 70px "Fira Code", monospace';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      context.shadowBlur = 8;
+      context.fillText(text, canvas.width / 2, canvas.height / 2 + 3);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const label = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.64, 0.32),
+      new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide })
+    );
+    label.position.z = 0.36;
+    token.add(label);
+    token.userData.side = index % 2 === 0 ? -1 : 1;
+    token.userData.row = Math.floor(index / 2) - 1;
+    token.userData.orbitOffset = (index / 2) * Math.PI;
+    orbitGroup.add(token);
+    return token;
+  });
+
+  const particleCount = 72;
+  const particlePositions = new Float32Array(particleCount * 3);
+  for (let index = 0; index < particleCount; index += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 2 + Math.random() * 2;
+    particlePositions[index * 3] = Math.cos(angle) * radius;
+    particlePositions[index * 3 + 1] = (Math.random() - 0.5) * 3.2;
+    particlePositions[index * 3 + 2] = (Math.random() - 0.5) * 1.4;
+  }
+  const particleGeometry = new THREE.BufferGeometry();
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  const particles = new THREE.Points(
+    particleGeometry,
+    new THREE.PointsMaterial({
+      color: 0xe2ad42,
+      size: 0.045,
+      transparent: true,
+      opacity: 0.72,
+      sizeAttenuation: true
+    })
+  );
+  scene.add(particles);
+
+  let animationId = null;
+  let elapsed = 0;
+  let pointerX = 0;
+  let pointerY = 0;
+  let resizeObserver = null;
+  let destroyed = false;
+
+  const renderFrame = () => {
+    animationId = null;
+    if (destroyed || !containerElement.isConnected) {
+      destroy();
+      return;
+    }
+    elapsed += 0.016;
+    orbitGroup.rotation.y = Math.sin(elapsed * 0.35) * 0.08 + pointerX * 0.035;
+    orbitGroup.rotation.x = Math.cos(elapsed * 0.3) * 0.045 + pointerY * 0.025;
+    orbitRing.rotation.z += 0.0018;
+    innerRing.rotation.z -= 0.0012;
+    glyphs.forEach((glyph) => {
+      const phase = elapsed * 0.72 + glyph.userData.orbitOffset;
+      const aspectScale = Math.min(1, Math.max(0.68, containerElement.clientWidth / Math.max(containerElement.clientHeight, 1)));
+      glyph.position.set(
+        glyph.userData.side * (2.3 * aspectScale + Math.sin(phase) * 0.1),
+        glyph.userData.row * 0.82 + Math.sin(phase * 1.2) * 0.16,
+        Math.cos(phase) * 0.48
+      );
+      glyph.rotation.y = -glyph.userData.side * 0.16 + Math.sin(phase) * 0.16;
+      glyph.rotation.x = Math.sin(phase * 0.8) * 0.1;
+    });
+    particles.rotation.y = elapsed * 0.018;
+    particles.rotation.z = Math.sin(elapsed * 0.18) * 0.025;
+    renderer.render(scene, camera);
+    animationId = requestAnimationFrame(renderFrame);
+  };
+
+  const onPointerMove = (event) => {
+    const bounds = stageElement.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+    pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
+    pointerY = (event.clientY - bounds.top) / bounds.height - 0.5;
+  };
+  const onPointerLeave = () => {
+    pointerX = 0;
+    pointerY = 0;
+  };
+  const onResize = () => {
+    const nextWidth = containerElement.clientWidth;
+    const nextHeight = containerElement.clientHeight;
+    if (!nextWidth || !nextHeight) return;
+    camera.aspect = nextWidth / nextHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(nextWidth, nextHeight);
+    if (prefersReducedMotion()) renderer.render(scene, camera);
+  };
+  const destroy = () => {
+    if (destroyed) return;
+    destroyed = true;
+    if (animationId !== null) cancelAnimationFrame(animationId);
+    stageElement.removeEventListener('pointermove', onPointerMove);
+    stageElement.removeEventListener('pointerleave', onPointerLeave);
+    window.removeEventListener('resize', onResize);
+    resizeObserver?.disconnect();
+    scene.traverse((object) => {
+      if (object.geometry) object.geometry.dispose();
+      if (object.material) {
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((material) => {
+          material.map?.dispose();
+          material.dispose();
+        });
+      }
+    });
+    renderer.dispose();
+    renderer.domElement.remove();
+    stageElement.removeAttribute('data-webgl-ready');
+    if (activeScenes.get(containerElement)?.destroy === destroy) activeScenes.delete(containerElement);
+  };
+
+  stageElement.addEventListener('pointermove', onPointerMove, { passive: true });
+  stageElement.addEventListener('pointerleave', onPointerLeave, { passive: true });
+  window.addEventListener('resize', onResize);
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(containerElement);
+  }
+
+  const instance = { destroy };
+  activeScenes.set(containerElement, instance);
+  if (prefersReducedMotion()) {
+    glyphs.forEach((glyph, index) => {
+      glyph.position.set(glyph.userData.side * 2.3, glyph.userData.row * 0.82, 0);
+    });
+    renderer.render(scene, camera);
+  } else {
+    renderFrame();
+  }
+  return instance;
+}
+
 /**
  * 2. 3D Auth Stage (Sacred African Shield & Glowing Gateway Key)
  */

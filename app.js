@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {
   init3DHeroCanvas,
+  init3DCodeRobotGlyphs,
   init3DAuthCanvas,
   init3DStoryCanvas,
   init3DAudioVisualizer,
@@ -3026,9 +3027,15 @@ import {
       '<!-- Interactive Bilingual Studio (Only this fills the Code page) -->' +
       '<section class="c4k-ide-section ide-main-standalone" id="code-ide" aria-labelledby="ide-title">' +
         '<div class="c4k-ide-header-box">' +
-          '<figure class="c4k-code-robot-artwork">' +
+          '<div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Idílẹ́wà coding assistant with animated programming glyphs">' +
+            '<div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div>' +
+            '<div class="code-robot-glyph-fallback" aria-hidden="true">' +
+              '<span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span>' +
+            '</div>' +
+            '<figure class="c4k-code-robot-artwork">' +
             '<img src="./assets/idilewa-code-robot.jpg" alt="Idílẹ́wà learning assistant celebrates a coding achievement with a Great job message and +50 XP badge" loading="eager" />' +
-          '</figure>' +
+            '</figure>' +
+          '</div>' +
           '<div class="c4k-ide-badge">' +
             '<span class="badge-code-icon">&lt;/&gt;</span> <span>INTERACTIVE BILINGUAL STUDIO</span>' +
           '</div>' +
@@ -5194,7 +5201,13 @@ import {
     });
   }
 
+  let activeCodeRobotScene = null;
+
   function render() {
+    if (activeCodeRobotScene) {
+      activeCodeRobotScene.destroy();
+      activeCodeRobotScene = null;
+    }
     const { page, params } = parseLocation();
     if (params.lang && LANGUAGES.some((l) => l.id === params.lang)) state.currentLang = params.lang;
     if (params.level && ['beginner', 'intermediate', 'advanced', 'growing', 'fluent'].includes(params.level)) state.level = normalizeCourseLevel(params.level);
@@ -5215,6 +5228,9 @@ import {
       initHeroCinematicVideoEngine();
       const heroCanvas = document.getElementById('hero3DCanvasWrap');
       if (heroCanvas) init3DHeroCanvas(heroCanvas);
+    } else if (page === 'coding') {
+      const codeRobotGlyphs = document.getElementById('codeRobotGlyphCanvas');
+      if (codeRobotGlyphs) activeCodeRobotScene = init3DCodeRobotGlyphs(codeRobotGlyphs);
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const audioCanvas = document.getElementById('waveformCanvas');
       if (audioCanvas) init3DAudioVisualizer(audioCanvas);
