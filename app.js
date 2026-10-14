@@ -591,9 +591,9 @@ import {
               </div>
 
               <!-- 2D Photographic & Greeting Hotspots View (Hidden By Default) -->
-              <div class="hero-photo-wrap" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap" style="display: none;">
+              <div class="hero-photo-wrap family-view-reference" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap" style="display: none;">
                 <div class="hero-photo-frame">
-                  <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" class="hero-photo cinematic-living-image" />
+                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo cinematic-living-image" />
                   <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
                   <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
                   <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>

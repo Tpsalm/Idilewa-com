@@ -249,6 +249,9 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.35s ease;
   will-change: transform;
 }
+.hero-photo-wrap.family-view-reference {
+  aspect-ratio: 4 / 3;
+}
 .hero-photo-wrap:hover {
   box-shadow: 0 52px 130px -10px rgba(6, 69, 38, 0.52),
               0 24px 62px -8px rgba(0, 0, 0, 0.22),
@@ -273,6 +276,21 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   animation: cinematicMicroPushIn 22s ease-in-out infinite alternate;
   transform-origin: 54% 62%;
   will-change: transform;
+}
+.family-view-reference .hero-photo {
+  object-fit: contain;
+  filter: none;
+  animation: none;
+  transform: none;
+}
+.family-view-reference .cinematic-video-canvas,
+.family-view-reference .cinematic-tablet-screen-glow,
+.family-view-reference .cinematic-golden-hour-rays,
+.family-view-reference .cinematic-jewelry-glints,
+.family-view-reference .cinematic-lens-flare,
+.family-view-reference .hero-vignette-overlay,
+.family-view-reference .cinematic-live-badge {
+  display: none;
 }
 @keyframes cinematicMicroPushIn {
   0% {
