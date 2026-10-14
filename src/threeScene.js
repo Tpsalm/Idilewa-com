@@ -340,76 +340,6 @@ export function init3DAuthCanvas(containerElement) {
 }
 
 /**
- * 3. 3D Coding Stage (Yoruba Hologram Code Cube & Cyber Matrix)
- */
-export function init3DCodingCanvas(containerElement) {
-  if (!containerElement) return null;
-  cleanPreviousScene(containerElement);
-  if (!isWebGLAvailable()) {
-    renderFallbackVisual(containerElement, 'Indigenous Yoruba STEAM Hologram');
-    return { destroy: () => { containerElement.innerHTML = ''; } };
-  }
-
-  const width = containerElement.clientWidth || 340;
-  const height = containerElement.clientHeight || 280;
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-  camera.position.set(0, 0, 5.5);
-
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-  renderer.setSize(width, height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.domElement.style.width = '100%';
-  renderer.domElement.style.height = '100%';
-  renderer.domElement.style.display = 'block';
-  containerElement.appendChild(renderer.domElement);
-
-  const ambient = new THREE.AmbientLight(0xffffff, 0.95);
-  scene.add(ambient);
-
-  const cyanLight = new THREE.PointLight(0x06b6d4, 3, 10);
-  cyanLight.position.set(3, 3, 3);
-  scene.add(cyanLight);
-
-  const greenLight = new THREE.PointLight(0x10b981, 3, 10);
-  greenLight.position.set(-3, -3, 3);
-  scene.add(greenLight);
-
-  const group = new THREE.Group();
-  scene.add(group);
-
-  const cubeWire = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 1.5, 1.5),
-    new THREE.MeshStandardMaterial({ color: 0x10b981, wireframe: true, roughness: 0.1, metalness: 0.9 })
-  );
-  group.add(cubeWire);
-
-  const crystal = new THREE.Mesh(
-    new THREE.DodecahedronGeometry(0.7, 1),
-    new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.2, metalness: 0.85, emissive: 0x0e7490, emissiveIntensity: 0.5 })
-  );
-  group.add(crystal);
-
-  const axisRing1 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.3, 0.03, 16, 48),
-    new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2 })
-  );
-  group.add(axisRing1);
-
-  const axisRing2 = new THREE.Mesh(
-    new THREE.TorusGeometry(1.45, 0.03, 16, 48),
-    new THREE.MeshStandardMaterial({ color: 0x15764a, metalness: 0.9, roughness: 0.2 })
-  );
-  axisRing2.rotation.x = Math.PI / 2;
-  group.add(axisRing2);
-
-  const instance = setupSimpleOrbit(containerElement, group, cubeWire, crystal, axisRing1, axisRing2, renderer, scene, camera);
-  activeScenes.set(containerElement, instance);
-  return instance;
-}
-
-/**
  * 4. 3D Story & Culture Stage (Ancient Drum, Cowrie Shell & Magic Story Orb)
  */
 export function init3DStoryCanvas(containerElement) {
@@ -472,9 +402,6 @@ export function autoMount3DElements() {
   const authEl = document.getElementById('auth3DCanvasWrap');
   if (authEl) init3DAuthCanvas(authEl);
 
-  const codingEl = document.getElementById('coding3DCanvasWrap');
-  if (codingEl) init3DCodingCanvas(codingEl);
-
   const storyEl = document.getElementById('story3DCanvasWrap');
   if (storyEl) init3DStoryCanvas(storyEl);
 
@@ -485,8 +412,6 @@ export function autoMount3DElements() {
       init3DHeroCanvas(el);
     } else if (sceneType === 'auth' || sceneType === 'shield') {
       init3DAuthCanvas(el);
-    } else if (sceneType === 'coding' || sceneType === 'cube') {
-      init3DCodingCanvas(el);
     } else if (sceneType === 'story' || sceneType === 'culture') {
       init3DStoryCanvas(el);
     }

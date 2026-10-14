@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import {
   init3DHeroCanvas,
   init3DAuthCanvas,
-  init3DCodingCanvas,
   init3DStoryCanvas,
   init3DAudioVisualizer,
   init3DTiltEngine,
@@ -149,7 +148,7 @@ import {
       ]
     },
     coding: {
-      title: 'Kọ Koodu ní Èdè Rẹ · Code in Your Language.',
+      title: 'Kọ Koodu ní Èdè Rẹ · Code.',
       eyebrow: 'Interactive Bilingual Studio',
       desc: 'Write and test computer programs in Yorùbá, Igbo, Hausa, Swahili, and Python with live compiler terminal output.',
       icon: 'code', image: 'code-kids.jpg', imageAlt: 'Children coding in African languages',
@@ -309,7 +308,7 @@ import {
   const NAV = [
     { label: 'Home', route: 'index', group: 'home' },
     { label: 'Curriculum', route: 'curriculum', group: 'curriculum' },
-    { label: 'Code in Your Language', route: 'coding', group: 'code' },
+    { label: 'Code', route: 'coding', group: 'code' },
     { label: 'Voice Trainer', route: 'trainer', group: 'trainer' },
     { label: 'Read & listen', route: 'oral', group: 'read' },
     { label: 'Stories', route: 'ere', group: 'stories' },
@@ -331,7 +330,7 @@ import {
 
   const LABELS = Object.fromEntries(ROUTES.map((r) => [r, r === 'index' ? 'Home' : r.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())]));
   LABELS.curriculum = 'Curriculum';
-  LABELS.coding = 'Code in Your Language';
+  LABELS.coding = 'Code';
   LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note';
   LABELS.owe_add = 'Share a proverb'; LABELS.owe_detail = 'Owe · translation & meaning';
   LABELS.owe_story = 'Owe · moral story'; LABELS.owe_reflection = 'Owe · reflection';
@@ -3027,11 +3026,14 @@ import {
       '<!-- Interactive Bilingual Studio (Only this fills the Code page) -->' +
       '<section class="c4k-ide-section ide-main-standalone" id="code-ide" aria-labelledby="ide-title">' +
         '<div class="c4k-ide-header-box">' +
+          '<figure class="c4k-code-robot-artwork">' +
+            '<img src="./assets/idilewa-code-robot.jpg" alt="Idílẹ́wà learning assistant celebrates a coding achievement with a Great job message and +50 XP badge" loading="eager" />' +
+          '</figure>' +
           '<div class="c4k-ide-badge">' +
             '<span class="badge-code-icon">&lt;/&gt;</span> <span>INTERACTIVE BILINGUAL STUDIO</span>' +
           '</div>' +
           '<h1 id="ide-title" class="c4k-ide-title">' +
-            'Kọ Koodu ní Èdè Rẹ · Code in Your Language' +
+            'Kọ Koodu ní Èdè Rẹ · Code' +
           '</h1>' +
           '<p class="c4k-ide-subtitle">' +
           'Learn in Yorùbá, Igbo, Hausa, and Kiswahili. Build HTML, CSS, and JavaScript in your browser, or connect a private compiler for Python and 29 more programming languages.' +
@@ -3190,17 +3192,11 @@ import {
         routeLink('index', 'Home') + '<span>/</span><strong>Curriculum</strong>' +
       '</div>' +
 
-      '<!-- 1. 3D Animated African STEAM Hologram Stage -->' +
+      '<!-- Curriculum learning hero artwork -->' +
       '<section class="c4k-3d-hero-stage scroll-3d-reveal" id="code-hero-stage">' +
-        '<div class="c4k-3d-ambient-glow" aria-hidden="true"></div>' +
-        '<div id="coding3DCanvasWrap" class="c4k-3d-canvas-wrap" data-3d-scene="coding" aria-label="Interactive 3D Yoruba Hologram Code Cube"></div>' +
-        '<div class="c4k-3d-particles-container" id="c4k-particles" aria-hidden="true">' +
-          '<div class="c4k-floating-token token-1">{ ÈdèKoodu }</div>' +
-          '<div class="c4k-floating-token token-2">tẹ_jade("Ẹ n lẹ́")</div>' +
-          '<div class="c4k-floating-token token-3">🤖 STEAM & AI</div>' +
-          '<div class="c4k-floating-token token-4">fún i = 1 dé 10</div>' +
-          '<div class="c4k-floating-token token-5">🌍 African Innovators</div>' +
-        '</div>' +
+        '<figure class="c4k-curriculum-photo">' +
+          '<img src="./assets/code-kids.jpg" alt="Two young learners working together on a coding activity on a laptop" loading="eager" />' +
+        '</figure>' +
 
         '<div class="c4k-hero-content-wrapper">' +
           '<div class="c4k-badge-pill">' +
@@ -3215,7 +3211,7 @@ import {
           '<div class="c4k-quick-pills-row">' +
             '<button type="button" class="c4k-nav-pill active" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
             '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
-            routeLink('coding', icon('code', 14) + ' Code in Your Language IDE', 'c4k-nav-pill') +
+            routeLink('coding', icon('code', 14) + ' Code IDE', 'c4k-nav-pill') +
           '</div>' +
 
           '<!-- 3 Interactive Grade Band 3D Hub Cards -->' +
@@ -5222,9 +5218,6 @@ import {
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const audioCanvas = document.getElementById('waveformCanvas');
       if (audioCanvas) init3DAudioVisualizer(audioCanvas);
-    } else if (page === 'coding' || page === 'curriculum') {
-      const codingCanvas = document.getElementById('coding3DCanvasWrap');
-      if (codingCanvas) init3DCodingCanvas(codingCanvas);
     } else if (page === 'ere' || page === 'oral') {
       const storyCanvas = document.getElementById('story3DCanvasWrap');
       if (storyCanvas) init3DStoryCanvas(storyCanvas);
