@@ -46,9 +46,9 @@ import {
     'voice_lessons',
     'curriculum',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
-    'ere', 'ere_game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
+    'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
-    'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'profile', 'schools',
+    'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'payment', 'pricing', 'profile', 'schools',
     'tutor', 'voices'
   ];
 
@@ -326,7 +326,7 @@ import {
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
     owe_detail: 'read', owe_story: 'read', owe_reflection: 'read', voices: 'read',
     connect_students: 'about', connect_teachers: 'about', consent: 'about', contact: 'about', privacy: 'about',
-    ere: 'stories', ere_game: 'stories', ifa: 'culture', ifa_odu: 'culture',
+    ere: 'stories', ere_game: 'stories', game: 'stories', library: 'read', payment: 'about', ifa: 'culture', ifa_odu: 'culture',
     about: 'about', method: 'about', schools: 'about', tutor: 'about',
     guides: 'culture', human: 'culture', keepers: 'culture'
   };
@@ -341,6 +341,9 @@ import {
   LABELS.consent = 'Parent & guardian consent';
   LABELS.contact = 'Contact';
   LABELS.privacy = 'Privacy';
+  LABELS.library = 'Library';
+  LABELS.game = 'Tile game';
+  LABELS.payment = 'Payment';
   LABELS.trainer = 'Voice African Language Trainer';
   LABELS.voice_lessons = 'Voice African Language Trainer';
 
@@ -360,6 +363,9 @@ import {
     teacherRequests: [],
     teacherReplies: [],
     teacherFilter: 'all',
+    tileGame: { language: 'yoruba', deck: [], selected: [], matched: [], moves: 0 },
+    libraryFilter: 'all',
+    librarySearch: '',
     interested: [],
     available: { yoruba: true, igbo: true, hausa: true, swahili: true, twi: false, wolof: false, zulu: false, fulfulde: false },
     loginMode: 'signin',
@@ -405,6 +411,13 @@ import {
         ...stored,
         available: { ...defaults.available, ...(stored.available || {}) },
         consent: { ...defaults.consent, ...(stored.consent || {}) },
+        tileGame: {
+          ...defaults.tileGame,
+          ...(stored.tileGame || {}),
+          deck: Array.isArray(stored.tileGame?.deck) ? stored.tileGame.deck : [],
+          selected: Array.isArray(stored.tileGame?.selected) ? stored.tileGame.selected.slice(0, 2) : [],
+          matched: Array.isArray(stored.tileGame?.matched) ? stored.tileGame.matched : []
+        },
         trainer: {
           ...defaults.trainer,
           ...(stored.trainer || {}),
@@ -434,6 +447,8 @@ import {
         teacherRequests: Array.isArray(stored.teacherRequests) ? stored.teacherRequests : [],
         teacherReplies: Array.isArray(stored.teacherReplies) ? stored.teacherReplies : [],
         teacherFilter: typeof stored.teacherFilter === 'string' ? stored.teacherFilter : 'all',
+        libraryFilter: typeof stored.libraryFilter === 'string' ? stored.libraryFilter : 'all',
+        librarySearch: typeof stored.librarySearch === 'string' ? stored.librarySearch : '',
         reflectionFeeling: typeof stored.reflectionFeeling === 'string' ? stored.reflectionFeeling : '',
         authRole: typeof stored.authRole === 'string' ? stored.authRole : 'child',
         completed: Array.isArray(stored.completed) ? stored.completed : defaults.completed.slice(),
@@ -507,7 +522,13 @@ import {
   function renderHeader(page) {
     const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
     const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
-    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
+    const mobileShortcuts = [
+      { route: 'library', label: 'Library', ico: 'book' },
+      { route: 'game', label: 'Tile game', ico: 'sparkles' },
+      { route: 'profile', label: 'Profile', ico: 'user' },
+      { route: 'payment', label: 'Payment', ico: 'shield' }
+    ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
+    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts;
     document.getElementById('site-header').innerHTML = `
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
@@ -532,10 +553,9 @@ import {
   function renderMobileNav(page) {
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
-      { route: 'curriculum', label: 'Curriculum', ico: 'book' },
+      { route: 'library', label: 'Library', ico: 'book' },
+      { route: 'game', label: 'Game', ico: 'sparkles' },
       { route: 'coding', label: 'Code', ico: 'code' },
-      { route: 'trainer', label: 'Trainer', ico: 'mic' },
-      { route: 'ere', label: 'Stories', ico: 'quote' },
       { route: 'profile', label: 'Progress', ico: 'user' }
     ];
     document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
@@ -549,8 +569,8 @@ import {
           <p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p>
         </div>
         <div class="footer-links"><h3>Curriculum</h3>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</div>
-        <div class="footer-links"><h3>Discover</h3>${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
-        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('contact', 'Contact us')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</div>
+        <div class="footer-links"><h3>Discover</h3>${routeLink('library', 'Learning library')}${routeLink('game', 'African word game')}${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
+        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('profile', 'Learner profile')}${routeLink('pricing', 'Plans & pricing')}${routeLink('payment', 'Payment information')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('contact', 'Contact us')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</div>
       </div>
       <div class="container footer-bottom"><span>© Idilewa · A learning space for languages, culture and technology</span><span class="footer-note">A thoughtful beginning, built to grow.</span></div>
     </footer>`;
@@ -3602,15 +3622,143 @@ import {
 
   function renderDirectory() {
     const groups = [
-      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'kids', 'individuals', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
+      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'library', 'game', 'kids', 'individuals', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
       { title: 'Stories & living culture', text: 'Explore oral traditions, voices, guides and cultural context.', pages: ['ere', 'ere_game', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'voices', 'ifa', 'ifa_odu', 'guides', 'human', 'keepers'] },
-      { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'login', 'consent', 'base'] }
+      { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'payment', 'login', 'consent', 'base'] }
     ];
     return `<div class="container route-page directory-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Explore all spaces</strong></div><section class="directory-hero"><span class="section-kicker">The Idilewa map</span><h1>One home.<br /><em>Many ways to belong.</em></h1><p>Start with a language, follow a story, explore culture or build something new.</p>${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}</section>${groups.map((g) => `<section class="directory-group"><div class="directory-heading"><div><span class="section-kicker">A learning layer</span><h2>${g.title}</h2><p>${g.text}</p></div><span class="directory-count">${g.pages.length} spaces</span></div><div class="directory-links">${g.pages.map((page) => `<a href="#/${page}" data-route="${page}" class="directory-link"><span>${icon(page === 'coding' ? 'code' : page.includes('oral') || page.includes('ere') || page === 'voices' ? 'book' : page === 'schools' || page === 'tutor' || page === 'connect_students' || page === 'connect_teachers' ? 'people' : 'sparkles', 17)}</span><strong>${LABELS[page]}</strong>${icon('arrow', 15)}</a>`).join('')}</div></section>`).join('')}<div class="directory-note">${icon('info', 17)} Every named prototype route is connected through this route map and the main navigation.</div></div>`;
   }
 
   function renderPricing() {
-    return `<div class="container route-page pricing-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Plans</strong></div><section class="pricing-hero"><span class="section-kicker">Free to start · no checkout</span><h1>More language.<br /><em>More belonging.</em></h1><p>All current learning plans are free. No payment details are collected and no subscription is started.</p><div class="pricing-free-note">${icon('check', 16)} Family: $0 USD/month <span aria-hidden="true">·</span> School: $0 USD/month</div></section>${renderStepper(['Explore plans', 'Choose learning paths', 'Review as a family', 'Begin together'], 0)}<div class="pricing-grid"><article class="pricing-card"><span class="pricing-label">Begin here</span><h2>Explorer</h2><p>For learners ready to try a first path.</p><div class="pricing-cost"><strong>Free</strong><small>to get started</small></div><ul><li>${icon('check', 15)} Explore available languages</li><li>${icon('check', 15)} Try sample lessons & stories</li><li>${icon('check', 15)} Follow a personal learning path</li></ul>${routeLink('languages', 'Start exploring ' + icon('arrow', 15), 'button button-outline')}</article><article class="pricing-card pricing-featured"><span class="popular-pill">Made for together</span><span class="pricing-label">For home</span><h2>Family</h2><p>Free access to the current language, culture and story learning previews.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore available family learning paths</li><li>${icon('check', 15)} Try sample stories and activities</li><li>${icon('check', 15)} Keep progress in this browser preview</li></ul>${routeLink('login', `Create a free account ${icon('arrow', 15)}`, 'button button-primary', 'data-mode="signup"')}</article><article class="pricing-card"><span class="pricing-label">For educators</span><h2>School</h2><p>Free preview of classroom learning paths; no school service or student roster is active.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore sample language modules</li><li>${icon('check', 15)} Preview culture and coding activities</li><li>${icon('lock', 15)} Student connections are not available</li></ul>${routeLink('schools', 'Explore schools ' + icon('arrow', 15), 'button button-outline')}</article></div><p class="pricing-footnote">Current plan prices are $0. No Paystack checkout is started for free plans. If prices change, confirm the new amount and billing terms before enabling payments.</p></div>`;
+    return `<div class="container route-page pricing-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Plans</strong></div><section class="pricing-hero page-depth-reveal"><span class="section-kicker">Free to start · no checkout</span><h1>More language.<br /><em>More belonging.</em></h1><p>All current learning plans are free. No payment details are collected and no subscription is started.</p><div class="pricing-free-note">${icon('check', 16)} Family: $0 USD/month <span aria-hidden="true">·</span> School: $0 USD/month</div></section>${renderStepper(['Explore plans', 'Choose learning paths', 'Review as a family', 'Begin together'], 0)}<div class="pricing-grid"><article class="pricing-card"><span class="pricing-label">Begin here</span><h2>Explorer</h2><p>For learners ready to try a first path.</p><div class="pricing-cost"><strong>Free</strong><small>to get started</small></div><ul><li>${icon('check', 15)} Explore available languages</li><li>${icon('check', 15)} Try sample lessons & stories</li><li>${icon('check', 15)} Follow a personal learning path</li></ul>${routeLink('languages', 'Start exploring ' + icon('arrow', 15), 'button button-outline')}</article><article class="pricing-card pricing-featured"><span class="popular-pill">Made for together</span><span class="pricing-label">For home</span><h2>Family</h2><p>Free access to the current language, culture and story learning previews.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore available family learning paths</li><li>${icon('check', 15)} Try sample stories and activities</li><li>${icon('check', 15)} Keep progress in this browser preview</li></ul>${routeLink('login', `Create a free account ${icon('arrow', 15)}`, 'button button-primary', 'data-mode="signup"')}</article><article class="pricing-card"><span class="pricing-label">For educators</span><h2>School</h2><p>Free preview of classroom learning paths; no school service or student roster is active.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore sample language modules</li><li>${icon('check', 15)} Preview culture and coding activities</li><li>${icon('lock', 15)} Student connections are not available</li></ul>${routeLink('schools', 'Explore schools ' + icon('arrow', 15), 'button button-outline')}</article></div><p class="pricing-footnote">Current plan prices are $0. No Paystack checkout is started for free plans. ${routeLink('payment', 'View payment information ' + icon('arrow', 14), 'text-link')}. If prices change, confirm the new amount and billing terms before enabling payments.</p></div>`;
+  }
+
+  const LIBRARY_ITEMS = [
+    { title: 'Grandmother’s garden', kind: 'Stories', text: 'A gentle story about patience, care and a seed taking its time.', image: 'story-grandmother.jpg', route: 'owe_story', alt: 'A grandmother sharing a garden story with a child' },
+    { title: 'Words that welcome', kind: 'Language', text: 'Practice greetings and useful first phrases in four African languages.', image: 'yoruba-kids-culture.jpg', route: 'languages', alt: 'Children learning African-language greetings together' },
+    { title: 'Listen together', kind: 'Audio', text: 'Hear a phrase, notice its rhythm and try saying it at your own pace.', image: 'listening-reader.jpg', route: 'trainer', alt: 'A learner listening closely while following a book' },
+    { title: 'Make your first project', kind: 'Code', text: 'Explore beginner-friendly coding paths with familiar-language hints.', image: 'code-kids.jpg', route: 'coding', alt: 'Young learners collaborating on a coding project' },
+    { title: 'Proverbs with context', kind: 'Culture', text: 'Read a proverb, explore its meaning and reflect with care.', image: 'yoruba-educator-woman.jpg', route: 'owe', alt: 'A language educator introducing a proverb' },
+    { title: 'Match the words', kind: 'Games', text: 'Pair African-language words with their English meanings in a quick game.', image: 'african-kids-friends.jpg', route: 'game', alt: 'Children enjoying a language-learning game together' }
+  ];
+
+  function renderLibrary() {
+    const kinds = ['All', ...new Set(LIBRARY_ITEMS.map((item) => item.kind))];
+    const selectedFilter = state.libraryFilter || 'all';
+    const query = state.librarySearch || '';
+    const cards = LIBRARY_ITEMS.filter((item) => (selectedFilter === 'all' || item.kind.toLowerCase() === selectedFilter) && `${item.title} ${item.kind} ${item.text}`.toLowerCase().includes(query.toLowerCase()));
+    return `<div class="container route-page library-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Library</strong></div>
+      <section class="library-hero page-depth-reveal">
+        <div class="library-hero-copy"><span class="section-kicker">A welcoming place to explore</span><h1>Find a story.<br /><em>Follow your curiosity.</em></h1><p>Browse language practice, stories, listening, culture and creative technology. Choose a small next step that feels right for you.</p><div class="library-hero-actions">${routeLink('game', `Play the word match ${icon('arrow', 15)}`, 'button button-primary')}${routeLink('curriculum', 'Browse curriculum', 'button button-outline')}</div></div>
+        <div class="library-hero-art" aria-label="A family sharing a book"><img src="${imageUrl('story-grandmother.jpg')}" alt="A grandmother and child sharing a story in a garden" loading="lazy" /><span class="library-art-caption">${icon('book', 16)} Stories travel between generations</span></div>
+      </section>
+      <section class="library-browse" aria-labelledby="library-browse-title">
+        <div class="section-heading library-heading"><div><span class="section-kicker">The learning shelf</span><h2 id="library-browse-title">Choose what to explore.</h2><p>Every card opens a real learning space in Idilewa.</p></div><label class="library-search">${icon('search', 17)}<span>Search the library</span><input type="search" data-library-search value="${esc(query)}" placeholder="Stories, language, code…" /></label></div>
+        <div class="library-filters" role="group" aria-label="Filter library by type">${kinds.map((kind) => { const value = kind.toLowerCase(); const active = selectedFilter === value; return `<button type="button" class="library-filter ${active ? 'is-active' : ''}" data-action="library-filter" data-filter="${value}" aria-pressed="${active}">${kind}</button>`; }).join('')}</div>
+        <div class="library-card-grid" aria-live="polite">${LIBRARY_ITEMS.map((item) => { const visible = (selectedFilter === 'all' || item.kind.toLowerCase() === selectedFilter) && `${item.title} ${item.kind} ${item.text}`.toLowerCase().includes(query.toLowerCase()); return `<a class="library-card" href="#/${item.route}" data-route="${item.route}" data-library-item data-library-kind="${item.kind.toLowerCase()}" ${visible ? '' : 'hidden'}><div class="library-card-image"><img src="${imageUrl(item.image)}" alt="${esc(item.alt)}" loading="lazy" /><span>${esc(item.kind)}</span></div><div class="library-card-copy"><h3>${esc(item.title)}</h3><p>${esc(item.text)}</p><span class="library-card-link">Explore ${icon('arrow', 14)}</span></div></a>`; }).join('')}<p class="library-empty" data-library-empty ${cards.length ? 'hidden' : ''}>No matching shelf items. Try another word or choose “All”.</p></div>
+      </section>
+      <section class="library-next-step"><div><span class="section-kicker">Ready to try something?</span><h2>Learning can start with play.</h2><p>Match a few words in Yorùbá, Igbo, Hausa or Kiswahili—then explore the phrases in the curriculum.</p></div>${routeLink('game', `Open the tile game ${icon('arrow', 15)}`, 'button button-primary')}</section>
+    </div>`;
+  }
+
+  const TILE_WORDS = {
+    yoruba: { hello: ['Ẹ káàárọ̀', 'Good morning'], thanks: ['Ẹ ṣé', 'Thank you'], water: ['Omi', 'Water'], family: ['Ìdílé', 'Family'] },
+    igbo: { hello: ['Ndewo', 'Hello'], thanks: ['Daalụ', 'Thank you'], water: ['Mmiri', 'Water'], family: ['Ezinụlọ', 'Family'] },
+    hausa: { hello: ['Sannu', 'Hello'], thanks: ['Na gode', 'Thank you'], water: ['Ruwa', 'Water'], family: ['Iyali', 'Family'] },
+    swahili: { hello: ['Habari', 'Hello'], thanks: ['Asante', 'Thank you'], water: ['Maji', 'Water'], family: ['Familia', 'Family'] }
+  };
+
+  function makeTileDeck() {
+    const pairs = Object.keys(TILE_WORDS[state.tileGame.language] || TILE_WORDS.yoruba);
+    const deck = pairs.flatMap((pair) => [{ id: `${pair}-native`, pair, side: 0 }, { id: `${pair}-meaning`, pair, side: 1 }]);
+    for (let i = deck.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+  }
+
+  function renderTileGame() {
+    const game = state.tileGame;
+    if (!TILE_WORDS[game.language]) game.language = 'yoruba';
+    const expectedIds = Object.keys(TILE_WORDS[game.language]).flatMap((pair) => [`${pair}-native`, `${pair}-meaning`]);
+    if (game.deck.length !== expectedIds.length || !expectedIds.every((id) => game.deck.some((card) => card?.id === id))) {
+      game.deck = makeTileDeck();
+      game.selected = [];
+      game.matched = [];
+      game.moves = 0;
+      saveState();
+    }
+    const language = getLanguage(game.language);
+    const isComplete = game.matched.length === Object.keys(TILE_WORDS[game.language]).length;
+    const tiles = game.deck.map((card, index) => {
+      const word = TILE_WORDS[game.language][card.pair];
+      const isOpen = game.selected.includes(card.id) || game.matched.includes(card.pair);
+      const text = isOpen ? word[card.side] : '✦';
+      const label = isOpen ? `${word[card.side]}${game.matched.includes(card.pair) ? ', matched' : ''}` : `Hidden tile ${index + 1}`;
+      return `<button type="button" class="tile-match-card ${isOpen ? 'is-open' : ''} ${game.matched.includes(card.pair) ? 'is-matched' : ''}" data-action="tile-card" data-card="${card.id}" data-pair="${card.pair}" aria-label="${esc(label)}" aria-pressed="${isOpen}" ${game.matched.includes(card.pair) ? 'disabled' : ''}><span class="tile-card-side">${card.side === 0 ? esc(language.name) : 'English'}</span><strong>${esc(text)}</strong><span class="tile-card-mark">${isOpen ? icon(game.matched.includes(card.pair) ? 'check' : 'sparkles', 17) : '＋'}</span></button>`;
+    }).join('');
+    return `<div class="container route-page tile-game-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('library', 'Library')}<span>/</span><strong>Tile game</strong></div>
+      <section class="tile-game-hero page-depth-reveal"><div><span class="section-kicker">A little language-play</span><h1>Find the word<br /><em>that belongs.</em></h1><p>Turn over two tiles and match each African-language phrase to its English meaning. A small game for curious learners of every age.</p><div class="tile-game-controls"><label for="tile-language-select">Practice language</label><select id="tile-language-select">${LANGUAGES.map((item) => `<option value="${item.id}" ${game.language === item.id ? 'selected' : ''}>${item.name}</option>`).join('')}</select><button type="button" class="button button-outline" data-action="tile-game-reset">${icon('refresh', 16)} Start again</button></div></div><div class="tile-game-hero-art"><img src="${imageUrl('african-kids-friends.jpg')}" alt="Friends smiling as they learn together" loading="lazy" /><span>${icon('sparkles', 16)} Play · notice · remember</span></div></section>
+      <section class="tile-game-board-section" aria-labelledby="tile-game-title">
+        <div class="tile-game-board-heading"><div><span class="section-kicker">${isComplete ? 'Beautifully matched' : `${language.name} · English`}</span><h2 id="tile-game-title">${isComplete ? 'All pairs found!' : 'Match the pairs'}</h2><p>${isComplete ? `You found all four pairs in ${game.moves} ${game.moves === 1 ? 'move' : 'moves'}. Try another language or play again.` : 'Choose any two tiles. Matched pairs stay face up.'}</p></div><div class="tile-game-score"><span><strong>${game.moves}</strong> moves</span><span><strong>${game.matched.length}/4</strong> pairs</span></div></div>
+        <div class="tile-match-grid" aria-label="Word matching tiles">${tiles}</div>
+        <p class="tile-game-status" role="status">${isComplete ? `Great work! ${game.moves} moves to complete this round.` : game.selected.length === 2 ? 'Not a match this time. Take a look, then try again.' : game.selected.length === 1 ? 'One tile turned over. Choose its meaning or matching phrase.' : 'Turn over two tiles to find a matching pair.'}</p>
+      </section>
+      <section class="tile-game-tip"><span>${icon('heart', 20)}</span><div><strong>Learning tip</strong><p>Say each phrase aloud if you know it, and ask a family member or language speaker about pronunciation and context.</p></div>${routeLink('curriculum', 'Explore lessons ' + icon('arrow', 14), 'text-link')}</section>
+    </div>`;
+  }
+
+  function renderPayment() {
+    return `<div class="container route-page payment-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Payment</strong></div>
+      <section class="payment-hero page-depth-reveal"><div class="payment-hero-copy"><span class="section-kicker">Billing & payment information</span><h1>Your learning is<br /><em>free to explore.</em></h1><p>All current Idilewa plans are $0. There is no checkout, recurring charge or payment information to enter.</p><div class="payment-free-status">${icon('shield', 20)}<span><strong>No payment due</strong><small>No card or bank details are collected here.</small></span></div>${routeLink('pricing', 'Review plans and what’s included ' + icon('arrow', 15), 'button button-primary')}</div><div class="payment-hero-art"><img src="${imageUrl('page-pricing-1.jpg')}" alt="A family exploring a learning plan together" loading="lazy" /><span>${icon('check', 16)} Family and School · $0 USD/month</span></div></section>
+      <section class="payment-details"><article class="payment-summary-card"><span class="section-kicker">Current plan</span><div><span class="payment-plan-icon">${icon('sparkles', 21)}</span><span><strong>Idilewa learning preview</strong><small>Family and School plans · no charge</small></span></div><strong class="payment-zero">$0 <small>USD / month</small></strong><p>Explore the available learning paths, stories and activities at no cost.</p><span class="payment-plan-status">${icon('check', 14)} Active preview · no billing set up</span></article><article class="payment-safety-card">${icon('lock', 21)}<div><h2>Nothing to pay or manage</h2><p>Billing history, saved payment methods and paid subscriptions are not enabled. We will not ask for card details while all plans remain free.</p>${routeLink('contact', 'Questions? Contact Idilewa ' + icon('arrow', 14), 'text-link')}</div></article></section>
+      <p class="payment-footnote">This page is an account-information view, not a payment service. If paid plans are introduced, prices, terms and a secure payment provider must be confirmed before checkout is enabled.</p>
+    </div>`;
+  }
+
+  let profilePhoto = (() => {
+    try { return localStorage.getItem('idilewa-profile-photo') || ''; } catch (_) { return ''; }
+  })();
+
+  async function saveProfilePhoto(file) {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showToast('Choose a JPG, PNG or WebP image.', 'error');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('That image is larger than 8 MB. Choose a smaller file.', 'error');
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error('The selected image could not be read.'));
+        image.src = objectUrl;
+      });
+      const scale = Math.min(1, 512 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Image processing is unavailable in this browser.');
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+      localStorage.setItem('idilewa-profile-photo', dataUrl);
+      profilePhoto = dataUrl;
+      render();
+      showToast('Profile photo saved on this device.');
+    } catch (error) {
+      showToast(`Could not save that photo: ${error.message || 'browser storage is unavailable'}`, 'error');
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   }
 
   function renderProfile() {
@@ -3618,7 +3766,7 @@ import {
     const percent = Math.min(100, Math.round((completedCount / 8) * 100));
     const lang = getLanguage(state.currentLang);
     const journeyStep = completedCount >= 8 ? 3 : state.streak >= 3 ? 2 : completedCount ? 1 : 0;
-    return `<div class="container route-page profile-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My progress</strong></div>${renderStepper(['Choose a path', 'Practice a lesson', 'Build a streak', 'Celebrate progress'], journeyStep)}<section class="profile-welcome"><div class="profile-avatar">${icon('user', 27)}</div><div><span class="section-kicker">Your learning space · demo</span><h1>A good day to keep going.</h1><p>Your progress is saved in this browser for this prototype.</p></div><button class="button button-outline" data-route="login">${icon('user', 16)} Account settings</button></section><div class="profile-overview-grid"><article class="progress-main-card"><div class="progress-main-head"><div><span class="section-kicker">Current path</span><h2>${lang.name} · ${state.level.charAt(0).toUpperCase() + state.level.slice(1)}</h2><p>Keep building confidence, one small lesson at a time.</p></div><span class="progress-medallion">${icon('leaf', 23)}</span></div><div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div><div class="progress-foot"><span>${completedCount} lessons completed</span>${routeLink('course', 'Continue learning ' + icon('arrow', 14), 'text-link')}</div></article><div class="stat-card stat-streak"><span>${icon('sparkles', 20)}</span><small>Learning streak</small><strong>${state.streak} <em>days</em></strong><p>Showing up is a win.</p></div><div class="stat-card stat-points"><span>${icon('star', 20)}</span><small>Practice points</small><strong>${state.points}</strong><p>Earned by trying new things.</p></div></div><div class="profile-lower-grid"><section class="profile-card"><div class="section-heading compact-heading"><div><span class="section-kicker">Your recent steps</span><h2>Learning timeline</h2></div>${routeLink('course', 'View path ' + icon('arrow', 14), 'text-link')}</div><div class="timeline-row"><span class="timeline-check">${icon('check', 15)}</span><div><strong>Start with a greeting</strong><small>${lang.name} · First lesson</small></div><span class="timeline-status">${state.completed.includes(`${lang.id}-greetings-intro`) ? 'Complete' : 'Ready'}</span></div><div class="timeline-row timeline-next"><span class="timeline-num">02</span><div><strong>People close to us</strong><small>Next module · Words for family</small></div><button class="text-link" data-action="open-module" data-module="family" data-lang="${lang.id}" data-level="${state.level}">Open ${icon('arrow', 14)}</button></div><div class="timeline-row timeline-next"><span class="timeline-num">03</span><div><strong>Stories & memory</strong><small>Explore a story and listen for new words</small></div>${routeLink('ere', 'Explore ' + icon('arrow', 14), 'text-link')}</div></section><aside class="profile-badges"><span class="section-kicker">Small things worth celebrating</span><h2>Your first badges</h2><div class="badge-list"><div class="badge-item"><span class="badge-icon badge-green">${icon('leaf', 18)}</span><div><strong>First steps</strong><small>Opened your learning path</small></div></div><div class="badge-item"><span class="badge-icon badge-yellow">${icon('volume', 18)}</span><div><strong>Good listener</strong><small>Practiced a spoken phrase</small></div></div><div class="badge-item badge-locked"><span class="badge-icon">${icon('trophy', 18)}</span><div><strong>Story keeper</strong><small>Complete a story activity</small></div></div></div></aside></div><div class="profile-privacy-note">${icon('lock', 16)} This demo keeps progress on this device. Production accounts require secure authentication and privacy review.</div></div>`;
+    return `<div class="container route-page profile-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My progress</strong></div>${renderStepper(['Choose a path', 'Practice a lesson', 'Build a streak', 'Celebrate progress'], journeyStep)}<section class="profile-welcome page-depth-reveal"><div class="profile-photo-wrap"><div class="profile-avatar">${profilePhoto ? `<img src="${esc(profilePhoto)}" alt="Your profile photo" />` : icon('user', 27)}</div><label class="profile-photo-button" for="profile-photo-input">${icon('edit', 15)} Choose photo</label><input id="profile-photo-input" type="file" accept="image/jpeg,image/png,image/webp" /></div><div><span class="section-kicker">Your learning space · demo</span><h1>A good day to keep going.</h1><p>Your progress is saved in this browser for this prototype.</p><small class="profile-photo-note">Profile photos are resized and stored only in this browser on this device.</small></div><button class="button button-outline" data-route="login">${icon('user', 16)} Account settings</button></section><div class="profile-overview-grid"><article class="progress-main-card"><div class="progress-main-head"><div><span class="section-kicker">Current path</span><h2>${lang.name} · ${state.level.charAt(0).toUpperCase() + state.level.slice(1)}</h2><p>Keep building confidence, one small lesson at a time.</p></div><span class="progress-medallion">${icon('leaf', 23)}</span></div><div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div><div class="progress-foot"><span>${completedCount} lessons completed</span>${routeLink('course', 'Continue learning ' + icon('arrow', 14), 'text-link')}</div></article><div class="stat-card stat-streak"><span>${icon('sparkles', 20)}</span><small>Learning streak</small><strong>${state.streak} <em>days</em></strong><p>Showing up is a win.</p></div><div class="stat-card stat-points"><span>${icon('star', 20)}</span><small>Practice points</small><strong>${state.points}</strong><p>Earned by trying new things.</p></div></div><div class="profile-lower-grid"><section class="profile-card"><div class="section-heading compact-heading"><div><span class="section-kicker">Your recent steps</span><h2>Learning timeline</h2></div>${routeLink('course', 'View path ' + icon('arrow', 14), 'text-link')}</div><div class="timeline-row"><span class="timeline-check">${icon('check', 15)}</span><div><strong>Start with a greeting</strong><small>${lang.name} · First lesson</small></div><span class="timeline-status">${state.completed.includes(`${lang.id}-greetings-intro`) ? 'Complete' : 'Ready'}</span></div><div class="timeline-row timeline-next"><span class="timeline-num">02</span><div><strong>People close to us</strong><small>Next module · Words for family</small></div><button class="text-link" data-action="open-module" data-module="family" data-lang="${lang.id}" data-level="${state.level}">Open ${icon('arrow', 14)}</button></div><div class="timeline-row timeline-next"><span class="timeline-num">03</span><div><strong>Stories & memory</strong><small>Explore a story and listen for new words</small></div>${routeLink('ere', 'Explore ' + icon('arrow', 14), 'text-link')}</div></section><aside class="profile-badges"><span class="section-kicker">Small things worth celebrating</span><h2>Your first badges</h2><div class="badge-list"><div class="badge-item"><span class="badge-icon badge-green">${icon('leaf', 18)}</span><div><strong>First steps</strong><small>Opened your learning path</small></div></div><div class="badge-item"><span class="badge-icon badge-yellow">${icon('volume', 18)}</span><div><strong>Good listener</strong><small>Practiced a spoken phrase</small></div></div><div class="badge-item badge-locked"><span class="badge-icon">${icon('trophy', 18)}</span><div><strong>Story keeper</strong><small>Complete a story activity</small></div></div></div></aside></div><div class="profile-privacy-note">${icon('lock', 16)} This demo keeps progress on this device. Production accounts require secure authentication and privacy review.</div></div>`;
   }
 
   function renderContact() {
@@ -4565,6 +4713,9 @@ import {
       case 'owe_detail': return renderOweDetail();
       case 'owe_story': return renderOweStory();
       case 'owe_reflection': return renderOweReflection();
+      case 'library': return renderLibrary();
+      case 'game': return renderTileGame();
+      case 'payment': return renderPayment();
       case 'connect_teachers': return renderConnectTeachers();
       case 'connect_students': return renderConnectStudents();
       case 'voices': return renderVoices();
@@ -5845,6 +5996,52 @@ import {
       case 'select-language':
         if (state.available[lang]) { state.currentLang = lang; saveState(); navigate('course', { lang }); }
         break;
+      case 'library-filter':
+        state.libraryFilter = el.dataset.filter || 'all';
+        saveState();
+        render();
+        break;
+      case 'tile-game-reset':
+        state.tileGame.deck = makeTileDeck();
+        state.tileGame.selected = [];
+        state.tileGame.matched = [];
+        state.tileGame.moves = 0;
+        saveState();
+        render();
+        break;
+      case 'tile-card': {
+        const game = state.tileGame;
+        const cardId = el.dataset.card;
+        const pairId = el.dataset.pair;
+        if (!cardId || !pairId || game.selected.length >= 2 || game.matched.includes(pairId) || game.selected.includes(cardId)) break;
+        game.selected.push(cardId);
+        if (game.selected.length === 2) {
+          game.moves += 1;
+          const picked = game.deck.filter((card) => game.selected.includes(card.id));
+          if (picked.length === 2 && picked[0].pair === picked[1].pair) {
+            game.matched.push(pairId);
+            game.selected = [];
+            saveState();
+            render();
+            if (game.matched.length === Object.keys(TILE_WORDS[game.language]).length) showToast(`All pairs matched in ${game.moves} ${game.moves === 1 ? 'move' : 'moves'}!`);
+            else showToast('Match found! Keep going.');
+            break;
+          }
+          const pendingSelection = game.selected.join('|');
+          saveState();
+          render();
+          window.setTimeout(() => {
+            if (parseLocation().page !== 'game' || state.tileGame.selected.join('|') !== pendingSelection) return;
+            state.tileGame.selected = [];
+            saveState();
+            render();
+          }, 900);
+          break;
+        }
+        saveState();
+        render();
+        break;
+      }
       case 'notify-language':
         if (!state.interested.includes(lang)) state.interested.push(lang);
         saveState(); render(); showToast(`${SOON_LANGUAGES.find((l) => l.id === lang)?.name || LANGUAGES.find((l) => l.id === lang)?.name || 'Language'} saved to your interest list on this device.`); break;
@@ -6165,6 +6362,23 @@ import {
 
   document.addEventListener('change', (event) => {
     const el = event.target;
+    if (el.matches('#profile-photo-input')) {
+      const file = el.files?.[0];
+      el.value = '';
+      if (file) void saveProfilePhoto(file);
+      return;
+    }
+    if (el.matches('#tile-language-select')) {
+      if (!TILE_WORDS[el.value]) return;
+      state.tileGame.language = el.value;
+      state.tileGame.deck = makeTileDeck();
+      state.tileGame.selected = [];
+      state.tileGame.matched = [];
+      state.tileGame.moves = 0;
+      saveState();
+      render();
+      return;
+    }
     if (el.matches('[data-action="ide-select-preset"]')) { handleAction('ide-select-preset', el); return; }
     if (el.matches('#ide-language-select')) {
       handleAction('ide-set-lang', { dataset: { lang: el.value } });
@@ -6190,6 +6404,21 @@ import {
 
   document.addEventListener('input', (event) => {
     const target = event.target;
+    if (target.matches('[data-library-search]')) {
+      state.librarySearch = target.value;
+      const query = target.value.trim().toLowerCase();
+      const cards = document.querySelectorAll('[data-library-item]');
+      let visibleCount = 0;
+      cards.forEach((card) => {
+        const visible = (state.libraryFilter === 'all' || card.dataset.libraryKind === state.libraryFilter) && card.textContent.toLowerCase().includes(query);
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+      const empty = document.querySelector('[data-library-empty]');
+      if (empty) empty.hidden = visibleCount > 0;
+      saveState();
+      return;
+    }
     if (target.id === 'ide-code-input') {
       state.coding.ideCode = target.value;
       const lineGutter = document.getElementById('ide-line-numbers');
