@@ -7017,6 +7017,24 @@ body[data-page="coding"] {
   box-shadow: none;
 }
 
+.contact-email-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 18px 20px;
+  border: 1px solid #dce9dc;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #f6faf4, #fff);
+}
+
+.contact-email-card > div { display: grid; gap: 5px; }
+.contact-email-card > div > a { color: var(--green-dark); font-size: clamp(17px, 2.5vw, 22px); font-weight: 800; overflow-wrap: anywhere; }
+.contact-privacy-note { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.contact-privacy-note .icon { flex: 0 0 auto; color: var(--green); }
+
 @media (max-width: 560px) {
   .modern-auth-page {
     padding: 24px 14px 48px;
@@ -7227,6 +7245,8 @@ body[data-page="login"] .site-header { background: rgba(251, 252, 248, .9); }
   .auth-path-card { width: 190px; }
   .auth-layer-guide { margin-top: 21px; }
   .auth-layer-guide-grid { grid-template-columns: 1fr; }
+  .contact-email-card { align-items: stretch; padding: 16px; }
+  .contact-email-card .button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

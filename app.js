@@ -3623,18 +3623,23 @@ import {
   }
 
   function renderContact() {
+    const supportEmail = 'idilewa2026@gmail.com';
     return `<div class="container route-page information-page">
       <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Contact</strong></div>
       <section class="page-intro-card">
         <span class="section-kicker">Talk with the Idilewa team</span>
         <h1>We’d love to <em>hear from you.</em></h1>
         <p>Questions about language learning, schools, accessibility or the platform are welcome.</p>
-        <div class="consent-security-note">${icon('info', 16)} Direct email and message delivery are not configured on this deployment. Please do not submit a child’s personal information or sensitive account details here.</div>
+        <div class="contact-email-card">
+          <div><span class="section-kicker">Email Idilewa</span><a href="mailto:${supportEmail}?subject=Idilewa%20support">${supportEmail}</a></div>
+          <a class="button button-primary" href="mailto:${supportEmail}?subject=Idilewa%20support">${icon('send', 16)} Write to us</a>
+        </div>
+        <p class="contact-privacy-note">${icon('lock', 15)} This opens your email app. Do not include a child’s full name, password, address or other sensitive information.</p>
       </section>
       <section class="information-card-grid" aria-label="Contact topics">
-        <article class="profile-card"><span class="section-kicker">Families & learners</span><h2>Learning support</h2><p>For now, use the learning paths and help notes in the platform. A monitored support address will be published after it is configured.</p></article>
+        <article class="profile-card"><span class="section-kicker">Families & learners</span><h2>Learning support</h2><p>Email us about platform access, learning paths or accessibility. For account safety, never send passwords or one-time codes.</p></article>
         <article class="profile-card"><span class="section-kicker">Schools & educators</span><h2>School partnerships</h2><p>School and tutor listings on this site are previews, not confirmed service providers or live bookings.</p></article>
-        <article class="profile-card"><span class="section-kicker">Safety & privacy</span><h2>Report a concern</h2><p>Do not use this prototype to exchange child contact information. Real safeguarding and support channels must be established before student connections go live.</p></article>
+        <article class="profile-card"><span class="section-kicker">Safety & privacy</span><h2>Report a concern</h2><p>Contact us about a platform concern without including sensitive child information. This inbox is not an emergency response service; teacher connections remain disabled until safeguarding is verified.</p></article>
       </section>
     </div>`;
   }
