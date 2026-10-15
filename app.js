@@ -32,7 +32,9 @@ import {
 } from './src/yorubaCodeEngine.js';
 import {
   supabase,
-  isSupabaseConfigured
+  isSupabaseConfigured,
+  signIn as signInAccount,
+  signUp as signUpAccount
 } from './src/supabaseClient.js';
 
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
@@ -43,7 +45,7 @@ import {
     'trainer',
     'voice_lessons',
     'curriculum',
-    'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'course',
+    'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
     'ere', 'ere_game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
     'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'profile', 'schools',
@@ -323,7 +325,7 @@ import {
     languages: 'curriculum', course: 'curriculum', lesson: 'curriculum', kids: 'curriculum', individuals: 'curriculum',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
     owe_detail: 'read', owe_story: 'read', owe_reflection: 'read', voices: 'read',
-    connect_students: 'about', connect_teachers: 'about', consent: 'about',
+    connect_students: 'about', connect_teachers: 'about', consent: 'about', contact: 'about', privacy: 'about',
     ere: 'stories', ere_game: 'stories', ifa: 'culture', ifa_odu: 'culture',
     about: 'about', method: 'about', schools: 'about', tutor: 'about',
     guides: 'culture', human: 'culture', keepers: 'culture'
@@ -337,6 +339,8 @@ import {
   LABELS.owe_story = 'Owe · moral story'; LABELS.owe_reflection = 'Owe · reflection';
   LABELS.connect_students = 'Connect with Students'; LABELS.connect_teachers = 'Connect with Teachers';
   LABELS.consent = 'Parent & guardian consent';
+  LABELS.contact = 'Contact';
+  LABELS.privacy = 'Privacy';
   LABELS.trainer = 'Voice African Language Trainer';
   LABELS.voice_lessons = 'Voice African Language Trainer';
 
@@ -438,6 +442,16 @@ import {
     } catch (_) { return { ...defaults, available: { ...defaults.available }, trainer: { ...defaults.trainer } }; }
   }
   const state = readState();
+  let verifiedGuardianSignup = (() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('idilewa-guardian-signup') || 'null');
+      return saved && /^[0-9a-f-]{36}$/i.test(saved.approvalId || '') && typeof saved.email === 'string'
+        ? { approvalId: saved.approvalId, email: saved.email.toLowerCase() }
+        : null;
+    } catch (_) {
+      return null;
+    }
+  })();
   if (state.level === 'growing') state.level = 'intermediate';
   if (state.level === 'fluent') state.level = 'advanced';
   if (!['beginner', 'intermediate', 'advanced'].includes(state.level)) state.level = 'beginner';
@@ -503,7 +517,7 @@ import {
       </div>
       <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
-        <div class="mobile-menu-list">${menu}</div>
+        <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
         <div class="mobile-menu-bottom"><a class="button button-primary" href="#/trainer" data-route="trainer">${icon('mic', 15)} African Voice Trainer</a><a href="#/login" data-route="login">Sign in to your space</a></div>
       </div>`;
   }
@@ -529,7 +543,7 @@ import {
         </div>
         <div class="footer-links"><h3>Curriculum</h3>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</div>
         <div class="footer-links"><h3>Discover</h3>${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
-        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('base', 'Explore all pages')}</div>
+        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('contact', 'Contact us')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</div>
       </div>
       <div class="container footer-bottom"><span>© Idilewa · A learning space for languages, culture and technology</span><span class="footer-note">A thoughtful beginning, built to grow.</span></div>
     </footer>`;
@@ -3601,6 +3615,42 @@ import {
     return `<div class="container route-page profile-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My progress</strong></div>${renderStepper(['Choose a path', 'Practice a lesson', 'Build a streak', 'Celebrate progress'], journeyStep)}<section class="profile-welcome"><div class="profile-avatar">${icon('user', 27)}</div><div><span class="section-kicker">Your learning space · demo</span><h1>A good day to keep going.</h1><p>Your progress is saved in this browser for this prototype.</p></div><button class="button button-outline" data-route="login">${icon('user', 16)} Account settings</button></section><div class="profile-overview-grid"><article class="progress-main-card"><div class="progress-main-head"><div><span class="section-kicker">Current path</span><h2>${lang.name} · ${state.level.charAt(0).toUpperCase() + state.level.slice(1)}</h2><p>Keep building confidence, one small lesson at a time.</p></div><span class="progress-medallion">${icon('leaf', 23)}</span></div><div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div><div class="progress-foot"><span>${completedCount} lessons completed</span>${routeLink('course', 'Continue learning ' + icon('arrow', 14), 'text-link')}</div></article><div class="stat-card stat-streak"><span>${icon('sparkles', 20)}</span><small>Learning streak</small><strong>${state.streak} <em>days</em></strong><p>Showing up is a win.</p></div><div class="stat-card stat-points"><span>${icon('star', 20)}</span><small>Practice points</small><strong>${state.points}</strong><p>Earned by trying new things.</p></div></div><div class="profile-lower-grid"><section class="profile-card"><div class="section-heading compact-heading"><div><span class="section-kicker">Your recent steps</span><h2>Learning timeline</h2></div>${routeLink('course', 'View path ' + icon('arrow', 14), 'text-link')}</div><div class="timeline-row"><span class="timeline-check">${icon('check', 15)}</span><div><strong>Start with a greeting</strong><small>${lang.name} · First lesson</small></div><span class="timeline-status">${state.completed.includes(`${lang.id}-greetings-intro`) ? 'Complete' : 'Ready'}</span></div><div class="timeline-row timeline-next"><span class="timeline-num">02</span><div><strong>People close to us</strong><small>Next module · Words for family</small></div><button class="text-link" data-action="open-module" data-module="family" data-lang="${lang.id}" data-level="${state.level}">Open ${icon('arrow', 14)}</button></div><div class="timeline-row timeline-next"><span class="timeline-num">03</span><div><strong>Stories & memory</strong><small>Explore a story and listen for new words</small></div>${routeLink('ere', 'Explore ' + icon('arrow', 14), 'text-link')}</div></section><aside class="profile-badges"><span class="section-kicker">Small things worth celebrating</span><h2>Your first badges</h2><div class="badge-list"><div class="badge-item"><span class="badge-icon badge-green">${icon('leaf', 18)}</span><div><strong>First steps</strong><small>Opened your learning path</small></div></div><div class="badge-item"><span class="badge-icon badge-yellow">${icon('volume', 18)}</span><div><strong>Good listener</strong><small>Practiced a spoken phrase</small></div></div><div class="badge-item badge-locked"><span class="badge-icon">${icon('trophy', 18)}</span><div><strong>Story keeper</strong><small>Complete a story activity</small></div></div></div></aside></div><div class="profile-privacy-note">${icon('lock', 16)} This demo keeps progress on this device. Production accounts require secure authentication and privacy review.</div></div>`;
   }
 
+  function renderContact() {
+    return `<div class="container route-page information-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Contact</strong></div>
+      <section class="page-intro-card">
+        <span class="section-kicker">Talk with the Idilewa team</span>
+        <h1>We’d love to <em>hear from you.</em></h1>
+        <p>Questions about language learning, schools, accessibility or the platform are welcome.</p>
+        <div class="consent-security-note">${icon('info', 16)} Direct email and message delivery are not configured on this deployment. Please do not submit a child’s personal information or sensitive account details here.</div>
+      </section>
+      <section class="information-card-grid" aria-label="Contact topics">
+        <article class="profile-card"><span class="section-kicker">Families & learners</span><h2>Learning support</h2><p>For now, use the learning paths and help notes in the platform. A monitored support address will be published after it is configured.</p></article>
+        <article class="profile-card"><span class="section-kicker">Schools & educators</span><h2>School partnerships</h2><p>School and tutor listings on this site are previews, not confirmed service providers or live bookings.</p></article>
+        <article class="profile-card"><span class="section-kicker">Safety & privacy</span><h2>Report a concern</h2><p>Do not use this prototype to exchange child contact information. Real safeguarding and support channels must be established before student connections go live.</p></article>
+      </section>
+    </div>`;
+  }
+
+  function renderPrivacy() {
+    return `<div class="container route-page information-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Privacy policy</strong></div>
+      <section class="page-intro-card">
+        <span class="section-kicker">Privacy & family safety · draft notice</span>
+        <h1>Learning should feel <em>safe.</em></h1>
+        <p>This prototype uses browser storage for some learning progress and preferences. This draft is not a substitute for a reviewed privacy policy or a notice approved for children and families.</p>
+      </section>
+      <section class="information-card-grid privacy-policy-grid">
+        <article class="profile-card"><h2>Information in this prototype</h2><p>Some activities store progress, drafts or preferences in this browser. Anyone with access to the same device or browser profile may be able to see that local data.</p></article>
+        <article class="profile-card"><h2>Accounts & approval</h2><p>Account services require correctly configured Supabase Auth. Parent approval requires a working server-backed email flow and database migration; until verified, do not use this site to authorize a child account or teacher connection.</p></article>
+        <article class="profile-card"><h2>Children’s information</h2><p>Do not enter a child’s full legal name, school, home address, phone number, password reused elsewhere, or other sensitive information into a prototype.</p></article>
+        <article class="profile-card"><h2>Third-party services</h2><p>Production integrations may process information through Supabase, Vercel and an email provider. Their final use, retention periods and safeguards must be documented before launch.</p></article>
+        <article class="profile-card"><h2>Your choices</h2><p>You can clear this prototype’s browser data through the browser’s site-data settings. That does not delete data held by any separately configured production service.</p></article>
+        <article class="profile-card"><h2>Policy status</h2><p>This notice is a transparent development draft, not legal advice. A qualified privacy professional must review it for the countries and age groups the service will support.</p></article>
+      </section>
+    </div>`;
+  }
+
   function renderLogin() {
     const signUp = state.loginMode === 'signup';
     const activeGrant = consentCodeIsActive();
@@ -3737,22 +3787,42 @@ import {
             <label for="authEmail" class="form-label">Email address</label>
             <div class="input-with-icon">
               <span class="input-icon">${icon('user', 17)}</span>
-              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" required />
+              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" value="${isChild && signUp && verifiedGuardianSignup ? esc(verifiedGuardianSignup.email) : ''}" ${isChild && signUp && verifiedGuardianSignup ? 'readonly' : ''} required />
             </div>
           </div>
 
-          ${isChild ? `
+          ${isChild && signUp ? verifiedGuardianSignup ? `
+          <div class="form-group consent-form-group guardian-approved-state">
+            <p class="form-helper-text">${icon('check', 14)} Parent approval verified for ${esc(verifiedGuardianSignup.email)}. Finish creating the child account before the approval expires.</p>
+            <button class="text-link" type="button" data-action="guardian-use-another-email">Use a different learner email</button>
+          </div>
+          ` : `
           <div class="form-group consent-form-group">
-            <div class="form-label-row">
-              <label for="signinConsentCode" class="form-label">Parent-Approved Consent Code</label>
-              ${routeLink('consent', 'Get Parent Code ' + icon('arrow', 12), 'text-link text-link-small')}
+            <label for="guardianEmail" class="form-label">Parent or guardian email</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('heart', 17)}</span>
+              <input id="guardianEmail" type="email" name="guardianEmail" class="form-input" autocomplete="email" placeholder="parent@example.com" required />
             </div>
+            <p class="form-helper-text">We’ll email your parent or guardian a private approval link. After they approve, your one-time sign-up code will be sent to your email above.</p>
+            <button class="button button-outline" type="button" data-action="request-guardian-approval">Email my parent for approval</button>
+          </div>
+          <div class="form-group consent-form-group">
+            <label for="guardianAccessCode" class="form-label">One-time code from your email</label>
             <div class="input-with-icon">
               <span class="input-icon">${icon('shield', 17)}</span>
-              <input id="signinConsentCode" type="text" name="consentCode" class="form-input" maxlength="12" autocomplete="off" placeholder="ID-123456" value="${activeGrant ? esc(state.consent.approvedCode) : ''}" required />
-              ${activeGrant ? `<span class="input-badge-verified">${icon('check', 13)} Active on Device</span>` : ''}
+              <input id="guardianAccessCode" type="text" inputmode="numeric" pattern="[0-9]{6}" name="guardianAccessCode" class="form-input" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code" />
             </div>
-            <p class="form-helper-text">${activeGrant ? 'Guardian approval is active on this browser.' : 'A parent or guardian must sign the consent form to generate this code.'}</p>
+            <button class="button button-outline" type="button" data-action="verify-guardian-code">Verify parent-approved code</button>
+            <p class="form-helper-text">The code is single-use and expires after 15 minutes. Never share it with anyone.</p>
+          </div>
+          ` : ''}
+
+          ${isChild && !signUp ? `
+          <div class="form-group consent-form-group">
+            <div class="form-label-row">
+              <span class="form-label">Child account protection</span>
+            </div>
+            <p class="form-helper-text">Guardian approval is verified when the child account is created. Sign in with the child’s email and password; no local-browser code is accepted.</p>
           </div>
           ` : ''}
 
@@ -3773,7 +3843,7 @@ import {
           ${signUp ? `
           <label class="consent-check modern-consent-check">
             <input type="checkbox" name="demoOnly" value="yes" required checked />
-            <span>I agree to create an Idilewa account. Child account approval is a local prototype check and is not production safeguarding.</span>
+            <span>I agree to the <a href="#/privacy" data-route="privacy">privacy notice</a> and understand learning progress may be stored in this browser. For a child account, parent approval is required before creation.</span>
           </label>
           ` : `
           <div class="form-options-row">
@@ -3785,8 +3855,8 @@ import {
           </div>
           `}
 
-          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured ? '' : 'disabled'}>
-            <span>${signUp ? (isChild ? 'Validate Code & Create Child Space' : 'Create Supervised Space') : (isChild ? 'Check Code & Sign In' : 'Sign In to Learning Space')}</span>
+          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || !isChild || verifiedGuardianSignup) ? '' : 'disabled'}>
+            <span>${signUp ? (isChild ? 'Create Child Learning Space' : 'Create Learning Space') : 'Sign In to Learning Space'}</span>
             ${icon('arrow', 16)}
           </button>
         </form>
@@ -3865,67 +3935,42 @@ import {
     return `${prefix}-${String(value).padStart(6, '0')}`;
   }
   function consentCodeIsActive() {
-    const grant = state.consent;
-    return !!(grant?.approved && grant.accountApproved && grant.approvedCode && Number(grant.expiresAt) > Date.now());
+    return false;
   }
   function tutorGrantIsActive(tutorId) {
-    const grant = state.consent;
-    return consentCodeIsActive() && !!(grant.tutorApproved && tutorId && grant.tutorId === tutorId);
+    return false;
   }
   function tutorSessionIsValid() {
-    const grant = state.consent;
-    return tutorGrantIsActive(grant.tutorId) && grant.tutorValidatedFor === grant.tutorId;
+    return false;
   }
-  function startConsentRequest(tutorId = '') {
-    const alias = state.consent.learnerAlias || 'Young learner';
-    state.consent = {
-      ...defaults.consent,
-      requestCode: makeConsentCode('REQ'),
-      learnerAlias: alias,
-      tutorId: tutorId || '',
-      requestedAt: new Date().toISOString()
-    };
-    saveState();
-  }
-
   function renderConnectTeachers() {
     const visible = TEACHER_PROFILES.filter((teacher) => state.teacherFilter === 'all' || teacher.tags.includes(state.teacherFilter));
-    const codeActive = consentCodeIsActive();
-    const childVerified = codeActive && !!state.consent.childVerified;
-    const banner = !codeActive
-      ? `<div class="consent-gate-card is-pending">${icon('shield', 20)}<div><strong>Parent approval comes first.</strong><p>Before a child requests an introduction, a parent or guardian must sign a short consent form and issue a code for the selected tutor.</p></div>${routeLink('consent', 'Start parent consent ' + icon('arrow', 14), 'button button-primary')}</div>`
-      : !childVerified
-        ? `<form class="consent-code-check" data-form="child-consent-check"><div><span class="section-kicker">Parent approval found · child verification needed</span><h2>Enter the code your parent gave you.</h2><p>Only the tutor selected by your parent can be requested from this page.</p></div><label for="childConnectCode">Parent-approved code<input id="childConnectCode" name="consentCode" autocomplete="off" maxlength="12" placeholder="ID-123456" required /></label><button class="button button-primary" type="submit">Verify parent code ${icon('check', 15)}</button></form>`
-        : `<div class="consent-gate-card is-approved">${icon('check', 20)}<div><strong>Parent approval verified on this device.</strong><p>Connection is limited to ${esc(TEACHER_PROFILES.find((item) => item.id === state.consent.tutorId)?.name || 'the approved tutor')}. No booking or message is sent by this preview.</p></div></div>`;
+    const childVerified = false;
+    const banner = `<div class="consent-gate-card is-pending">${icon('shield', 20)}<div><strong>Teacher connections are not enabled.</strong><p>These profiles are illustrative only. Real educator accounts, a secure pairing service and server-side guardian authorization are not configured.</p></div>${routeLink('consent', 'Review family safeguards ' + icon('arrow', 14), 'button button-primary')}</div>`;
     return `<div class="container route-page connection-page connect-teachers-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Teachers</strong></div>
       <section class="connection-hero"><div class="connection-hero-copy"><span class="section-kicker">For learners & families</span><h1>Find a teacher<br /><em>who helps you grow.</em></h1><p>Explore educator profiles, teaching times and learning experience. A guardian-approved code must match the specific tutor before an introduction can be requested.</p><div class="connection-hero-points"><span>${icon('shield', 16)} Parent-approved introductions</span><span>${icon('clock', 16)} Times shown in WAT</span></div></div><div class="connection-hero-image"><img src="./assets/yoruba-educator-man.jpg" alt="Illustrative Yorùbá educator in traditional agbada holding a language book" /><span>Educator portraits and schedules are illustrative demo content.</span></div></section>
-      ${renderStepper(['Choose a tutor', 'Parent signs consent', 'Child verifies code', 'Connect safely'], childVerified ? 3 : codeActive ? 2 : 0)}
+      ${renderStepper(['Choose a tutor', 'Parent signs consent', 'Child verifies code', 'Connect safely'], 0)}
       ${banner}
       <div class="connection-notice">${icon('info', 17)} <div><strong>Sample directory · not real registered teachers.</strong><span>Profiles, schedules and learner counts are placeholders. No one receives a message or booking from this demo. In a real service, permission must be checked on a secure server.</span></div></div>
       <section class="teacher-directory-section"><div class="section-heading"><div><span class="section-kicker">Educator profiles</span><h2>Meet a language guide.</h2><p>Compare teaching focus, weekly availability and sample experience.</p></div><label class="teacher-filter-label" for="teacherFilter">Filter by focus<select id="teacherFilter" data-action="filter-teachers"><option value="all" ${state.teacherFilter === 'all' ? 'selected' : ''}>All teaching styles</option><option value="speaking" ${state.teacherFilter === 'speaking' ? 'selected' : ''}>Conversation</option><option value="story" ${state.teacherFilter === 'story' ? 'selected' : ''}>Stories</option><option value="coding" ${state.teacherFilter === 'coding' ? 'selected' : ''}>Coding + language</option></select></label></div>
-        <div class="teacher-profile-grid">${visible.length ? visible.map((teacher) => { const allowed = childVerified && tutorGrantIsActive(teacher.id); const requested = state.teacherRequests.includes(teacher.id); return `<article class="teacher-profile-card"><div class="teacher-profile-photo teacher-profile-initials-photo" role="img" aria-label="Sample educator profile for ${esc(teacher.name)}"><span class="teacher-profile-monogram" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join('').replace(/[^a-z0-9]/gi, ''))}</span><span class="demo-profile-badge">Sample profile</span></div><div class="teacher-profile-body"><div class="teacher-name-row"><div><span class="teacher-language-tag">${esc(teacher.language)} · ${teacher.focus.includes('coding') ? 'Language + code' : 'Language learning'}</span><h3>${esc(teacher.name)}</h3></div><span class="teacher-registered-mark">${icon('check', 13)} Preview</span></div><p class="teacher-focus">${esc(teacher.focus)}</p><div class="teacher-metrics"><div><span>${icon('clock', 15)} Teaching hours</span><strong>${esc(teacher.hoursSummary)}</strong></div><div><span>${icon('people', 15)} Learners supported</span><strong>${teacher.learners} <small>sample</small></strong></div></div><div class="teacher-card-hours"><span>${icon('calendar', 15)} Weekly availability</span><strong>${esc(teacher.hours)}</strong></div><button class="button ${allowed && requested ? 'button-soft' : 'button-primary'} teacher-profile-button" type="button" data-action="connect-tutor" data-id="${teacher.id}">${allowed && requested ? 'Approved request saved' : allowed ? 'Request approved introduction' : 'Ask parent to approve this tutor'} ${icon(allowed && requested ? 'check' : 'arrow', 14)}</button><button class="text-link teacher-details-link" type="button" data-action="teacher-profile" data-id="${teacher.id}">View sample profile</button></div></article>`; }).join('') : '<div class="teacher-empty">No sample profiles match that focus yet. Try another filter.</div>'}</div>
-      </section><div class="connection-child-note">${icon('heart', 17)} A parent can approve one named tutor at a time. Any new tutor requires a new signed approval and code.</div></div>`;
+        <div class="teacher-profile-grid">${visible.length ? visible.map((teacher) => { const allowed = childVerified && tutorGrantIsActive(teacher.id); const requested = state.teacherRequests.includes(teacher.id); return `<article class="teacher-profile-card"><div class="teacher-profile-photo teacher-profile-initials-photo" role="img" aria-label="Sample educator profile for ${esc(teacher.name)}"><span class="teacher-profile-monogram" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join('').replace(/[^a-z0-9]/gi, ''))}</span><span class="demo-profile-badge">Sample profile</span></div><div class="teacher-profile-body"><div class="teacher-name-row"><div><span class="teacher-language-tag">${esc(teacher.language)} · ${teacher.focus.includes('coding') ? 'Language + code' : 'Language learning'}</span><h3>${esc(teacher.name)}</h3></div><span class="teacher-registered-mark">${icon('check', 13)} Preview</span></div><p class="teacher-focus">${esc(teacher.focus)}</p><div class="teacher-metrics"><div><span>${icon('clock', 15)} Teaching hours</span><strong>${esc(teacher.hoursSummary)}</strong></div><div><span>${icon('people', 15)} Learners supported</span><strong>${teacher.learners} <small>sample</small></strong></div></div><div class="teacher-card-hours"><span>${icon('calendar', 15)} Weekly availability</span><strong>${esc(teacher.hours)}</strong></div><button class="button button-soft teacher-profile-button" type="button" disabled>Unavailable · sample educator</button><button class="text-link teacher-details-link" type="button" data-action="teacher-profile" data-id="${teacher.id}">View sample profile</button></div></article>`; }).join('') : '<div class="teacher-empty">No sample profiles match that focus yet. Try another filter.</div>'}</div>
+      </section>      <div class="connection-child-note">${icon('heart', 17)} No teacher connection or request can be made from this preview.</div></div>`;
   }
 
   function renderConnectStudents() {
-    const verified = tutorSessionIsValid();
-    const grant = state.consent;
-    const tutor = TEACHER_PROFILES.find((item) => item.id === grant.tutorId);
+    const verified = false;
     const samplePreview = `<details class="locked-sample-preview"><summary>Preview fictional learner cards (read-only)</summary><div class="learner-request-grid">${LEARNER_REQUESTS.map((learner) => `<article class="learner-request-card sample-locked"><div class="learner-card-head"><span class="learner-avatar">${icon('user', 21)}</span><span class="guardian-managed-tag">${icon('lock', 13)} Fictional sample</span></div><span class="teacher-language-tag">${esc(learner.language)} · ${esc(learner.level)}</span><h3>${esc(learner.label)}</h3><div class="learner-goal"><small>Example learning goal</small><p>${esc(learner.goal)}</p></div><div class="learner-request-meta"><span>${icon('sparkles', 14)} ${esc(learner.interest)}</span><span>${icon('calendar', 14)} Sample schedule</span></div><button class="button button-soft" type="button" disabled>Parent code required before assignment</button></article>`).join('')}</div></details>`;
-    const tutorOptions = TEACHER_PROFILES.map((profile) => `<option value="${profile.id}" ${grant.tutorId === profile.id ? 'selected' : ''}>${esc(profile.name)} · ${esc(profile.language)}</option>`).join('');
-    const assignment = verified
-      ? `<article class="approved-assignment-card"><div class="approved-assignment-mark">${icon('check', 22)}</div><span class="section-kicker">Parent-approved assignment</span><h2>${esc(grant.learnerAlias || 'Young learner')}</h2><p>Assigned tutor: <strong>${esc(tutor?.name || 'Approved tutor')}</strong>. The guardian approved this specific pairing and signed the consent form.</p><div class="assignment-scope-pill">${icon('shield', 15)} Anonymous learner · no contact details</div>${grant.assignmentAccepted ? `<div class="assignment-active-note">${icon('check', 16)} Assignment accepted in this local demo. No lesson, message or booking is actually created.</div>` : `<button class="button button-primary" data-action="accept-assignment">Accept this approved demo assignment ${icon('arrow', 15)}</button>`}</article>`
-      : `<form class="tutor-consent-verify-card" data-form="tutor-consent-check"><div><span class="section-kicker">Required before teaching or connecting</span><h2>Validate the parent-approved code.</h2><p>A tutor may only open the learner’s anonymous assignment after the parent has signed the form, approved that tutor and shared the matching code.</p></div><label for="tutorIdentity">Your tutor profile<select id="tutorIdentity" name="tutorId" required><option value="">Choose your sample tutor profile</option>${tutorOptions}</select></label><label for="tutorConsentCode">Parent-approved consent code<input id="tutorConsentCode" name="consentCode" type="text" autocomplete="off" maxlength="12" placeholder="ID-123456" required /></label><button class="button button-primary" type="submit">Validate code & assignment ${icon('shield', 15)}</button><small>No code or parent approval means no learner profile, response, booking or teaching access.</small></form>`;
+    const assignment = `<article class="tutor-consent-verify-card"><span class="section-kicker">Connections unavailable</span><h2>No learner assignments are shared here.</h2><p>The directory and learner cards are fictional. Real educator identity checks, a server-side pairing service and tutor-scoped guardian approval must be deployed before any code can authorize a connection.</p></article>`;
     return `<div class="container route-page connection-page connect-students-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Connect with Students</strong></div>
       <section class="connection-teacher-hero"><div><span class="section-kicker">For educators · safeguarding first</span><h1>Teach only after<br /><em>guardian approval.</em></h1><p>Every child–tutor pairing needs a signed parent consent form and a code that matches the assigned tutor before a learner can be accepted.</p><div class="hero-actions">${routeLink('connect_teachers', `Open family tutor directory ${icon('arrow', 15)}`, 'button button-outline')}${routeLink('consent', 'How consent works', 'text-link')}</div></div><div class="connection-kids-image"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in traditional Yorùbá attire sharing a language book" /><span>Safety and family permission come first.</span></div></section>
       ${renderStepper(['Review request', 'Parent signs form', 'Validate tutor code', 'Accept assignment'], verified ? 3 : 0)}
-      <div class="connection-notice">${icon('shield', 17)} <div><strong>Four checks before a real lesson.</strong><span>Parent approval · signed form · code matches the assigned tutor · secure production verification. This offline prototype demonstrates the flow but cannot verify a real parent.</span></div></div>
+      <div class="connection-notice">${icon('shield', 17)} <div><strong>Teacher connections are disabled.</strong><span>No parent code is accepted here and no learner data, message, booking or lesson is exposed.</span></div></div>
       <section class="tutor-approval-workspace">${assignment}</section>
       ${!verified ? samplePreview : ''}
-      <div class="connection-child-note">${icon('lock', 17)} Tutor approvals are tutor-specific and expire after seven days in this demo. The stored local code is not a production credential.</div></div>`;
+      <div class="connection-child-note">${icon('lock', 17)} Sample learner cards are fictional and read-only.</div></div>`;
   }
 
-  function renderConsent() {
+  function renderLegacyConsent() {
     const grant = state.consent;
     const active = consentCodeIsActive();
     const pending = !!grant.requestCode && !grant.approved;
@@ -3945,6 +3990,31 @@ import {
         : `<section class="consent-approved-card"><div class="consent-approved-icon">${icon('check', 25)}</div><span class="section-kicker">Step 3 · parent approved</span><h2>Guardian approval is ready.</h2><p>The parent-signed form has approved a supervised account${grant.tutorApproved ? ` and one named tutor: <strong>${esc(assignedTutor?.name || 'Approved tutor')}</strong>` : ' only; tutor access is not approved yet'}.</p><div class="approved-code-display"><small>Child consent code · share only with the learner and approved tutor</small><strong>${esc(grant.approvedCode)}</strong><span>Expires in 7 days · local demo only</span></div><div class="consent-scope-list"><span>${icon('check', 15)} Child account approval: active</span><span>${grant.tutorApproved ? icon('check', 15) : icon('lock', 15)} Tutor approval: ${grant.tutorApproved ? esc(assignedTutor?.name || 'one assigned tutor') : 'not included'}</span></div><div class="consent-action-row"><button class="button button-primary" data-action="consent-signup">Continue to child sign-up ${icon('arrow', 14)}</button>${routeLink('connect_students', 'Tutor code validation ' + icon('arrow', 14), 'button button-outline')}</div><p class="consent-demo-warning">This is an offline prototype: its local code cannot prove who signed or securely notify another device. Do not use it to authorise a real child account or lesson.</p></section>`;
     }
     return `<div class="container route-page consent-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Parent & guardian consent</strong></div><section class="consent-hero"><div><span class="section-kicker">A clear, family-first safeguard</span><h1>Permission before<br /><em>connection.</em></h1><p>A short guardian-signed form comes first. Only then can the child receive a code—and a tutor must validate that same code before a learner assignment opens.</p><div class="consent-hero-tags"><span>${icon('lock', 15)} No child contact details</span><span>${icon('shield', 15)} Tutor-specific approval</span></div></div><div class="consent-hero-image"><img src="./assets/hero-reader.jpg" alt="A parent and child reviewing a learning activity together" /><span>Illustrative family learning scene.</span></div></section>${renderStepper(['Request code', 'Guardian form', 'Approved code', 'Use & validate'], activeStep)}${body}<div class="consent-four-rules"><article><strong>1. Request</strong><span>A reference is created for the parent to review.</span></article><article><strong>2. Sign</strong><span>Guardian role, permissions and typed signature are required.</span></article><article><strong>3. Issue</strong><span>A child code appears only after the form passes its checks.</span></article><article><strong>4. Validate</strong><span>Signup and a named tutor must validate the approved code.</span></article></div><div class="consent-security-note">${icon('info', 16)} Browser storage is not secure verification. A production service needs a protected backend, guardian identity/authority checks, expiring one-time tokens, audit records, secure account controls and a reviewed child-safeguarding/legal process.</div></div>`;
+  }
+
+  function renderConsent() {
+    return `<div class="container route-page consent-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Parent & guardian consent</strong></div>
+      <section class="consent-hero">
+        <div><span class="section-kicker">A clear, family-first safeguard</span><h1>Permission before<br /><em>connection.</em></h1>
+          <p>For child account creation, a parent or guardian receives an email link and must approve before a short-lived code is sent to the learner’s email.</p>
+          <div class="consent-hero-tags"><span>${icon('lock', 15)} Approval is server-verified</span><span>${icon('shield', 15)} One-time sign-up code</span></div>
+          <button class="button button-primary" data-action="consent-signup">Start child sign-up ${icon('arrow', 15)}</button>
+        </div>
+        <div class="consent-hero-image"><img src="./assets/hero-reader.jpg" alt="A parent and child reviewing a learning activity together" /><span>Illustrative family learning scene.</span></div>
+      </section>
+      ${renderStepper(['Learner request', 'Guardian email', 'One-time code', 'Create account'], 0)}
+      <section class="consent-step-card">
+        <h2>What happens</h2>
+        <ol><li>The learner enters their email and a parent or guardian’s email.</li><li>The parent receives a private approval link and makes a separate tutor-consent choice if one is requested.</li><li>After approval, a six-digit code is sent to the learner and expires after 15 minutes.</li><li>The code is checked by the server and the approved account must be created promptly.</li></ol>
+        <div class="consent-security-note">${icon('info', 16)} Email approval confirms control of an inbox and the guardian’s declaration; it does not independently prove legal identity or authority. The workflow remains unavailable until Supabase migration and private Vercel provider settings are configured.</div>
+      </section>
+      <section class="consent-step-card">
+        <h2>Teacher connections</h2>
+        <p>The displayed teacher directory is sample content. It does not represent verified educators, and no real learner-to-teacher connection, message, booking or lesson should be initiated from this preview. Production matching must use authenticated educator accounts and a separate, server-verified parent approval for the named educator.</p>
+        ${routeLink('connect_teachers', 'View sample teacher directory ' + icon('arrow', 14), 'button button-outline')}
+      </section>
+    </div>`;
   }
 
   function openTeacherProfile(id) {
@@ -4472,6 +4542,8 @@ import {
       case 'voices': return renderVoices();
       case 'pricing': return renderPricing();
       case 'profile': return renderProfile();
+      case 'contact': return renderContact();
+      case 'privacy': return renderPrivacy();
       case 'login': return renderLogin();
       case 'consent': return renderConsent();
       case 'base': return renderBase();
@@ -5255,6 +5327,77 @@ import {
     window.setTimeout(() => { toast.classList.add('toast-out'); window.setTimeout(() => toast.remove(), 240); }, 3200);
   }
 
+  async function submitGuardianRequest(button) {
+    const childEmailInput = document.getElementById('authEmail');
+    const parentEmailInput = document.getElementById('guardianEmail');
+    const aliasInput = document.getElementById('authName');
+    if (!childEmailInput?.reportValidity() || !parentEmailInput?.reportValidity() || !aliasInput?.reportValidity()) return;
+    button.disabled = true;
+    verifiedGuardianSignup = null;
+    sessionStorage.removeItem('idilewa-guardian-signup');
+    const previousText = button.textContent;
+    button.textContent = 'Sending approval request…';
+    try {
+      const response = await fetch('/api/guardian/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          childEmail: childEmailInput.value.trim(),
+          parentEmail: parentEmailInput.value.trim(),
+          learnerAlias: aliasInput.value.trim()
+        })
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || 'The parent request could not be sent.');
+      showToast(result.message || 'Request sent. Ask your parent to check their inbox.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'The parent request could not be sent.', 'error');
+    } finally {
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = previousText;
+      }
+    }
+  }
+
+  async function verifyGuardianCode(button) {
+    const emailInput = document.getElementById('authEmail');
+    const codeInput = document.getElementById('guardianAccessCode');
+    if (!emailInput?.reportValidity()) return;
+    const email = emailInput.value.trim().toLowerCase();
+    const code = codeInput?.value.trim() || '';
+    if (!/^\d{6}$/.test(code)) {
+      showToast('Enter the six-digit code sent to the learner email address.', 'error');
+      codeInput?.focus();
+      return;
+    }
+    button.disabled = true;
+    const previousText = button.textContent;
+    button.textContent = 'Checking code…';
+    try {
+      const response = await fetch('/api/guardian/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.approvalId) {
+        throw new Error(result?.error || 'The parent-approved code could not be verified.');
+      }
+      verifiedGuardianSignup = { approvalId: result.approvalId, email };
+      sessionStorage.setItem('idilewa-guardian-signup', JSON.stringify(verifiedGuardianSignup));
+      render();
+      showToast('Parent approval verified. Finish creating the child account now.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'The parent-approved code could not be verified.', 'error');
+    } finally {
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = previousText;
+      }
+    }
+  }
+
   function openModal(title, body) {
     document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close">${icon('close', 19)}</button><div class="modal-icon">${icon('sparkles', 22)}</div><h2 id="modalTitle">${esc(title)}</h2><p>${esc(body)}</p><button class="button button-primary modal-done" data-action="close-modal">Got it ${icon('check', 15)}</button></section></div>`;
     document.querySelector('.modal-done')?.focus();
@@ -5358,8 +5501,10 @@ import {
         answerAiPrompt(el.dataset.topic || 'general');
         break;
       }
-      case 'start-consent-request': startConsentRequest(el.dataset.tutorId || ''); navigate('consent'); break;
-      case 'consent-signup': state.loginMode = 'signup'; saveState(); navigate('login'); break;
+      case 'start-consent-request':
+        state.authRole = 'child'; state.loginMode = 'signup'; saveState(); navigate('login'); break;
+      case 'consent-signup':
+        state.authRole = 'child'; state.loginMode = 'signup'; saveState(); navigate('login'); break;
       
       case 'ide-set-lang': {
         const lang = el.dataset.lang || 'yoruba';
@@ -5649,16 +5794,7 @@ import {
         state.coding.stage = Math.max(0, Math.min(3, Number(el.dataset.stage) || 0));
         state.coding.result = ''; state.coding.draft = ''; saveState(); render(); document.getElementById('coding-start')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); break;
       case 'connect-tutor': {
-        const id = el.dataset.id;
-        if (!tutorGrantIsActive(id)) {
-          startConsentRequest(id); navigate('consent');
-          showToast('A parent approval request was created for this specific tutor.');
-        } else if (!state.consent.childVerified) {
-          navigate('connect_teachers'); showToast('Enter the parent-approved code before requesting this tutor.', 'error');
-        } else {
-          if (!state.teacherRequests.includes(id)) state.teacherRequests.unshift(id);
-          saveState(); render(); showToast('Guardian-approved demo request saved locally. No tutor was contacted.');
-        }
+        showToast('Teacher connections are unavailable until real educators and server-side guardian authorization are configured.', 'error');
         break;
       }
       case 'accept-assignment':
@@ -5667,17 +5803,8 @@ import {
         showToast('Approved demo assignment noted. No lesson or message was created.'); break;
       case 'teacher-profile': openTeacherProfile(el.dataset.id); break;
       case 'request-teacher-intro': {
-        const id = el.dataset.id;
         document.getElementById('modal-root').innerHTML = '';
-        if (!tutorGrantIsActive(id)) {
-          startConsentRequest(id); navigate('consent');
-          showToast('A signed parent form and a code for this tutor are required first.');
-        } else if (!state.consent.childVerified) {
-          navigate('connect_teachers'); showToast('Verify the parent-approved code before requesting an introduction.', 'error');
-        } else {
-          if (!state.teacherRequests.includes(id)) state.teacherRequests.unshift(id);
-          saveState(); render(); showToast('Guardian-approved demo request saved locally. No tutor was contacted.');
-        }
+        showToast('Teacher connections are unavailable until real educators and server-side guardian authorization are configured.', 'error');
         break;
       }
       case 'learner-profile': openLearnerProfile(el.dataset.id); break;
@@ -5771,8 +5898,19 @@ import {
       case 'billing-period': state.billing = el.dataset.period; saveState(); render(); break;
       case 'choose-plan': openModal(`${el.dataset.plan || 'Family'} updates`, 'Your interest has been noted in this browser preview. The Idilewa team will confirm final plans and pricing before launch.'); break;
       case 'login-mode': state.loginMode = el.dataset.mode === 'signup' ? 'signup' : 'signin'; render(); break;
+      case 'request-guardian-approval': void submitGuardianRequest(el); break;
+      case 'verify-guardian-code': void verifyGuardianCode(el); break;
+      case 'guardian-use-another-email':
+        verifiedGuardianSignup = null;
+        sessionStorage.removeItem('idilewa-guardian-signup');
+        render();
+        break;
       case 'auth-role-select': {
         state.authRole = el.dataset.role || 'child';
+        if (state.authRole !== 'child') {
+          verifiedGuardianSignup = null;
+          sessionStorage.removeItem('idilewa-guardian-signup');
+        }
         saveState();
         render();
         break;
@@ -6062,53 +6200,9 @@ import {
     if (!type) return;
     event.preventDefault();
     const data = new FormData(form);
-    if (type === 'guardian-consent') {
-      const requestCode = String(data.get('requestCode') || '').trim().toUpperCase();
-      const alias = String(data.get('learnerAlias') || '').trim().slice(0, 28);
-      const signature = String(data.get('signature') || '').trim();
-      const relationship = String(data.get('relationship') || '').trim();
-      const tutorId = String(data.get('tutorId') || '').trim();
-      const tutorConsent = data.get('tutorConsent') === 'yes';
-      if (!state.consent.requestCode || requestCode !== state.consent.requestCode.toUpperCase()) {
-        showToast('The request reference does not match. Ask the learner to show the current reference.', 'error'); return;
-      }
-      if (!alias || !signature || !relationship || data.get('accountConsent') !== 'yes' || data.get('consentRead') !== 'yes') {
-        showToast('Complete the parent/guardian details, signed name and required permission checks.', 'error'); return;
-      }
-      if ((tutorId && !tutorConsent) || (!tutorId && tutorConsent)) {
-        showToast('To approve a tutor, choose one named tutor and tick the tutor-approval box. Otherwise leave both blank.', 'error'); return;
-      }
-      state.consent = {
-        ...state.consent,
-        approved: true,
-        approvedCode: makeConsentCode('ID'),
-        learnerAlias: alias,
-        accountApproved: true,
-        tutorApproved: !!(tutorId && tutorConsent),
-        tutorId: tutorId && tutorConsent ? tutorId : '',
-        childVerified: false,
-        tutorValidatedFor: '',
-        assignmentAccepted: false,
-        approvedAt: new Date().toISOString(),
-        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
-      };
-      // The typed guardian signature and relationship are deliberately not stored.
-      saveState(); render(); showToast('Parent approval recorded in this browser demo. The child code is now available.');
-    } else if (type === 'child-consent-check') {
-      const code = String(data.get('consentCode') || '').trim().toUpperCase();
-      if (!consentCodeIsActive() || !state.consent.accountApproved || code !== state.consent.approvedCode) {
-        showToast('That code is not active. Ask a parent or guardian to complete the consent form first.', 'error'); return;
-      }
-      state.consent.childVerified = true; saveState(); render();
-      showToast('Parent code verified in this browser. Tutor requests remain limited to the approved tutor.');
-    } else if (type === 'tutor-consent-check') {
-      const code = String(data.get('consentCode') || '').trim().toUpperCase();
-      const tutorId = String(data.get('tutorId') || '').trim();
-      if (!consentCodeIsActive() || !tutorGrantIsActive(tutorId) || code !== state.consent.approvedCode) {
-        showToast('Code rejected. A parent must approve this exact tutor and share the active code.', 'error'); return;
-      }
-      state.consent.tutorValidatedFor = tutorId; state.consent.assignmentAccepted = false;
-      saveState(); render(); showToast('Guardian code validated for the assigned tutor. Only the anonymous approved assignment is unlocked.');
+    if (type === 'guardian-consent' || type === 'child-consent-check' || type === 'tutor-consent-check') {
+      showToast('Local consent codes are disabled. Use the verified parent-email approval flow for child accounts.', 'error');
+      return;
     } else if (type === 'coding-run') {
       const code = String(data.get('code') || '').slice(0, 1200);
       const tech = CODE_PATHS.find((item) => item.id === form.dataset.tech) || CODE_PATHS[0];
@@ -6167,12 +6261,10 @@ import {
     } else if (type === 'login') {
       const accountType = String(data.get('accountType') || state.authRole || 'child');
       const email = String(data.get('email') || '').trim();
-      if (accountType === 'child') {
-        const code = String(data.get('consentCode') || '').trim().toUpperCase();
-        if (!consentCodeIsActive() || !state.consent.accountApproved || code !== state.consent.approvedCode) {
-          showToast('A current parent approval code is required for this local prototype flow.', 'error');
-          navigate('consent'); return;
-        }
+      if (state.loginMode === 'signup' && accountType === 'child'
+        && (!verifiedGuardianSignup || verifiedGuardianSignup.email !== email.trim().toLowerCase())) {
+        showToast('A verified guardian email code for this exact learner email is required before child sign-up.', 'error');
+        return;
       }
       if (!isSupabaseConfigured || !supabase) {
         showToast('Account authentication is not configured on this deployment. Continue as a guest.', 'error');
@@ -6183,23 +6275,21 @@ import {
       try {
         if (state.loginMode === 'signup') {
           const name = String(data.get('name') || '').trim();
-          const { data: authData, error } = await supabase.auth.signUp({
+          const { session } = await signUpAccount({
             email,
             password,
-            options: { data: { name, role: accountType } },
+            name,
+            role: accountType,
+            guardianAccessRequestId: accountType === 'child' ? verifiedGuardianSignup?.approvalId : undefined,
           });
-          if (error) throw error;
-          if (!authData?.user) throw new Error('The authentication service did not return an account.');
-          if (!authData.session) {
+          if (!session) {
             state.loginMode = 'signin';
             render();
             showToast('Account created. Check your email to confirm it, then sign in.', 'success');
             return;
           }
         } else {
-          const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          if (!authData?.user || !authData.session) throw new Error('The authentication service did not return a signed-in session.');
+          await signInAccount({ email, password });
         }
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Account authentication failed. Try again.', 'error');
@@ -6211,7 +6301,9 @@ import {
         saveState();
       }
       showToast(state.loginMode === 'signup' ? 'Your Idilewa account is ready.' : 'Signed in successfully.', 'success');
-      navigate(accountType === 'educator' ? 'connect_teachers' : accountType === 'parent' ? 'consent' : 'profile');
+      verifiedGuardianSignup = null;
+      sessionStorage.removeItem('idilewa-guardian-signup');
+      navigate('index');
     } else if (type === 'interest') {
       showToast('Thanks for your interest. This prototype does not send or store contact details.');
       form.reset();

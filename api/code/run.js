@@ -21,6 +21,14 @@ export default async function handler(req, res) {
     const status = error instanceof RunnerConfigurationError
       ? 503
       : (error && Number.isInteger(error.statusCode) ? error.statusCode : 502);
+    if (status === 502) {
+      const message = error instanceof Error ? error.message : '';
+      const upstreamStatus = message.match(/\bHTTP (\d{3})\b/)?.[1] || null;
+      console.error('[code/run] Private runner execution failed.', {
+        errorType: error instanceof Error ? error.name : 'UnknownError',
+        upstreamStatus,
+      });
+    }
     return sendJson(res, status, {
       error: status === 503
         ? 'The private code runner has not been configured.'

@@ -1,8 +1,8 @@
 // Supabase Database & Auth client with offline fallback
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || 'https://baxlxprxjwntqodrpsjm.supabase.co';
-const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJheGx4cHJ4andudHFvZHJwc2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NjA0ODksImV4cCI6MjEwNzAzNjQ4OX0.HZjZUT5GYz5EQG1tAw-tex25Yx3RYu_ilF15tCJ0bbU';
+const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
 
 export let supabase = null;
 try {
@@ -41,16 +41,25 @@ function setLocalItem(key, value) {
   } catch (_) {}
 }
 
-export async function signUp({ email, password, name, role = 'child' }) {
+export async function signUp({ email, password, name, role = 'child', guardianAccessRequestId }) {
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('Authentication is not configured. Set the Supabase URL and anon key before creating accounts.');
+  }
+  if (role === 'child' && !/^[0-9a-f-]{36}$/i.test(guardianAccessRequestId || '')) {
+    throw new Error('A verified guardian approval is required before creating a child account.');
   }
   const normalizedEmail = email.toLowerCase().trim();
   const userName = name || normalizedEmail.split('@')[0];
   const { data, error } = await supabase.auth.signUp({
     email: normalizedEmail,
     password,
-    options: { data: { name: userName, role } },
+    options: {
+      data: {
+        name: userName,
+        role,
+        ...(role === 'child' ? { guardian_access_request_id: guardianAccessRequestId } : {}),
+      },
+    },
   });
   if (error) throw new Error(error.message);
   if (!data?.user) throw new Error('The authentication service did not return an account.');
