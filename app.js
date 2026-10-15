@@ -470,16 +470,23 @@ import {
     return planned ? { ...planned, native: planned.name, tint: 'peach', greeting: '', hello: '', translation: '', lessons: 'Learning materials in preparation', upcoming: true } : LANGUAGES[0];
   };
 
+  let defaultAuthEntryInitialized = false;
   function parseLocation() {
     const hash = window.location.hash.replace(/^#\/?/, '');
     if (!hash) {
-      const defaultPage = document.body?.dataset?.defaultRoute || 'index';
+      const defaultPage = document.body?.dataset?.defaultRoute || 'login';
+      if (defaultPage === 'login' && !defaultAuthEntryInitialized) {
+        state.loginMode = 'signup';
+        defaultAuthEntryInitialized = true;
+      }
       return { page: ROUTES.includes(defaultPage) ? defaultPage : 'index', params: {} };
     }
     const [path, query = ''] = hash.split('?');
     let page = path.split('/')[0] || 'index';
     if (page === 'languages' || page === 'learn') page = 'curriculum';
-    return { page: ROUTES.includes(page) ? page : 'base', params: Object.fromEntries(new URLSearchParams(query)) };
+    const params = Object.fromEntries(new URLSearchParams(query));
+    if (page === 'login' && ['signin', 'signup'].includes(params.mode)) state.loginMode = params.mode;
+    return { page: ROUTES.includes(page) ? page : 'base', params };
   }
 
   function navigate(route, params = {}, replace = false) {
@@ -510,15 +517,15 @@ import {
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
           <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
-          <a class="header-signin" href="#/login" data-route="login">Sign in</a>
-          <a class="button button-small button-primary header-cta" href="#/trainer" data-route="trainer">${icon('mic', 14)} Voice Studio</a>
+          <a class="header-signin" href="#/login?mode=signin" data-route="login" data-mode="signin">Sign in</a>
+          <a class="button button-small button-primary header-cta" href="#/login?mode=signup" data-route="login" data-mode="signup">${icon('user', 14)} Create account</a>
           <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
         </div>
       </div>
       <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
         <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
-        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/trainer" data-route="trainer">${icon('mic', 15)} African Voice Trainer</a><a href="#/login" data-route="login">Sign in to your space</a></div>
+        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/login?mode=signup" data-route="login" data-mode="signup">${icon('user', 15)} Create an account</a><a href="#/login?mode=signin" data-route="login" data-mode="signin">Sign in to your space</a></div>
       </div>`;
   }
 
@@ -3663,10 +3670,10 @@ import {
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
     const authLayers = [
-      { title: 'Choose who is learning', text: 'Adults and educators can explore independently. A child path starts with a parent or guardian, never personal details.' },
-      { title: 'Get signed family approval', text: 'A guardian reviews the request and signs. Approval for an assigned tutor is an explicit, separate choice.' },
-      { title: 'Check the approved code', text: 'The code is a local verification check ensuring all young learners stay under active parental supervision.' },
-      { title: 'Continue safely & explore', text: 'You can explore all language paths freely. Never enter real passwords or sensitive personal data in this demo.' }
+      { title: 'Choose who is learning', text: 'Select the right account type. Children use a learner alias and need guardian approval before account creation.' },
+      { title: 'Request guardian approval', text: 'A parent or guardian receives an email request and reviews the account permission before approving.' },
+      { title: 'Verify the one-time code', text: 'After approval, the learner verifies the short-lived code sent to their email address.' },
+      { title: 'Create an account and explore', text: 'Adult and educator accounts use Supabase Auth when the deployment is configured; teacher pairing remains unavailable.' }
     ];
 
     return `<div class="container route-page auth-page modern-auth-page">
@@ -3704,8 +3711,8 @@ import {
             <div class="auth-highlight-pill">
               <span class="auth-pill-ico tone-blue">${icon('shield', 16)}</span>
               <div>
-                <strong>Child-Safe Guardian Supervision</strong>
-                <small>Consent codes & verified educator matching</small>
+                <strong>Guardian-first child sign-up</strong>
+                <small>Email approval and a one-time learner code</small>
               </div>
             </div>
           </div>
@@ -3715,6 +3722,23 @@ import {
             <p>A joyful place where children and families preserve African heritage while mastering 21st-century tech.</p>
             <div class="auth-quote-author">— The Idilewa Philosophy</div>
           </div>
+
+          <section class="auth-paths" aria-label="Explore Idilewa learning paths">
+            <div class="auth-paths-heading"><span>MADE FOR CURIOUS MINDS</span><strong>One space. Many ways to grow.</strong></div>
+            <div class="auth-paths-track">
+              <a class="auth-path-card" href="#/curriculum" data-route="curriculum"><span aria-hidden="true">★★★★★</span><strong>Language &amp; culture</strong><small>Learn through words, stories and heritage</small></a>
+              <a class="auth-path-card" href="#/coding" data-route="coding"><span aria-hidden="true">★★★★★</span><strong>Code &amp; create</strong><small>Explore creative coding and STEAM</small></a>
+              <a class="auth-path-card" href="#/ere" data-route="ere"><span aria-hidden="true">★★★★★</span><strong>Read &amp; listen</strong><small>Discover stories and oral traditions</small></a>
+              <a class="auth-path-card" href="#/trainer" data-route="trainer"><span aria-hidden="true">★★★★★</span><strong>Speak with confidence</strong><small>Practice sounds and pronunciation</small></a>
+              <div class="auth-paths-copy" aria-hidden="true">
+                <a class="auth-path-card" href="#/curriculum" tabindex="-1"><span>★★★★★</span><strong>Language &amp; culture</strong><small>Learn through words, stories and heritage</small></a>
+                <a class="auth-path-card" href="#/coding" tabindex="-1"><span>★★★★★</span><strong>Code &amp; create</strong><small>Explore creative coding and STEAM</small></a>
+                <a class="auth-path-card" href="#/ere" tabindex="-1"><span>★★★★★</span><strong>Read &amp; listen</strong><small>Discover stories and oral traditions</small></a>
+                <a class="auth-path-card" href="#/trainer" tabindex="-1"><span>★★★★★</span><strong>Speak with confidence</strong><small>Practice sounds and pronunciation</small></a>
+              </div>
+            </div>
+            <p class="auth-paths-note">Learning paths, not user reviews or ratings.</p>
+          </section>
         </div>
       </aside>
 
@@ -5288,11 +5312,11 @@ import {
     const title = page === 'index' ? 'Preserving African culture. Promoting technology.' : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
     document.title = `${title} · Idilewa`;
     if (page === 'coding') {
-      document.body.dataset.page = 'coding';
+      document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}`;
       initializeIdeRuntimes();
     } else {
-      delete document.body.dataset.page;
+      document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
     }
     if (page === 'index') {
@@ -6121,7 +6145,7 @@ import {
       if (modalRoot) modalRoot.innerHTML = '';
       const route = routeEl.dataset.route;
       const params = {};
-      ['lang', 'level', 'module', 'lesson'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
+      ['lang', 'level', 'module', 'lesson', 'mode'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
       navigate(route, params);
       return;
     }
