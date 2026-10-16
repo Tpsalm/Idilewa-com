@@ -612,12 +612,20 @@ import {
       { title: 'Find a story', label: 'Stories · Culture', copy: 'Read and listen to stories that invite sharing across generations.', image: 'story-grandmother.jpg', route: 'ere', action: 'Read a story' },
       { title: 'Practice a sound', label: 'Voice Lessons', copy: 'Build confidence with vowels, consonants and guided speaking practice.', image: 'listening-reader.jpg', route: 'voice_lessons', action: 'Start a lesson' }
     ];
+    const phonePreviews = [
+      { type: 'language', glyph: 'Ẹ', label: 'YORÙBÁ · FIRST WORDS', title: 'Ẹ káàárọ̀', copy: 'Good morning', action: 'Listen', text: 'Ẹ káàárọ̀' },
+      { type: 'code', glyph: '</>', label: 'CODE · CREATE', title: 'Make a pattern', copy: 'Try your first steps in code.', action: 'Explore', text: '' },
+      { type: 'story', glyph: 'Ìt', label: 'STORIES · LISTEN', title: 'A story travels', copy: 'Read, listen and share together.', action: 'Discover', text: '' },
+      { type: 'voice', glyph: 'Ohùn', label: 'VOICE LESSONS', title: 'Sound foundations', copy: 'Practice vowels, consonants and tones.', action: 'Practice', text: '' }
+    ];
+    const renderPhoneSlide = (item, index, duplicate = false) => `<article class="android-preview-slide ${duplicate ? 'is-clone' : ''}" ${duplicate ? 'aria-hidden="true"' : ''}><div class="android-slide-visual android-slide-${item.type}"><span>${item.glyph}</span><small>0${index + 1}</small></div><small class="android-slide-label">${item.label}</small><strong>${item.title}</strong><span class="android-slide-copy">${item.copy}</span>${item.text ? `<button type="button" aria-label="Play ${item.title}" ${duplicate ? 'tabindex="-1"' : ''} data-action="play-audio" data-text="${esc(item.text)}">${icon('play', 12)} ${item.action}</button>` : `<span class="android-slide-action">${item.action} ${icon('arrow', 12)}</span>`}</article>`;
+    const renderPreviewCard = (item, index, duplicate = false) => `<article class="home-app-slide" ${duplicate ? 'aria-hidden="true"' : ''}><img src="./assets/${item.image}" alt="${duplicate ? '' : esc(item.title + ' preview')}" loading="lazy" /><div class="home-app-slide-copy"><span>${item.label}</span><h4>${item.title}</h4><p>${item.copy}</p>${routeLink(item.route, `${item.action} ${icon('arrow', 14)}`, 'text-link', duplicate ? 'tabindex="-1"' : '')}</div><span class="home-app-slide-number">0${index + 1}</span></article>`;
     return `<section class="home-app-section" aria-labelledby="home-app-title"><div class="container home-app-layout">
       <div class="home-app-device-column"><div class="home-app-heading"><span class="section-kicker">A little Idilewa in your pocket</span><h2 id="home-app-title">Learning that moves with you.</h2><p>Explore languages, stories and creative practice from one welcoming home.</p></div>
-        <div class="android-device" role="img" aria-label="Android phone preview of the Idilewa learning app"><div class="android-device-side"></div><div class="android-device-screen"><div class="android-status"><span>9:41</span><span>● ● ▰</span></div><div class="android-appbar"><span class="android-app-mark">È</span><strong>idílẹ́wà</strong><span>${icon('user', 15)}</span></div><div class="android-welcome"><small>Ẹ káàárọ̀, learner</small><strong>What would you like to explore?</strong></div><div class="android-learning-card"><span class="android-card-glyph">Ẹ</span><small>YORÙBÁ · FIRST WORDS</small><strong>Ẹ káàárọ̀</strong><span>Good morning</span><button type="button" aria-label="Play greeting" data-action="play-audio" data-text="Ẹ káàárọ̀">${icon('play', 13)} Listen</button></div><div class="android-progress"><span>Today’s journey</span><strong>1 of 3 steps</strong><div><i></i></div></div><div class="android-bottom-nav"><span>${icon('home', 14)}Home</span><span>${icon('book', 14)}Learn</span><span>${icon('user', 14)}Profile</span></div></div></div>
+        <div class="android-device" aria-label="Android phone preview of the Idilewa learning app"><div class="android-device-side"></div><div class="android-device-screen"><div class="android-status"><span>9:41</span><span>● ● ▰</span></div><div class="android-appbar"><span class="android-app-mark">È</span><strong>idílẹ́wà</strong><span>${icon('user', 15)}</span></div><div class="android-welcome"><small>Ẹ káàárọ̀, learner</small><strong>What would you like to explore?</strong></div><div class="android-preview-viewport" id="android-preview-viewport" aria-label="Automatically swiping Idilewa learning previews"><div class="android-preview-track">${phonePreviews.map((item, index) => renderPhoneSlide(item, index)).join('')}${renderPhoneSlide(phonePreviews[0], 0, true)}</div></div><div class="android-bottom-nav"><span>${icon('home', 14)}Home</span><span>${icon('book', 14)}Learn</span><span>${icon('user', 14)}Profile</span></div></div></div>
       </div>
-      <div class="home-app-swipe-area"><div class="home-app-swipe-heading"><div><span class="section-kicker">Look around</span><h3>One space. Many ways to grow.</h3></div><div class="home-app-swipe-controls"><button class="icon-button" type="button" data-action="app-preview-scroll" data-dir="prev" aria-label="Previous learning preview" title="Previous">${icon('arrow', 17, 'arrow-flip')}</button><button class="icon-button" type="button" data-action="app-preview-scroll" data-dir="next" aria-label="Next learning preview" title="Next">${icon('arrow', 17)}</button></div></div>
-        <div class="home-app-swipe-track" id="home-app-swipe-track" tabindex="0" aria-label="Swipe through Idilewa learning previews">${previews.map((item,index) => `<article class="home-app-slide"><img src="./assets/${item.image}" alt="${esc(item.title)} preview" loading="lazy" /><div class="home-app-slide-copy"><span>${item.label}</span><h4>${item.title}</h4><p>${item.copy}</p>${routeLink(item.route, `${item.action} ${icon('arrow', 14)}`, 'text-link')}</div><span class="home-app-slide-number">0${index+1}</span></article>`).join('')}</div><div class="home-app-swipe-hint">Swipe or scroll to explore <span aria-hidden="true">→</span></div>
+      <div class="home-app-swipe-area"><div class="home-app-swipe-heading"><div><span class="section-kicker">Look around</span><h3>One space. Many ways to grow.</h3></div></div>
+        <div class="home-app-swipe-track" id="home-app-swipe-track" tabindex="0" aria-label="Automatically scrolling Idilewa learning previews">${previews.map((item, index) => renderPreviewCard(item, index)).join('')}${previews.map((item, index) => renderPreviewCard(item, index, true)).join('')}</div><div class="home-app-swipe-hint">Swipe or scroll to explore <span aria-hidden="true">→</span></div>
       </div>
     </div></section><section class="home-principles-strip" aria-label="Idilewa learning principles"><div class="container"><span>${icon('globe', 17)} African languages</span><span>${icon('people', 17)} Family learning</span><span>${icon('leaf', 17)} Culture with context</span><span>${icon('code', 17)} STEAM for young makers</span></div></section>`;
   }
@@ -3139,9 +3147,8 @@ import {
             '<div class="code-robot-glyph-fallback" aria-hidden="true">' +
               '<span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span>' +
             '</div>' +
-            '<figure class="c4k-code-robot-artwork">' +
-            '<img src="./assets/idilewa-code-robot.jpg" alt="Idílẹ́wà learning assistant celebrates a coding achievement with a Great job message and +50 XP badge" loading="eager" />' +
-            '</figure>' +
+            '<div class="code-robot-message" aria-hidden="true">Great job!</div>' +
+            '<div class="code-robot-xp" aria-hidden="true">★ +50 XP</div>' +
           '</div>' +
           '<div class="c4k-ide-badge">' +
             '<span class="badge-code-icon">&lt;/&gt;</span> <span>INTERACTIVE BILINGUAL STUDIO</span>' +
@@ -5579,6 +5586,31 @@ import {
   }
 
   let activeCodeRobotScene = null;
+  let homePreviewTimers = [];
+
+  function startHomePreviewMotion() {
+    homePreviewTimers.forEach((timer) => window.clearInterval(timer));
+    homePreviewTimers = [];
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const carousels = [
+      { element: document.getElementById('android-preview-viewport'), count: 4, delay: 3600 },
+      { element: document.getElementById('home-app-swipe-track'), count: 4, delay: 4400 }
+    ];
+    carousels.forEach(({ element, count, delay }) => {
+      if (!element) return;
+      const advance = () => {
+        if (document.hidden || element.matches(':hover') || element.contains(document.activeElement)) return;
+        const first = element.firstElementChild;
+        if (!first) return;
+        const styles = getComputedStyle(element);
+        const gap = parseFloat(styles.columnGap || styles.gap) || 0;
+        const step = first.getBoundingClientRect().width + gap;
+        if (element.scrollLeft + step >= step * count - 2) element.scrollTo({ left: 0, behavior: 'auto' });
+        else element.scrollBy({ left: step, behavior: 'smooth' });
+      };
+      homePreviewTimers.push(window.setInterval(advance, delay));
+    });
+  }
 
   function render() {
     if (activeCodeRobotScene) {
@@ -5608,6 +5640,7 @@ import {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
     }
+    startHomePreviewMotion();
     if (page === 'index') {
       initHeroParallax();
       initHeroCinematicVideoEngine();
@@ -6363,11 +6396,6 @@ import {
         }).catch((error) => showToast(error instanceof Error ? error.message : 'Could not sign out.', 'error'));
         break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
-      case 'app-preview-scroll': {
-        const track = document.getElementById('home-app-swipe-track');
-        if (track) track.scrollBy({ left: (el.dataset.dir === 'prev' ? -1 : 1) * track.clientWidth * 0.78, behavior: 'smooth' });
-        break;
-      }
       case 'trainer-set-lang': {
         const selectedLang = el.dataset.lang || 'yoruba';
         state.trainer.lang = selectedLang;

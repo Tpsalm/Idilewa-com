@@ -7599,3 +7599,48 @@ body[data-page="login"] .main-content { padding: 0; }
   .profile-editor-submit { align-items: stretch; flex-direction: column; }
   .profile-editor-submit .button { width: 100%; }
 }
+
+.android-device { transform-style: preserve-3d; animation: android-device-orbit 12s ease-in-out infinite; will-change: transform; }
+@keyframes android-device-orbit {
+  0%, 100% { transform: perspective(950px) rotateY(-8deg) rotateX(2deg) rotateZ(-2deg) translateY(0); }
+  50% { transform: perspective(950px) rotateY(8deg) rotateX(-1deg) rotateZ(1deg) translateY(-6px); }
+}
+.android-preview-viewport { width: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-inline: contain; }
+.android-preview-viewport::-webkit-scrollbar { display: none; }
+.android-preview-track { display: flex; width: 100%; height: 100%; }
+.android-preview-slide { flex: 0 0 100%; min-width: 0; display: grid; align-content: start; gap: 7px; padding: 8px 2px 10px; scroll-snap-align: start; }
+.android-preview-slide > strong { color: var(--green-dark); font-size: 15px; line-height: 1.2; }
+.android-slide-label { color: var(--muted); font-size: 7px; font-weight: 850; letter-spacing: .25px; }
+.android-slide-copy { min-height: 25px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.android-slide-visual { position: relative; height: 84px; display: grid; place-items: center; overflow: hidden; border: 1px solid #e6eadd; border-radius: 11px; background: #fff4cf; }
+.android-slide-visual > span { color: var(--green-dark); font-size: 37px; font-weight: 850; }
+.android-slide-visual > small { position: absolute; top: 7px; right: 8px; color: rgba(24,35,29,.42); font-size: 9px; font-weight: 850; }
+.android-slide-code { background: #e7f4e8; }
+.android-slide-code > span { color: #15764a; font: 850 27px/1 monospace; }
+.android-slide-story { background: #fff0e5; }
+.android-slide-story > span { color: #a75130; font-size: 28px; }
+.android-slide-voice { background: #e8f4f5; }
+.android-slide-voice > span { color: #167ea0; font-size: 20px; }
+.android-preview-slide > button, .android-slide-action { width: max-content; display: inline-flex; align-items: center; gap: 5px; min-height: 27px; padding: 0 9px; border: 0; border-radius: 7px; color: #fff; background: var(--green); font-size: 9px; font-weight: 750; }
+.android-slide-action { color: var(--green-dark); background: #eaf3e7; }
+.home-app-swipe-track { scroll-behavior: smooth; }
+.home-app-slide[aria-hidden="true"] { pointer-events: none; }
+.c4k-code-robot-stage { perspective: 1000px; }
+.c4k-code-robot-stage .c4k-code-robot-artwork { display: none; }
+.code-robot-message, .code-robot-xp { position: absolute; z-index: 4; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(21,118,74,.22); border-radius: 999px; box-shadow: 0 10px 24px rgba(13,61,38,.14); font-weight: 850; pointer-events: none; }
+.code-robot-message { top: 15%; right: 17%; min-height: 46px; padding: 0 19px; color: var(--green-dark); background: #fff; font-size: 15px; transform: rotate(7deg); }
+.code-robot-message::after { content: ""; position: absolute; bottom: -7px; left: 18px; width: 13px; height: 13px; border-right: 1px solid rgba(21,118,74,.22); border-bottom: 1px solid rgba(21,118,74,.22); background: #fff; transform: rotate(45deg); }
+.code-robot-xp { bottom: 15%; left: 15%; min-height: 40px; padding: 0 14px; color: #543e07; background: #f6d166; font-size: 13px; transform: rotate(-6deg); }
+@media (max-width: 560px) {
+  .android-device { animation-duration: 15s; }
+  .android-preview-slide { gap: 5px; padding: 6px 1px 8px; }
+  .android-slide-visual { height: 68px; }
+  .android-preview-slide > strong { font-size: 13px; }
+  .android-slide-copy { min-height: 22px; font-size: 8px; }
+  .code-robot-message { top: 13%; right: 6%; min-height: 38px; padding-inline: 13px; font-size: 12px; }
+  .code-robot-xp { bottom: 11%; left: 7%; min-height: 34px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .android-device { animation: none; }
+  .home-app-swipe-track, .android-preview-viewport { scroll-behavior: auto; }
+}

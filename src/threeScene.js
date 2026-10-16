@@ -296,31 +296,75 @@ export function init3DCodeRobotGlyphs(containerElement) {
   let pointerY = 0;
   let resizeObserver = null;
   let destroyed = false;
-  let robotTexture = null;
-  let robotGeometry = null;
-  let robotMaterial = null;
-  let robotPlane = null;
-  const robotImage = stageElement.querySelector('.c4k-code-robot-artwork img');
-  const onRobotImageLoad = () => {
-    if (destroyed || !robotImage?.naturalWidth || !robotImage.naturalHeight) return;
-    robotTexture = new THREE.Texture(robotImage);
-    robotTexture.colorSpace = THREE.SRGBColorSpace;
-    robotTexture.needsUpdate = true;
-    const robotHeight = 4.2;
-    const robotWidth = robotHeight * (robotImage.naturalWidth / robotImage.naturalHeight);
-    robotGeometry = new THREE.PlaneGeometry(robotWidth, robotHeight);
-    robotMaterial = new THREE.MeshBasicMaterial({ map: robotTexture, side: THREE.DoubleSide });
-    robotPlane = new THREE.Mesh(robotGeometry, robotMaterial);
-    robotPlane.position.z = 0.08;
-    scene.add(robotPlane);
-    stageElement.setAttribute('data-3d-robot-ready', 'true');
-    if (prefersReducedMotion()) renderer.render(scene, camera);
+  const robotGroup = new THREE.Group();
+  robotGroup.position.y = -0.12;
+  scene.add(robotGroup);
+  const shellMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f8f4, roughness: 0.24, metalness: 0.18 });
+  const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x1687bf, roughness: 0.22, metalness: 0.42, emissive: 0x073d68, emissiveIntensity: 0.2 });
+  const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x101d2c, roughness: 0.2, metalness: 0.28 });
+  const cyanMaterial = new THREE.MeshStandardMaterial({ color: 0x79efff, roughness: 0.16, emissive: 0x31dfff, emissiveIntensity: 1.1 });
+  const goldMaterial = new THREE.MeshStandardMaterial({ color: 0xeab946, roughness: 0.32, metalness: 0.38 });
+  const tabletMaterial = new THREE.MeshStandardMaterial({ color: 0x263444, roughness: 0.3, metalness: 0.42 });
+  const addEllipsoid = (parent, material, position, scale) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), material);
+    mesh.position.set(...position);
+    mesh.scale.set(...scale);
+    parent.add(mesh);
+    return mesh;
   };
-  if (robotImage?.complete && robotImage.naturalWidth) {
-    onRobotImageLoad();
-  } else {
-    robotImage?.addEventListener('load', onRobotImageLoad);
+  const addBox = (parent, material, position, size, radius = 0) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
+    mesh.position.set(...position);
+    parent.add(mesh);
+    if (radius) mesh.rotation.z = radius;
+    return mesh;
+  };
+  const addCylinder = (parent, material, position, size, rotation = 0) => {
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(size[0], size[1], size[2], 20), material);
+    mesh.position.set(...position);
+    mesh.rotation.z = rotation;
+    parent.add(mesh);
+    return mesh;
+  };
+
+  addEllipsoid(robotGroup, shellMaterial, [0, -0.08, 0], [0.72, 0.77, 0.46]);
+  addEllipsoid(robotGroup, goldMaterial, [0, -0.12, 0.46], [0.2, 0.2, 0.07]);
+  addCylinder(robotGroup, blueMaterial, [0, 0.62, 0], [0.24, 0.27, 0.22]);
+
+  const robotHead = new THREE.Group();
+  robotHead.position.set(0, 1.08, 0);
+  robotGroup.add(robotHead);
+  addEllipsoid(robotHead, shellMaterial, [0, 0, 0], [1.1, 0.83, 0.58]);
+  addEllipsoid(robotHead, darkMaterial, [0, -0.01, 0.49], [0.82, 0.57, 0.16]);
+  for (const side of [-1, 1]) {
+    addEllipsoid(robotHead, blueMaterial, [side * 1.06, -0.04, 0], [0.28, 0.4, 0.29]);
+    addEllipsoid(robotHead, goldMaterial, [side * 1.16, -0.04, 0.02], [0.09, 0.22, 0.25]);
   }
+  const eyePupils = [-1, 1].map((side) => {
+    const pupilGroup = new THREE.Group();
+    pupilGroup.userData.side = side;
+    pupilGroup.position.set(side * 0.39, 0.03, 0.67);
+    robotHead.add(pupilGroup);
+    addEllipsoid(pupilGroup, cyanMaterial, [0, 0, 0], [0.17, 0.22, 0.075]);
+    addEllipsoid(pupilGroup, darkMaterial, [0, 0, 0.07], [0.07, 0.12, 0.035]);
+    addEllipsoid(pupilGroup, shellMaterial, [-0.035, 0.045, 0.11], [0.026, 0.035, 0.015]);
+    return pupilGroup;
+  });
+  addEllipsoid(robotHead, cyanMaterial, [0, -0.39, 0.64], [0.12, 0.035, 0.025]);
+  addCylinder(robotHead, darkMaterial, [0.72, 0.93, 0], [0.035, 0.045, 0.43], -0.12);
+  addEllipsoid(robotHead, goldMaterial, [0.75, 1.16, 0], [0.1, 0.1, 0.1]);
+
+  for (const side of [-1, 1]) {
+    addEllipsoid(robotGroup, blueMaterial, [side * 0.62, 0.25, 0.08], [0.33, 0.34, 0.34]);
+    addCylinder(robotGroup, shellMaterial, [side * 0.7, -0.05, 0.12], [0.18, 0.23, 0.58], side * -0.34);
+    addEllipsoid(robotGroup, shellMaterial, [side * 0.54, -0.48, 0.45], [0.21, 0.18, 0.2]);
+    addCylinder(robotGroup, blueMaterial, [side * 0.34, -1.05, 0], [0.2, 0.23, 0.56], side * 0.04);
+    addEllipsoid(robotGroup, shellMaterial, [side * 0.37, -1.42, 0.1], [0.31, 0.16, 0.38]);
+  }
+  addBox(robotGroup, tabletMaterial, [0, -0.49, 0.57], [1.03, 0.75, 0.13], -0.05);
+  addBox(robotGroup, blueMaterial, [0, -0.49, 0.65], [0.83, 0.52, 0.035], -0.05);
+  addBox(robotGroup, cyanMaterial, [0, -0.34, 0.68], [0.46, 0.045, 0.02]);
+  addBox(robotGroup, goldMaterial, [0, -0.48, 0.68], [0.58, 0.035, 0.02]);
 
   const glyphSpecs = [
     { text: '</>', color: 0x087e9b },
@@ -405,11 +449,13 @@ export function init3DCodeRobotGlyphs(containerElement) {
     elapsed += 0.016;
     orbitGroup.rotation.y = Math.sin(elapsed * 0.35) * 0.08 + pointerX * 0.035;
     orbitGroup.rotation.x = Math.cos(elapsed * 0.3) * 0.045 + pointerY * 0.025;
-    if (robotPlane) {
-      robotPlane.position.y = Math.sin(elapsed * 0.75) * 0.055;
-      robotPlane.rotation.y = Math.sin(elapsed * 0.38) * 0.095 + pointerX * 0.12;
-      robotPlane.rotation.x = Math.cos(elapsed * 0.42) * 0.035 - pointerY * 0.08;
-    }
+    robotGroup.position.y = -0.12 + Math.sin(elapsed * 0.75) * 0.055;
+    robotGroup.rotation.y = Math.sin(elapsed * 0.38) * 0.08 + pointerX * 0.2;
+    robotGroup.rotation.x = Math.cos(elapsed * 0.42) * 0.025 - pointerY * 0.12;
+    eyePupils.forEach((pupilGroup) => {
+      pupilGroup.position.x = pupilGroup.userData.side * 0.39 + pointerX * 0.11;
+      pupilGroup.position.y = 0.03 - pointerY * 0.08;
+    });
     glyphs.forEach((glyph) => {
       const phase = elapsed * 0.72 + glyph.userData.orbitOffset;
       const aspectScale = Math.min(1, Math.max(0.68, containerElement.clientWidth / Math.max(containerElement.clientHeight, 1)));
@@ -428,10 +474,8 @@ export function init3DCodeRobotGlyphs(containerElement) {
   };
 
   const onPointerMove = (event) => {
-    const bounds = stageElement.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return;
-    pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
-    pointerY = (event.clientY - bounds.top) / bounds.height - 0.5;
+    pointerX = Math.max(-1, Math.min(1, (event.clientX / window.innerWidth) * 2 - 1));
+    pointerY = Math.max(-1, Math.min(1, (event.clientY / window.innerHeight) * 2 - 1));
   };
   const onPointerLeave = () => {
     pointerX = 0;
@@ -450,9 +494,8 @@ export function init3DCodeRobotGlyphs(containerElement) {
     if (destroyed) return;
     destroyed = true;
     if (animationId !== null) cancelAnimationFrame(animationId);
-    stageElement.removeEventListener('pointermove', onPointerMove);
-    stageElement.removeEventListener('pointerleave', onPointerLeave);
-    robotImage?.removeEventListener('load', onRobotImageLoad);
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('blur', onPointerLeave);
     window.removeEventListener('resize', onResize);
     resizeObserver?.disconnect();
     scene.traverse((object) => {
@@ -472,8 +515,8 @@ export function init3DCodeRobotGlyphs(containerElement) {
     if (activeScenes.get(containerElement)?.destroy === destroy) activeScenes.delete(containerElement);
   };
 
-  stageElement.addEventListener('pointermove', onPointerMove, { passive: true });
-  stageElement.addEventListener('pointerleave', onPointerLeave, { passive: true });
+  window.addEventListener('pointermove', onPointerMove, { passive: true });
+  window.addEventListener('blur', onPointerLeave);
   window.addEventListener('resize', onResize);
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(onResize);
@@ -486,10 +529,9 @@ export function init3DCodeRobotGlyphs(containerElement) {
     glyphs.forEach((glyph, index) => {
       glyph.position.set(glyph.userData.side * 2.3, glyph.userData.row * 0.82, 0);
     });
-    if (robotPlane) {
-      robotPlane.position.set(0, 0, 0.08);
-      robotPlane.rotation.set(0, 0, 0);
-    }
+    robotGroup.position.set(0, -0.12, 0);
+    robotGroup.rotation.set(0, 0, 0);
+    eyePupils.forEach((pupilGroup) => { pupilGroup.position.x = pupilGroup.userData.side * 0.39; });
     renderer.render(scene, camera);
   } else {
     renderFrame();
