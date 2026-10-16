@@ -392,7 +392,8 @@ import {
       ideLang: 'yoruba', idePresetId: 'hello_world',
       ideCode: '# Kí Ilé Ayé ní Èdè Yorùbá\njẹ́ orúkọ = "Ọmọ Yorùbá"\ntẹ_jade("Ẹ n lẹ́ o, " + orúkọ + "! Ẹ káàbọ̀ sí Idíléwà.")\ntẹ_jade("A n kọ́ koodu ní èdè abínibí wa lónìí! ✨")',
       ideOutput: '> [Idilewa Engine v2.4 Online]\n> Ẹ n lẹ́ o, Ọmọ Yorùbá! Ẹ káàbọ̀ sí Idíléwà.\n> A n kọ́ koodu ní èdè abínibí wa lónìí! ✨\n✓ Àṣeyọrí: Execution completed in 0.02ms (+10 Maker XP)',
-      ideTab: 'terminal', ideRuntime: '0.02ms', ideXp: 10
+      ideTab: 'terminal', ideRuntime: '0.02ms', ideXp: 10,
+      ideSidebar: 'explorer', ideInstalledExtensions: [], ideAssistantMessages: []
     },
     trainer: {
       lang: 'yoruba',
@@ -439,6 +440,9 @@ import {
           questCommands: Array.isArray(stored.coding?.questCommands) ? stored.coding.questCommands.filter((step) => ['up', 'right', 'down', 'left'].includes(step)).slice(0, 12) : [],
           questTrail: Array.isArray(stored.coding?.questTrail) ? stored.coding.questTrail.filter((cell) => typeof cell === 'string').slice(0, 20) : [],
           questResult: typeof stored.coding?.questResult === 'string' ? stored.coding.questResult : '',
+          ideSidebar: ['explorer', 'extensions'].includes(stored.coding?.ideSidebar) ? stored.coding.ideSidebar : 'explorer',
+          ideInstalledExtensions: Array.isArray(stored.coding?.ideInstalledExtensions) ? stored.coding.ideInstalledExtensions.filter((id) => typeof id === 'string') : [],
+          ideAssistantMessages: Array.isArray(stored.coding?.ideAssistantMessages) ? stored.coding.ideAssistantMessages.filter((message) => message && ['user', 'assistant'].includes(message.role) && typeof message.text === 'string').slice(-12) : [],
           search: typeof stored.coding?.search === 'string' ? stored.coding.search : '',
           draft: typeof stored.coding?.draft === 'string' ? stored.coding.draft : '',
           result: typeof stored.coding?.result === 'string' ? stored.coding.result : ''
@@ -3079,9 +3083,121 @@ import {
     }
   }
 
+  function inspectIdeCode(code, language) {
+    const stack = [];
+    const issues = [];
+    const pairs = { ')': '(', ']': '[', '}': '{' };
+    let quote = '';
+    let line = 1;
+    let comment = false;
+    for (let index = 0; index < code.length; index += 1) {
+      const character = code[index];
+      if (character === '\n') { line += 1; comment = false; continue; }
+      if (comment) continue;
+      if (quote) {
+        if (character === '\\') { index += 1; continue; }
+        if (character === quote) quote = '';
+        continue;
+      }
+      if ((character === '#' && language !== 'javascript') || (character === '/' && code[index + 1] === '/' && language === 'javascript')) {
+        comment = true;
+        if (character === '/') index += 1;
+        continue;
+      }
+      if (character === '"' || character === "'" || (character === '`' && language === 'javascript')) {
+        quote = character;
+        continue;
+      }
+      if ('([{'.includes(character)) stack.push({ character, line });
+      else if (pairs[character]) {
+        const opening = stack.pop();
+        if (!opening || opening.character !== pairs[character]) {
+          issues.push(`Unexpected “${character}” on line ${line}.`);
+          return { issues, fixedCode: null };
+        }
+      }
+    }
+
+    let fixedCode = code;
+    if (quote) {
+      issues.push(`The ${quote} string opened near the end of the file is not closed.`);
+      fixedCode += quote;
+    }
+    if (stack.length) {
+      const closers = stack.reverse().map(({ character }) => ({ '(': ')', '[': ']', '{': '}' }[character])).join('');
+      issues.push(`Missing closing ${closers.split('').join(' ')}.`);
+      fixedCode = `${fixedCode}${fixedCode.endsWith('\n') || !fixedCode ? '' : '\n'}${closers}`;
+    }
+
+    if (!issues.length && language === 'javascript') {
+      try { new Function(code); } catch (error) { issues.push(`JavaScript syntax: ${error.message}`); }
+    } else if (!issues.length && language === 'yoruba') {
+      try { new Function(transpileYorubaToJS(code)); } catch (error) { issues.push(`Yorùbá code syntax: ${error.message}`); }
+    }
+    return { issues, fixedCode: fixedCode !== code ? fixedCode : null };
+  }
+
+  function addIdeAssistantMessage(role, text) {
+    state.coding.ideAssistantMessages = [...(state.coding.ideAssistantMessages || []), { role, text }].slice(-12);
+    saveState();
+    render();
+  }
+
+  function analyzeIdeAssistantCode(request = '') {
+    const code = document.getElementById('ide-code-input')?.value ?? state.coding.ideCode ?? '';
+    const language = state.coding.ideLang || 'yoruba';
+    const analysis = inspectIdeCode(code, language);
+    const prompt = request.trim();
+    if (prompt) state.coding.ideAssistantMessages.push({ role: 'user', text: prompt });
+    const response = analysis.issues.length
+      ? `I checked the current ${language} file. ${analysis.issues.join(' ')}${analysis.fixedCode ? ' I can safely add the missing closing characters.' : ' I cannot safely rewrite this error automatically; review the line and run the code to get a runtime message.'}`
+      : `I checked the current ${language} file and found no unclosed strings or bracket pairs. ${prompt ? `For “${prompt}”,` : ''} run the code to check runtime behavior; this local assistant does not send code to a hosted AI service.`;
+    state.coding.ideAssistantMessages.push({ role: 'assistant', text: response });
+    state.coding.ideAssistantMessages = state.coding.ideAssistantMessages.slice(-12);
+    saveState();
+    render();
+  }
+
+  function applyIdeAssistantFix() {
+    const code = document.getElementById('ide-code-input')?.value ?? state.coding.ideCode ?? '';
+    const analysis = inspectIdeCode(code, state.coding.ideLang || 'yoruba');
+    if (!analysis.fixedCode) {
+      const text = analysis.issues.length
+        ? `No safe automatic fix is available. ${analysis.issues.join(' ')}`
+        : 'No safe syntax fix is needed. Run the code to check its behavior.';
+      addIdeAssistantMessage('assistant', text);
+      return;
+    }
+    state.coding.ideCode = analysis.fixedCode;
+    state.coding.ideAssistantMessages = [...(state.coding.ideAssistantMessages || []), { role: 'assistant', text: `Applied a safe syntax fix: ${analysis.issues.join(' ')}` }].slice(-12);
+    saveState();
+    render();
+  }
+
   // ==========================================
   // RENDER: CODE IN YOUR LANGUAGE (IDE STANDALONE)
   // ==========================================
+  function renderIdeSidebar(currentPreset) {
+    const extensions = [
+      { id: 'yoruba-language-tools', name: 'Yorùbá Language Tools', description: 'Diacritic helpers and language-aware snippets.', icon: 'globe' },
+      { id: 'african-code-snippets', name: 'African Code Snippets', description: 'Starter patterns for the Idilewa languages.', icon: 'code' },
+      { id: 'kid-safe-runner', name: 'Kid-safe Code Runner', description: 'Run code in the existing isolated preview.', icon: 'shield' },
+      { id: 'voice-pronunciation', name: 'Voice & Pronunciation', description: 'Open pronunciation practice alongside code.', icon: 'mic' }
+    ];
+    if (state.coding.ideSidebar === 'extensions') {
+      return `<div class="ide-sidebar-title"><span>EXTENSIONS</span><small>Idilewa tools</small></div><label class="ide-extension-search-label" for="ide-extension-search">Search extensions</label><input id="ide-extension-search" type="search" placeholder="Search extensions" /><div class="ide-extension-list">${extensions.map((extension) => {
+        const installed = (state.coding.ideInstalledExtensions || []).includes(extension.id);
+        return `<article class="ide-extension-card" data-extension-name="${esc(extension.name.toLowerCase())}"><span class="ide-extension-icon">${icon(extension.icon, 18)}</span><div><strong>${esc(extension.name)}</strong><p>${esc(extension.description)}</p><small>Idilewa · Built-in</small></div><button type="button" data-action="ide-toggle-extension" data-extension-id="${extension.id}" aria-pressed="${installed}">${installed ? 'Installed' : 'Install'}</button></article>`;
+      }).join('')}</div>`;
+    }
+    return `<div class="ide-sidebar-title"><span>EXPLORER</span><button type="button" data-action="ide-sidebar-mode" data-mode="extensions" title="Show extensions">${icon('plus', 14)}</button></div><div class="ide-tree-root">${icon('arrow', 12)} IDILEWA</div><div class="ide-tree-group"><button type="button" class="ide-tree-folder">${icon('arrow', 12)} ${icon('folder', 14)} ${esc(state.coding.ideLang || 'yoruba')}</button><div class="ide-tree-files"><button type="button" class="ide-tree-file is-active">${icon('code', 14)} ${esc(currentPreset.filename)}</button><button type="button" class="ide-tree-file">${icon('book', 14)} README.md</button><button type="button" class="ide-tree-file">${icon('layers', 14)} lessons</button></div></div><div class="ide-sidebar-lower"><span>OPEN EDITORS</span><small>${esc(currentPreset.filename)}</small><button type="button" data-action="ide-sidebar-mode" data-mode="extensions">${icon('grid', 14)} Browse extensions</button></div>`;
+  }
+
+  function renderIdeAssistant() {
+    const messages = state.coding.ideAssistantMessages || [];
+    return `<aside class="ide-assistant-panel" aria-label="Idilewa code assistant"><div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Assistant</span><small>LOCAL</small></div><div class="ide-assistant-robot"><div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Interactive Idilewa coding assistant"><div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div><div class="code-robot-glyph-fallback" aria-hidden="true"><span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span></div><div class="code-robot-message" aria-hidden="true">Great job!</div><div class="code-robot-xp" aria-hidden="true">★ +50 XP</div></div></div><div class="ide-assistant-notice">Local syntax analysis only. Code stays in this browser; a hosted AI service is not connected.</div><div class="ide-assistant-actions"><button type="button" data-action="ide-assistant-analyze">${icon('search', 14)} Analyze code</button><button type="button" data-action="ide-assistant-fix">${icon('sparkles', 14)} Fix safe syntax</button></div><div class="ide-assistant-messages" id="ide-assistant-messages" aria-live="polite">${messages.length ? messages.map((message) => `<article class="ide-chat-message is-${message.role}"><small>${message.role === 'user' ? 'You' : 'Code Assistant'}</small><p>${esc(message.text)}</p></article>`).join('') : '<article class="ide-chat-message is-assistant"><small>Code Assistant</small><p>Ask about your code or run a local syntax check. I can safely fix missing closing brackets and quotes.</p></article>'}</div><form class="ide-assistant-form" data-form="ide-assistant"><textarea name="question" id="ide-assistant-question" rows="3" maxlength="600" placeholder="Ask about this code…"></textarea><button type="submit" aria-label="Send question">${icon('arrow', 15)}</button></form></aside>`;
+  }
+
   function renderCoding() {
     const flow = state.coding;
     const ideLang = flow.ideLang || 'yoruba';
@@ -3138,28 +3254,19 @@ import {
       '> Kọ koodu ki o tẹ "Ṣe Koodu (Run)" lati wo àbájáde.'
     );
 
-    return '<div class="container route-page coding-page c4k-redesigned-page ide-fullscreen-page">' +
-      '<!-- Interactive Bilingual Studio (Only this fills the Code page) -->' +
-      '<section class="c4k-ide-section ide-main-standalone" id="code-ide" aria-labelledby="ide-title">' +
-        '<div class="c4k-ide-header-box">' +
-          '<div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Idílẹ́wà coding assistant with animated programming glyphs">' +
-            '<div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div>' +
-            '<div class="code-robot-glyph-fallback" aria-hidden="true">' +
-              '<span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span>' +
-            '</div>' +
-            '<div class="code-robot-message" aria-hidden="true">Great job!</div>' +
-            '<div class="code-robot-xp" aria-hidden="true">★ +50 XP</div>' +
-          '</div>' +
-          '<div class="c4k-ide-badge">' +
-            '<span class="badge-code-icon">&lt;/&gt;</span> <span>INTERACTIVE BILINGUAL STUDIO</span>' +
-          '</div>' +
-          '<h1 id="ide-title" class="c4k-ide-title">' +
-            'Kọ Koodu ní Èdè Rẹ · Code' +
-          '</h1>' +
-          '<p class="c4k-ide-subtitle">' +
-          'Learn in Yorùbá, Igbo, Hausa, and Kiswahili. Build HTML, CSS, and JavaScript in your browser, or connect a private compiler for Python and 29 more programming languages.' +
-          '</p>' +
-        '</div>' +
+    const sidebarMode = state.coding.ideSidebar || 'explorer';
+    return '<div class="coding-page ide-fullscreen-page ide-page-root">' +
+      '<section class="c4k-ide-section ide-main-standalone ide-vscode-shell" id="code-ide" aria-labelledby="ide-title">' +
+        '<div class="ide-workbench-shell">' +
+          '<nav class="ide-activity-bar" aria-label="Code workspace views">' +
+            '<button type="button" class="ide-activity-button ' + (sidebarMode === 'explorer' ? 'is-active' : '') + '" data-action="ide-sidebar-mode" data-mode="explorer" title="Explorer" aria-label="Explorer">' + icon('folder', 19) + '</button>' +
+            '<button type="button" class="ide-activity-button ' + (sidebarMode === 'extensions' ? 'is-active' : '') + '" data-action="ide-sidebar-mode" data-mode="extensions" title="Extensions" aria-label="Extensions">' + icon('grid', 19) + '</button>' +
+            '<button type="button" class="ide-activity-button" data-action="ide-assistant-analyze" title="Analyze code" aria-label="Analyze code">' + icon('sparkles', 19) + '</button>' +
+          '</nav>' +
+          '<aside class="ide-explorer-sidebar" aria-label="Project explorer">' + renderIdeSidebar(currentPreset) + '</aside>' +
+          '<div class="ide-main-column">' +
+            '<header class="ide-titlebar"><div class="ide-titlebar-brand"><span class="ide-brand-mark">&lt;/&gt;</span><strong>Idilewa Code</strong><span class="ide-titlebar-path">workspace / ' + esc(currentPreset.filename) + '</span></div><div class="ide-titlebar-actions"><button type="button" class="ide-titlebar-run" data-action="ide-run-code" title="Run code">' + icon('play', 14) + '<span>Run</span></button><button type="button" class="ide-titlebar-action" data-action="ide-copy-code" title="Copy code">' + icon('check', 15) + '</button></div></header>' +
+            '<div class="c4k-ide-header-box ide-code-heading"><div><div class="c4k-ide-badge"><span class="badge-code-icon">&lt;/&gt;</span><span>INTERACTIVE BILINGUAL STUDIO</span></div><h1 id="ide-title" class="c4k-ide-title">Kọ Koodu ní Èdè Rẹ</h1><p class="c4k-ide-subtitle">Build in Yorùbá, Igbo, Hausa, Kiswahili, Python, and the web languages.</p></div></div>' +
 
         '<div class="c4k-ide-workspace">' +
           '<!-- Top Control Bar -->' +
@@ -3292,7 +3399,11 @@ import {
             '</div>' +
           '</div>' +
         '</div>' +
+        '</div>' +
+        renderIdeAssistant() +
+        '</div>' +
       '</section>' +
+      renderFooter() +
     '</div>';
   }
 
@@ -5870,6 +5981,31 @@ import {
         showToast('Switched IDE to ' + lang.toUpperCase() + ' mode.');
         break;
       }
+      case 'ide-sidebar-mode': {
+        const mode = el.dataset.mode === 'extensions' ? 'extensions' : 'explorer';
+        state.coding.ideSidebar = mode;
+        saveState();
+        render();
+        break;
+      }
+      case 'ide-toggle-extension': {
+        const extensionId = el.dataset.extensionId;
+        if (!extensionId) break;
+        const installed = state.coding.ideInstalledExtensions || [];
+        state.coding.ideInstalledExtensions = installed.includes(extensionId)
+          ? installed.filter((id) => id !== extensionId)
+          : [...installed, extensionId];
+        saveState();
+        render();
+        showToast(state.coding.ideInstalledExtensions.includes(extensionId) ? 'Idilewa extension enabled.' : 'Idilewa extension removed.');
+        break;
+      }
+      case 'ide-assistant-analyze':
+        analyzeIdeAssistantCode();
+        break;
+      case 'ide-assistant-fix':
+        applyIdeAssistantFix();
+        break;
       case 'ide-select-preset': {
         const presetId = el.value;
         state.coding.idePresetId = presetId;
@@ -6671,6 +6807,12 @@ import {
         lineGutter.innerHTML = Array.from({ length: count }, (_, i) => '<div>' + (i + 1) + '</div>').join('');
       }
     }
+    if (target.id === 'ide-extension-search') {
+      const query = target.value.trim().toLowerCase();
+      document.querySelectorAll('.ide-extension-card').forEach((card) => {
+        card.hidden = !card.dataset.extensionName.includes(query);
+      });
+    }
 
     if (event.target && event.target.id === 'siteSearch') {
       const results = document.getElementById('searchResults');
@@ -6759,6 +6901,10 @@ import {
       if (!text || !meaning || !data.get('consent')) { showToast('Please complete the required fields and consent check.', 'error'); return; }
       state.savedProverbs.unshift({ text, meaning, language: String(data.get('language') || 'Yorùbá'), context: String(data.get('context') || '').trim() });
       saveState(); navigate('owe'); showToast('Your proverb is saved in this browser preview.');
+    } else if (type === 'ide-assistant') {
+      const prompt = String(data.get('question') || '').trim();
+      if (!prompt) { showToast('Ask a question about the code first.', 'error'); return; }
+      analyzeIdeAssistantCode(prompt);
     } else if (type === 'profile-settings') {
       const profile = {
         name: String(data.get('name') || '').trim(),
@@ -6848,6 +6994,11 @@ import {
     }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault(); openSearch();
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && parseLocation().page === 'coding') {
+      event.preventDefault();
+      const runButton = document.querySelector('[data-action="ide-run-code"]');
+      if (runButton) handleAction('ide-run-code', runButton);
     }
   });
 
