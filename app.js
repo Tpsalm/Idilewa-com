@@ -113,24 +113,24 @@ import {
   const PAGE_META = {
     voice_lessons: {
       title: 'Master African Tonal Pitch with Interactive Voice Practice.',
-      eyebrow: 'Voice African Language Trainer',
+      eyebrow: 'Voice Lessons',
       desc: 'Interactive speech studio with pitch detection, tone melody soundboards, and voice synthesis across 6 African languages and 60 lessons.',
       icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
       active: 0, flow: ['Select Language', 'Hear Native Tones', 'Record & Analyze', 'Earn Certificate'],
-      cta: 'Open Voice Studio', ctaRoute: 'trainer',
+      cta: 'Open Voice Lessons', ctaRoute: 'voice_lessons',
       cards: [
-        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
-        { title: 'Speech Evaluation', text: 'Prototype pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
-        { title: '60 Audio Lessons', text: 'Beginner, intermediate, and advanced curriculum for Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.', icon: 'book', route: 'trainer', tone: 'blue' }
+        { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'voice_lessons', tone: 'mint' },
+        { title: 'Speech Evaluation', text: 'Practice pronunciation, rhythm, and clarity with feedback.', icon: 'mic', route: 'voice_lessons', tone: 'yellow' },
+        { title: '60 Audio Lessons', text: 'Start with Yoruba sounds, then explore beginner, intermediate, and advanced lessons.', icon: 'book', route: 'voice_lessons', tone: 'blue' }
       ]
     },
     trainer: {
       title: 'Master African Tonal Pitch with Real-Time Voice AI.',
-      eyebrow: 'Voice African Language Trainer',
+      eyebrow: 'Voice Lessons',
       desc: 'Interactive speech studio with pitch detection, tone melody soundboards, and native voice synthesis across 6 African languages and 60 lessons.',
       icon: 'mic', image: 'listening-reader.jpg', imageAlt: 'A learner practicing voice pronunciation with interactive audio',
       active: 0, flow: ['Select Language', 'Hear Native Tones', 'Record & Analyze', 'Earn Certificate'],
-      cta: 'Open Voice Studio', ctaRoute: 'trainer',
+      cta: 'Open Voice Lessons', ctaRoute: 'voice_lessons',
       cards: [
         { title: 'Tonal Pitch Melody', text: 'Hear high, mid, and low tonal frequencies with dynamic soundboard keys.', icon: 'music', route: 'trainer', tone: 'mint' },
         { title: 'Speech Evaluation', text: 'Real-time pitch accuracy, rhythm, and clarity scoring with star rewards.', icon: 'mic', route: 'trainer', tone: 'yellow' },
@@ -312,7 +312,7 @@ import {
     { label: 'Home', route: 'index', group: 'home' },
     { label: 'Curriculum', route: 'curriculum', group: 'curriculum' },
     { label: 'Code', route: 'coding', group: 'code' },
-    { label: 'Voice Trainer', route: 'trainer', group: 'trainer' },
+    { label: 'Voice Lessons', route: 'voice_lessons', group: 'trainer' },
     { label: 'Read & listen', route: 'oral', group: 'read' },
     { label: 'Stories', route: 'ere', group: 'stories' },
     { label: 'About', route: 'about', group: 'about' }
@@ -344,8 +344,8 @@ import {
   LABELS.library = 'Library';
   LABELS.game = 'Tile game';
   LABELS.payment = 'Payment';
-  LABELS.trainer = 'Voice African Language Trainer';
-  LABELS.voice_lessons = 'Voice African Language Trainer';
+  LABELS.trainer = 'Voice Lessons';
+  LABELS.voice_lessons = 'Voice Lessons';
 
   const defaults = {
     currentLang: 'yoruba',
@@ -369,7 +369,7 @@ import {
     interested: [],
     available: { yoruba: true, igbo: true, hausa: true, swahili: true, twi: false, wolof: false, zulu: false, fulfulde: false },
     loginMode: 'signin',
-    authRole: 'child',
+    authRole: 'adult',
     billing: 'monthly',
     consent: {
       requestCode: '', approvedCode: '', approved: false,
@@ -486,12 +486,14 @@ import {
   };
 
   let defaultAuthEntryInitialized = false;
+  let authIntroPending = !window.location.hash;
   function parseLocation() {
     const hash = window.location.hash.replace(/^#\/?/, '');
     if (!hash) {
       const defaultPage = document.body?.dataset?.defaultRoute || 'login';
       if (defaultPage === 'login' && !defaultAuthEntryInitialized) {
         state.loginMode = 'signup';
+        state.authRole = 'adult';
         defaultAuthEntryInitialized = true;
       }
       return { page: ROUTES.includes(defaultPage) ? defaultPage : 'index', params: {} };
@@ -520,6 +522,10 @@ import {
   }
 
   function renderHeader(page) {
+    if (page === 'login') {
+      document.getElementById('site-header').innerHTML = '';
+      return;
+    }
     const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
     const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
     const mobileShortcuts = [
@@ -538,6 +544,7 @@ import {
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
           <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
+          <a class="header-profile" href="#/profile" data-route="profile">${icon('user', 15)} Profile</a>
           <a class="header-signin" href="#/login?mode=signin" data-route="login" data-mode="signin">Sign in</a>
           <a class="button button-small button-primary header-cta" href="#/login?mode=signup" data-route="login" data-mode="signup">${icon('user', 14)} Create account</a>
           <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
@@ -582,7 +589,7 @@ import {
     const featureCards = [
       { title: 'K–8 STEAM Curriculum', desc: 'Standards-aligned lessons infused with African culture.', icon: 'layers', route: 'curriculum', tone: 'blue', tag: 'Curriculum', image: 'page-languages-1.jpg' },
       { title: 'Code in your language', desc: 'Interactive bilingual coding studio for kids.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Interactive IDE', image: 'code-kids.jpg' },
-      { title: 'African Voice Trainer', desc: 'Real-time pitch scoring & tone feedback for 6 African languages.', icon: 'mic', route: 'trainer', tone: 'mint', tag: 'Interactive AI Studio', image: 'listening-reader.jpg' },
+      { title: 'Voice Lessons', desc: 'Start with Yorùbá sounds, then practice pitch and pronunciation across African languages.', icon: 'mic', route: 'voice_lessons', tone: 'mint', tag: 'Interactive Audio Lessons', image: 'listening-reader.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
       { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
       { title: 'Connect with Students', desc: 'A respectful space for educators to meet learners.', icon: 'people', route: 'connect_students', tone: 'peach', tag: 'For educators', image: 'african-kids-friends.jpg' },
@@ -828,7 +835,7 @@ import {
           <div class="home-trainer-copy">
             <div class="home-trainer-badge">
               <span class="badge-dot"></span>
-              <span>AI VOICE & TONAL PITCH TRAINER</span>
+              <span>VOICE LESSONS · SOUND &amp; TONAL PRACTICE</span>
             </div>
             <h2>Speak African Languages with <span class="highlight-green">Native Tonal Fluency</span></h2>
             <p>Our interactive voice studio listens to your voice in real time, analyzes pitch accuracy, and gives instant feedback across Yorùbá, Igbo, Hausa, Swahili, isiZulu, and Twi.</p>
@@ -856,7 +863,7 @@ import {
               </div>
             </div>
             <div class="home-trainer-actions">
-              ${routeLink('trainer', `Launch Voice Studio ${icon('arrow', 17)}`, 'button button-primary')}
+              ${routeLink('voice_lessons', `Explore Voice Lessons ${icon('arrow', 17)}`, 'button button-primary')}
               ${routeLink('voices', `Explore Voice Library`, 'button button-outline')}
             </div>
           </div>
@@ -959,7 +966,7 @@ import {
           <h3>Practice Real-Time Tonal Pronunciation & Pitch Melody</h3>
           <p>Train with 60 audio lessons across 6 African languages. Get instant speech analysis and fluency score feedback.</p>
         </div>
-        ${routeLink('trainer', `Open Voice Trainer ${icon('arrow', 15)}`, 'button button-primary')}
+        ${routeLink('voice_lessons', `Open Voice Lessons ${icon('arrow', 15)}`, 'button button-primary')}
       </section>
       ${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}<div class="language-group-head"><div><span class="section-kicker">Available to explore</span><h2>Choose your first path</h2></div><span class="muted-count">${availableLanguages.length} learning paths</span></div>
       <div class="language-choice-grid">${availableLanguages.map(renderLanguageCard).join('')}</div>
@@ -2915,6 +2922,25 @@ import {
     previewTab?.classList.toggle('active', tab === 'preview');
     const terminal = document.getElementById('ide-terminal-logs');
     if (terminal) terminal.textContent = output;
+    const translated = document.getElementById('ide-output-translation');
+    if (translated) translated.textContent = '';
+  }
+  function renderVoiceTranslationTools() {
+    return `<section class="voice-translation-panel" aria-labelledby="voice-translate-title">
+      <div><span class="section-kicker">Listen, translate, speak</span><h2 id="voice-translate-title">Try a phrase</h2><p>Type or dictate a short English phrase, then compare a phrasebook translation and hear it aloud.</p></div>
+      <label class="voice-translation-input-label" for="voice-translation-input">English phrase</label>
+      <textarea id="voice-translation-input" rows="3" placeholder="Type a greeting or choose the microphone to dictate"></textarea>
+      <div class="voice-translation-controls">
+        <label for="voice-translation-language">Language</label>
+        <select id="voice-translation-language"><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="sw">Swahili</option></select>
+        <button type="button" class="button button-primary" data-action="translate-voice-text">Translate</button>
+        <button type="button" class="button button-outline" data-action="speak-voice-translation">Say result</button>
+        <button type="button" class="button button-outline" data-action="start-voice-transcription">${icon('mic', 15)} Dictate</button>
+      </div>
+      <p id="voice-translation-result" class="voice-translation-result" aria-live="polite"></p>
+      <small id="voice-transcription-status" class="voice-transcription-status">Speech recognition availability depends on your browser.</small>
+      <small>Offline phrasebook; longer or unfamiliar sentences may be approximate.</small>
+    </section>`;
   }
 
   async function runRemoteIdeCode(code, language) {
@@ -3187,6 +3213,14 @@ import {
                     '<span class="status-xp" id="ide-status-xp">+' + (flow.ideXp || 10) + ' Maker XP</span>' +
                   '</div>' +
                   '<pre class="terminal-logs" id="ide-terminal-logs">' + esc(initialOutput) + '</pre>' +
+                  '<div class="ide-translation-tools" aria-label="Translate console output">' +
+                    '<label for="ide-output-language">Translate output to</label>' +
+                    '<select id="ide-output-language" aria-label="Output language"><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="sw">Swahili</option></select>' +
+                    '<button type="button" class="button button-small button-outline" data-action="translate-ide-output">Translate</button>' +
+                    '<button type="button" class="button button-small button-outline" data-action="speak-ide-output">Say result</button>' +
+                    '<p id="ide-output-translation" class="ide-translation-result" aria-live="polite"></p>' +
+                    '<small>Offline phrasebook; longer or unfamiliar sentences may be approximate.</small>' +
+                  '</div>' +
                 '</div>' +
 
                 '<!-- Canvas View -->' +
@@ -3457,7 +3491,7 @@ import {
 
   function renderOral() {
     const genres = [
-      { title: 'Voice Trainer', titleSub: 'Real-time pitch & tone', copy: 'Interactive tone soundboards, native pronunciation and pitch scoring across 6 African languages.', icon: 'mic', route: 'trainer', tone: 'yellow' },
+      { title: 'Voice Lessons', titleSub: 'Sounds, speech & tone', copy: 'Foundational pronunciation and interactive audio lessons across African languages.', icon: 'mic', route: 'voice_lessons', tone: 'yellow' },
       { title: 'Oríkì', titleSub: 'Praise poetry', copy: 'Explore poetic praise, identity and remembrance through context and community voices.', icon: 'quote', route: 'oriki', tone: 'peach' },
       { title: 'Òwe', titleSub: 'Proverbs', copy: 'Notice how compact sayings can hold wit, wisdom and ways of seeing the world.', icon: 'sparkles', route: 'owe', tone: 'mint' },
       { title: 'Story & song', titleSub: 'Oral genres', copy: 'Find out how stories, songs and spoken forms carry memory across generations.', icon: 'music', route: 'oral_genre', tone: 'blue' }
@@ -3828,7 +3862,9 @@ import {
       { title: 'Create an account and explore', text: 'Adult and educator accounts use Supabase Auth when the deployment is configured; teacher pairing remains unavailable.' }
     ];
 
-    return `<div class="container route-page auth-page modern-auth-page">
+    const introSplash = authIntroPending ? '<div class="auth-intro-screen" aria-label="Idilewa"><span class="auth-intro-mark"><i></i><i></i><i></i></span><strong>idílẹ́wà</strong></div>' : '';
+    authIntroPending = false;
+    return `${introSplash}<div class="container route-page auth-page modern-auth-page">
       <!-- Left Column: Rich Cultural Media & Highlights Showcase -->
       <aside class="auth-art modern-auth-art">
         <div class="auth-showcase-card">
@@ -3896,10 +3932,9 @@ import {
 
       <!-- Right Column: Modern Authentication Card Panel -->
       <main class="auth-panel modern-auth-panel">
-        <div class="breadcrumbs">
-          ${routeLink('index', 'Home')}
-          <span>/</span>
-          <strong>${signUp ? 'Create Account' : 'Sign In'}</strong>
+        <div class="auth-brand" aria-label="Idilewa">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span class="auth-brand-word">idílẹ́wà</span>
         </div>
 
         <div class="auth-header-block">
@@ -4381,17 +4416,28 @@ import {
         : 96;
 
       return `<div class="container route-page trainer-page">
+                <section class="voice-foundations" aria-labelledby="voice-foundations-title">
+                  <div class="section-heading">
+                    <div><span class="section-kicker">Start here · Yorùbá sound foundations</span><h2 id="voice-foundations-title">Vowels, consonants &amp; tone</h2><p>Learn the mouth sounds before moving into words and conversation. Choose a sound to hear your browser pronounce it.</p></div>
+                  </div>
+                  <div class="voice-foundation-grid">
+                    <article class="voice-foundation-block"><h3>Oral vowels</h3><p>Seven distinct vowel sounds, each with high, mid and low tone examples.</p><div class="voice-sound-list">${ORAL_VOWELS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.ipa)}">${esc(item.char)} <small>${esc(item.ipa)}</small></button>`).join('')}</div></article>
+                    <article class="voice-foundation-block"><h3>Consonants</h3><p>Notice sounds such as Yorùbá <strong>gb</strong> and <strong>ṣ</strong>, which differ from English.</p><div class="voice-sound-list">${CONSONANTS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.desc)}">${esc(item.char)} <small>${esc(item.sound)}</small></button>`).join('')}</div></article>
+                    <article class="voice-foundation-block"><h3>Nasal vowels &amp; vowel pairs</h3><p>Let nasal vowels resonate gently. Adjacent vowels are usually pronounced distinctly across syllables, not forced into English-style glides.</p><div class="voice-sound-list">${NASAL_VOWELS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.sound)}">${esc(item.char)} <small>${esc(item.sound)}</small></button>`).join('')}</div><div class="voice-diphthong-note"><strong>Listen for vowel sequences</strong><button type="button" data-action="speak-voice-lesson" data-phrase="A. I. E. O. U.">a · i · e · o · u</button><small>Keep each vowel clear when two meet; local pronunciation can vary by word and speaker.</small></div></article>
+                  </div>
+                  ${renderVoiceTranslationTools()}
+                </section>
         <div class="breadcrumbs">
           ${routeLink("index", "Home")}<span>/</span>
           ${routeLink("languages", "Languages")}<span>/</span>
-          <strong>Voice African Language Trainer</strong>
+            <strong>Voice Lessons</strong>
         </div>
 
         <section class="trainer-hero">
           <div class="trainer-hero-copy">
             <div class="trainer-hero-badge">
               <span>${icon("headphones", 16)}</span>
-              <strong>VOICE AFRICAN LANGUAGE TRAINER MODEL</strong>
+              <strong>VOICE LESSONS · PRONUNCIATION STUDIO</strong>
             </div>
             <h1>Speak African Languages<br /><em>with 100% Native Tonal Fluency.</em></h1>
             <p>Master authentic pitch accents, Do-Re-Mi tone melodies, and pronunciation for kids through 60 structured voice lessons across Beginner, Intermediate, and Advanced tiers.</p>
@@ -4430,7 +4476,7 @@ import {
 
           <div class="trainer-hero-visual">
             <div class="trainer-interactive-disc">
-              <img src="./assets/listening-reader.jpg" alt="Child practicing African voice trainer" class="trainer-hero-img" />
+                <img src="./assets/listening-reader.jpg" alt="Child practicing African-language voice lessons" class="trainer-hero-img" />
               <div class="trainer-orbit-ring" aria-hidden="true">
                 <span class="orbit-tone tone-high">High (Mí) ↗</span>
                 <span class="orbit-tone tone-mid">Mid (Re) →</span>
@@ -4639,7 +4685,7 @@ import {
             <div>
               <span class="section-kicker">${activeLevel.toUpperCase()} CURRICULUM</span>
               <h2>All 20 Lessons in ${activeLevel.charAt(0).toUpperCase() + activeLevel.slice(1)} Tier</h2>
-              <p>Click on any lesson card to load it directly into the Voice Trainer Studio.</p>
+              <p>Choose a lesson to load it into the Voice Lessons practice studio.</p>
             </div>
             <span class="demo-badge">${currentTierLessons.length} Audio Lessons</span>
           </div>
@@ -5466,13 +5512,21 @@ import {
     renderMobileNav(page);
     const title = page === 'index' ? 'Preserving African culture. Promoting technology.' : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
     document.title = `${title} · Idilewa`;
+    const pageMarkup = assignUniqueRouteImages(page, renderPage(page, params))
+      .replace(/(?:African )?Voice (?:African Language )?Trainer/gi, 'Voice Lessons')
+      .replace(/Voice Studio/gi, 'Voice Lessons');
     if (page === 'coding') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}`;
+      document.getElementById('main').innerHTML = pageMarkup;
       initializeIdeRuntimes();
+    } else if (page === 'login') {
+      document.body.dataset.page = page;
+      document.getElementById('main').innerHTML = pageMarkup;
+      const intro = document.querySelector('.auth-intro-screen');
+      if (intro) window.setTimeout(() => intro.remove(), 1450);
     } else {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${assignUniqueRouteImages(page, renderPage(page, params))}${renderPageInformationLayers(page)}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
     }
     if (page === 'index') {
       initHeroParallax();
@@ -5863,6 +5917,68 @@ import {
         showToast('Console output cleared.');
         break;
       }
+      case 'translate-ide-output': {
+        const source = document.getElementById('ide-terminal-logs')?.textContent || '';
+        const lang = document.getElementById('ide-output-language')?.value || 'yo';
+        const result = translateText(source, lang);
+        const output = document.getElementById('ide-output-translation');
+        if (output) {
+          output.textContent = result.translated || 'Add console output before translating.';
+          output.dataset.translation = result.translated || '';
+          output.dataset.language = lang;
+        }
+        break;
+      }
+      case 'speak-ide-output': {
+        const output = document.getElementById('ide-output-translation');
+        if (output?.dataset.translation) speakText(output.dataset.translation, output.dataset.language || 'yo');
+        else showToast('Translate the console output first.', 'error');
+        break;
+      }
+      case 'translate-voice-text': {
+        const source = document.getElementById('voice-translation-input')?.value || '';
+        const lang = document.getElementById('voice-translation-language')?.value || 'yo';
+        const result = translateText(source, lang);
+        const output = document.getElementById('voice-translation-result');
+        if (output) {
+          output.textContent = result.translated || 'Add a phrase before translating.';
+          output.dataset.translation = result.translated || '';
+          output.dataset.language = lang;
+        }
+        break;
+      }
+      case 'speak-voice-translation': {
+        const output = document.getElementById('voice-translation-result');
+        if (output?.dataset.translation) speakText(output.dataset.translation, output.dataset.language || 'yo');
+        else showToast('Translate a phrase first.', 'error');
+        break;
+      }
+      case 'speak-voice-lesson': {
+        speakText(el.dataset.phrase || '', 'yo');
+        break;
+      }
+      case 'start-voice-transcription': {
+        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const status = document.getElementById('voice-transcription-status');
+        if (!Recognition) {
+          if (status) status.textContent = 'Speech recognition is not supported in this browser. Type your phrase instead.';
+          break;
+        }
+        const recognition = new Recognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        if (status) status.textContent = 'Listening for an English phrase…';
+        recognition.onresult = (event) => {
+          const input = document.getElementById('voice-translation-input');
+          if (input) input.value = event.results[0][0].transcript;
+          if (status) status.textContent = 'Phrase transcribed. Select Translate to continue.';
+        };
+        recognition.onerror = () => { if (status) status.textContent = 'Could not transcribe this phrase. Check microphone permission or type it instead.'; };
+        recognition.onend = () => { if (status?.textContent === 'Listening for an English phrase…') status.textContent = 'No speech detected. Try again or type your phrase.'; };
+        recognition.start();
+        break;
+      }
 
       case 'code-jump': {
         const targetId = ['coding-start', 'code-quest', 'code-adventures'].includes(el.dataset.target) ? el.dataset.target : 'coding-start';
@@ -6160,7 +6276,7 @@ import {
         saveState();
         render();
         const langNames = { yoruba: 'Yorùbá', igbo: 'Igbo', hausa: 'Hausa', swahili: 'Kiswahili', zulu: 'isiZulu', twi: 'Twi' };
-        showToast(`Selected ${langNames[selectedLang] || selectedLang} Voice Trainer`);
+        showToast(`Selected ${langNames[selectedLang] || selectedLang} Voice Lessons`);
         break;
       }
       case 'trainer-set-level': {

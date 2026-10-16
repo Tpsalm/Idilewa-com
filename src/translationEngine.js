@@ -2,18 +2,18 @@
 
 export const DICTIONARY = {
   // Greetings & Courtesies
-  'hello': { yo: 'Báwo ni?', ig: 'Kedu?', ha: 'Sannu', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
-  'hi': { yo: 'Báwo ni', ig: 'Ndewo', ha: 'Sannu', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
-  'good morning': { yo: 'Ẹ káàárọ̀', ig: 'Ụtụtụ ọma', ha: 'Ina kwana', phoneticYo: 'Eh KAH-ah-raw', toneYo: 'Mid-High-Low' },
+  'hello': { yo: 'Báwo ni?', ig: 'Kedu?', ha: 'Sannu', sw: 'Habari', pcm: 'How you dey?', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
+  'hi': { yo: 'Báwo ni', ig: 'Ndewo', ha: 'Sannu', sw: 'Hujambo', pcm: 'How far?', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
+  'good morning': { yo: 'Ẹ káàárọ̀', ig: 'Ụtụtụ ọma', ha: 'Ina kwana', sw: 'Habari za asubuhi', pcm: 'Good morning o', phoneticYo: 'Eh KAH-ah-raw', toneYo: 'Mid-High-Low' },
   'good afternoon': { yo: 'Ẹ káàsán', ig: 'Ehihie ọma', ha: 'Ina wuni', phoneticYo: 'Eh KAH-ah-sahn', toneYo: 'Mid-High-High' },
   'good evening': { yo: 'Ẹ kúulẹ́', ig: 'Mgbede ọma', ha: 'Barka da yamma', phoneticYo: 'Eh KOO-leh', toneYo: 'Mid-High-High' },
   'good night': { yo: 'O dárọ̀', ig: 'Ka chi foo', ha: 'Mu kwana lafiya', phoneticYo: 'Oh DAH-raw', toneYo: 'Mid-High-Low' },
   'how are you': { yo: 'Báwo ni nǹkan?', ig: 'Kedu ka i mere?', ha: 'Yaya kake / Yaya kike?', phoneticYo: 'BAH-woh nee n-KAHN', toneYo: 'Mí-Re-Dò' },
   'how are you doing': { yo: 'Ṣé àlàáfíà ni?', ig: 'Kedu ka ị mere taa?', ha: 'Yaya aiki?', phoneticYo: 'Sheh ah-lah-FEE-ah nee', toneYo: 'Mí-Dò-Mí-Dò-Re' },
   'i am fine': { yo: 'Mo wà dáadáa', ig: 'Adị m mma', ha: 'Ina lafiya', phoneticYo: 'Moh wah DAH-dah', toneYo: 'Re-Dò-Mí-Mí' },
-  'thank you': { yo: 'Ẹ ṣeé púpọ̀', ig: 'Dalu / Imela', ha: 'Nagode sosai', phoneticYo: 'Eh SHEH poo-PAW', toneYo: 'Re-Mí-Re-Dò' },
+  'thank you': { yo: 'Ẹ ṣeé púpọ̀', ig: 'Dalu / Imela', ha: 'Nagode sosai', sw: 'Asante', pcm: 'Thank you', phoneticYo: 'Eh SHEH poo-PAW', toneYo: 'Re-Mí-Re-Dò' },
   'thank you very much': { yo: 'Ẹ ṣeun púpọ̀ gidigidi', ig: 'Dalu nke ukwuu', ha: 'Nagode kwarai da gaske', phoneticYo: 'Eh shay-OON poo-paw gee-dee-gee-dee', toneYo: 'Re-Mí-Re-Dò' },
-  'welcome': { yo: 'Ẹ káàbọ̀', ig: 'Nnọọ', ha: 'Barka da zuwa', phoneticYo: 'Eh KAH-ah-baw', toneYo: 'Re-High-Low' },
+  'welcome': { yo: 'Ẹ káàbọ̀', ig: 'Nnọọ', ha: 'Barka da zuwa', sw: 'Karibu', pcm: 'You are welcome', phoneticYo: 'Eh KAH-ah-baw', toneYo: 'Re-High-Low' },
   'please': { yo: 'Ẹ jọ̀wọ́', ig: 'Biko', ha: 'Don Allah', phoneticYo: 'Eh JAW-waw', toneYo: 'Re-Low-High' },
   'sorry': { yo: 'Pẹ̀lẹ́ o', ig: 'Ndo', ha: 'Kayi hakuri', phoneticYo: 'PEH-leh oh', toneYo: 'Low-High-Re' },
   'yes': { yo: 'Bẹ́ẹ̀ni', ig: 'Ee / Eyaa', ha: 'Eh / Ii', phoneticYo: 'BEH-eh-nee', toneYo: 'High-High-Re' },
@@ -111,6 +111,23 @@ const WORD_LEXICON = {
     'learn': 'koya', 'teach': 'koyar', 'see': 'gani', 'hear': 'ji', 'know': 'sani',
     'good': 'mai kyau', 'bad': 'marar kyau', 'big': 'babba', 'small': 'karami', 'beautiful': 'kyau',
     'today': 'yau', 'tomorrow': 'gobe', 'yesterday': 'jiya', 'with': 'tare da', 'and': 'da'
+  },
+  sw: {
+    'i': 'mimi', 'you': 'wewe', 'he': 'yeye', 'she': 'yeye', 'we': 'sisi', 'they': 'wao',
+    'am': 'ni', 'is': 'ni', 'are': 'ni', 'have': 'kuwa na', 'go': 'kwenda', 'come': 'kuja',
+    'eat': 'kula', 'drink': 'kunywa', 'sleep': 'lala', 'play': 'cheza', 'learn': 'jifunza',
+    'teach': 'fundisha', 'see': 'ona', 'hear': 'sikia', 'know': 'jua', 'good': 'nzuri',
+    'bad': 'mbaya', 'big': 'kubwa', 'small': 'ndogo', 'happy': 'furaha', 'today': 'leo',
+    'tomorrow': 'kesho', 'yesterday': 'jana', 'with': 'na', 'and': 'na', 'the': '', 'my': 'yangu'
+  },
+  pcm: {
+    'i': 'I', 'you': 'you', 'he': 'e', 'she': 'she', 'we': 'we', 'they': 'dem',
+    'am': 'dey', 'is': 'dey', 'are': 'dey', 'have': 'get', 'go': 'go', 'come': 'come',
+    'eat': 'chop', 'drink': 'drink', 'sleep': 'sleep', 'play': 'play', 'learn': 'learn',
+    'teach': 'teach', 'see': 'see', 'hear': 'hear', 'know': 'know', 'good': 'good',
+    'bad': 'bad', 'big': 'big', 'small': 'small', 'happy': 'happy', 'today': 'today',
+    'tomorrow': 'tomorrow', 'yesterday': 'yesterday', 'with': 'with', 'and': 'and',
+    'the': '', 'my': 'my'
   }
 };
 
@@ -152,7 +169,10 @@ export function translateText(englishText, targetLang = 'yo') {
 
   // 3. Multi-word decomposition
   const words = clean.split(/\s+/);
-  const targetLex = WORD_LEXICON[targetLang] || WORD_LEXICON.yo;
+  const targetLex = WORD_LEXICON[targetLang];
+  if (!targetLex) {
+    return { translated: englishText, phonetic: '', tone: '', targetLang, unsupported: true };
+  }
   const translatedWords = words.map((w) => {
     const stripped = w.replace(/[^a-z0-9]/g, '');
     if (DICTIONARY[stripped] && DICTIONARY[stripped][targetLang]) {
@@ -192,7 +212,7 @@ export function speakText(text, lang = 'yo') {
   
   // Choose best matching voice
   const voices = window.speechSynthesis.getVoices();
-  const langCode = lang === 'yo' ? 'yo-NG' : lang === 'ig' ? 'ig-NG' : lang === 'ha' ? 'ha-NG' : 'en-US';
+  const langCode = lang === 'yo' ? 'yo-NG' : lang === 'ig' ? 'ig-NG' : lang === 'ha' ? 'ha-NG' : lang === 'sw' ? 'sw-KE' : lang === 'pcm' ? 'en-NG' : 'en-US';
   
   const nativeVoice = voices.find((v) => v.lang.toLowerCase().includes(lang) || v.lang.toLowerCase().includes('ng'));
   if (nativeVoice) {
