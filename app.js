@@ -33,6 +33,9 @@ import {
 import {
   supabase,
   isSupabaseConfigured,
+  getCurrentUser,
+  updateUserProfile,
+  signOut as signOutAccount,
   signIn as signInAccount,
   signUp as signUpAccount
 } from './src/supabaseClient.js';
@@ -312,7 +315,9 @@ import {
     { label: 'Home', route: 'index', group: 'home' },
     { label: 'Curriculum', route: 'curriculum', group: 'curriculum' },
     { label: 'Code', route: 'coding', group: 'code' },
-    { label: 'Voice Lessons', route: 'voice_lessons', group: 'trainer' },
+    { label: 'Voice Lessons', route: 'voice_lessons', group: 'trainer' }
+  ];
+  const MENU_NAV = [...NAV,
     { label: 'Read & listen', route: 'oral', group: 'read' },
     { label: 'Stories', route: 'ere', group: 'stories' },
     { label: 'About', route: 'about', group: 'about' }
@@ -528,14 +533,20 @@ import {
     }
     const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
     const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
+    const currentUser = getCurrentUser();
+    const avatarLabel = currentUser?.name?.trim()?.charAt(0)?.toUpperCase() || 'S';
+    const profileAvatar = profilePhoto
+      ? `<img src="${esc(profilePhoto)}" alt="" />`
+      : esc(avatarLabel);
     const mobileShortcuts = [
       { route: 'library', label: 'Library', ico: 'book' },
       { route: 'game', label: 'Tile game', ico: 'sparkles' },
       { route: 'profile', label: 'Profile', ico: 'user' },
       { route: 'payment', label: 'Payment', ico: 'shield' }
     ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
-    const menu = NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts;
+    const menu = MENU_NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts + routeLink('base', `${icon('layers', 19)}<span>All pages</span>${icon('arrow', 16)}`, 'mobile-menu-link');
     document.getElementById('site-header').innerHTML = `
+      ${page === 'index' ? `<div class="home-promo-strip"><span>${icon('sparkles', 14)} A little every day brings your language closer.</span>${routeLink('languages', 'Explore languages ' + icon('arrow', 13))}</div>` : ''}
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -544,16 +555,14 @@ import {
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
           <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
-          <a class="header-profile" href="#/profile" data-route="profile">${icon('user', 15)} Profile</a>
-          <a class="header-signin" href="#/login?mode=signin" data-route="login" data-mode="signin">Sign in</a>
-          <a class="button button-small button-primary header-cta" href="#/login?mode=signup" data-route="login" data-mode="signup">${icon('user', 14)} Create account</a>
+          <a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${currentUser ? esc(currentUser.name || 'Profile') : 'Profile'}</span></a>
           <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
         </div>
       </div>
       <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
         <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
-        <div class="mobile-menu-bottom"><a class="button button-primary" href="#/login?mode=signup" data-route="login" data-mode="signup">${icon('user', 15)} Create an account</a><a href="#/login?mode=signin" data-route="login" data-mode="signin">Sign in to your space</a></div>
+        <div class="mobile-menu-bottom">${routeLink('profile', `${icon('user', 15)} Open your profile ${icon('arrow', 14)}`, 'button button-primary')}</div>
       </div>`;
   }
 
@@ -584,6 +593,34 @@ import {
   }
 
   function pill(text, tone = 'soft') { return `<span class="pill pill-${tone}">${text}</span>`; }
+
+  function renderHomeBenefits() {
+    const benefits = [
+      ['book', 'Language foundations', 'Begin with clear sound, vocabulary and guided learning paths.'],
+      ['sparkles', 'Made for discovery', 'Short activities help learners build confidence at their own pace.'],
+      ['layers', 'Culture in context', 'Stories and language learning stay connected to community.'],
+      ['volume', 'Listen and speak', 'Hear phrases, practice pronunciation and explore tonal patterns.'],
+      ['code', 'Create with code', 'Build computational thinking through interactive STEAM lessons.']
+    ];
+    return `<section class="home-benefits-section" aria-labelledby="home-benefits-title"><div class="container"><div class="home-section-heading"><span class="section-kicker">A learning space for every kind of curious</span><h2 id="home-benefits-title">Why Idilewa?</h2><p>Language, culture and technology belong in the same learning journey.</p></div><div class="home-benefits-grid">${benefits.map(([glyph,title,copy]) => `<article class="home-benefit"><span class="home-benefit-icon">${icon(glyph, 24)}</span><h3>${title}</h3><p>${copy}</p></article>`).join('')}</div></div></section>`;
+  }
+
+  function renderHomeAppPreview() {
+    const previews = [
+      { title: 'Hear a greeting', label: 'Yorùbá · Language', copy: 'Start with a phrase, then listen for the tones that shape its meaning.', image: 'page-languages-1.jpg', route: 'languages', action: 'Explore languages' },
+      { title: 'Make something', label: 'Code · STEAM', copy: 'Turn your ideas into small programs in a welcoming code studio.', image: 'code-kids.jpg', route: 'coding', action: 'Open Code Studio' },
+      { title: 'Find a story', label: 'Stories · Culture', copy: 'Read and listen to stories that invite sharing across generations.', image: 'story-grandmother.jpg', route: 'ere', action: 'Read a story' },
+      { title: 'Practice a sound', label: 'Voice Lessons', copy: 'Build confidence with vowels, consonants and guided speaking practice.', image: 'listening-reader.jpg', route: 'voice_lessons', action: 'Start a lesson' }
+    ];
+    return `<section class="home-app-section" aria-labelledby="home-app-title"><div class="container home-app-layout">
+      <div class="home-app-device-column"><div class="home-app-heading"><span class="section-kicker">A little Idilewa in your pocket</span><h2 id="home-app-title">Learning that moves with you.</h2><p>Explore languages, stories and creative practice from one welcoming home.</p></div>
+        <div class="android-device" role="img" aria-label="Android phone preview of the Idilewa learning app"><div class="android-device-side"></div><div class="android-device-screen"><div class="android-status"><span>9:41</span><span>● ● ▰</span></div><div class="android-appbar"><span class="android-app-mark">È</span><strong>idílẹ́wà</strong><span>${icon('user', 15)}</span></div><div class="android-welcome"><small>Ẹ káàárọ̀, learner</small><strong>What would you like to explore?</strong></div><div class="android-learning-card"><span class="android-card-glyph">Ẹ</span><small>YORÙBÁ · FIRST WORDS</small><strong>Ẹ káàárọ̀</strong><span>Good morning</span><button type="button" aria-label="Play greeting" data-action="play-audio" data-text="Ẹ káàárọ̀">${icon('play', 13)} Listen</button></div><div class="android-progress"><span>Today’s journey</span><strong>1 of 3 steps</strong><div><i></i></div></div><div class="android-bottom-nav"><span>${icon('home', 14)}Home</span><span>${icon('book', 14)}Learn</span><span>${icon('user', 14)}Profile</span></div></div></div>
+      </div>
+      <div class="home-app-swipe-area"><div class="home-app-swipe-heading"><div><span class="section-kicker">Look around</span><h3>One space. Many ways to grow.</h3></div><div class="home-app-swipe-controls"><button class="icon-button" type="button" data-action="app-preview-scroll" data-dir="prev" aria-label="Previous learning preview" title="Previous">${icon('arrow', 17, 'arrow-flip')}</button><button class="icon-button" type="button" data-action="app-preview-scroll" data-dir="next" aria-label="Next learning preview" title="Next">${icon('arrow', 17)}</button></div></div>
+        <div class="home-app-swipe-track" id="home-app-swipe-track" tabindex="0" aria-label="Swipe through Idilewa learning previews">${previews.map((item,index) => `<article class="home-app-slide"><img src="./assets/${item.image}" alt="${esc(item.title)} preview" loading="lazy" /><div class="home-app-slide-copy"><span>${item.label}</span><h4>${item.title}</h4><p>${item.copy}</p>${routeLink(item.route, `${item.action} ${icon('arrow', 14)}`, 'text-link')}</div><span class="home-app-slide-number">0${index+1}</span></article>`).join('')}</div><div class="home-app-swipe-hint">Swipe or scroll to explore <span aria-hidden="true">→</span></div>
+      </div>
+    </div></section><section class="home-principles-strip" aria-label="Idilewa learning principles"><div class="container"><span>${icon('globe', 17)} African languages</span><span>${icon('people', 17)} Family learning</span><span>${icon('leaf', 17)} Culture with context</span><span>${icon('code', 17)} STEAM for young makers</span></div></section>`;
+  }
 
   function renderHome() {
     const featureCards = [
@@ -694,6 +731,9 @@ import {
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
       </section>
+
+      ${renderHomeBenefits()}
+      ${renderHomeAppPreview()}
 
       <!-- 5 Pathways Learning Cards (Five Pillars of Idilewa) -->
       <section class="container section visual-journey-3d-section" id="visual-journey">
@@ -3795,12 +3835,52 @@ import {
     }
   }
 
-  function renderProfile() {
+  function renderLegacyProfile() {
     const completedCount = state.completed.length;
     const percent = Math.min(100, Math.round((completedCount / 8) * 100));
     const lang = getLanguage(state.currentLang);
     const journeyStep = completedCount >= 8 ? 3 : state.streak >= 3 ? 2 : completedCount ? 1 : 0;
     return `<div class="container route-page profile-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My progress</strong></div>${renderStepper(['Choose a path', 'Practice a lesson', 'Build a streak', 'Celebrate progress'], journeyStep)}<section class="profile-welcome page-depth-reveal"><div class="profile-photo-wrap"><div class="profile-avatar">${profilePhoto ? `<img src="${esc(profilePhoto)}" alt="Your profile photo" />` : icon('user', 27)}</div><label class="profile-photo-button" for="profile-photo-input">${icon('edit', 15)} Choose photo</label><input id="profile-photo-input" type="file" accept="image/jpeg,image/png,image/webp" /></div><div><span class="section-kicker">Your learning space · demo</span><h1>A good day to keep going.</h1><p>Your progress is saved in this browser for this prototype.</p><small class="profile-photo-note">Profile photos are resized and stored only in this browser on this device.</small></div><button class="button button-outline" data-route="login">${icon('user', 16)} Account settings</button></section><div class="profile-overview-grid"><article class="progress-main-card"><div class="progress-main-head"><div><span class="section-kicker">Current path</span><h2>${lang.name} · ${state.level.charAt(0).toUpperCase() + state.level.slice(1)}</h2><p>Keep building confidence, one small lesson at a time.</p></div><span class="progress-medallion">${icon('leaf', 23)}</span></div><div class="large-progress"><div><span style="width:${percent}%"></span></div><strong>${percent}%</strong></div><div class="progress-foot"><span>${completedCount} lessons completed</span>${routeLink('course', 'Continue learning ' + icon('arrow', 14), 'text-link')}</div></article><div class="stat-card stat-streak"><span>${icon('sparkles', 20)}</span><small>Learning streak</small><strong>${state.streak} <em>days</em></strong><p>Showing up is a win.</p></div><div class="stat-card stat-points"><span>${icon('star', 20)}</span><small>Practice points</small><strong>${state.points}</strong><p>Earned by trying new things.</p></div></div><div class="profile-lower-grid"><section class="profile-card"><div class="section-heading compact-heading"><div><span class="section-kicker">Your recent steps</span><h2>Learning timeline</h2></div>${routeLink('course', 'View path ' + icon('arrow', 14), 'text-link')}</div><div class="timeline-row"><span class="timeline-check">${icon('check', 15)}</span><div><strong>Start with a greeting</strong><small>${lang.name} · First lesson</small></div><span class="timeline-status">${state.completed.includes(`${lang.id}-greetings-intro`) ? 'Complete' : 'Ready'}</span></div><div class="timeline-row timeline-next"><span class="timeline-num">02</span><div><strong>People close to us</strong><small>Next module · Words for family</small></div><button class="text-link" data-action="open-module" data-module="family" data-lang="${lang.id}" data-level="${state.level}">Open ${icon('arrow', 14)}</button></div><div class="timeline-row timeline-next"><span class="timeline-num">03</span><div><strong>Stories & memory</strong><small>Explore a story and listen for new words</small></div>${routeLink('ere', 'Explore ' + icon('arrow', 14), 'text-link')}</div></section><aside class="profile-badges"><span class="section-kicker">Small things worth celebrating</span><h2>Your first badges</h2><div class="badge-list"><div class="badge-item"><span class="badge-icon badge-green">${icon('leaf', 18)}</span><div><strong>First steps</strong><small>Opened your learning path</small></div></div><div class="badge-item"><span class="badge-icon badge-yellow">${icon('volume', 18)}</span><div><strong>Good listener</strong><small>Practiced a spoken phrase</small></div></div><div class="badge-item badge-locked"><span class="badge-icon">${icon('trophy', 18)}</span><div><strong>Story keeper</strong><small>Complete a story activity</small></div></div></div></aside></div><div class="profile-privacy-note">${icon('lock', 16)} This demo keeps progress on this device. Production accounts require secure authentication and privacy review.</div></div>`;
+  }
+
+  const PROFILE_DETAILS_KEY = 'idilewa-profile-details';
+
+  function getProfileDetails() {
+    const user = getCurrentUser() || {};
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(PROFILE_DETAILS_KEY) || '{}'); } catch (_) {}
+    return {
+      name: saved.name || user.name || '',
+      email: user.email || '',
+      bio: saved.bio || user.bio || '',
+      goal: saved.goal || user.learning_goal || '',
+      language: saved.language || user.learning_language || state.currentLang || 'yoruba',
+      level: saved.level || user.learning_level || state.level || 'beginner',
+      interests: Array.isArray(saved.interests) ? saved.interests : Array.isArray(user.interests) ? user.interests : []
+    };
+  }
+
+  function renderProfileEditor() {
+    const user = getCurrentUser();
+    const profile = getProfileDetails();
+    const interests = [
+      ['speaking', 'Speaking & listening'], ['stories', 'Stories & culture'],
+      ['coding', 'Coding & STEAM'], ['family', 'Learning with family']
+    ];
+    return `<section class="profile-editor" aria-labelledby="profile-editor-title">
+      <div class="profile-editor-heading"><span class="section-kicker">Your account · your learning path</span><h2 id="profile-editor-title">Complete your profile</h2><p>Tell us how you want to learn. You can update these details any time.</p></div>
+      <form data-form="profile-settings" class="profile-editor-form">
+        <fieldset class="profile-layer"><legend><span>01</span> About you</legend><div class="profile-field-grid"><label>Display name<input name="name" autocomplete="name" maxlength="60" required value="${esc(profile.name)}" placeholder="What should we call you?" /></label><label>Email<input value="${esc(profile.email)}" readonly placeholder="Sign in to connect your account" /></label></div></fieldset>
+        <fieldset class="profile-layer"><legend><span>02</span> Your story</legend><label>Short bio<textarea name="bio" rows="3" maxlength="500" placeholder="Share a little about yourself and what you enjoy learning.">${esc(profile.bio)}</textarea></label><label>Learning goal<textarea name="goal" rows="2" maxlength="240" placeholder="What would you like to be able to do?">${esc(profile.goal)}</textarea></label></fieldset>
+        <fieldset class="profile-layer"><legend><span>03</span> Learning preferences</legend><div class="profile-field-grid"><label>Primary language<select name="language">${LANGUAGES.map((language) => `<option value="${language.id}" ${profile.language === language.id ? 'selected' : ''}>${language.name}</option>`).join('')}</select></label><label>Experience level<select name="level">${[['beginner','Beginning'],['intermediate','Growing'],['advanced','Confident']].map(([value,label]) => `<option value="${value}" ${profile.level === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label></div><div class="profile-interest-list"><span>I'm interested in</span>${interests.map(([value,label]) => `<label><input type="checkbox" name="interests" value="${value}" ${profile.interests.includes(value) ? 'checked' : ''} />${label}</label>`).join('')}</div></fieldset>
+        <fieldset class="profile-layer"><legend><span>04</span> Account & privacy</legend><p>${user ? `Signed in as ${esc(user.email || '')}. Your profile details are saved to your Idilewa account.` : 'You are browsing as a guest. Save these details on this device, or sign in to connect them to an account.'}</p><div class="profile-account-actions">${user ? '<button type="button" class="button button-outline" data-action="profile-sign-out">Sign out</button>' : `${routeLink('login', 'Sign in', 'button button-outline', 'data-mode="signin"')}${routeLink('login', 'Create account', 'button button-primary', 'data-mode="signup"')}`}</div></fieldset>
+        <div class="profile-editor-submit"><small>Profile photo is managed above and stays on this device.</small><button type="submit" class="button button-primary">Save profile ${icon('check', 15)}</button></div>
+      </form>
+    </section>`;
+  }
+
+  function renderProfile() {
+    return renderLegacyProfile().replace('<strong>My progress</strong></div>', '<strong>My profile</strong></div>' + renderProfileEditor());
   }
 
   function renderContact() {
@@ -5636,6 +5716,11 @@ import {
     document.querySelector('.modal-done')?.focus();
   }
 
+  function openProfileCompletionPrompt() {
+    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card profile-completion-modal" role="dialog" aria-modal="true" aria-labelledby="profileCompletionTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close">${icon('close', 19)}</button><div class="modal-icon">${icon('user', 22)}</div><h2 id="profileCompletionTitle">Complete your profile</h2><p>Add a short bio and learning goal so your Idilewa space reflects what you want to explore.</p><button class="button button-primary modal-done" data-action="complete-profile">Continue to profile ${icon('arrow', 15)}</button></section></div>`;
+    document.querySelector('.modal-done')?.focus();
+  }
+
   function closeMobileMenu() {
     const menu = document.getElementById('mobile-menu');
     const toggle = document.querySelector('.menu-toggle');
@@ -6267,7 +6352,22 @@ import {
         break;
       }
       case 'forgot-password': openModal('Password reset', 'Password reset will be available when secure account services are connected. Do not use a real password in this prototype.'); break;
+      case 'complete-profile':
+        document.getElementById('modal-root').innerHTML = '';
+        navigate('profile');
+        break;
+      case 'profile-sign-out':
+        void signOutAccount().then(() => {
+          render();
+          showToast('You have signed out.', 'success');
+        }).catch((error) => showToast(error instanceof Error ? error.message : 'Could not sign out.', 'error'));
+        break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
+      case 'app-preview-scroll': {
+        const track = document.getElementById('home-app-swipe-track');
+        if (track) track.scrollBy({ left: (el.dataset.dir === 'prev' ? -1 : 1) * track.clientWidth * 0.78, behavior: 'smooth' });
+        break;
+      }
       case 'trainer-set-lang': {
         const selectedLang = el.dataset.lang || 'yoruba';
         state.trainer.lang = selectedLang;
@@ -6631,6 +6731,34 @@ import {
       if (!text || !meaning || !data.get('consent')) { showToast('Please complete the required fields and consent check.', 'error'); return; }
       state.savedProverbs.unshift({ text, meaning, language: String(data.get('language') || 'Yorùbá'), context: String(data.get('context') || '').trim() });
       saveState(); navigate('owe'); showToast('Your proverb is saved in this browser preview.');
+    } else if (type === 'profile-settings') {
+      const profile = {
+        name: String(data.get('name') || '').trim(),
+        bio: String(data.get('bio') || '').trim(),
+        goal: String(data.get('goal') || '').trim(),
+        language: String(data.get('language') || 'yoruba'),
+        level: String(data.get('level') || 'beginner'),
+        interests: data.getAll('interests').map(String)
+      };
+      const metadata = {
+        name: profile.name,
+        bio: profile.bio,
+        learning_goal: profile.goal,
+        learning_language: profile.language,
+        learning_level: profile.level,
+        interests: profile.interests
+      };
+      try {
+        if (getCurrentUser()) await updateUserProfile(metadata);
+        localStorage.setItem(PROFILE_DETAILS_KEY, JSON.stringify(profile));
+        state.currentLang = LANGUAGES.some((item) => item.id === profile.language) ? profile.language : 'yoruba';
+        state.level = ['beginner', 'intermediate', 'advanced'].includes(profile.level) ? profile.level : 'beginner';
+        saveState();
+        render();
+        showToast(getCurrentUser() ? 'Your profile was saved to your account.' : 'Your profile was saved on this device. Sign in to sync it.', 'success');
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Could not save your profile.', 'error');
+      }
     } else if (type === 'login') {
       const accountType = String(data.get('accountType') || state.authRole || 'child');
       const email = String(data.get('email') || '').trim();
@@ -6677,6 +6805,8 @@ import {
       verifiedGuardianSignup = null;
       sessionStorage.removeItem('idilewa-guardian-signup');
       navigate('index');
+      const profile = getProfileDetails();
+      if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
     } else if (type === 'interest') {
       showToast('Thanks for your interest. This prototype does not send or store contact details.');
       form.reset();

@@ -115,6 +115,17 @@ export function getCurrentUser() {
   return getLocalItem(LOCAL_STORAGE_KEY_USER, null);
 }
 
+export async function updateUserProfile(profile) {
+  if (!supabase) throw new Error('Account authentication is not configured.');
+  const { data, error } = await supabase.auth.updateUser({ data: profile });
+  if (error) throw new Error(error.message);
+  if (!data?.user) throw new Error('The account service did not return the updated profile.');
+  const current = getCurrentUser() || {};
+  const updated = { ...current, ...profile, id: data.user.id, email: data.user.email };
+  setLocalItem(LOCAL_STORAGE_KEY_USER, updated);
+  return updated;
+}
+
 export async function saveProgress({ userId, lessonType, lessonId, meta = {} }) {
   const progressList = getLocalItem(LOCAL_STORAGE_KEY_PROGRESS, []);
   const entry = {
