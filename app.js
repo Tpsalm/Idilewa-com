@@ -53,8 +53,13 @@ import {
 (() => {
   'use strict';
 
-  const canonicalHost = 'www.idlewa.com';
-  const redirectHosts = new Set(['idlewa.com', 'idilewa-com.vercel.app', 'idilewa-com-tapee2.vercel.app']);
+  const canonicalHost = 'www.idilewa.com';
+  const redirectHosts = new Set([
+    'idlewa.com',
+    'www.idlewa.com',
+    'idilewa-com.vercel.app',
+    'idilewa-com-tapee2.vercel.app',
+  ]);
   if (redirectHosts.has(window.location.hostname.toLowerCase())) {
     const destination = new URL(window.location.href);
     destination.protocol = 'https:';

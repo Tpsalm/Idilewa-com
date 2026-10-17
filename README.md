@@ -184,6 +184,8 @@ JUDGE0_AUTH_TOKEN=your-private-runner-token
 
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are public client configuration; enforce access with Supabase Auth policies and database row-level security. For existing deployments, `SUPABASE_PUBLIC_URL` and `SUPABASE_ANON_KEY` are also supported; Vite exposes only these two explicitly named variables to browser code. `JUDGE0_URL` and `JUDGE0_AUTH_TOKEN` are server-side secrets and must never use the `VITE_` prefix or be placed in browser code. Keep Judge0 private and configure execution time and memory limits.
 
+The production canonical site is `https://www.idilewa.com`. The Vercel project redirects its apex and stable Vercel aliases to this hostname; use the DNS records shown in the Vercel domain settings for both `idilewa.com` and `www.idilewa.com`.
+
 Use `vercel dev` to exercise the Vercel API routes locally; plain `npm run dev` serves the Vite front end and does not provide `/api/code/*`. GitHub Pages can host the static front end, but not these API routes, so compiler languages and configured Supabase sign-in require the Vercel deployment. Treat GitHub Pages as a static preview unless its workflow is intentionally migrated.
 
 ### Supabase account setup and operations
