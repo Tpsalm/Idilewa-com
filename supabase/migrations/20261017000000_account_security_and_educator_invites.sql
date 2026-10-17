@@ -1,4 +1,4 @@
--- Apply after supabase_schema.sql and supabase_guardian_consent.sql.
+-- Apply after the initial schema and guardian consent migrations.
 -- Restrict profile access, validate account roles, and require educator invites.
 
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;

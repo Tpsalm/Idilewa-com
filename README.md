@@ -182,19 +182,19 @@ JUDGE0_URL=https://your-private-judge0-service.example
 JUDGE0_AUTH_TOKEN=your-private-runner-token
 ```
 
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are public client configuration; enforce access with Supabase Auth policies and database row-level security. `JUDGE0_URL` and `JUDGE0_AUTH_TOKEN` are server-side secrets and must never use the `VITE_` prefix or be placed in browser code. Keep Judge0 private and configure execution time and memory limits.
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are public client configuration; enforce access with Supabase Auth policies and database row-level security. For existing deployments, `SUPABASE_PUBLIC_URL` and `SUPABASE_ANON_KEY` are also supported; Vite exposes only these two explicitly named variables to browser code. `JUDGE0_URL` and `JUDGE0_AUTH_TOKEN` are server-side secrets and must never use the `VITE_` prefix or be placed in browser code. Keep Judge0 private and configure execution time and memory limits.
 
 Use `vercel dev` to exercise the Vercel API routes locally; plain `npm run dev` serves the Vite front end and does not provide `/api/code/*`. GitHub Pages can host the static front end, but not these API routes, so compiler languages and configured Supabase sign-in require the Vercel deployment. Treat GitHub Pages as a static preview unless its workflow is intentionally migrated.
 
 ### Supabase account setup and operations
 
-The SQL files in this repository are not proof that a remote database has been provisioned. In the intended Supabase project, apply them in order from the SQL Editor:
+The migration files in this repository are not proof that a remote database has been provisioned. In the intended Supabase project, link the repository and apply pending migrations in order:
 
-1. `supabase_schema.sql` (base tables and owner-only profile access).
-2. `supabase_guardian_consent.sql` (guardian approval and child account checks).
+1. `supabase/migrations/20261016000000_initial_schema.sql` (base tables and owner-only profile access).
+2. `supabase/migrations/20261016010000_guardian_consent.sql` (guardian approval and child account checks).
 3. `supabase/migrations/20261017000000_account_security_and_educator_invites.sql` (role protection and one-time educator invitations).
 
-Do not enable account registration until the SQL completes successfully. The migration is version-controlled and repeatable, but is not automatically applied by deployment. Confirm the target project before running it; never test account creation against production with an unowned test address.
+Run `supabase link --project-ref <project-ref>` and `supabase db push --linked` after verifying the target project. Do not enable account registration until the migrations complete successfully; deployment does not apply database migrations. Never test account creation against production with an unowned test address.
 
 Configure the Supabase Auth email template to send the numeric `{{ .Token }}` code for sign-up and sign-in, enable email confirmation, allow the production URL in Auth redirect settings, and set the minimum password length to 12 in the Supabase Auth password policy. The app enforces 12–128 characters plus uppercase, lowercase, number and symbol at sign-up; existing sign-in passwords are not blocked by that client-side minimum. Children and educators can request an individual email OTP for sign-in; account role is verified against the private profile after code validation. Actual inbox delivery depends on the Supabase SMTP/provider configuration and must be tested using a mailbox you control.
 

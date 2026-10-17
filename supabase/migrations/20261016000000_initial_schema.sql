@@ -3,9 +3,6 @@
 -- Project: Idilewa (Culturally Immersive Yoruba Full-Stack Web App)
 -- ==============================================================================
 
--- 1. Enable UUID Extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- ==============================================================================
 -- 2. TABLE: PROFILES (User profiles linked directly to Supabase Auth)
 -- ==============================================================================
@@ -95,7 +92,7 @@ CREATE TRIGGER on_auth_user_created
 -- 3. TABLE: PROGRESS (Tracks completed curriculum, voice, and coding lessons)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.progress (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   lesson_type TEXT NOT NULL, -- 'learn', 'voice', 'coding', 'vowels', 'consonants', 'owe', 'ifa'
   lesson_id TEXT NOT NULL,
@@ -127,7 +124,7 @@ CREATE POLICY "Users can modify their own progress"
 -- 4. TABLE: CODE_SUBMISSIONS (Stores kid's Yoruba code creations & sandbox scripts)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.code_submissions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT DEFAULT 'Koodu Yorùbá Titun',
   code TEXT NOT NULL,
@@ -159,7 +156,7 @@ CREATE POLICY "Users can delete their own code submissions"
 -- 5. TABLE: VOICE_SUBMISSIONS (Stores speech pitch, tones, and voice recordings)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.voice_submissions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   text TEXT NOT NULL,
   target_lang TEXT DEFAULT 'yo', -- 'yo', 'ig', 'ha'
@@ -188,7 +185,7 @@ CREATE POLICY "Users can insert their own voice submissions"
 -- 6. TABLE: COMMUNITY_PROVERBS (Optional community additions & reflections)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.community_proverbs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   yoruba TEXT NOT NULL,
   literal TEXT,
