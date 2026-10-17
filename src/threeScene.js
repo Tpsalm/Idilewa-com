@@ -540,82 +540,189 @@ export function init3DCodeRobotGlyphs(containerElement) {
 }
 
 /**
- * 2. 3D Auth Stage (Sacred African Shield & Glowing Gateway Key)
+ * 2. 3D Authentication Scene (Rotating African language globe)
  */
 export function init3DAuthCanvas(containerElement) {
   if (!containerElement) return null;
   cleanPreviousScene(containerElement);
-  if (!isWebGLAvailable()) {
-    renderFallbackVisual(containerElement, 'Sacred African Shield & Gateway');
-    return { destroy: () => { containerElement.innerHTML = ''; } };
-  }
+  if (!isWebGLAvailable()) return null;
 
-  const width = containerElement.clientWidth || 340;
-  const height = containerElement.clientHeight || 220;
-
+  const width = containerElement.clientWidth || 360;
+  const height = containerElement.clientHeight || 300;
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-  camera.position.set(0, 0, 5.8);
+  const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+  camera.position.set(0, 0, 5.1);
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
   renderer.setSize(width, height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
   renderer.domElement.style.width = '100%';
   renderer.domElement.style.height = '100%';
   renderer.domElement.style.display = 'block';
   containerElement.appendChild(renderer.domElement);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
-  scene.add(ambientLight);
-
-  const keyLight = new THREE.DirectionalLight(0xfde047, 2.5);
-  keyLight.position.set(3, 4, 4);
+  scene.add(new THREE.AmbientLight(0xe7fff0, 1.45));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+  keyLight.position.set(-3, 4, 5);
   scene.add(keyLight);
+  const greenLight = new THREE.PointLight(0x34d399, 2.8, 8);
+  greenLight.position.set(2, -1, 3);
+  scene.add(greenLight);
 
-  const emeraldLight = new THREE.PointLight(0x15764a, 3.2, 10);
-  emeraldLight.position.set(-3, -2, 2);
-  scene.add(emeraldLight);
+  const world = new THREE.Group();
+  world.position.y = 0.1;
+  scene.add(world);
 
-  const group = new THREE.Group();
-  scene.add(group);
-
-  const torusKnot = new THREE.Mesh(
-    new THREE.TorusKnotGeometry(0.9, 0.28, 80, 16),
-    new THREE.MeshStandardMaterial({ color: 0x15764a, roughness: 0.2, metalness: 0.85 })
+  const globe = new THREE.Mesh(
+    new THREE.SphereGeometry(1.12, 48, 40),
+    new THREE.MeshPhongMaterial({ color: 0x79d6aa, transparent: true, opacity: 0.16, shininess: 90 })
   );
-  group.add(torusKnot);
+  world.add(globe);
 
-  const coreJewel = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.6, 2),
-    new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.15, metalness: 0.95, emissive: 0x78350f, emissiveIntensity: 0.4 })
+  const grid = new THREE.Mesh(
+    new THREE.SphereGeometry(1.135, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0xe8fff4, wireframe: true, transparent: true, opacity: 0.12 })
   );
-  group.add(coreJewel);
+  world.add(grid);
 
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(1.6, 0.03, 16, 48),
-    new THREE.MeshStandardMaterial({ color: 0xfde047, metalness: 0.9, roughness: 0.2 })
-  );
-  ring.rotation.x = Math.PI / 3;
-  group.add(ring);
-
-  const sparkGeo = new THREE.BufferGeometry();
-  const sparkCount = 45;
-  const sparkPos = new Float32Array(sparkCount * 3);
-  for (let i = 0; i < sparkCount; i++) {
-    const theta = Math.random() * Math.PI * 2;
-    const r = 1.3 + Math.random() * 1.2;
-    sparkPos[i * 3] = Math.cos(theta) * r;
-    sparkPos[i * 3 + 1] = (Math.random() - 0.5) * 2;
-    sparkPos[i * 3 + 2] = Math.sin(theta) * r;
+  const continentShapes = [
+    [[-18, 36], [-6, 36], [10, 38], [25, 32], [33, 31], [44, 12], [51, 11], [44, -2], [42, -12], [35, -22], [30, -34], [19, -35], [12, -18], [8, -5], [2, 5], [-9, 5], [-17, 15], [-18, 28]],
+    [[-10, 36], [-8, 54], [2, 60], [14, 56], [26, 48], [36, 42], [32, 31], [21, 37], [10, 38]],
+    [[-82, 10], [-78, 31], [-66, 50], [-53, 52], [-48, 39], [-58, 23], [-72, 8]],
+    [[-80, 10], [-67, 8], [-50, 0], [-45, -13], [-54, -30], [-68, -55], [-76, -35], [-79, -10]],
+    [[112, -11], [130, -12], [145, -20], [153, -29], [145, -39], [130, -35], [115, -25]],
+    [[-8, 58], [20, 72], [62, 68], [90, 58], [125, 50], [145, 42], [150, 18], [130, 5], [110, 12], [95, 5], [80, 8], [65, 23], [48, 30], [35, 42], [20, 38], [8, 52]]
+  ];
+  const isInsidePolygon = (longitude, latitude, polygon) => {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+      const [xi, yi] = polygon[i];
+      const [xj, yj] = polygon[j];
+      const crosses = (yi > latitude) !== (yj > latitude)
+        && longitude < ((xj - xi) * (latitude - yi)) / (yj - yi) + xi;
+      if (crosses) inside = !inside;
+    }
+    return inside;
+  };
+  const landPositions = [];
+  for (let latitude = -58; latitude <= 74; latitude += 2.8) {
+    for (let longitude = -180; longitude <= 180; longitude += 2.8) {
+      if (!continentShapes.some((shape) => isInsidePolygon(longitude, latitude, shape))) continue;
+      const lat = THREE.MathUtils.degToRad(latitude);
+      const lon = THREE.MathUtils.degToRad(longitude);
+      const radius = 1.151;
+      landPositions.push(
+        radius * Math.cos(lat) * Math.sin(lon),
+        radius * Math.sin(lat),
+        radius * Math.cos(lat) * Math.cos(lon)
+      );
+    }
   }
-  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
-  const sparkles = new THREE.Points(
-    sparkGeo,
-    new THREE.PointsMaterial({ color: 0xfbbf24, size: 0.12, transparent: true, opacity: 0.9 })
+  const landGeometry = new THREE.BufferGeometry();
+  landGeometry.setAttribute('position', new THREE.Float32BufferAttribute(landPositions, 3));
+  const land = new THREE.Points(
+    landGeometry,
+    new THREE.PointsMaterial({ color: 0x0c6849, size: 0.028, transparent: true, opacity: 0.6, sizeAttenuation: true })
   );
-  group.add(sparkles);
+  world.add(land);
+  world.scale.setScalar(0.82);
 
-  const instance = setupSimpleOrbit(containerElement, group, torusKnot, coreJewel, ring, sparkles, renderer, scene, camera);
+  const orbit = new THREE.Group();
+  orbit.rotation.set(0.55, 0.18, -0.42);
+  scene.add(orbit);
+  const orbitRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.52, 0.012, 8, 128),
+    new THREE.MeshBasicMaterial({ color: 0xf5d77c, transparent: true, opacity: 0.56 })
+  );
+  orbit.add(orbitRing);
+  const secondRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.39, 0.007, 6, 128),
+    new THREE.MeshBasicMaterial({ color: 0xd9fff0, transparent: true, opacity: 0.45 })
+  );
+  secondRing.rotation.set(0.8, 0.25, 0.7);
+  orbit.add(secondRing);
+
+  const satellites = [];
+  for (let index = 0; index < 4; index += 1) {
+    const satellite = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(index === 0 ? 0.09 : 0.065, 1),
+      new THREE.MeshStandardMaterial({
+        color: index % 2 ? 0xf6d16b : 0xf1fff6,
+        emissive: index % 2 ? 0x8a5b11 : 0x166044,
+        emissiveIntensity: 0.38,
+        metalness: 0.24,
+        roughness: 0.28
+      })
+    );
+    orbit.add(satellite);
+    satellites.push(satellite);
+  }
+
+  const particlePositions = new Float32Array(72 * 3);
+  for (let index = 0; index < 72; index += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 1.72 + Math.random() * 0.82;
+    particlePositions[index * 3] = Math.cos(angle) * radius;
+    particlePositions[index * 3 + 1] = (Math.random() - 0.5) * 3.3;
+    particlePositions[index * 3 + 2] = Math.sin(angle) * radius * 0.52;
+  }
+  const particleGeometry = new THREE.BufferGeometry();
+  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  const particles = new THREE.Points(
+    particleGeometry,
+    new THREE.PointsMaterial({ color: 0xffe49a, size: 0.025, transparent: true, opacity: 0.84 })
+  );
+  scene.add(particles);
+
+  let animationFrame = 0;
+  let resizeObserver = null;
+  const resize = () => {
+    const nextWidth = containerElement.clientWidth;
+    const nextHeight = containerElement.clientHeight;
+    if (!nextWidth || !nextHeight) return;
+    camera.aspect = nextWidth / nextHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(nextWidth, nextHeight);
+  };
+  window.addEventListener('resize', resize);
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(containerElement);
+  }
+
+  const renderFrame = (time) => {
+    animationFrame = requestAnimationFrame(renderFrame);
+    const seconds = time * 0.001;
+    world.rotation.y = seconds * 0.32;
+    world.rotation.x = 0.2 + Math.sin(seconds * 0.5) * 0.035;
+    orbit.rotation.y = seconds * -0.21;
+    orbitRing.rotation.z = seconds * 0.12;
+    satellites.forEach((satellite, index) => {
+      const angle = seconds * 0.72 + (index / satellites.length) * Math.PI * 2;
+      satellite.position.set(Math.cos(angle) * 1.52, Math.sin(angle * 1.35) * 0.12, Math.sin(angle) * 1.52);
+      satellite.rotation.set(angle, angle * 0.8, 0);
+    });
+    particles.rotation.y = seconds * 0.025;
+    particles.rotation.x = Math.sin(seconds * 0.15) * 0.035;
+    renderer.render(scene, camera);
+  };
+  if (prefersReducedMotion()) renderer.render(scene, camera);
+  else animationFrame = requestAnimationFrame(renderFrame);
+
+  const instance = {
+    destroy: () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      window.removeEventListener('resize', resize);
+      if (resizeObserver) resizeObserver.disconnect();
+      scene.traverse((object) => {
+        if (object.geometry) object.geometry.dispose();
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((material) => material?.dispose());
+      });
+      renderer.dispose();
+      containerElement.innerHTML = '';
+    }
+  };
   activeScenes.set(containerElement, instance);
   return instance;
 }

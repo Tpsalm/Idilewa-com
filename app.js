@@ -459,7 +459,7 @@ import {
         libraryFilter: typeof stored.libraryFilter === 'string' ? stored.libraryFilter : 'all',
         librarySearch: typeof stored.librarySearch === 'string' ? stored.librarySearch : '',
         reflectionFeeling: typeof stored.reflectionFeeling === 'string' ? stored.reflectionFeeling : '',
-        authRole: typeof stored.authRole === 'string' ? stored.authRole : 'child',
+        authRole: typeof stored.authRole === 'string' ? stored.authRole : defaults.authRole,
         completed: Array.isArray(stored.completed) ? stored.completed : defaults.completed.slice(),
         interested: Array.isArray(stored.interested) ? stored.interested : []
       };
@@ -4063,72 +4063,28 @@ import {
     const introSplash = authIntroPending ? '<div class="auth-intro-screen" aria-label="Idilewa"><span class="auth-intro-mark"><i></i><i></i><i></i></span><strong>idílẹ́wà</strong></div>' : '';
     authIntroPending = false;
     return `${introSplash}<div class="container route-page auth-page modern-auth-page">
-      <!-- Left Column: Rich Cultural Media & Highlights Showcase -->
-      <aside class="auth-art modern-auth-art">
-        <div class="auth-showcase-card">
-          <div class="auth-image modern-auth-image">
-            <img src="./assets/hero-home.jpg" alt="African mother and children learning languages and technology together on Idilewa" />
-            <div class="auth-art-overlay"></div>
-            <div class="auth-art-badge">
-              <span class="pulse-dot"></span>
-              <span>Idilewa Learning Space</span>
-            </div>
-            <div class="auth-art-note">
-              <span>Èdè wa, àṣà wa, ìdílé wa</span>
-              <strong>Our language. Our culture. Our family.</strong>
-            </div>
+      <!-- Right-side animated learning scene -->
+      <aside class="auth-art modern-auth-art" aria-label="Children exploring languages, stories and technology">
+        <div class="auth-scene-shell">
+          <img class="auth-scene-photo" src="./assets/hero-home.jpg" alt="" />
+          <div class="auth-scene-shade" aria-hidden="true"></div>
+          <div class="auth-scene-kicker">${icon('sparkles', 15)} <span>LANGUAGE · CULTURE · FUTURE</span></div>
+          <div class="auth-globe-stage" aria-hidden="true"><div id="auth3DCanvasWrap"></div></div>
+          <div class="auth-language-chip auth-language-yoruba">Yorùbá</div>
+          <div class="auth-language-chip auth-language-igbo">Igbo</div>
+          <div class="auth-language-chip auth-language-hausa">Hausa</div>
+          <div class="auth-language-chip auth-language-swahili">Swahili</div>
+          <div class="auth-scene-float auth-scene-book">${icon('book', 19)}</div>
+          <div class="auth-scene-float auth-scene-code">${icon('code', 20)}</div>
+          <div class="auth-scene-float auth-scene-audio">${icon('headphones', 19)}</div>
+          <div class="auth-scene-caption">
+            <span>African languages. Real culture.</span>
+            <strong>A brighter future.</strong>
           </div>
-
-          <div class="auth-highlights-box">
-            <div class="auth-highlight-pill">
-              <span class="auth-pill-ico tone-mint">${icon('mic', 16)}</span>
-              <div>
-                <strong>AI Voice & Tonal Feedback</strong>
-                <small>6 African languages with live pitch scoring</small>
-              </div>
-            </div>
-            <div class="auth-highlight-pill">
-              <span class="auth-pill-ico tone-yellow">${icon('code', 16)}</span>
-              <div>
-                <strong>K–8 Code for Kids & STEAM</strong>
-                <small>30+ interactive lessons paired with cultural proverbs</small>
-              </div>
-            </div>
-            <div class="auth-highlight-pill">
-              <span class="auth-pill-ico tone-blue">${icon('shield', 16)}</span>
-              <div>
-                <strong>Guardian-first child sign-up</strong>
-                <small>Email approval and a one-time learner code</small>
-              </div>
-            </div>
-          </div>
-
-          <div class="auth-quote-card">
-            <div class="auth-quote-mark">“</div>
-            <p>A joyful place where children and families preserve African heritage while mastering 21st-century tech.</p>
-            <div class="auth-quote-author">— The Idilewa Philosophy</div>
-          </div>
-
-          <section class="auth-paths" aria-label="Explore Idilewa learning paths">
-            <div class="auth-paths-heading"><span>MADE FOR CURIOUS MINDS</span><strong>One space. Many ways to grow.</strong></div>
-            <div class="auth-paths-track">
-              <a class="auth-path-card" href="#/curriculum" data-route="curriculum"><span aria-hidden="true">★★★★★</span><strong>Language &amp; culture</strong><small>Learn through words, stories and heritage</small></a>
-              <a class="auth-path-card" href="#/coding" data-route="coding"><span aria-hidden="true">★★★★★</span><strong>Code &amp; create</strong><small>Explore creative coding and STEAM</small></a>
-              <a class="auth-path-card" href="#/ere" data-route="ere"><span aria-hidden="true">★★★★★</span><strong>Read &amp; listen</strong><small>Discover stories and oral traditions</small></a>
-              <a class="auth-path-card" href="#/trainer" data-route="trainer"><span aria-hidden="true">★★★★★</span><strong>Speak with confidence</strong><small>Practice sounds and pronunciation</small></a>
-              <div class="auth-paths-copy" aria-hidden="true">
-                <a class="auth-path-card" href="#/curriculum" tabindex="-1"><span>★★★★★</span><strong>Language &amp; culture</strong><small>Learn through words, stories and heritage</small></a>
-                <a class="auth-path-card" href="#/coding" tabindex="-1"><span>★★★★★</span><strong>Code &amp; create</strong><small>Explore creative coding and STEAM</small></a>
-                <a class="auth-path-card" href="#/ere" tabindex="-1"><span>★★★★★</span><strong>Read &amp; listen</strong><small>Discover stories and oral traditions</small></a>
-                <a class="auth-path-card" href="#/trainer" tabindex="-1"><span>★★★★★</span><strong>Speak with confidence</strong><small>Practice sounds and pronunciation</small></a>
-              </div>
-            </div>
-            <p class="auth-paths-note">Learning paths, not user reviews or ratings.</p>
-          </section>
         </div>
       </aside>
 
-      <!-- Right Column: Modern Authentication Card Panel -->
+      <!-- Left-side sign-in and account creation form -->
       <main class="auth-panel modern-auth-panel">
         <div class="auth-brand" aria-label="Idilewa">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -5766,9 +5722,6 @@ import {
     } else if (page === 'ere' || page === 'oral') {
       const storyCanvas = document.getElementById('story3DCanvasWrap');
       if (storyCanvas) init3DStoryCanvas(storyCanvas);
-    } else if (page === 'login' || page === 'consent') {
-      const authCanvas = document.getElementById('auth3DCanvasWrap');
-      if (authCanvas) init3DAuthCanvas(authCanvas);
     }
     autoMount3DElements();
     init3DTiltEngine();
