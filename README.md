@@ -196,7 +196,7 @@ The SQL files in this repository are not proof that a remote database has been p
 
 Do not enable account registration until the SQL completes successfully. The migration is version-controlled and repeatable, but is not automatically applied by deployment. Confirm the target project before running it; never test account creation against production with an unowned test address.
 
-Configure the Supabase Auth email template to send the numeric `{{ .Token }}` code for sign-up, enable email confirmation, allow the production URL in Auth redirect settings, and set the minimum password length to 12 in the Supabase Auth password policy. The app enforces 12–128 characters at sign-up; existing sign-in passwords are not blocked by that client-side minimum. Actual inbox delivery depends on the Supabase SMTP/provider configuration and must be tested using a mailbox you control.
+Configure the Supabase Auth email template to send the numeric `{{ .Token }}` code for sign-up and sign-in, enable email confirmation, allow the production URL in Auth redirect settings, and set the minimum password length to 12 in the Supabase Auth password policy. The app enforces 12–128 characters plus uppercase, lowercase, number and symbol at sign-up; existing sign-in passwords are not blocked by that client-side minimum. Children and educators can request an individual email OTP for sign-in; account role is verified against the private profile after code validation. Actual inbox delivery depends on the Supabase SMTP/provider configuration and must be tested using a mailbox you control.
 
 Configure these server-only Vercel variables for guardian approvals and educator invites:
 

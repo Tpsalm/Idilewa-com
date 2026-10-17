@@ -50,6 +50,16 @@ function requirePersistedResult(data, error, message) {
   return data;
 }
 
+export function isSignupPasswordValid(password) {
+  return typeof password === 'string'
+    && password.length >= 12
+    && password.length <= 128
+    && /[a-z]/.test(password)
+    && /[A-Z]/.test(password)
+    && /\d/.test(password)
+    && /[^A-Za-z0-9\s]/.test(password);
+}
+
 function mapProgress(row) {
   return {
     id: row.id,
@@ -121,8 +131,8 @@ async function loadAccountProfile(client, authUser) {
 
 export async function signUp({ email, password, name, role = 'child', guardianAccessRequestId, educatorInviteId }) {
   const client = requireSupabase();
-  if (typeof password !== 'string' || password.length < 12 || password.length > 128) {
-    throw new Error('Choose a password between 12 and 128 characters.');
+  if (!isSignupPasswordValid(password)) {
+    throw new Error('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.');
   }
   if (role === 'child' && !/^[0-9a-f-]{36}$/i.test(guardianAccessRequestId || '')) {
     throw new Error('A verified guardian approval is required before creating a child account.');
@@ -166,6 +176,47 @@ export async function verifySignupOtp({ email, token }) {
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
   const userRecord = await loadAccountProfile(client, data.user);
+  setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
+  return userRecord;
+}
+
+export async function requestSigninOtp(email) {
+  const client = requireSupabase();
+  const normalizedEmail = email.toLowerCase().trim();
+  const { error } = await client.auth.signInWithOtp({
+    email: normalizedEmail,
+    options: { shouldCreateUser: false },
+  });
+  if (error) throw new Error(error.message, { cause: error });
+}
+
+export async function verifySigninOtp({ email, token, expectedRole }) {
+  const client = requireSupabase();
+  if (!['child', 'educator'].includes(expectedRole)) {
+    throw new Error('Email-code sign-in is available only for child and educator accounts.');
+  }
+  const normalizedEmail = email.toLowerCase().trim();
+  if (!/^\d{6,8}$/.test(token)) throw new Error('Enter the verification code from your email.');
+  const { data, error } = await client.auth.verifyOtp({
+    email: normalizedEmail,
+    token,
+    type: 'email',
+  });
+  if (error) throw new Error(error.message, { cause: error });
+  if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
+
+  let userRecord;
+  try {
+    userRecord = await loadAccountProfile(client, data.user);
+    if (userRecord.role !== expectedRole) {
+      throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
+    }
+  } catch (profileError) {
+    const { error: signOutError } = await client.auth.signOut();
+    if (signOutError) throw new Error('Could not clear the session after the account check failed.', { cause: signOutError });
+    throw profileError;
+  }
+
   setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
   return userRecord;
 }

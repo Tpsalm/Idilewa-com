@@ -40,6 +40,9 @@ import {
   signUp as signUpAccount,
   verifySignupOtp,
   resendSignupOtp,
+  requestSigninOtp,
+  verifySigninOtp,
+  isSignupPasswordValid,
   saveProgress,
   getUserProgress,
   saveCodeSubmission
@@ -477,6 +480,16 @@ import {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(saved) ? saved.toLowerCase() : '';
     } catch (_) {
       return '';
+    }
+  })();
+  let pendingSignin = (() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('idilewa-pending-signin-otp') || 'null');
+      return saved && typeof saved.email === 'string' && ['child', 'educator'].includes(saved.role)
+        ? { email: saved.email.toLowerCase(), role: saved.role }
+        : null;
+    } catch (_) {
+      return null;
     }
   })();
   let verifiedGuardianSignup = (() => {
@@ -4072,6 +4085,9 @@ import {
 
   function renderLogin() {
     const signUp = state.loginMode === 'signup';
+    const pendingOtpEmail = pendingSignupEmail || pendingSignin?.email || '';
+    const pendingOtpRole = pendingSignin?.role || state.authRole;
+    const isSigninOtp = Boolean(pendingSignin?.email && !pendingSignupEmail);
     const activeGrant = consentCodeIsActive();
     const role = state.authRole || 'child';
     const isChild = role === 'child';
@@ -4112,12 +4128,12 @@ import {
 
         <div class="auth-header-block">
           <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
-          <h1 class="auth-title">${pendingSignupEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
-          <p class="auth-subtitle">${pendingSignupEmail ? `Enter the verification code sent to ${esc(pendingSignupEmail)}.` : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
+          <h1 class="auth-title">${pendingOtpEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
+          <p class="auth-subtitle">${pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
-        <div class="auth-toggle modern-auth-tabs" role="tablist" ${pendingSignupEmail ? 'hidden' : ''}>
+        <div class="auth-toggle modern-auth-tabs" role="tablist" ${pendingOtpEmail ? 'hidden' : ''}>
           <button type="button" class="auth-tab-btn ${!signUp ? 'active' : ''}" data-action="login-mode" data-mode="signin" role="tab" aria-selected="${!signUp}">
             ${icon('user', 15)} Sign In
           </button>
@@ -4127,7 +4143,7 @@ import {
         </div>
 
         <!-- Persona Role Selector Cards -->
-        <div class="auth-role-selector" ${pendingSignupEmail ? 'hidden' : ''}>
+        <div class="auth-role-selector" ${pendingOtpEmail ? 'hidden' : ''}>
           <label class="auth-role-label">Choose Learning Persona:</label>
           <div class="auth-role-grid">
             <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child">
@@ -4154,21 +4170,20 @@ import {
         </div>
 
         <!-- Modern Auth Form -->
-        ${pendingSignupEmail ? `
-        <form class="auth-form modern-auth-form" data-form="signup-otp">
+        ${pendingOtpEmail ? `
+        <form class="auth-form modern-auth-form" data-form="${isSigninOtp ? 'signin-otp' : 'signup-otp'}" data-otp-role="${esc(pendingOtpRole)}">
           <div class="form-group">
             <label for="signupOtp" class="form-label">Email verification code</label>
             <div class="input-with-icon">
-              <span class="input-icon">${icon('shield', 17)}</span>
               <input id="signupOtp" type="text" name="token" class="form-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,8}" minlength="6" maxlength="8" placeholder="6–8 digit code" required />
             </div>
-            <p class="form-helper-text">This code confirms your email address and completes account sign-up.</p>
+            <p class="form-helper-text">${isSigninOtp ? 'This code signs you in securely. It is valid only for this email and expires shortly.' : 'This code confirms your email address and completes account sign-up.'}</p>
           </div>
           <button class="button button-primary modern-auth-submit" type="submit">
-            <span>Verify email and continue</span>${icon('arrow', 16)}
+            <span>${isSigninOtp ? 'Verify code and sign in' : 'Verify email and continue'}</span>${icon('arrow', 16)}
           </button>
-          <button class="button button-outline" type="button" data-action="resend-signup-otp">Send a new code</button>
-          <button class="text-link" type="button" data-action="cancel-signup-otp">Back to sign up</button>
+          <button class="button button-outline" type="button" data-action="${isSigninOtp ? 'resend-signin-otp' : 'resend-signup-otp'}">Send a new code</button>
+          <button class="text-link" type="button" data-action="cancel-auth-otp">${isSigninOtp ? 'Back to sign in' : 'Back to sign up'}</button>
         </form>
         ` : `
         <form class="auth-form modern-auth-form" data-form="login">
@@ -4178,7 +4193,6 @@ import {
           <div class="form-group">
             <label for="authName" class="form-label">Name or Learner Alias</label>
             <div class="input-with-icon">
-              <span class="input-icon">${icon('smile', 17)}</span>
               <input id="authName" type="text" name="name" class="form-input" autocomplete="name" placeholder="${isChild ? 'e.g. Ayo B. (Use nickname for safety)' : 'e.g. Samuel Owoyemi'}" required />
             </div>
           </div>
@@ -4187,9 +4201,22 @@ import {
           <div class="form-group">
             <label for="authEmail" class="form-label">Email address</label>
             <div class="input-with-icon">
-              <span class="input-icon">${icon('user', 17)}</span>
               <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" value="${isChild && signUp && verifiedGuardianSignup ? esc(verifiedGuardianSignup.email) : isEducator && signUp && verifiedEducatorSignup ? esc(verifiedEducatorSignup.email) : ''}" ${isChild && signUp && verifiedGuardianSignup || isEducator && signUp && verifiedEducatorSignup ? 'readonly' : ''} required />
             </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label for="authPassword" class="form-label">Password</label>
+              ${!signUp ? `<button class="forgot-link" type="button" data-action="forgot-password">Forgot password?</button>` : ''}
+            </div>
+            <div class="input-with-icon">
+              <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" ${signUp ? 'minlength="12" maxlength="128"' : ''} placeholder="${signUp ? 'At least 12 characters' : 'Enter your password'}" required />
+              <button type="button" class="password-toggle-btn" data-action="toggle-password-visibility" aria-label="Toggle password visibility">
+                ${icon('eye', 16)}
+              </button>
+            </div>
+            ${signUp ? '<p class="form-helper-text password-guidance">Use at least 12 characters, including uppercase and lowercase letters, a number and a symbol. Example: <span>River!Drum7Leaf</span>. Do not reuse this sample.</p>' : ''}
           </div>
 
           ${isChild && signUp ? verifiedGuardianSignup ? `
@@ -4201,29 +4228,18 @@ import {
           <div class="form-group consent-form-group">
             <label for="guardianEmail" class="form-label">Parent or guardian email</label>
             <div class="input-with-icon">
-              <span class="input-icon">${icon('heart', 17)}</span>
               <input id="guardianEmail" type="email" name="guardianEmail" class="form-input" autocomplete="email" placeholder="parent@example.com" required />
             </div>
             <p class="form-helper-text">We’ll email your parent or guardian a private approval link. After they approve, your one-time sign-up code will be sent to your email above.</p>
             <button class="button button-outline" type="button" data-action="request-guardian-approval">Email my parent for approval</button>
           </div>
           <div class="form-group consent-form-group">
-            <label for="guardianAccessCode" class="form-label">One-time code from your email</label>
+            <label for="guardianAccessCode" class="form-label">Parent-approved one-time passcode</label>
             <div class="input-with-icon">
-              <span class="input-icon">${icon('shield', 17)}</span>
-              <input id="guardianAccessCode" type="text" inputmode="numeric" pattern="[0-9]{6}" name="guardianAccessCode" class="form-input" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code" />
+              <input id="guardianAccessCode" type="text" inputmode="numeric" pattern="[0-9]{6}" name="guardianAccessCode" class="form-input" maxlength="6" autocomplete="one-time-code" placeholder="Enter 6-digit passcode" />
             </div>
             <button class="button button-outline" type="button" data-action="verify-guardian-code">Verify parent-approved code</button>
             <p class="form-helper-text">The code is single-use and expires after 15 minutes. Never share it with anyone.</p>
-          </div>
-          ` : ''}
-
-          ${isChild && !signUp ? `
-          <div class="form-group consent-form-group">
-            <div class="form-label-row">
-              <span class="form-label">Child account protection</span>
-            </div>
-            <p class="form-helper-text">Guardian approval is verified when the child account is created. Sign in with the child’s email and password; no local-browser code is accepted.</p>
           </div>
           ` : ''}
 
@@ -4234,30 +4250,21 @@ import {
           </div>
           ` : `
           <div class="form-group consent-form-group">
-            <label for="educatorInviteCode" class="form-label">One-time educator invitation code</label>
+            <label for="educatorInviteCode" class="form-label">One-time educator invitation passcode</label>
             <div class="input-with-icon">
-              <span class="input-icon">${icon('school', 17)}</span>
-              <input id="educatorInviteCode" type="text" name="educatorInviteCode" class="form-input" autocomplete="one-time-code" minlength="8" maxlength="64" placeholder="Enter your invitation code" />
+              <input id="educatorInviteCode" type="text" name="educatorInviteCode" class="form-input" autocomplete="one-time-code" minlength="8" maxlength="64" placeholder="Enter invitation passcode" />
             </div>
             <button class="button button-outline" type="button" data-action="verify-educator-invite">Verify invitation</button>
-            <p class="form-helper-text">Educator accounts require an invitation. Sign-in uses your email and password—no shared passcode.</p>
+            <p class="form-helper-text">Educator accounts require a verified invitation before registration.</p>
           </div>
           ` : ''}
 
-          <div class="form-group">
-            <div class="form-label-row">
-              <label for="authPassword" class="form-label">Password</label>
-              ${!signUp ? `<button class="forgot-link" type="button" data-action="forgot-password">Forgot password?</button>` : ''}
-            </div>
-            <div class="input-with-icon">
-              <span class="input-icon">${icon('lock', 17)}</span>
-              <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" ${signUp ? 'minlength="12" maxlength="128"' : ''} placeholder="${signUp ? 'At least 12 characters' : '••••••••••••'}" required />
-              <button type="button" class="password-toggle-btn" data-action="toggle-password-visibility" aria-label="Toggle password visibility">
-                ${icon('eye', 16)}
-              </button>
-            </div>
-            ${signUp ? '<p class="form-helper-text password-guidance">Use 12 or more characters. A memorable passphrase is easier to remember, for example: <span>River!Drum7Leaf</span>. Do not reuse this sample.</p>' : ''}
+          ${!signUp && (isChild || isEducator) ? `
+          <div class="form-group consent-form-group">
+            <button class="button button-outline" type="button" data-action="request-signin-otp">Email me a one-time sign-in passcode</button>
+            <p class="form-helper-text">We’ll send a short-lived code to this account’s email. No shared role passcode is used.</p>
           </div>
+          ` : ''}
 
           ${signUp ? `
           <label class="consent-check modern-consent-check">
@@ -4286,7 +4293,7 @@ import {
           <span class="safe-note-icon">${icon('lock', 16)}</span>
           <div>
             <strong>${authConfigured ? 'Your account is protected by Supabase Auth' : 'Account service is not configured'}</strong>
-            <span>${authConfigured ? 'Your password is sent to Supabase over HTTPS. Never reuse a password from another account.' : 'Add the Supabase URL and public anon key to the deployment environment to enable sign up and sign in. You can still explore as a guest.'}</span>
+            <span>${authConfigured ? pendingOtpEmail ? 'A short-lived verification code is sent to this email. Never share it with anyone.' : 'Your password is sent to Supabase over HTTPS. Never reuse a password from another account.' : 'Add the Supabase URL and public anon key to the deployment environment to enable sign up and sign in. You can still explore as a guest.'}</span>
           </div>
         </div>
 
@@ -5932,6 +5939,36 @@ import {
     }
   }
 
+  async function requestChildOrEducatorSigninOtp(button) {
+    const emailInput = document.getElementById('authEmail');
+    if (!emailInput?.reportValidity()) return;
+    const email = emailInput.value.trim().toLowerCase();
+    const role = state.authRole;
+    if (!['child', 'educator'].includes(role)) {
+      showToast('Email-code sign-in is available for child and educator accounts.', 'error');
+      return;
+    }
+
+    button.disabled = true;
+    const previousText = button.textContent;
+    button.textContent = 'Sending sign-in code…';
+    try {
+      await requestSigninOtp(email);
+      pendingSignin = { email, role };
+      state.loginMode = 'signin';
+      sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
+      render();
+      showToast('A one-time sign-in code has been sent to your email.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'A sign-in code could not be sent.', 'error');
+    } finally {
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = previousText;
+      }
+    }
+  }
+
   function openModal(title, body) {
     document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close">${icon('close', 19)}</button><div class="modal-icon">${icon('sparkles', 22)}</div><h2 id="modalTitle">${esc(title)}</h2><p>${esc(body)}</p><button class="button button-primary modal-done" data-action="close-modal">Got it ${icon('check', 15)}</button></section></div>`;
     document.querySelector('.modal-done')?.focus();
@@ -6574,6 +6611,7 @@ import {
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'verify-educator-invite': void verifyEducatorInvite(el); break;
+      case 'request-signin-otp': void requestChildOrEducatorSigninOtp(el); break;
       case 'educator-use-another-code':
         verifiedEducatorSignup = null;
         sessionStorage.removeItem('idilewa-educator-signup');
@@ -6587,9 +6625,20 @@ import {
           .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
           .finally(() => { if (el.isConnected) el.disabled = false; });
         break;
-      case 'cancel-signup-otp':
+      case 'resend-signin-otp':
+        if (!pendingSignin?.email) break;
+        el.disabled = true;
+        void requestSigninOtp(pendingSignin.email)
+          .then(() => showToast('A new sign-in code has been sent.', 'success'))
+          .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
+          .finally(() => { if (el.isConnected) el.disabled = false; });
+        break;
+      case 'cancel-auth-otp':
+        state.loginMode = pendingSignin ? 'signin' : 'signup';
         pendingSignupEmail = '';
+        pendingSignin = null;
         sessionStorage.removeItem('idilewa-pending-signup-email');
+        sessionStorage.removeItem('idilewa-pending-signin-otp');
         render();
         break;
       case 'guardian-use-another-email':
@@ -6970,6 +7019,25 @@ import {
         showToast(error instanceof Error ? error.message : 'Email verification failed. Check the code and try again.', 'error');
       }
       return;
+    } else if (type === 'signin-otp') {
+      const token = String(data.get('token') || '').trim();
+      const expectedRole = form.dataset.otpRole;
+      try {
+        await verifySigninOtp({ email: pendingSignin?.email || '', token, expectedRole });
+        state.authRole = expectedRole;
+        if (expectedRole === 'child') {
+          state.consent.childVerified = true;
+          saveState();
+        }
+        pendingSignin = null;
+        sessionStorage.removeItem('idilewa-pending-signin-otp');
+        await syncAccountLessonProgress();
+        navigate('index');
+        showToast('Your email is verified and you are signed in.', 'success');
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Email sign-in failed. Check the code and try again.', 'error');
+      }
+      return;
     } else if (type === 'coding-run') {
       const code = String(data.get('code') || '').slice(0, 1200);
       const tech = CODE_PATHS.find((item) => item.id === form.dataset.tech) || CODE_PATHS[0];
@@ -7092,8 +7160,8 @@ import {
       const password = String(data.get('password') || '');
       try {
         if (state.loginMode === 'signup') {
-          if (password.length < 12) {
-            showToast('Choose a password with at least 12 characters.', 'error');
+          if (!isSignupPasswordValid(password)) {
+            showToast('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.', 'error');
             document.getElementById('authPassword')?.focus();
             return;
           }
