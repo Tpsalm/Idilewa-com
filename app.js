@@ -4066,21 +4066,12 @@ import {
       <!-- Right-side animated learning scene -->
       <aside class="auth-art modern-auth-art" aria-label="Children exploring languages, stories and technology">
         <div class="auth-scene-shell">
-          <img class="auth-scene-photo" src="./assets/hero-home.jpg" alt="" />
+          <img class="auth-scene-photo" src="./assets/auth-learning-reference.png" alt="" />
           <div class="auth-scene-shade" aria-hidden="true"></div>
-          <div class="auth-scene-kicker">${icon('sparkles', 15)} <span>LANGUAGE · CULTURE · FUTURE</span></div>
           <div class="auth-globe-stage" aria-hidden="true"><div id="auth3DCanvasWrap"></div></div>
-          <div class="auth-language-chip auth-language-yoruba">Yorùbá</div>
-          <div class="auth-language-chip auth-language-igbo">Igbo</div>
-          <div class="auth-language-chip auth-language-hausa">Hausa</div>
-          <div class="auth-language-chip auth-language-swahili">Swahili</div>
-          <div class="auth-scene-float auth-scene-book">${icon('book', 19)}</div>
-          <div class="auth-scene-float auth-scene-code">${icon('code', 20)}</div>
-          <div class="auth-scene-float auth-scene-audio">${icon('headphones', 19)}</div>
-          <div class="auth-scene-caption">
-            <span>African languages. Real culture.</span>
-            <strong>A brighter future.</strong>
-          </div>
+          <div class="auth-laptop-screen-glow" aria-hidden="true"></div>
+          <span class="auth-laptop-pointer" aria-hidden="true"></span>
+          <span class="auth-scene-light-pass" aria-hidden="true"></span>
         </div>
       </aside>
 
