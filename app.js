@@ -584,15 +584,20 @@ import {
   function renderFooter() {
     return `<footer class="site-footer">
       <div class="container footer-main">
-        <div class="footer-brand-block">
-          <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
-          <p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p>
+        <div class="footer-directory">
+          <section class="footer-links"><h2>${icon('book', 25)} Curriculum</h2>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</section>
+          <section class="footer-links"><h2>${icon('sparkles', 25)} Discover</h2>${routeLink('library', 'Learning library')}${routeLink('game', 'African word game')}${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</section>
+          <section class="footer-links"><h2>${icon('layers', 25)} Idilewa</h2>${routeLink('about', 'Our story')}${routeLink('profile', 'Learner profile')}${routeLink('pricing', 'Plans & pricing')}${routeLink('payment', 'Payment information')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('contact', 'Contact us')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</section>
         </div>
-        <div class="footer-links"><h3>Curriculum</h3>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</div>
-        <div class="footer-links"><h3>Discover</h3>${routeLink('library', 'Learning library')}${routeLink('game', 'African word game')}${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</div>
-        <div class="footer-links"><h3>Idilewa</h3>${routeLink('about', 'Our story')}${routeLink('profile', 'Learner profile')}${routeLink('pricing', 'Plans & pricing')}${routeLink('payment', 'Payment information')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('contact', 'Contact us')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</div>
+        <div class="footer-secondary">
+          <section class="footer-support"><h2>${icon('heart', 25)} Support &amp; Feedback</h2><div class="footer-support-copy"><p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p><p>${routeLink('contact', 'Contact us')} · ${routeLink('privacy', 'Privacy policy')}</p></div></section>
+          <section class="footer-purpose"><h2>${icon('sparkles', 25)} Our purpose</h2><p>A learning space for languages, culture and technology.</p><p class="footer-note">A thoughtful beginning, built to grow.</p></section>
+        </div>
       </div>
-      <div class="container footer-bottom"><span>© Idilewa · A learning space for languages, culture and technology</span><span class="footer-note">A thoughtful beginning, built to grow.</span></div>
+      <div class="footer-bottom"><div class="container footer-bottom-inner">
+        <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
+        <p>© Idilewa · A learning space for languages, culture and technology</p>
+      </div></div>
     </footer>`;
   }
 
@@ -5687,11 +5692,11 @@ import {
       .replace(/Voice Studio/gi, 'Voice Lessons');
     if (page === 'coding') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = pageMarkup;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
       initializeIdeRuntimes();
     } else if (page === 'login') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = pageMarkup;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
     } else {
