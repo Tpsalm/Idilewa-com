@@ -198,6 +198,8 @@ Run `supabase link --project-ref <project-ref>` and `supabase db push --linked` 
 
 Configure the Supabase Auth email template to send the numeric `{{ .Token }}` code for sign-up and sign-in, enable email confirmation, allow the production URL in Auth redirect settings, and set the minimum password length to 12 in the Supabase Auth password policy. The app enforces 12–128 characters plus uppercase, lowercase, number and symbol at sign-up; existing sign-in passwords are not blocked by that client-side minimum. Children and educators can request an individual email OTP for sign-in; account role is verified against the private profile after code validation. Actual inbox delivery depends on the Supabase SMTP/provider configuration and must be tested using a mailbox you control.
 
+New child registration stays paused until guardian approval email delivery has a sender on a domain verified in Resend. Existing child accounts can still sign in; adult and invited educator registration remain available. Do not set `RESEND_FROM_EMAIL` to a public mailbox address such as Gmail.
+
 Configure these server-only Vercel variables for guardian approvals and educator invites:
 
 ```dotenv

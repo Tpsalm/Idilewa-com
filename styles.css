@@ -1399,6 +1399,8 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 .modern-auth-safe-note .safe-note-icon { color: var(--green); flex: 0 0 auto; margin-top: 2px; }
 .modern-auth-safe-note strong { display: block; font-size: 11px; color: var(--ink); margin-bottom: 2px; }
 .modern-auth-safe-note span { display: block; font-size: 10px; color: #69786d; line-height: 1.45; }
+.auth-signup-paused { background: #f2faf4; border-color: #cfe3d2; }
+.auth-signup-paused strong { color: var(--green-dark); }
 .auth-alt-links { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 .auth-guest-btn { width: 100%; min-height: 42px; font-size: 12px; font-weight: 750; }
 .auth-sub-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 2px; }

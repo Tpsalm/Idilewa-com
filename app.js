@@ -4094,6 +4094,7 @@ import {
     const isEducator = role === 'educator';
     const isParent = role === 'parent';
     const isAdult = role === 'adult';
+    const childSignupPaused = signUp && isChild;
     const authConfigured = isSupabaseConfigured && Boolean(supabase);
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
@@ -4129,7 +4130,7 @@ import {
         <div class="auth-header-block">
           <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
           <h1 class="auth-title">${pendingOtpEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
-          <p class="auth-subtitle">${pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
+          <p class="auth-subtitle">${pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : childSignupPaused ? 'Child account registration is temporarily paused. Existing child accounts can still sign in.' : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
@@ -4185,6 +4186,14 @@ import {
           <button class="button button-outline" type="button" data-action="${isSigninOtp ? 'resend-signin-otp' : 'resend-signup-otp'}">Send a new code</button>
           <button class="text-link" type="button" data-action="cancel-auth-otp">${isSigninOtp ? 'Back to sign in' : 'Back to sign up'}</button>
         </form>
+        ` : childSignupPaused ? `
+        <div class="auth-safe-note modern-auth-safe-note auth-signup-paused" role="status">
+          <span class="safe-note-icon">${icon('heart', 16)}</span>
+          <div>
+            <strong>Child sign-up is temporarily paused</strong>
+            <span>Guardian approval emails need a verified sender before new child accounts can be created. Existing child accounts can still sign in; adult and invited educator sign-up remain available.</span>
+          </div>
+        </div>
         ` : `
         <form class="auth-form modern-auth-form" data-form="login">
           <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
@@ -7142,6 +7151,10 @@ import {
     } else if (type === 'login') {
       const accountType = String(data.get('accountType') || state.authRole || 'child');
       const email = String(data.get('email') || '').trim();
+      if (state.loginMode === 'signup' && accountType === 'child') {
+        showToast('New child registration is temporarily paused until guardian email delivery is configured.', 'error');
+        return;
+      }
       if (state.loginMode === 'signup' && accountType === 'child'
         && (!verifiedGuardianSignup || verifiedGuardianSignup.email !== email.trim().toLowerCase())) {
         showToast('A verified guardian email code for this exact learner email is required before child sign-up.', 'error');
