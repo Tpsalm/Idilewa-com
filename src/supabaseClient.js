@@ -193,8 +193,8 @@ export async function requestSigninOtp(email) {
 
 export async function verifySigninOtp({ email, token, expectedRole }) {
   const client = requireSupabase();
-  if (!['child', 'educator'].includes(expectedRole)) {
-    throw new Error('Email-code sign-in is available only for child and educator accounts.');
+  if (!['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
+    throw new Error('Select a valid account type before using email-code sign-in.');
   }
   const normalizedEmail = email.toLowerCase().trim();
   if (!/^\d{6,8}$/.test(token)) throw new Error('Enter the verification code from your email.');
@@ -220,6 +220,16 @@ export async function verifySigninOtp({ email, token, expectedRole }) {
 
   setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
   return userRecord;
+}
+
+export async function updateAccountPassword(password) {
+  const client = requireSupabase();
+  if (!isSignupPasswordValid(password)) {
+    throw new Error('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.');
+  }
+  const { data, error } = await client.auth.updateUser({ password });
+  if (error) throw new Error(error.message, { cause: error });
+  if (!data?.user) throw new Error('The authentication service did not confirm your new password.');
 }
 
 export async function resendSignupOtp(email) {

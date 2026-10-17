@@ -7307,6 +7307,9 @@ body[data-page="login"] .site-header { background: rgba(251, 252, 248, .9); }
   }
 
   .modern-auth-art { order: 1; }
+  .modern-auth-art { min-height: 0; padding: 16px 0; }
+  .modern-auth-panel { border-right: 0; border-bottom: 1px solid #e6ece5; }
+  .auth-scene-shell { width: min(100%, 68svh, 520px); }
   .modern-auth-image { aspect-ratio: 16 / 9; }
   .auth-highlights-box { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .auth-highlight-pill { align-items: flex-start; }
@@ -7343,6 +7346,7 @@ body[data-page="login"] .site-header { background: rgba(251, 252, 248, .9); }
   .modern-auth-form { gap: 13px; }
   .auth-highlights-box { grid-template-columns: 1fr; }
   .auth-highlight-pill { align-items: center; }
+  .auth-scene-shell { width: min(100%, 68svh, 520px); border-radius: 22px; }
   .modern-auth-image { aspect-ratio: 4 / 3; }
   .auth-paths { padding-top: 5px; }
   .auth-paths-track { animation-duration: 26s; }
@@ -7413,6 +7417,37 @@ body[data-page="login"] .main-content { padding: 0; }
 .auth-subtitle { margin-bottom: 0; color: #667b72; font-size: 13px; line-height: 1.5; }
 .auth-role-label { letter-spacing: 0; }
 .modern-auth-submit { border-radius: 8px; }
+.modern-auth-art {
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 2.6vw, 38px);
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(197, 239, 208, .96), transparent 57%),
+    linear-gradient(145deg, #e8f2e7, #cfe2d2 58%, #edf2e8);
+}
+.auth-scene-shell {
+  position: relative;
+  top: auto;
+  width: min(100%, 68svh, 640px);
+  height: auto;
+  min-height: 0;
+  max-height: 88svh;
+  aspect-ratio: 4 / 5;
+  margin: auto;
+  border: 1px solid rgba(255, 255, 255, .76);
+  border-radius: 28px;
+  box-shadow: 0 28px 80px rgba(14, 59, 39, .22);
+}
+.auth-scene-photo {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 48%;
+  transform-origin: center;
+}
+.auth-scene-shade { border-radius: inherit; }
 .auth-intro-screen { position: fixed; z-index: 1000; inset: 0; display: flex; align-items: center; justify-content: center; gap: 15px; background: #fff; animation: auth-intro-exit .45s ease 1s forwards; }
 .auth-intro-screen > strong { color: var(--green-dark); font-size: 36px; font-weight: 850; animation: auth-logo-bounce .7s cubic-bezier(.2,.8,.3,1.3) both; }
 .auth-intro-mark { display: flex; align-items: center; justify-content: center; gap: 3px; width: 48px; height: 48px; border-radius: 13px; background: #e6f4e9; animation: auth-logo-bounce .7s cubic-bezier(.2,.8,.3,1.3) both; }

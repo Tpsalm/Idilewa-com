@@ -42,6 +42,7 @@ import {
   resendSignupOtp,
   requestSigninOtp,
   verifySigninOtp,
+  updateAccountPassword,
   isSignupPasswordValid,
   saveProgress,
   getUserProgress,
@@ -485,11 +486,22 @@ import {
   let pendingSignin = (() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem('idilewa-pending-signin-otp') || 'null');
-      return saved && typeof saved.email === 'string' && ['child', 'educator'].includes(saved.role)
-        ? { email: saved.email.toLowerCase(), role: saved.role }
+      return saved && typeof saved.email === 'string' && ['child', 'educator', 'adult', 'parent'].includes(saved.role)
+        ? {
+          email: saved.email.toLowerCase(),
+          role: saved.role,
+          purpose: saved.purpose === 'password-reset' ? 'password-reset' : 'signin'
+        }
         : null;
     } catch (_) {
       return null;
+    }
+  })();
+  let passwordResetVerified = (() => {
+    try {
+      return sessionStorage.getItem('idilewa-password-reset-verified') === 'true';
+    } catch (_) {
+      return false;
     }
   })();
   let verifiedGuardianSignup = (() => {
@@ -4085,9 +4097,11 @@ import {
 
   function renderLogin() {
     const signUp = state.loginMode === 'signup';
-    const pendingOtpEmail = pendingSignupEmail || pendingSignin?.email || '';
+    const passwordResetReady = Boolean(pendingSignin?.purpose === 'password-reset' && passwordResetVerified);
+    const pendingOtpEmail = pendingSignupEmail || (passwordResetReady ? '' : pendingSignin?.email || '');
     const pendingOtpRole = pendingSignin?.role || state.authRole;
-    const isSigninOtp = Boolean(pendingSignin?.email && !pendingSignupEmail);
+    const isSigninOtp = Boolean(pendingSignin?.email && !pendingSignupEmail && !passwordResetReady);
+    const authStepPending = Boolean(pendingOtpEmail || passwordResetReady);
     const activeGrant = consentCodeIsActive();
     const role = state.authRole || 'child';
     const isChild = role === 'child';
@@ -4129,12 +4143,12 @@ import {
 
         <div class="auth-header-block">
           <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
-          <h1 class="auth-title">${pendingOtpEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
-          <p class="auth-subtitle">${pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : childSignupPaused ? 'Child account registration is temporarily paused. Existing child accounts can still sign in.' : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
+          <h1 class="auth-title">${passwordResetReady ? 'Choose a new password' : pendingOtpEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
+          <p class="auth-subtitle">${passwordResetReady ? 'Your email is verified. Set a new password to finish recovering your account.' : pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : childSignupPaused ? 'Child account registration is temporarily paused. Existing child accounts can still sign in.' : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
-        <div class="auth-toggle modern-auth-tabs" role="tablist" ${pendingOtpEmail ? 'hidden' : ''}>
+        <div class="auth-toggle modern-auth-tabs" role="tablist" ${authStepPending ? 'hidden' : ''}>
           <button type="button" class="auth-tab-btn ${!signUp ? 'active' : ''}" data-action="login-mode" data-mode="signin" role="tab" aria-selected="${!signUp}">
             ${icon('user', 15)} Sign In
           </button>
@@ -4144,7 +4158,7 @@ import {
         </div>
 
         <!-- Persona Role Selector Cards -->
-        <div class="auth-role-selector" ${pendingOtpEmail ? 'hidden' : ''}>
+        <div class="auth-role-selector" ${authStepPending ? 'hidden' : ''}>
           <label class="auth-role-label">Choose Learning Persona:</label>
           <div class="auth-role-grid">
             <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child">
@@ -4178,13 +4192,29 @@ import {
             <div class="input-with-icon">
               <input id="signupOtp" type="text" name="token" class="form-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,8}" minlength="6" maxlength="8" placeholder="6–8 digit code" required />
             </div>
-            <p class="form-helper-text">${isSigninOtp ? 'This code signs you in securely. It is valid only for this email and expires shortly.' : 'This code confirms your email address and completes account sign-up.'}</p>
+            <p class="form-helper-text">${isSigninOtp ? pendingSignin?.purpose === 'password-reset' ? 'This code verifies access to your account. You can choose a new password after confirming it.' : 'This code signs you in securely. It is valid only for this email and expires shortly.' : 'This code confirms your email address and completes account sign-up.'}</p>
           </div>
           <button class="button button-primary modern-auth-submit" type="submit">
-            <span>${isSigninOtp ? 'Verify code and sign in' : 'Verify email and continue'}</span>${icon('arrow', 16)}
+            <span>${isSigninOtp ? pendingSignin?.purpose === 'password-reset' ? 'Verify code and continue' : 'Verify code and sign in' : 'Verify email and continue'}</span>${icon('arrow', 16)}
           </button>
           <button class="button button-outline" type="button" data-action="${isSigninOtp ? 'resend-signin-otp' : 'resend-signup-otp'}">Send a new code</button>
           <button class="text-link" type="button" data-action="cancel-auth-otp">${isSigninOtp ? 'Back to sign in' : 'Back to sign up'}</button>
+        </form>
+        ` : passwordResetReady ? `
+        <form class="auth-form modern-auth-form" data-form="password-reset">
+          <div class="form-group">
+            <label for="newAuthPassword" class="form-label">New password</label>
+            <input id="newAuthPassword" type="password" name="password" class="form-input" autocomplete="new-password" minlength="12" maxlength="128" placeholder="At least 12 characters" required />
+          </div>
+          <div class="form-group">
+            <label for="confirmAuthPassword" class="form-label">Confirm new password</label>
+            <input id="confirmAuthPassword" type="password" name="confirmPassword" class="form-input" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Enter the new password again" required />
+            <p class="form-helper-text password-guidance">Use at least 12 characters with uppercase and lowercase letters, a number and a symbol. Example: <span>River!Drum7Leaf</span>. Do not reuse this sample.</p>
+          </div>
+          <button class="button button-primary modern-auth-submit" type="submit">
+            <span>Update password and sign in</span>${icon('arrow', 16)}
+          </button>
+          <button class="text-link" type="button" data-action="cancel-auth-otp">Cancel recovery</button>
         </form>
         ` : childSignupPaused ? `
         <div class="auth-safe-note modern-auth-safe-note auth-signup-paused" role="status">
@@ -4217,7 +4247,7 @@ import {
           <div class="form-group">
             <div class="form-label-row">
               <label for="authPassword" class="form-label">Password</label>
-              ${!signUp ? `<button class="forgot-link" type="button" data-action="forgot-password">Forgot password?</button>` : ''}
+              ${!signUp ? `<button class="forgot-link" type="button" data-action="request-password-reset">Forgot password?</button>` : ''}
             </div>
             <div class="input-with-icon">
               <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" ${signUp ? 'minlength="12" maxlength="128"' : ''} placeholder="${signUp ? 'At least 12 characters' : 'Enter your password'}" required />
@@ -4268,10 +4298,10 @@ import {
           </div>
           ` : ''}
 
-          ${!signUp && (isChild || isEducator) ? `
+          ${!signUp ? `
           <div class="form-group consent-form-group">
             <button class="button button-outline" type="button" data-action="request-signin-otp">Email me a one-time sign-in passcode</button>
-            <p class="form-helper-text">We’ll send a short-lived code to this account’s email. No shared role passcode is used.</p>
+            <p class="form-helper-text">Use a short-lived code sent to this account’s email if you can’t sign in with your password.</p>
           </div>
           ` : ''}
 
@@ -4286,7 +4316,7 @@ import {
               <input type="checkbox" name="rememberMe" value="yes" checked />
               <span>Remember this device</span>
             </label>
-            <span class="auth-security-badge">${icon('shield', 12)} Protected Demo</span>
+            <span class="auth-security-badge">${icon('shield', 12)} ${authConfigured ? 'Account protected' : 'Demo preview'}</span>
           </div>
           `}
 
@@ -5948,13 +5978,13 @@ import {
     }
   }
 
-  async function requestChildOrEducatorSigninOtp(button) {
+  async function requestAccountSigninOtp(button) {
     const emailInput = document.getElementById('authEmail');
     if (!emailInput?.reportValidity()) return;
     const email = emailInput.value.trim().toLowerCase();
     const role = state.authRole;
-    if (!['child', 'educator'].includes(role)) {
-      showToast('Email-code sign-in is available for child and educator accounts.', 'error');
+    if (!['child', 'educator', 'adult', 'parent'].includes(role)) {
+      showToast('Select a valid account type before requesting a sign-in code.', 'error');
       return;
     }
 
@@ -5963,13 +5993,47 @@ import {
     button.textContent = 'Sending sign-in code…';
     try {
       await requestSigninOtp(email);
-      pendingSignin = { email, role };
+      pendingSignin = { email, role, purpose: 'signin' };
       state.loginMode = 'signin';
       sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
+      sessionStorage.removeItem('idilewa-password-reset-verified');
+      passwordResetVerified = false;
       render();
       showToast('A one-time sign-in code has been sent to your email.', 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'A sign-in code could not be sent.', 'error');
+    } finally {
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = previousText;
+      }
+    }
+  }
+
+  async function requestPasswordResetCode(button) {
+    const emailInput = document.getElementById('authEmail');
+    if (!emailInput?.reportValidity()) return;
+    const email = emailInput.value.trim().toLowerCase();
+    const role = state.authRole;
+    if (!['child', 'educator', 'adult', 'parent'].includes(role)) {
+      showToast('Select a valid account type before recovering your password.', 'error');
+      return;
+    }
+
+    button.disabled = true;
+    const previousText = button.textContent;
+    button.textContent = 'Sending recovery code…';
+    try {
+      await requestSigninOtp(email);
+      pendingSignin = { email, role, purpose: 'password-reset' };
+      passwordResetVerified = false;
+      state.loginMode = 'signin';
+      sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
+      sessionStorage.removeItem('idilewa-password-reset-verified');
+      render();
+      showToast('If the account can receive email codes, a verification code is on its way.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'A password recovery code could not be sent.', 'error');
     } finally {
       if (button.isConnected) {
         button.disabled = false;
@@ -6620,7 +6684,8 @@ import {
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'verify-educator-invite': void verifyEducatorInvite(el); break;
-      case 'request-signin-otp': void requestChildOrEducatorSigninOtp(el); break;
+      case 'request-signin-otp': void requestAccountSigninOtp(el); break;
+      case 'request-password-reset': void requestPasswordResetCode(el); break;
       case 'educator-use-another-code':
         verifiedEducatorSignup = null;
         sessionStorage.removeItem('idilewa-educator-signup');
@@ -6638,7 +6703,7 @@ import {
         if (!pendingSignin?.email) break;
         el.disabled = true;
         void requestSigninOtp(pendingSignin.email)
-          .then(() => showToast('A new sign-in code has been sent.', 'success'))
+          .then(() => showToast(pendingSignin?.purpose === 'password-reset' ? 'A new recovery code has been sent.' : 'A new sign-in code has been sent.', 'success'))
           .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
           .finally(() => { if (el.isConnected) el.disabled = false; });
         break;
@@ -6646,8 +6711,10 @@ import {
         state.loginMode = pendingSignin ? 'signin' : 'signup';
         pendingSignupEmail = '';
         pendingSignin = null;
+        passwordResetVerified = false;
         sessionStorage.removeItem('idilewa-pending-signup-email');
         sessionStorage.removeItem('idilewa-pending-signin-otp');
+        sessionStorage.removeItem('idilewa-password-reset-verified');
         render();
         break;
       case 'guardian-use-another-email':
@@ -6679,7 +6746,11 @@ import {
         }
         break;
       }
-      case 'forgot-password': openModal('Password reset', 'Password reset will be available when secure account services are connected. Do not use a real password in this prototype.'); break;
+      case 'forgot-password': {
+        const resetButton = document.querySelector('[data-action="request-password-reset"]');
+        if (resetButton) void requestPasswordResetCode(resetButton);
+        break;
+      }
       case 'complete-profile':
         document.getElementById('modal-root').innerHTML = '';
         navigate('profile');
@@ -7005,6 +7076,30 @@ import {
     if (type === 'guardian-consent' || type === 'child-consent-check' || type === 'tutor-consent-check') {
       showToast('Local consent codes are disabled. Use the verified parent-email approval flow for child accounts.', 'error');
       return;
+    } else if (type === 'password-reset') {
+      const password = String(data.get('password') || '');
+      const confirmation = String(data.get('confirmPassword') || '');
+      if (password !== confirmation) {
+        showToast('The passwords do not match. Re-enter them and try again.', 'error');
+        return;
+      }
+      if (!isSignupPasswordValid(password)) {
+        showToast('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.', 'error');
+        return;
+      }
+      try {
+        await updateAccountPassword(password);
+        pendingSignin = null;
+        passwordResetVerified = false;
+        sessionStorage.removeItem('idilewa-pending-signin-otp');
+        sessionStorage.removeItem('idilewa-password-reset-verified');
+        await syncAccountLessonProgress();
+        navigate('index');
+        showToast('Your password has been updated and you are signed in.', 'success');
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Your password could not be updated. Please try again.', 'error');
+      }
+      return;
     } else if (type === 'signup-otp') {
       const token = String(data.get('token') || '').trim();
       try {
@@ -7032,11 +7127,19 @@ import {
       const token = String(data.get('token') || '').trim();
       const expectedRole = form.dataset.otpRole;
       try {
+        const purpose = pendingSignin?.purpose || 'signin';
         await verifySigninOtp({ email: pendingSignin?.email || '', token, expectedRole });
         state.authRole = expectedRole;
         if (expectedRole === 'child') {
           state.consent.childVerified = true;
           saveState();
+        }
+        if (purpose === 'password-reset') {
+          passwordResetVerified = true;
+          sessionStorage.setItem('idilewa-password-reset-verified', 'true');
+          render();
+          showToast('Email verified. Choose a new password to finish recovery.', 'success');
+          return;
         }
         pendingSignin = null;
         sessionStorage.removeItem('idilewa-pending-signin-otp');
@@ -7198,7 +7301,13 @@ import {
           await signInAccount({ email, password });
         }
       } catch (error) {
-        showToast(error instanceof Error ? error.message : 'Account authentication failed. Try again.', 'error');
+        const message = error instanceof Error ? error.message : 'Account authentication failed. Try again.';
+        showToast(
+          state.loginMode !== 'signup' && /invalid login credentials/i.test(message)
+            ? 'That email and password were not accepted. Check them, or use the email code or Forgot password option.'
+            : message,
+          'error'
+        );
         return;
       }
 
