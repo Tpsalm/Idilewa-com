@@ -53,6 +53,17 @@ import {
 (() => {
   'use strict';
 
+  const canonicalHost = 'www.idlewa.com';
+  const redirectHosts = new Set(['idlewa.com', 'idilewa-com.vercel.app', 'idilewa-com-tapee2.vercel.app']);
+  if (redirectHosts.has(window.location.hostname.toLowerCase())) {
+    const destination = new URL(window.location.href);
+    destination.protocol = 'https:';
+    destination.hostname = canonicalHost;
+    destination.port = '';
+    window.location.replace(destination.href);
+    return;
+  }
+
   const ROUTES = [
     'trainer',
     'voice_lessons',
