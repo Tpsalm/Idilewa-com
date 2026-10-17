@@ -139,8 +139,8 @@ All 36 HTML entries declared in `vite.config.ts` are supported:
 
 To ensure transparency and protect learner privacy:
 1. **Speech Recognition & Fluency:** Audio playback utilizes Web Speech API and Web Audio synthesizer tone generators. Voice evaluation is a prototype scoring demonstration and does not claim certified native speech AI. Authentic media requires fluent native speaker verification.
-2. **Authentication & Data Storage:** Much of the prototype's learning progress and contributions are stored in the current browser. Sign-in/sign-up uses Supabase Auth only when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured; account submission is otherwise disabled. Supabase Auth configuration alone does not make every learning record server-persistent.
-3. **Child Safeguarding & Consent:** The guardian consent flow is an interactive UX demonstration. Local browser codes do not constitute legal identity verification. Live tutoring requires production identity governance and background checks.
+2. **Authentication & Data Storage:** Sign-up, email-code verification, sign-in and sign-out use Supabase Auth when configured. Account metadata and learner-record APIs are available, but not every progress, code or voice interaction in the app is yet connected to remote storage; unconnected state remains browser-local. Remote account/database delivery has not been verified against the production project.
+3. **Child Safeguarding & Consent:** Child sign-up requires a guardian email approval request and one-time code through the Vercel API. The educator path requires a server-verified, single-use invitation. Both paths remain unavailable until their database migration and server email settings are configured. This workflow does not replace legal identity verification or educator background checks; live tutoring remains disabled.
 4. **Payments & Subscriptions:** Pricing cards are preview concepts only. No live financial transactions or payment gateways are configured.
 5. **Cultural Attribution:** Proverbs, Oríkì, and Ifá introductions are educational overviews and explicitly emphasize community permission, speaker context, and oral attribution.
 
@@ -185,6 +185,34 @@ JUDGE0_AUTH_TOKEN=your-private-runner-token
 `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are public client configuration; enforce access with Supabase Auth policies and database row-level security. `JUDGE0_URL` and `JUDGE0_AUTH_TOKEN` are server-side secrets and must never use the `VITE_` prefix or be placed in browser code. Keep Judge0 private and configure execution time and memory limits.
 
 Use `vercel dev` to exercise the Vercel API routes locally; plain `npm run dev` serves the Vite front end and does not provide `/api/code/*`. GitHub Pages can host the static front end, but not these API routes, so compiler languages and configured Supabase sign-in require the Vercel deployment. Treat GitHub Pages as a static preview unless its workflow is intentionally migrated.
+
+### Supabase account setup and operations
+
+The SQL files in this repository are not proof that a remote database has been provisioned. In the intended Supabase project, apply them in order from the SQL Editor:
+
+1. `supabase_schema.sql` (base tables and owner-only profile access).
+2. `supabase_guardian_consent.sql` (guardian approval and child account checks).
+3. `supabase/migrations/20261017000000_account_security_and_educator_invites.sql` (role protection and one-time educator invitations).
+
+Do not enable account registration until the SQL completes successfully. The migration is version-controlled and repeatable, but is not automatically applied by deployment. Confirm the target project before running it; never test account creation against production with an unowned test address.
+
+Configure the Supabase Auth email template to send the numeric `{{ .Token }}` code for sign-up, enable email confirmation, allow the production URL in Auth redirect settings, and set the minimum password length to 12 in the Supabase Auth password policy. The app enforces 12–128 characters at sign-up; existing sign-in passwords are not blocked by that client-side minimum. Actual inbox delivery depends on the Supabase SMTP/provider configuration and must be tested using a mailbox you control.
+
+Configure these server-only Vercel variables for guardian approvals and educator invites:
+
+```dotenv
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
+GUARDIAN_TOKEN_SECRET=use-a-random-secret-of-at-least-32-characters
+APP_BASE_URL=https://your-production-domain.example
+RESEND_API_KEY=your-email-provider-api-key
+RESEND_FROM_EMAIL=Idilewa <no-reply@your-verified-domain.example>
+```
+
+Never expose `SUPABASE_SERVICE_ROLE_KEY`, `GUARDIAN_TOKEN_SECRET` or the Resend key in a `VITE_` variable. Verify the sender domain and rate-limit policies before launch. With `GUARDIAN_TOKEN_SECRET` set to the same secret in your shell, run `node scripts/create-educator-invite.mjs`; provide the printed SQL to a trusted Supabase operator, then share the code with the intended educator once. The database consumes it atomically during account creation.
+
+Before serving real users, configure automated database backups/PITR for the selected Supabase plan, document retention and deletion policies, restrict production access, and test restoring a backup into a separate project. Schedule review of database logs, Auth/email delivery, API errors and rate limits. These operational controls are project/provider settings and are not established by the repository alone.
+
+Lesson completion and code attempts use the account-backed Supabase tables when a user is signed in; database failures are shown rather than silently treated as successful saves. The client also exposes remote voice-record methods, but the current voice score is simulated and is not persisted or a verified assessment. Guest records and significant learning UI state remain local, so cross-device continuity for every activity is not yet complete.
 
 ### Preview Production Build
 ```bash

@@ -7,6 +7,7 @@ import {
   getProductionOrigin,
   GuardianConsentError,
   hashGuardianValue,
+  normalizeEducatorInviteCode,
   normalizeEmail,
   readFormBody,
   readJsonBody,
@@ -23,6 +24,13 @@ test('guardian inputs are normalized, bounded, and escaped', () => {
     renderApprovalPage({ token: 'a'.repeat(40), learnerAlias: '<script>', tutorRequested: false }),
     /&lt;script&gt;/,
   );
+});
+
+test('educator invitations normalize and validate before lookup', () => {
+  assert.equal(normalizeEducatorInviteCode('  abcdef0123456789  '), 'ABCDEF0123456789');
+  assert.throws(() => normalizeEducatorInviteCode('short'), GuardianConsentError);
+  assert.throws(() => normalizeEducatorInviteCode('invite_code_with_underscore'), GuardianConsentError);
+  assert.throws(() => normalizeEducatorInviteCode('bad code value'), GuardianConsentError);
 });
 
 test('guardian tokens and codes use bounded cryptographically random formats', () => {

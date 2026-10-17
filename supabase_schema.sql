@@ -25,29 +25,54 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Turn on Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Profiles Policies
-CREATE POLICY "Public profiles are viewable by everyone" 
+-- Profiles are private by default; only the account owner can read their row.
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+CREATE POLICY "Users can view their own profile"
   ON public.profiles FOR SELECT 
-  USING (true);
+  USING (auth.uid() = id);
 
-CREATE POLICY "Users can insert their own profile" 
-  ON public.profiles FOR INSERT 
-  WITH CHECK (auth.uid() = id);
-
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" 
   ON public.profiles FOR UPDATE 
-  USING (auth.uid() = id);
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+CREATE OR REPLACE FUNCTION public.protect_profile_role()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public, auth, pg_temp
+AS $$
+BEGIN
+  IF auth.uid() = OLD.id
+    AND (NEW.role IS DISTINCT FROM OLD.role OR NEW.email IS DISTINCT FROM OLD.email) THEN
+    RAISE EXCEPTION 'Account role and email cannot be changed through profile updates.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS protect_profile_role_before_update ON public.profiles;
+CREATE TRIGGER protect_profile_role_before_update
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_profile_role();
 
 -- Trigger to automatically create a profile entry when a user signs up via Supabase Auth
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_role TEXT := COALESCE(new.raw_user_meta_data->>'role', 'adult');
 BEGIN
+  IF v_role NOT IN ('adult', 'parent') THEN
+    RAISE EXCEPTION 'Child and educator accounts require their approval database migrations.';
+  END IF;
+
   INSERT INTO public.profiles (id, email, name, role, avatar_url, points, streak)
   VALUES (
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    COALESCE(new.raw_user_meta_data->>'role', 'child'),
+    v_role,
     COALESCE(new.raw_user_meta_data->>'avatar_url', 'https://api.dicebear.com/7.x/bottts/svg?seed=' || new.id),
     50,
     1

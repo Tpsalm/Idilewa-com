@@ -22,6 +22,17 @@ export function normalizeEmail(value) {
   return email;
 }
 
+export function normalizeEducatorInviteCode(value) {
+  if (typeof value !== 'string') {
+    throw new GuardianConsentError(400, 'Enter a valid educator invitation code.');
+  }
+  const code = value.trim().toUpperCase();
+  if (code.length < 8 || code.length > 64 || !/^[A-Z0-9-]+$/.test(code)) {
+    throw new GuardianConsentError(400, 'Enter a valid educator invitation code.');
+  }
+  return code;
+}
+
 export function createGuardianAdmin() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

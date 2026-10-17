@@ -1350,6 +1350,8 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 
 /* Role Selector Grid */
 .auth-role-selector { margin-bottom: 16px; }
+.auth-role-selector[hidden] { display: none; }
+.modern-auth-tabs[hidden] { display: none; }
 .auth-role-label { display: block; font-size: 11px; font-weight: 750; color: #495c4f; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 .auth-role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .auth-role-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; padding: 11px 5px; border-radius: 14px; border: 1.5px solid #e5ece4; background: #ffffff; cursor: pointer; transition: all 0.2s ease; }
@@ -1381,12 +1383,15 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 .input-with-icon { position: relative; display: flex; align-items: center; }
 .input-icon { position: absolute; left: 14px; display: flex; color: #7b8e80; pointer-events: none; transition: color 0.2s ease; }
 .form-input { width: 100%; min-height: 46px; padding: 10px 42px 10px 42px; border-radius: 12px; border: 1.5px solid #dce4dc; background: #ffffff; color: var(--ink); font-size: 13px; font-weight: 500; transition: all 0.2s ease; }
+.input-with-icon .form-input { padding-inline: 46px 44px; }
 .form-input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3.5px rgba(21, 118, 74, 0.12); background: #fbfdfb; }
 .input-with-icon:focus-within .input-icon { color: var(--green); }
 .password-toggle-btn { position: absolute; right: 12px; background: none; border: 0; color: #7b8e80; cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: color 0.2s ease; }
 .password-toggle-btn:hover { color: var(--green-dark); }
 .input-badge-verified { position: absolute; right: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: #e4f7e9; color: var(--green-dark); font-size: 10px; font-weight: 800; }
 .form-helper-text { margin: 3px 0 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
+.password-guidance { font-size: 13px; }
+.password-guidance span { color: var(--green-dark); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 .form-options-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .modern-consent-check { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #55675a; cursor: pointer; }
 .modern-consent-check input { width: 16px; height: 16px; accent-color: var(--green); }

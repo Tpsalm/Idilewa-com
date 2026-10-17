@@ -193,7 +193,7 @@ DECLARE
   v_role TEXT := COALESCE(new.raw_user_meta_data->>'role', 'child');
   v_request_id UUID;
 BEGIN
-  IF v_role NOT IN ('child', 'adult', 'parent', 'educator', 'institution') THEN
+  IF v_role NOT IN ('child', 'adult', 'parent', 'educator') THEN
     RAISE EXCEPTION 'Unsupported account role.';
   END IF;
 
@@ -221,6 +221,8 @@ BEGIN
     UPDATE public.guardian_access_requests
     SET status = 'used', claimed_by = new.id
     WHERE id = v_request_id;
+  ELSIF v_role = 'educator' THEN
+    RAISE EXCEPTION 'Educator sign-up requires the educator invitation migration.';
   END IF;
 
   INSERT INTO public.profiles (

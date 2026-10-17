@@ -37,7 +37,12 @@ import {
   updateUserProfile,
   signOut as signOutAccount,
   signIn as signInAccount,
-  signUp as signUpAccount
+  signUp as signUpAccount,
+  verifySignupOtp,
+  resendSignupOtp,
+  saveProgress,
+  getUserProgress,
+  saveCodeSubmission
 } from './src/supabaseClient.js';
 
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
@@ -466,11 +471,29 @@ import {
     } catch (_) { return { ...defaults, available: { ...defaults.available }, trainer: { ...defaults.trainer } }; }
   }
   const state = readState();
+  let pendingSignupEmail = (() => {
+    try {
+      const saved = sessionStorage.getItem('idilewa-pending-signup-email') || '';
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(saved) ? saved.toLowerCase() : '';
+    } catch (_) {
+      return '';
+    }
+  })();
   let verifiedGuardianSignup = (() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem('idilewa-guardian-signup') || 'null');
       return saved && /^[0-9a-f-]{36}$/i.test(saved.approvalId || '') && typeof saved.email === 'string'
         ? { approvalId: saved.approvalId, email: saved.email.toLowerCase() }
+        : null;
+    } catch (_) {
+      return null;
+    }
+  })();
+  let verifiedEducatorSignup = (() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('idilewa-educator-signup') || 'null');
+      return saved && /^[0-9a-f-]{36}$/i.test(saved.inviteId || '') && typeof saved.email === 'string'
+        ? { inviteId: saved.inviteId, email: saved.email.toLowerCase() }
         : null;
     } catch (_) {
       return null;
@@ -4089,12 +4112,12 @@ import {
 
         <div class="auth-header-block">
           <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
-          <h1 class="auth-title">${signUp ? 'Create your account' : 'Welcome back'}</h1>
-          <p class="auth-subtitle">${signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
+          <h1 class="auth-title">${pendingSignupEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
+          <p class="auth-subtitle">${pendingSignupEmail ? `Enter the verification code sent to ${esc(pendingSignupEmail)}.` : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
-        <div class="auth-toggle modern-auth-tabs" role="tablist">
+        <div class="auth-toggle modern-auth-tabs" role="tablist" ${pendingSignupEmail ? 'hidden' : ''}>
           <button type="button" class="auth-tab-btn ${!signUp ? 'active' : ''}" data-action="login-mode" data-mode="signin" role="tab" aria-selected="${!signUp}">
             ${icon('user', 15)} Sign In
           </button>
@@ -4104,7 +4127,7 @@ import {
         </div>
 
         <!-- Persona Role Selector Cards -->
-        <div class="auth-role-selector">
+        <div class="auth-role-selector" ${pendingSignupEmail ? 'hidden' : ''}>
           <label class="auth-role-label">Choose Learning Persona:</label>
           <div class="auth-role-grid">
             <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child">
@@ -4131,6 +4154,23 @@ import {
         </div>
 
         <!-- Modern Auth Form -->
+        ${pendingSignupEmail ? `
+        <form class="auth-form modern-auth-form" data-form="signup-otp">
+          <div class="form-group">
+            <label for="signupOtp" class="form-label">Email verification code</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('shield', 17)}</span>
+              <input id="signupOtp" type="text" name="token" class="form-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,8}" minlength="6" maxlength="8" placeholder="6–8 digit code" required />
+            </div>
+            <p class="form-helper-text">This code confirms your email address and completes account sign-up.</p>
+          </div>
+          <button class="button button-primary modern-auth-submit" type="submit">
+            <span>Verify email and continue</span>${icon('arrow', 16)}
+          </button>
+          <button class="button button-outline" type="button" data-action="resend-signup-otp">Send a new code</button>
+          <button class="text-link" type="button" data-action="cancel-signup-otp">Back to sign up</button>
+        </form>
+        ` : `
         <form class="auth-form modern-auth-form" data-form="login">
           <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
 
@@ -4148,7 +4188,7 @@ import {
             <label for="authEmail" class="form-label">Email address</label>
             <div class="input-with-icon">
               <span class="input-icon">${icon('user', 17)}</span>
-              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" value="${isChild && signUp && verifiedGuardianSignup ? esc(verifiedGuardianSignup.email) : ''}" ${isChild && signUp && verifiedGuardianSignup ? 'readonly' : ''} required />
+              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" value="${isChild && signUp && verifiedGuardianSignup ? esc(verifiedGuardianSignup.email) : isEducator && signUp && verifiedEducatorSignup ? esc(verifiedEducatorSignup.email) : ''}" ${isChild && signUp && verifiedGuardianSignup || isEducator && signUp && verifiedEducatorSignup ? 'readonly' : ''} required />
             </div>
           </div>
 
@@ -4187,6 +4227,23 @@ import {
           </div>
           ` : ''}
 
+          ${isEducator && signUp ? verifiedEducatorSignup ? `
+          <div class="form-group consent-form-group guardian-approved-state">
+            <p class="form-helper-text">${icon('check', 14)} One-time educator invitation verified. Finish creating the account using this email.</p>
+            <button class="text-link" type="button" data-action="educator-use-another-code">Use a different invitation code</button>
+          </div>
+          ` : `
+          <div class="form-group consent-form-group">
+            <label for="educatorInviteCode" class="form-label">One-time educator invitation code</label>
+            <div class="input-with-icon">
+              <span class="input-icon">${icon('school', 17)}</span>
+              <input id="educatorInviteCode" type="text" name="educatorInviteCode" class="form-input" autocomplete="one-time-code" minlength="8" maxlength="64" placeholder="Enter your invitation code" />
+            </div>
+            <button class="button button-outline" type="button" data-action="verify-educator-invite">Verify invitation</button>
+            <p class="form-helper-text">Educator accounts require an invitation. Sign-in uses your email and password—no shared passcode.</p>
+          </div>
+          ` : ''}
+
           <div class="form-group">
             <div class="form-label-row">
               <label for="authPassword" class="form-label">Password</label>
@@ -4194,11 +4251,12 @@ import {
             </div>
             <div class="input-with-icon">
               <span class="input-icon">${icon('lock', 17)}</span>
-              <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" minlength="8" placeholder="••••••••••••" required />
+              <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" ${signUp ? 'minlength="12" maxlength="128"' : ''} placeholder="${signUp ? 'At least 12 characters' : '••••••••••••'}" required />
               <button type="button" class="password-toggle-btn" data-action="toggle-password-visibility" aria-label="Toggle password visibility">
                 ${icon('eye', 16)}
               </button>
             </div>
+            ${signUp ? '<p class="form-helper-text password-guidance">Use 12 or more characters. A memorable passphrase is easier to remember, for example: <span>River!Drum7Leaf</span>. Do not reuse this sample.</p>' : ''}
           </div>
 
           ${signUp ? `
@@ -4216,11 +4274,12 @@ import {
           </div>
           `}
 
-          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || !isChild || verifiedGuardianSignup) ? '' : 'disabled'}>
+          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || (!isChild || verifiedGuardianSignup) && (!isEducator || verifiedEducatorSignup)) ? '' : 'disabled'}>
             <span>${signUp ? (isChild ? 'Create Child Learning Space' : 'Create Learning Space') : 'Sign In to Learning Space'}</span>
             ${icon('arrow', 16)}
           </button>
         </form>
+        `}
 
         <!-- Trust & Privacy Sandbox Note -->
         <div class="auth-safe-note modern-auth-safe-note">
@@ -5733,6 +5792,37 @@ import {
     window.setTimeout(() => { toast.classList.add('toast-out'); window.setTimeout(() => toast.remove(), 240); }, 3200);
   }
 
+  async function syncAccountLessonProgress() {
+    const user = getCurrentUser();
+    if (!user?.id) return;
+    try {
+      const records = await getUserProgress(user.id);
+      const remoteLessons = records
+        .filter((record) => record.lessonType === 'lesson')
+        .map((record) => record.lessonId);
+      state.completed = [...new Set([...state.completed, ...remoteLessons])];
+      saveState();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Saved lesson progress could not be loaded.', 'error');
+    }
+  }
+
+  async function persistCompletedLesson(lessonId) {
+    const user = getCurrentUser();
+    if (!user?.id) return;
+    try {
+      await saveProgress({
+        userId: user.id,
+        lessonType: 'lesson',
+        lessonId,
+        meta: { language: state.currentLang, level: state.level },
+      });
+      showToast('Lesson progress saved to your account.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Lesson progress could not be saved to your account.', 'error');
+    }
+  }
+
   async function submitGuardianRequest(button) {
     const childEmailInput = document.getElementById('authEmail');
     const parentEmailInput = document.getElementById('guardianEmail');
@@ -5796,6 +5886,44 @@ import {
       showToast('Parent approval verified. Finish creating the child account now.', 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'The parent-approved code could not be verified.', 'error');
+    } finally {
+      if (button.isConnected) {
+        button.disabled = false;
+        button.textContent = previousText;
+      }
+    }
+  }
+
+  async function verifyEducatorInvite(button) {
+    const emailInput = document.getElementById('authEmail');
+    const codeInput = document.getElementById('educatorInviteCode');
+    if (!emailInput?.reportValidity()) return;
+    const email = emailInput.value.trim().toLowerCase();
+    const code = codeInput?.value.trim() || '';
+    if (code.length < 8 || code.length > 64) {
+      showToast('Enter the educator invitation code you received.', 'error');
+      codeInput?.focus();
+      return;
+    }
+    button.disabled = true;
+    const previousText = button.textContent;
+    button.textContent = 'Checking invitation…';
+    try {
+      const response = await fetch('/api/educator/verify-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.inviteId || !/^[0-9a-f-]{36}$/i.test(result.inviteId)) {
+        throw new Error(result?.error || 'That invitation is invalid, expired, or already used.');
+      }
+      verifiedEducatorSignup = { inviteId: result.inviteId, email };
+      sessionStorage.setItem('idilewa-educator-signup', JSON.stringify(verifiedEducatorSignup));
+      render();
+      showToast('Educator invitation verified. Finish account creation now.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'The educator invitation could not be verified.', 'error');
     } finally {
       if (button.isConnected) {
         button.disabled = false;
@@ -6376,7 +6504,8 @@ import {
       case 'complete-lesson': {
         const key = el.dataset.key || `${state.currentLang}-greetings-intro`;
         if (!state.completed.includes(key)) { state.completed.push(key); state.points += 25; state.streak = Math.max(1, state.streak + 1); }
-        saveState(); showToast('Lesson complete—your progress is saved here.'); navigate('course', { lang: lang || state.currentLang, level: el.dataset.level || state.level }); break;
+        void persistCompletedLesson(key);
+        saveState(); showToast(getCurrentUser() ? 'Lesson complete. Syncing progress to your account.' : 'Lesson complete. Progress is saved on this device.'); navigate('course', { lang: lang || state.currentLang, level: el.dataset.level || state.level }); break;
       }
       case 'play-audio': playSample(el); break;
       case 'hero-play-greeting': {
@@ -6444,6 +6573,25 @@ import {
       case 'login-mode': state.loginMode = el.dataset.mode === 'signup' ? 'signup' : 'signin'; render(); break;
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
+      case 'verify-educator-invite': void verifyEducatorInvite(el); break;
+      case 'educator-use-another-code':
+        verifiedEducatorSignup = null;
+        sessionStorage.removeItem('idilewa-educator-signup');
+        render();
+        break;
+      case 'resend-signup-otp':
+        if (!pendingSignupEmail) break;
+        el.disabled = true;
+        void resendSignupOtp(pendingSignupEmail)
+          .then(() => showToast('A new verification code has been sent.', 'success'))
+          .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
+          .finally(() => { if (el.isConnected) el.disabled = false; });
+        break;
+      case 'cancel-signup-otp':
+        pendingSignupEmail = '';
+        sessionStorage.removeItem('idilewa-pending-signup-email');
+        render();
+        break;
       case 'guardian-use-another-email':
         verifiedGuardianSignup = null;
         sessionStorage.removeItem('idilewa-guardian-signup');
@@ -6454,6 +6602,10 @@ import {
         if (state.authRole !== 'child') {
           verifiedGuardianSignup = null;
           sessionStorage.removeItem('idilewa-guardian-signup');
+        }
+        if (state.authRole !== 'educator') {
+          verifiedEducatorSignup = null;
+          sessionStorage.removeItem('idilewa-educator-signup');
         }
         saveState();
         render();
@@ -6795,6 +6947,29 @@ import {
     if (type === 'guardian-consent' || type === 'child-consent-check' || type === 'tutor-consent-check') {
       showToast('Local consent codes are disabled. Use the verified parent-email approval flow for child accounts.', 'error');
       return;
+    } else if (type === 'signup-otp') {
+      const token = String(data.get('token') || '').trim();
+      try {
+        await verifySignupOtp({ email: pendingSignupEmail, token });
+        if (state.authRole === 'child') {
+          state.consent.childVerified = true;
+          saveState();
+        }
+        await syncAccountLessonProgress();
+        pendingSignupEmail = '';
+        sessionStorage.removeItem('idilewa-pending-signup-email');
+        verifiedGuardianSignup = null;
+        verifiedEducatorSignup = null;
+        sessionStorage.removeItem('idilewa-guardian-signup');
+        sessionStorage.removeItem('idilewa-educator-signup');
+        navigate('index');
+        showToast('Your email is verified and your Idilewa account is ready.', 'success');
+        const profile = getProfileDetails();
+        if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Email verification failed. Check the code and try again.', 'error');
+      }
+      return;
     } else if (type === 'coding-run') {
       const code = String(data.get('code') || '').slice(0, 1200);
       const tech = CODE_PATHS.find((item) => item.id === form.dataset.tech) || CODE_PATHS[0];
@@ -6820,6 +6995,20 @@ import {
       } else {
         state.coding.result = `↻ ${copy.retry} Hint: include “${token}” in your example.`;
         saveState(); render();
+      }
+      const account = getCurrentUser();
+      if (account?.id) {
+        try {
+          await saveCodeSubmission({
+            userId: account.id,
+            title: `${tech.label || tech.name || tech.id} · ${missionId}`,
+            code,
+            output: state.coding.result,
+            language: tech.id,
+          });
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : 'Your code attempt could not be saved to your account.', 'error');
+        }
       }
     } else if (type === 'coding-subscribe') {
       const email = String(data.get('email') || '').trim();
@@ -6890,6 +7079,11 @@ import {
         showToast('A verified guardian email code for this exact learner email is required before child sign-up.', 'error');
         return;
       }
+      if (state.loginMode === 'signup' && accountType === 'educator'
+        && (!verifiedEducatorSignup || verifiedEducatorSignup.email !== email.trim().toLowerCase())) {
+        showToast('Verify a one-time educator invitation code before creating a teacher account.', 'error');
+        return;
+      }
       if (!isSupabaseConfigured || !supabase) {
         showToast('Account authentication is not configured on this deployment. Continue as a guest.', 'error');
         return;
@@ -6898,6 +7092,11 @@ import {
       const password = String(data.get('password') || '');
       try {
         if (state.loginMode === 'signup') {
+          if (password.length < 12) {
+            showToast('Choose a password with at least 12 characters.', 'error');
+            document.getElementById('authPassword')?.focus();
+            return;
+          }
           const name = String(data.get('name') || '').trim();
           const { session } = await signUpAccount({
             email,
@@ -6905,11 +7104,13 @@ import {
             name,
             role: accountType,
             guardianAccessRequestId: accountType === 'child' ? verifiedGuardianSignup?.approvalId : undefined,
+            educatorInviteId: accountType === 'educator' ? verifiedEducatorSignup?.inviteId : undefined,
           });
           if (!session) {
-            state.loginMode = 'signin';
+            pendingSignupEmail = email.toLowerCase();
+            sessionStorage.setItem('idilewa-pending-signup-email', pendingSignupEmail);
             render();
-            showToast('Account created. Check your email to confirm it, then sign in.', 'success');
+            showToast('Account created. Enter the verification code sent to your email.', 'success');
             return;
           }
         } else {
@@ -6924,9 +7125,12 @@ import {
         state.consent.childVerified = true;
         saveState();
       }
+      await syncAccountLessonProgress();
       showToast(state.loginMode === 'signup' ? 'Your Idilewa account is ready.' : 'Signed in successfully.', 'success');
       verifiedGuardianSignup = null;
+      verifiedEducatorSignup = null;
       sessionStorage.removeItem('idilewa-guardian-signup');
+      sessionStorage.removeItem('idilewa-educator-signup');
       navigate('index');
       const profile = getProfileDetails();
       if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
