@@ -606,7 +606,7 @@ import {
       ['volume', 'Listen and speak', 'Hear phrases, practice pronunciation and explore tonal patterns.'],
       ['code', 'Create with code', 'Build computational thinking through interactive STEAM lessons.']
     ];
-    return `<section class="home-benefits-section" aria-labelledby="home-benefits-title"><div class="container"><div class="home-section-heading"><span class="section-kicker">A learning space for every kind of curious</span><h2 id="home-benefits-title">Why Idilewa?</h2><p>Language, culture and technology belong in the same learning journey.</p></div><div class="home-benefits-grid">${benefits.map(([glyph,title,copy]) => `<article class="home-benefit"><span class="home-benefit-icon">${icon(glyph, 24)}</span><h3>${title}</h3><p>${copy}</p></article>`).join('')}</div></div></section>`;
+    return `<section class="home-benefits-section home-ribbon-section" aria-labelledby="home-benefits-title"><div class="container"><div class="home-section-heading"><span class="section-kicker">A learning space for every kind of curious</span><h2 id="home-benefits-title">Why Idilewa?</h2><p>Language, culture and technology belong in the same learning journey.</p></div><div class="home-benefits-grid">${benefits.map(([glyph,title,copy]) => `<article class="home-benefit"><span class="home-benefit-icon">${icon(glyph, 24)}</span><h3>${title}</h3><p>${copy}</p></article>`).join('')}</div></div></section>`;
   }
 
   function renderHomeAppPreview() {
@@ -624,7 +624,7 @@ import {
     ];
     const renderPhoneSlide = (item, index, duplicate = false) => `<article class="android-preview-slide ${duplicate ? 'is-clone' : ''}" ${duplicate ? 'aria-hidden="true"' : ''}><div class="android-slide-visual android-slide-${item.type}"><span>${item.glyph}</span><small>0${index + 1}</small></div><small class="android-slide-label">${item.label}</small><strong>${item.title}</strong><span class="android-slide-copy">${item.copy}</span>${item.text ? `<button type="button" aria-label="Play ${item.title}" ${duplicate ? 'tabindex="-1"' : ''} data-action="play-audio" data-text="${esc(item.text)}">${icon('play', 12)} ${item.action}</button>` : `<span class="android-slide-action">${item.action} ${icon('arrow', 12)}</span>`}</article>`;
     const renderPreviewCard = (item, index, duplicate = false) => `<article class="home-app-slide" ${duplicate ? 'aria-hidden="true"' : ''}><img src="./assets/${item.image}" alt="${duplicate ? '' : esc(item.title + ' preview')}" loading="lazy" /><div class="home-app-slide-copy"><span>${item.label}</span><h4>${item.title}</h4><p>${item.copy}</p>${routeLink(item.route, `${item.action} ${icon('arrow', 14)}`, 'text-link', duplicate ? 'tabindex="-1"' : '')}</div><span class="home-app-slide-number">0${index + 1}</span></article>`;
-    return `<section class="home-app-section" aria-labelledby="home-app-title"><div class="container home-app-layout">
+    return `<section class="home-app-section home-ribbon-section" aria-labelledby="home-app-title"><div class="container home-app-layout">
       <div class="home-app-device-column"><div class="home-app-heading"><span class="section-kicker">A little Idilewa in your pocket</span><h2 id="home-app-title">Learning that moves with you.</h2><p>Explore languages, stories and creative practice from one welcoming home.</p></div>
         <div class="android-device" aria-label="Android phone preview of the Idilewa learning app"><div class="android-device-side"></div><div class="android-device-screen"><div class="android-status"><span>9:41</span><span>● ● ▰</span></div><div class="android-appbar"><span class="android-app-mark">È</span><strong>idílẹ́wà</strong><span>${icon('user', 15)}</span></div><div class="android-welcome"><small>Ẹ káàárọ̀, learner</small><strong>What would you like to explore?</strong></div><div class="android-preview-viewport" id="android-preview-viewport" aria-label="Automatically swiping Idilewa learning previews"><div class="android-preview-track">${phonePreviews.map((item, index) => renderPhoneSlide(item, index)).join('')}${renderPhoneSlide(phonePreviews[0], 0, true)}</div></div><div class="android-bottom-nav"><span>${icon('home', 14)}Home</span><span>${icon('book', 14)}Learn</span><span>${icon('user', 14)}Profile</span></div></div></div>
       </div>
@@ -651,7 +651,7 @@ import {
       { title: 'Wisdom We Carry', label: 'Culture · Short read', bg: 'cover-pink', shape: '“', route: 'oral' }
     ];
     return `
-      <section class="hero-section">
+      <section class="hero-section home-ribbon-section">
         <div class="container hero-grid">
           <div class="hero-copy">
             <div class="eyebrow"><span class="eyebrow-dot"></span>African roots <span class="eyebrow-separator">·</span> brighter futures</div>
@@ -748,7 +748,7 @@ import {
       ${renderHomeAppPreview()}
 
       <!-- 5 Pathways Learning Cards (Five Pillars of Idilewa) -->
-      <section class="container section visual-journey-3d-section" id="visual-journey">
+      <section class="container section visual-journey-3d-section home-ribbon-section" id="visual-journey">
         <div class="section-heading text-center">
           <div>
             <span class="section-kicker">Scroll-Driven Learning Journey · Living Knowledge</span>
@@ -859,12 +859,12 @@ import {
         </div>
       </section>
 
-      <section class="container section section-start">
+      <section class="container section section-start home-ribbon-section">
         <div class="section-heading"><div><span class="section-kicker">A world of ways to learn</span><h2>Learn a little. Carry a lot.</h2><p>Choose a path that feels like you. There is always room to explore.</p></div><a class="text-link desktop-only" href="#/base" data-route="base">Explore the platform ${icon('arrow', 15)}</a></div>
         <div class="feature-grid">${featureCards.map((card) => `<a class="feature-card tone-${card.tone}" href="#/${card.route}" data-route="${card.route}"><span class="feature-card-portrait"><img src="./assets/${card.image}" alt="${card.imageAlt ? esc(card.imageAlt) : ''}" ${card.imageAlt ? '' : 'aria-hidden="true"'} loading="lazy" /></span><div class="feature-card-top"><span class="feature-icon">${icon(card.icon, 23)}</span><span class="feature-tag">${card.tag}</span></div><h3>${card.title}</h3><p>${card.desc}</p><span class="card-arrow">${icon('arrow', 17)}</span></a>`).join('')}</div>
       </section>
 
-      <section class="journey-section">
+      <section class="journey-section home-ribbon-section">
         <div class="container journey-inner">
           <div class="journey-intro"><span class="section-kicker">A clear path, at your pace</span><h2>Four small steps.<br /><span>One big connection.</span></h2><p>Every learning path makes the next step easy to see—without rushing the joy out of discovery.</p>${routeLink('course', `See how learning works ${icon('arrow', 16)}`, 'text-link')}</div>
           <div class="journey-steps">
@@ -876,13 +876,13 @@ import {
             ].map(([num, title, desc, ico, route]) => `<a href="#/${route}" data-route="${route}" class="journey-step"><span class="journey-number">${num}</span><span class="journey-icon">${icon(ico, 20)}</span><strong>${title}</strong><small>${desc}</small><span class="journey-link">${icon('arrow', 15)}</span></a>`).join('')}
           </div>\n    </section>
 
-      <section class="container section language-section">
+      <section class="container section language-section home-ribbon-section">
         <div class="section-heading"><div><span class="section-kicker">Start with a language</span><h2>Which one feels like home?</h2><p>Four learning paths are ready to explore, with more voices on the way.</p></div>${routeLink('languages', 'All languages ' + icon('arrow', 15), 'text-link')}</div>
         <div class="language-grid home-language-grid">${LANGUAGES.map((l) => `<button type="button" class="language-card lang-${l.tint}" data-action="${state.available[l.id] ? 'select-language' : 'notify-language'}" data-lang="${l.id}"><span class="language-glyph">${l.glyph}</span><span class="language-info"><strong>${l.name}</strong><small>${l.region}</small></span><span class="language-go">${icon('arrow', 16)}</span></button>`).join('')}</div>
         <div class="coming-soon-line"><span class="coming-soon-dot"></span>Coming soon: ${SOON_LANGUAGES.map((l) => l.name).join(' · ')} ${routeLink('languages', 'Get curious ' + icon('arrow', 13), 'text-link text-link-small')}</div>
       </section>
 
-      <section class="container section home-trainer-feature-section">
+      <section class="container section home-trainer-feature-section home-ribbon-section">
         <div class="home-trainer-card">
           <div class="home-trainer-copy">
             <div class="home-trainer-badge">
@@ -946,17 +946,17 @@ import {
         </div>
       </section>
 
-      <section class="container section explore-section">
+      <section class="container section explore-section home-ribbon-section">
         <div class="section-heading"><div><span class="section-kicker">Picked for curious minds</span><h2>Explore books & little discoveries</h2><p>Read, listen and find a new doorway into language and culture.</p></div>${routeLink('ere', 'Visit the library ' + icon('arrow', 15), 'text-link')}</div>
         <div class="book-grid">${books.map((book, i) => `<a href="#/${book.route}" data-route="${book.route}" class="book-card"><div class="book-cover ${book.bg}"><span class="book-cover-mark">${book.shape}</span><span class="book-sun"></span><span class="book-hill book-hill-one"></span><span class="book-hill book-hill-two"></span><span class="book-cover-index">0${i + 1}</span></div><strong>${book.title}</strong><small>${book.label}</small></a>`).join('')}</div>
       </section>
 
-      <section class="container story-feature section">
+      <section class="container story-feature section home-ribbon-section">
         <div class="story-feature-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with two children" loading="lazy" /><span class="image-caption">Stories are a way of remembering together.</span></div>
         <div class="story-feature-copy"><span class="section-kicker">Read · listen · remember</span><h2>Every story carries<br /><span>a little piece of us.</span></h2><p>Meet the voices behind a story. Listen in your language, notice a new phrase and bring the conversation home.</p><div class="story-feature-points"><span>${icon('headphones', 17)} Audio-first stories</span><span>${icon('people', 17)} Made for sharing</span></div>${routeLink('ere', `Explore stories ${icon('arrow', 16)}`, 'button button-primary')}</div>
       </section>
 
-      <section class="container section audience-section">
+      <section class="container section audience-section home-ribbon-section">
         <div class="section-heading"><div><span class="section-kicker">One home, many journeys</span><h2>Made for the way you learn.</h2><p>Welcoming for children, useful for adults and stronger when families learn together.</p></div></div>
         <div class="audience-grid">
           <a class="audience-card audience-kids" href="#/kids" data-route="kids"><span class="audience-icon">${icon('sparkles', 21)}</span><span class="audience-kicker">For young learners</span><strong>Curiosity comes first.</strong><small>Playful lessons, stories and gentle challenges.</small>${icon('arrow', 16)}</a>
@@ -965,7 +965,7 @@ import {
         </div>
       </section>
 
-      <section class="container home-cta-section"><div class="home-cta"><div><span class="section-kicker">Your next word is waiting</span><h2>Let’s keep the good things growing.</h2><p>Choose a language and take your first small step today.</p></div>${routeLink('languages', `Find your language ${icon('arrow', 17)}`, 'button button-white')}</div></section>`;
+      <section class="container home-cta-section home-ribbon-section"><div class="home-cta"><div><span class="section-kicker">Your next word is waiting</span><h2>Let’s keep the good things growing.</h2><p>Choose a language and take your first small step today.</p></div>${routeLink('languages', `Find your language ${icon('arrow', 17)}`, 'button button-white')}</div></section>`;
   }
 
   function renderLanguageCard(l) {

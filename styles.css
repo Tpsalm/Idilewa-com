@@ -7481,6 +7481,10 @@ body[data-page="login"] .main-content { padding: 0; }
 .home-benefit-icon { height: 43px; display: grid; place-items: center; color: #e7b547; }
 .home-benefit h3 { margin: 9px 0 5px; color: #fff; font-size: 13px; }
 .home-benefit p { max-width: 210px; margin: 0 auto; color: #d7e6db; font-size: 10px; line-height: 1.6; }
+.home-ribbon-section { position: relative; }
+.home-ribbon-section::before, .home-ribbon-section::after { content: ""; position: absolute; z-index: 2; left: 0; pointer-events: none; }
+.home-ribbon-section::before { top: 0; width: clamp(130px, 23%, 285px); height: 10px; background: linear-gradient(90deg, var(--green-dark) 0 78%, #e7b547 78% 81%, var(--green-bright) 81%); clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+.home-ribbon-section::after { top: 10px; left: 12px; width: clamp(95px, 17%, 205px); height: 4px; background: linear-gradient(90deg, rgba(12,87,55,.28), rgba(21,118,74,.1)); clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
 .home-app-section { overflow: hidden; padding: 58px 0; background: #eff2ec; }
 .home-app-layout { display: grid; grid-template-columns: minmax(230px, .7fr) minmax(0, 1.3fr); align-items: center; gap: clamp(32px, 7vw, 94px); }
 .home-app-device-column { display: grid; justify-items: center; gap: 23px; }
@@ -7600,10 +7604,10 @@ body[data-page="login"] .main-content { padding: 0; }
   .profile-editor-submit .button { width: 100%; }
 }
 
-.android-device { transform-style: preserve-3d; animation: android-device-orbit 12s ease-in-out infinite; will-change: transform; }
+.android-device { transform-style: preserve-3d; animation: android-device-orbit 6s ease-in-out infinite; will-change: transform; }
 @keyframes android-device-orbit {
-  0%, 100% { transform: perspective(950px) rotateY(-8deg) rotateX(2deg) rotateZ(-2deg) translateY(0); }
-  50% { transform: perspective(950px) rotateY(8deg) rotateX(-1deg) rotateZ(1deg) translateY(-6px); }
+  0%, 100% { transform: perspective(850px) rotateY(-17deg) rotateX(4deg) rotateZ(-3deg) translateY(0); }
+  50% { transform: perspective(850px) rotateY(17deg) rotateX(-4deg) rotateZ(2deg) translateY(-8px); }
 }
 .android-preview-viewport { width: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-inline: contain; }
 .android-preview-viewport::-webkit-scrollbar { display: none; }
@@ -7632,7 +7636,7 @@ body[data-page="login"] .main-content { padding: 0; }
 .code-robot-message::after { content: ""; position: absolute; bottom: -7px; left: 18px; width: 13px; height: 13px; border-right: 1px solid rgba(21,118,74,.22); border-bottom: 1px solid rgba(21,118,74,.22); background: #fff; transform: rotate(45deg); }
 .code-robot-xp { bottom: 15%; left: 15%; min-height: 40px; padding: 0 14px; color: #543e07; background: #f6d166; font-size: 13px; transform: rotate(-6deg); }
 @media (max-width: 560px) {
-  .android-device { animation-duration: 15s; }
+  .android-device { animation-duration: 6s; }
   .android-preview-slide { gap: 5px; padding: 6px 1px 8px; }
   .android-slide-visual { height: 68px; }
   .android-preview-slide > strong { font-size: 13px; }
