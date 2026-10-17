@@ -158,11 +158,41 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user) throw new Error('The authentication service did not return an account.');
 
-  const userRecord = data.session
-    ? await loadAccountProfile(client, data.user)
-    : mapAuthUser(data.user, { ...data.user.user_metadata, name: userName, role });
+  let welcomeEmailError = '';
+  try {
+    const response = await fetch('/api/auth/welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ userId: data.user.id }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      welcomeEmailError = typeof result?.error === 'string'
+        ? result.error
+        : 'Your account is ready, but the welcome email could not be sent.';
+    }
+  } catch (error) {
+    welcomeEmailError = error instanceof Error
+      ? `Your account is ready, but the welcome email could not be sent: ${error.message}`
+      : 'Your account is ready, but the welcome email could not be sent.';
+  }
+
+  let userRecord;
+  try {
+    userRecord = data.session
+      ? await loadAccountProfile(client, data.user)
+      : mapAuthUser(data.user, { ...data.user.user_metadata, name: userName, role });
+  } catch (profileError) {
+    if (data.session) {
+      const { error: signOutError } = await client.auth.signOut();
+      if (signOutError) {
+        throw new Error('The account profile could not be loaded and its session could not be cleared.', { cause: signOutError });
+      }
+    }
+    throw profileError;
+  }
   if (data.session) setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
-  return { user: userRecord, session: data.session, error: null };
+  return { user: userRecord, session: data.session, error: null, welcomeEmailError };
 }
 
 export async function verifySignupOtp({ email, token }) {
@@ -241,7 +271,7 @@ export async function resendSignupOtp(email) {
   if (error) throw new Error(error.message, { cause: error });
 }
 
-export async function signIn({ email, password }) {
+export async function signIn({ email, password, expectedRole }) {
   const client = requireSupabase();
   const normalizedEmail = email.toLowerCase().trim();
   const { data, error } = await client.auth.signInWithPassword({
@@ -254,8 +284,17 @@ export async function signIn({ email, password }) {
   let userRecord;
   try {
     userRecord = await loadAccountProfile(client, data.user);
+    if (expectedRole && userRecord.role !== expectedRole) {
+      throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
+    }
   } catch (profileError) {
-    throw new Error('Signed in, but your account profile could not be loaded.', { cause: profileError });
+    const { error: signOutError } = await client.auth.signOut();
+    if (signOutError) {
+      throw new Error('Your account check failed and the sign-in session could not be cleared.', { cause: signOutError });
+    }
+    throw profileError instanceof Error && profileError.message.startsWith('This email belongs to a ')
+      ? profileError
+      : new Error('Signed in, but your account profile could not be loaded. Confirm the Supabase migrations are applied.', { cause: profileError });
   }
   setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
   return { user: userRecord, session: data.session, error: null };

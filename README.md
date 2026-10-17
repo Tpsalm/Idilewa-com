@@ -200,7 +200,7 @@ Configure the Supabase Auth email template to send the numeric `{{ .Token }}` co
 
 New child registration stays paused until guardian approval email delivery has a sender on a domain verified in Resend. Existing child accounts can still sign in; adult and invited educator registration remain available. Do not set `RESEND_FROM_EMAIL` to a public mailbox address such as Gmail.
 
-Configure these server-only Vercel variables for guardian approvals and educator invites:
+Configure these server-only Vercel variables for welcome emails, guardian approvals and educator invites:
 
 ```dotenv
 SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
@@ -210,7 +210,9 @@ RESEND_API_KEY=your-email-provider-api-key
 RESEND_FROM_EMAIL=Idilewa <no-reply@your-verified-domain.example>
 ```
 
-Never expose `SUPABASE_SERVICE_ROLE_KEY`, `GUARDIAN_TOKEN_SECRET` or the Resend key in a `VITE_` variable. Verify the sender domain and rate-limit policies before launch. With `GUARDIAN_TOKEN_SECRET` set to the same secret in your shell, run `node scripts/create-educator-invite.mjs`; provide the printed SQL to a trusted Supabase operator, then share the code with the intended educator once. The database consumes it atomically during account creation.
+After Supabase creates an account, the app requests a welcome email from `/api/auth/welcome`. The server verifies the new account through Supabase and sends the message through Resend to the email address on that account; it does not depend on the user remaining signed in. Supabase still sends the separate sign-up verification code, so configure its Auth email template to use `{{ .Token }}` as described above. A failed welcome-email delivery is reported without discarding the newly created account.
+
+Never expose `SUPABASE_SERVICE_ROLE_KEY`, `GUARDIAN_TOKEN_SECRET` or the Resend key in a `VITE_` variable. Verify the sender domain and rate-limit policies before launch. Set `APP_BASE_URL` to the canonical HTTPS site origin. With `GUARDIAN_TOKEN_SECRET` set to the same secret in your shell, run `node scripts/create-educator-invite.mjs`; provide the printed SQL to a trusted Supabase operator, then share the code with the intended educator once. The database consumes it atomically during account creation.
 
 Before serving real users, configure automated database backups/PITR for the selected Supabase plan, document retention and deletion policies, restrict production access, and test restoring a backup into a separate project. Schedule review of database logs, Auth/email delivery, API errors and rate limits. These operational controls are project/provider settings and are not established by the repository alone.
 

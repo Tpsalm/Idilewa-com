@@ -7274,6 +7274,7 @@ import {
       }
 
       const password = String(data.get('password') || '');
+      let welcomeEmailError = '';
       try {
         if (state.loginMode === 'signup') {
           if (!isSignupPasswordValid(password)) {
@@ -7282,7 +7283,7 @@ import {
             return;
           }
           const name = String(data.get('name') || '').trim();
-          const { session } = await signUpAccount({
+          const { session, welcomeEmailError: deliveryError } = await signUpAccount({
             email,
             password,
             name,
@@ -7290,15 +7291,21 @@ import {
             guardianAccessRequestId: accountType === 'child' ? verifiedGuardianSignup?.approvalId : undefined,
             educatorInviteId: accountType === 'educator' ? verifiedEducatorSignup?.inviteId : undefined,
           });
+          welcomeEmailError = deliveryError;
           if (!session) {
             pendingSignupEmail = email.toLowerCase();
             sessionStorage.setItem('idilewa-pending-signup-email', pendingSignupEmail);
             render();
-            showToast('Account created. Enter the verification code sent to your email.', 'success');
+            showToast(
+              welcomeEmailError
+                ? `Account created. Enter the verification code sent to your email. ${welcomeEmailError}`
+                : 'Account created. Enter the verification code sent to your email.',
+              welcomeEmailError ? 'error' : 'success'
+            );
             return;
           }
         } else {
-          await signInAccount({ email, password });
+          await signInAccount({ email, password, expectedRole: accountType });
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Account authentication failed. Try again.';
@@ -7316,7 +7323,12 @@ import {
         saveState();
       }
       await syncAccountLessonProgress();
-      showToast(state.loginMode === 'signup' ? 'Your Idilewa account is ready.' : 'Signed in successfully.', 'success');
+      showToast(
+        welcomeEmailError
+          ? `Your Idilewa account is ready. ${welcomeEmailError}`
+          : state.loginMode === 'signup' ? 'Your Idilewa account is ready.' : 'Signed in successfully.',
+        welcomeEmailError ? 'error' : 'success'
+      );
       verifiedGuardianSignup = null;
       verifiedEducatorSignup = null;
       sessionStorage.removeItem('idilewa-guardian-signup');
