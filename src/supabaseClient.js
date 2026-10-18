@@ -132,6 +132,9 @@ async function loadAccountProfile(client, authUser) {
 
 export async function signUp({ email, password, name, role = 'child', guardianAccessRequestId, educatorInviteId }) {
   const client = requireSupabase();
+  if (!['child', 'adult', 'parent', 'educator'].includes(role)) {
+    throw new Error('Choose a supported account type before creating an account.');
+  }
   if (!isSignupPasswordValid(password)) {
     throw new Error('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.');
   }
@@ -142,7 +145,8 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
     throw new Error('A verified one-time educator invitation code is required before creating a teacher account.');
   }
   const normalizedEmail = email.toLowerCase().trim();
-  const userName = name || normalizedEmail.split('@')[0];
+  const userName = (typeof name === 'string' ? name.trim().slice(0, 80) : '')
+    || normalizedEmail.split('@')[0];
   const { data, error } = await client.auth.signUp({
     email: normalizedEmail,
     password,
