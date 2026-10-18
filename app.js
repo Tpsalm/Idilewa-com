@@ -6696,7 +6696,16 @@ import {
       }
       case 'billing-period': state.billing = el.dataset.period; saveState(); render(); break;
       case 'choose-plan': openModal(`${el.dataset.plan || 'Family'} updates`, 'Your interest has been noted in this browser preview. The Idilewa team will confirm final plans and pricing before launch.'); break;
-      case 'login-mode': state.loginMode = el.dataset.mode === 'signup' ? 'signup' : 'signin'; render(); break;
+      case 'login-mode': {
+        state.loginMode = el.dataset.mode === 'signup' ? 'signup' : 'signin';
+        const [path, query = ''] = window.location.hash.replace(/^#\/?/, '').split('?');
+        const params = new URLSearchParams(query);
+        params.set('mode', state.loginMode);
+        const nextHash = `#/${path || 'login'}?${params.toString()}`;
+        if (window.location.hash === nextHash) render();
+        else window.location.hash = nextHash;
+        break;
+      }
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'verify-educator-invite': void verifyEducatorInvite(el); break;
