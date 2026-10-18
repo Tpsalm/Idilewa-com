@@ -224,7 +224,7 @@ The HTML shells use `#fbfcf8` as their theme-color metadata. This is close to, b
 | `src/supabaseClient.js` | Supabase Auth integration and data helpers. Auth requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; learning progress continues to use local app state unless separately wired to remote persistence. |
 | `api/code/` | Vercel serverless routes for installed-runtime discovery and bounded code execution through a private Judge0 CE service. |
 | `supabase_schema.sql` | Proposed PostgreSQL tables, triggers, indexes, and row-level security policies for profiles, progress, code submissions, voice submissions, and community proverbs. |
-| `src/translationEngine.js` | Separate phrase dictionary, word lexicons, browser speech synthesis, approximate phonetics, and tone oscillator. |
+| `src/translationEngine.js` | Curated exact phrase entries with explicit plain-letter Yoruba forms where available, browser speech synthesis, and tone oscillator; unsupported phrases are not assembled from word substitutions. |
 | `src/vowelsConsonantsData.js` | Yoruba vowel, nasal vowel, consonant, and tone reference data. |
 | `src/yorubaCodeEngine.js` | Separate Yoruba code keyword map, lesson data, transpiler, and interpreter. |
 | `src/threeScene.js` | Separate Three.js scene/visualizer helpers. |

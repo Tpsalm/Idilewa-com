@@ -1,6 +1,15 @@
 // Multi-Language Translation & Speech Synthesis Engine (English -> Yorùbá, Igbo, Hausa)
 
 export const DICTIONARY = {
+  'god': { yo: 'Ọlọ́run', ig: 'Chukwu', ha: 'Allah', sw: 'Mungu', pcm: 'God', transliterationYo: 'Olorun' },
+  'lord': { yo: 'Olúwa', ig: 'Onye nwe', ha: 'Ubangiji', sw: 'Bwana', pcm: 'Lord', transliterationYo: 'Oluwa' },
+  'master': { yo: 'Ọ̀gá', ig: 'Nna ukwu', ha: 'Maigida', sw: 'Bwana', pcm: 'Oga', transliterationYo: 'Oga' },
+  'savior': { yo: 'Olùgbàlà', ig: 'Onye nzọpụta', ha: 'Mai ceto', sw: 'Mwokozi', pcm: 'Saviour', transliterationYo: 'Olugbala' },
+  'saviour': { yo: 'Olùgbàlà', ig: 'Onye nzọpụta', ha: 'Mai ceto', sw: 'Mwokozi', pcm: 'Saviour', transliterationYo: 'Olugbala' },
+  'god is good to africans': {
+    yo: 'Ọlọ́run dára sí àwọn ará Áfríkà.',
+    transliterationYo: 'Olorun dara si awon ara Afrika.',
+  },
   // Greetings & Courtesies
   'hello': { yo: 'Báwo ni?', ig: 'Kedu?', ha: 'Sannu', sw: 'Habari', pcm: 'How you dey?', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
   'hi': { yo: 'Báwo ni', ig: 'Ndewo', ha: 'Sannu', sw: 'Hujambo', pcm: 'How far?', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
@@ -84,123 +93,39 @@ export const DICTIONARY = {
   'strength': { yo: 'Agbára', ig: 'Ike', ha: 'Karfi', phoneticYo: 'ah-GBAH-rah', toneYo: 'Re-High-Re' }
 };
 
-// Word-level translation lexicon for assembling sentence translations
-const WORD_LEXICON = {
-  yo: {
-    'i': 'Mo', 'you': 'O / Ẹ', 'he': 'Ó', 'she': 'Ó', 'we': 'A', 'they': 'Wọ́n',
-    'am': 'wà', 'is': 'jẹ́', 'are': 'jẹ́', 'have': 'ní', 'will': 'yíò', 'can': 'lè',
-    'go': 'lọ', 'come': 'wá', 'eat': 'jẹ', 'drink': 'mu', 'sleep': 'sùn', 'play': 'ṣiré',
-    'learn': 'kọ́', 'teach': 'kọ́ni', 'see': 'rí', 'hear': 'gbọ́', 'know': 'mọ̀',
-    'good': 'dára', 'bad': 'bàjẹ́', 'big': 'tóbi', 'small': 'kéré', 'beautiful': 'lẹ́wà',
-    'happy': 'dùnnú', 'today': 'lónìí', 'tomorrow': 'ọ̀la', 'yesterday': 'àná',
-    'in': 'ninu', 'at': 'ní', 'to': 'sí', 'from': 'láti', 'with': 'pẹ̀lú', 'and': 'àti',
-    'the': '', 'a': 'kan', 'this': 'yìí', 'that': 'yẹn', 'my': 'mi', 'your': 'rẹ', 'our': 'wa'
-  },
-  ig: {
-    'i': 'M', 'you': 'Gị', 'he': 'Ọ', 'she': 'Ọ', 'we': 'Anyị', 'they': 'Ha',
-    'am': 'bụ', 'is': 'bụ', 'are': 'bụ', 'have': 'nwere', 'will': 'ga-', 'can': 'nwere ike',
-    'go': 'gaa', 'come': 'bịa', 'eat': 'rie', 'drink': 'ñụọ', 'sleep': 'hie ụra',
-    'learn': 'mụọ', 'teach': 'kụzie', 'see': 'hụ', 'hear': 'nụ', 'know': 'mara',
-    'good': 'ọma', 'bad': 'ọjọọ', 'big': 'ukwu', 'small': 'obere', 'beautiful': 'mma',
-    'today': 'taa', 'tomorrow': 'echi', 'yesterday': 'nyaahụ', 'with': 'na', 'and': 'na'
-  },
-  ha: {
-    'i': 'Ina', 'you': 'Kana / Kina', 'he': 'Yana', 'she': 'Tana', 'we': 'Muna', 'they': 'Suna',
-    'am': 'ne', 'is': 'ne', 'are': 'ne', 'have': 'da', 'will': 'zai', 'can': 'iya',
-    'go': 'tafi', 'come': 'zo', 'eat': 'ci', 'drink': 'sha', 'sleep': 'kwana',
-    'learn': 'koya', 'teach': 'koyar', 'see': 'gani', 'hear': 'ji', 'know': 'sani',
-    'good': 'mai kyau', 'bad': 'marar kyau', 'big': 'babba', 'small': 'karami', 'beautiful': 'kyau',
-    'today': 'yau', 'tomorrow': 'gobe', 'yesterday': 'jiya', 'with': 'tare da', 'and': 'da'
-  },
-  sw: {
-    'i': 'mimi', 'you': 'wewe', 'he': 'yeye', 'she': 'yeye', 'we': 'sisi', 'they': 'wao',
-    'am': 'ni', 'is': 'ni', 'are': 'ni', 'have': 'kuwa na', 'go': 'kwenda', 'come': 'kuja',
-    'eat': 'kula', 'drink': 'kunywa', 'sleep': 'lala', 'play': 'cheza', 'learn': 'jifunza',
-    'teach': 'fundisha', 'see': 'ona', 'hear': 'sikia', 'know': 'jua', 'good': 'nzuri',
-    'bad': 'mbaya', 'big': 'kubwa', 'small': 'ndogo', 'happy': 'furaha', 'today': 'leo',
-    'tomorrow': 'kesho', 'yesterday': 'jana', 'with': 'na', 'and': 'na', 'the': '', 'my': 'yangu'
-  },
-  pcm: {
-    'i': 'I', 'you': 'you', 'he': 'e', 'she': 'she', 'we': 'we', 'they': 'dem',
-    'am': 'dey', 'is': 'dey', 'are': 'dey', 'have': 'get', 'go': 'go', 'come': 'come',
-    'eat': 'chop', 'drink': 'drink', 'sleep': 'sleep', 'play': 'play', 'learn': 'learn',
-    'teach': 'teach', 'see': 'see', 'hear': 'hear', 'know': 'know', 'good': 'good',
-    'bad': 'bad', 'big': 'big', 'small': 'small', 'happy': 'happy', 'today': 'today',
-    'tomorrow': 'tomorrow', 'yesterday': 'yesterday', 'with': 'with', 'and': 'and',
-    'the': '', 'my': 'my'
-  }
-};
-
 export function translateText(englishText, targetLang = 'yo') {
-  if (!englishText || !englishText.trim()) {
+  if (typeof englishText !== 'string' || !englishText.trim()) {
     return {
       translated: '',
       phonetic: '',
       tone: '',
       targetLang,
+      exact: false,
     };
   }
 
-  const clean = englishText.trim().toLowerCase().replace(/[.?!,;:]+$/, '');
-
-  // 1. Direct dictionary exact match
-  if (DICTIONARY[clean] && DICTIONARY[clean][targetLang]) {
+  const clean = englishText.trim().toLowerCase().replace(/[.?!,;:]+$/, '').replace(/\s+/g, ' ');
+  const entry = DICTIONARY[clean];
+  if (!entry || !entry[targetLang]) {
     return {
-      translated: DICTIONARY[clean][targetLang],
-      phonetic: DICTIONARY[clean].phoneticYo || '',
-      tone: DICTIONARY[clean].toneYo || '',
+      translated: '',
+      phonetic: '',
+      tone: '',
+      transliteration: '',
       targetLang,
+      exact: false,
+      notFound: true,
     };
   }
 
-  // 2. Phrase contains match
-  for (const [key, val] of Object.entries(DICTIONARY)) {
-    if (clean === key || clean.startsWith(key + ' ') || clean.endsWith(' ' + key)) {
-      if (val[targetLang]) {
-        return {
-          translated: val[targetLang],
-          phonetic: val.phoneticYo || '',
-          tone: val.toneYo || '',
-          targetLang,
-        };
-      }
-    }
-  }
-
-  // 3. Multi-word decomposition
-  const words = clean.split(/\s+/);
-  const targetLex = WORD_LEXICON[targetLang];
-  if (!targetLex) {
-    return { translated: englishText, phonetic: '', tone: '', targetLang, unsupported: true };
-  }
-  const translatedWords = words.map((w) => {
-    const stripped = w.replace(/[^a-z0-9]/g, '');
-    if (DICTIONARY[stripped] && DICTIONARY[stripped][targetLang]) {
-      return DICTIONARY[stripped][targetLang];
-    }
-    if (targetLex[stripped]) {
-      return targetLex[stripped];
-    }
-    return w;
-  });
-
-  const assembled = translatedWords.join(' ');
   return {
-    translated: assembled,
-    phonetic: targetLang === 'yo' ? generateApproxPhonetic(assembled) : '',
-    tone: targetLang === 'yo' ? 'Àmì Ohùn Yorùbá' : '',
+    translated: entry[targetLang],
+    phonetic: targetLang === 'yo' ? entry.phoneticYo || '' : '',
+    tone: targetLang === 'yo' ? entry.toneYo || '' : '',
+    transliteration: targetLang === 'yo' ? entry.transliterationYo || '' : '',
     targetLang,
+    exact: true,
   };
-}
-
-function generateApproxPhonetic(yorubaText) {
-  return yorubaText
-    .replace(/ẹ/g, 'eh')
-    .replace(/ọ/g, 'aw')
-    .replace(/ṣ/g, 'sh')
-    .replace(/gb/g, 'kp')
-    .replace(/([àèìòù])/g, '$1(low)')
-    .replace(/([áéíóú])/g, '$1(high)');
 }
 
 // Speak translated text using Web Speech API with language phonetic rules

@@ -3059,8 +3059,9 @@ import {
         <button type="button" class="button button-outline" data-action="start-voice-transcription">${icon('mic', 15)} Dictate</button>
       </div>
       <p id="voice-translation-result" class="voice-translation-result" aria-live="polite"></p>
+      <small id="voice-translation-transliteration" aria-live="polite"></small>
       <small id="voice-transcription-status" class="voice-transcription-status">Speech recognition availability depends on your browser.</small>
-      <small>Offline phrasebook; longer or unfamiliar sentences may be approximate.</small>
+      <small>Curated phrasebook matches only. Unlisted sentences are not auto-translated, to avoid presenting incorrect grammar as exact.</small>
     </section>`;
   }
 
@@ -3442,7 +3443,7 @@ import {
                     '<button type="button" class="button button-small button-outline" data-action="translate-ide-output">Translate</button>' +
                     '<button type="button" class="button button-small button-outline" data-action="speak-ide-output">Say result</button>' +
                     '<p id="ide-output-translation" class="ide-translation-result" aria-live="polite"></p>' +
-                    '<small>Offline phrasebook; longer or unfamiliar sentences may be approximate.</small>' +
+                    '<small>Curated phrasebook matches only; unsupported sentences are not auto-translated.</small>' +
                   '</div>' +
                 '</div>' +
 
@@ -4311,13 +4312,6 @@ import {
             </div>
             <button class="button button-outline" type="button" data-action="verify-educator-invite">Verify invitation</button>
             <p class="form-helper-text">Educator accounts require a verified invitation before registration.</p>
-          </div>
-          ` : ''}
-
-          ${!signUp ? `
-          <div class="form-group consent-form-group">
-            <button class="button button-outline" type="button" data-action="request-signin-otp">Email me a one-time sign-in passcode</button>
-            <p class="form-helper-text">Use a short-lived code sent to this account’s email if you can’t sign in with your password.</p>
           </div>
           ` : ''}
 
@@ -5994,38 +5988,6 @@ import {
     }
   }
 
-  async function requestAccountSigninOtp(button) {
-    const emailInput = document.getElementById('authEmail');
-    if (!emailInput?.reportValidity()) return;
-    const email = emailInput.value.trim().toLowerCase();
-    const role = state.authRole;
-    if (!['child', 'educator', 'adult', 'parent'].includes(role)) {
-      showToast('Select a valid account type before requesting a sign-in code.', 'error');
-      return;
-    }
-
-    button.disabled = true;
-    const previousText = button.textContent;
-    button.textContent = 'Sending sign-in code…';
-    try {
-      await requestSigninOtp(email);
-      pendingSignin = { email, role, purpose: 'signin' };
-      state.loginMode = 'signin';
-      sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
-      sessionStorage.removeItem('idilewa-password-reset-verified');
-      passwordResetVerified = false;
-      render();
-      showToast('A one-time sign-in code has been sent to your email.', 'success');
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'A sign-in code could not be sent.', 'error');
-    } finally {
-      if (button.isConnected) {
-        button.disabled = false;
-        button.textContent = previousText;
-      }
-    }
-  }
-
   async function requestPasswordResetCode(button) {
     const emailInput = document.getElementById('authEmail');
     if (!emailInput?.reportValidity()) return;
@@ -6380,7 +6342,9 @@ import {
         const result = translateText(source, lang);
         const output = document.getElementById('ide-output-translation');
         if (output) {
-          output.textContent = result.translated || 'Add console output before translating.';
+          output.textContent = source.trim()
+            ? result.notFound ? 'No verified phrasebook match for this text.' : result.translated
+            : 'Add console output before translating.';
           output.dataset.translation = result.translated || '';
           output.dataset.language = lang;
         }
@@ -6397,10 +6361,20 @@ import {
         const lang = document.getElementById('voice-translation-language')?.value || 'yo';
         const result = translateText(source, lang);
         const output = document.getElementById('voice-translation-result');
+        const transliteration = document.getElementById('voice-translation-transliteration');
         if (output) {
-          output.textContent = result.translated || 'Add a phrase before translating.';
+          output.textContent = !source.trim()
+            ? 'Add a phrase before translating.'
+            : result.notFound
+              ? 'No verified phrasebook match for this phrase yet. Try a listed phrase or ask a fluent speaker.'
+              : result.translated;
           output.dataset.translation = result.translated || '';
           output.dataset.language = lang;
+        }
+        if (transliteration) {
+          transliteration.textContent = result.transliteration
+            ? `Plain-letter spelling: ${result.transliteration}`
+            : '';
         }
         break;
       }
@@ -6709,7 +6683,6 @@ import {
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'verify-educator-invite': void verifyEducatorInvite(el); break;
-      case 'request-signin-otp': void requestAccountSigninOtp(el); break;
       case 'request-password-reset': void requestPasswordResetCode(el); break;
       case 'educator-use-another-code':
         verifiedEducatorSignup = null;
