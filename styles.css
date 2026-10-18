@@ -7509,12 +7509,35 @@ body[data-page="login"] .main-content { padding: 0; }
   .voice-foundation-grid { grid-template-columns: 1fr; }
   .voice-foundation-block > p { min-height: 0; }
 }
+
+@media (max-width: 900px) {
+  body[data-page="login"] #main .modern-auth-panel .modern-auth-tabs .auth-tab-btn {
+    min-height: 44px;
+  }
+  body[data-page="login"] #main .modern-auth-panel .auth-role-card {
+    min-height: 82px;
+  }
+  body[data-page="login"] #main .modern-auth-panel .modern-auth-form .form-input {
+    min-height: 48px;
+  }
+  body[data-page="login"] #main .modern-auth-panel .modern-auth-form > .button {
+    min-height: 46px;
+  }
+}
+
 @media (max-width: 560px) {
-  .modern-auth-panel { min-height: 100svh; padding: 24px 18px 32px; }
+  .modern-auth-panel {
+    min-height: 100svh;
+    padding: max(22px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  }
+  .modern-auth-panel .auth-brand { margin-bottom: 20px; }
+  .modern-auth-panel .auth-header-block { margin-bottom: 16px; }
   .auth-role-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .auth-role-card { min-height: 76px; }
+  .auth-role-card { min-height: 82px; }
   .auth-laptop-screen-glow { top: 58%; left: 29%; width: 56%; height: 15%; }
   .auth-laptop-pointer { top: 67%; left: 45%; width: 8px; height: 8px; }
+  .modern-auth-panel .modern-auth-form .form-helper-text { font-size: 12px; line-height: 1.5; }
+  .modern-auth-panel .modern-auth-safe-note { font-size: 12px; line-height: 1.5; }
   .voice-foundations { padding: 16px; }
   .voice-translation-controls { align-items: stretch; }
   .ide-translation-tools { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
