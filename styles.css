@@ -6484,6 +6484,14 @@ main, #main, .main-content, .page-container {
   height: 440px;
 }
 
+.hero-3d-stage-container,
+.hero-photo-wrap.family-view-reference {
+  aspect-ratio: 4 / 3;
+  min-height: 0;
+  height: auto;
+  flex: 0 0 auto;
+}
+
 .hero-3d-canvas-wrap {
   position: absolute;
   inset: 0;
@@ -6551,7 +6559,6 @@ main, #main, .main-content, .page-container {
 }
 
 @media (max-width: 768px) {
-  .hero-3d-stage-container,
   .hero-3d-artifact-stage {
     height: 350px;
     min-height: 320px;
@@ -6559,7 +6566,6 @@ main, #main, .main-content, .page-container {
 }
 
 @media (max-width: 480px) {
-  .hero-3d-stage-container,
   .hero-3d-artifact-stage {
     height: 300px;
     min-height: 280px;
