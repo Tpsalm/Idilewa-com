@@ -157,6 +157,9 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   });
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user) throw new Error('The authentication service did not return an account.');
+  if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new Error('Could not create an account with this email. If you already registered, sign in or use Forgot password.');
+  }
 
   let welcomeEmailError = '';
   try {
