@@ -67,8 +67,18 @@ export default async function handler(req, res) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   const { data, error } = await admin.auth.admin.getUserById(userId);
-  if (error || !data?.user) {
-    console.error('[auth/welcome] Could not verify the new account with Supabase.');
+  if (error) {
+    if (error.status === 404) {
+      return sendJson(res, 410, { error: 'This welcome email request has expired.' });
+    }
+    console.error('[auth/welcome] Could not verify the new account with Supabase.', {
+      status: error.status,
+      code: error.code,
+    });
+    return sendJson(res, 503, { error: 'Welcome email delivery is temporarily unavailable.' });
+  }
+  if (!data?.user) {
+    console.error('[auth/welcome] Supabase returned no account for the requested user ID.');
     return sendJson(res, 503, { error: 'Welcome email delivery is temporarily unavailable.' });
   }
 

@@ -31,6 +31,59 @@ test('welcome endpoint rejects unsupported methods and malformed account ids', a
   assert.equal(bodyResponse.statusCode, 400);
 });
 
+test('welcome endpoint distinguishes an unknown account from admin-key failure', async () => {
+  const envNames = [
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'APP_BASE_URL',
+    'RESEND_API_KEY',
+    'RESEND_FROM_EMAIL',
+  ];
+  const previousEnv = Object.fromEntries(envNames.map((name) => [name, process.env[name]]));
+  const originalFetch = globalThis.fetch;
+  const originalConsoleError = console.error;
+  process.env.SUPABASE_URL = 'https://test-project.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+  process.env.APP_BASE_URL = 'https://www.idilewa.com';
+  process.env.RESEND_API_KEY = 'test-resend-key';
+  process.env.RESEND_FROM_EMAIL = 'Idilewa <no-reply@idilewa.com>';
+  console.error = () => {};
+
+  try {
+    globalThis.fetch = async () => new Response(
+      JSON.stringify({ code: 'user_not_found', message: 'User not found' }),
+      { status: 404 }
+    );
+    const missingResponse = createResponse();
+    await welcomeHandler({
+      method: 'POST',
+      headers: {},
+      body: { userId: '550e8400-e29b-41d4-a716-446655440000' },
+    }, missingResponse);
+    assert.equal(missingResponse.statusCode, 410);
+
+    globalThis.fetch = async () => new Response(
+      JSON.stringify({ code: 'bad_jwt', message: 'Invalid JWT' }),
+      { status: 401 }
+    );
+    const rejectedKeyResponse = createResponse();
+    await welcomeHandler({
+      method: 'POST',
+      headers: {},
+      body: { userId: '550e8400-e29b-41d4-a716-446655440000' },
+    }, rejectedKeyResponse);
+    assert.equal(rejectedKeyResponse.statusCode, 503);
+    assert.equal(rejectedKeyResponse.body.error, 'Welcome email delivery is temporarily unavailable.');
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalConsoleError;
+    for (const name of envNames) {
+      if (previousEnv[name] === undefined) delete process.env[name];
+      else process.env[name] = previousEnv[name];
+    }
+  }
+});
+
 test('welcome email includes a clear sign-in action and matching plain text', () => {
   const email = createWelcomeEmail({
     name: 'Ayo',
