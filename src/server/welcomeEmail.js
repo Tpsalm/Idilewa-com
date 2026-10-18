@@ -12,9 +12,46 @@ export function createWelcomeEmail({ name, loginUrl }) {
   const displayName = String(name).replace(/\s+/g, ' ').trim().slice(0, 80);
   const safeName = escapeHtml(displayName);
   const safeLoginUrl = escapeHtml(loginUrl);
+  const learningPaths = [
+    {
+      number: '01',
+      title: 'Learn a language',
+      description: 'Build everyday vocabulary in Yorùbá, Igbo, Hausa and Kiswahili with guided learning paths.',
+      color: '#eaf6ec',
+    },
+    {
+      number: '02',
+      title: 'Listen, speak and explore',
+      description: 'Try voice lessons, hear tones and greetings, and grow your confidence one practice at a time.',
+      color: '#e7f5fb',
+    },
+    {
+      number: '03',
+      title: 'Discover stories and culture',
+      description: 'Read and listen to African stories, proverbs and cultural learning made to be shared.',
+      color: '#fff0e8',
+    },
+    {
+      number: '04',
+      title: 'Create with code',
+      description: 'Explore playful coding and K–8 STEAM activities, with pathways for families and educators.',
+      color: '#fff5d9',
+    },
+  ];
+  const learningPathRows = learningPaths.map((path) => `
+              <tr><td style="padding:0 0 10px">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${path.color};border-radius:12px">
+                  <tr><td width="52" valign="top" style="padding:16px 0 16px 16px;font-size:13px;font-weight:700;letter-spacing:1px;color:#28734d">${path.number}</td>
+                    <td style="padding:15px 16px 15px 4px">
+                      <div style="font-size:15px;font-weight:700;line-height:1.4;color:#20372b">${path.title}</div>
+                      <div style="padding-top:5px;font-size:13px;line-height:1.6;color:#526358">${path.description}</div>
+                    </td>
+                  </tr>
+                </table>
+              </td></tr>`).join('');
   return {
     subject: 'Welcome to Idilewa — keep your language close',
-    text: `Ẹ káàbọ̀, ${displayName}!\n\nWelcome to Idilewa. Your learning space is ready for you to explore Yoruba, African stories, culture and coding at your own pace.\n\nSign in whenever you are ready: ${loginUrl}\n\nIf you did not create this account, you can safely ignore this email.\n\nWith warmth,\nThe Idilewa team`,
+    text: `Ẹ káàbọ̀, ${displayName}!\n\nWelcome to Idilewa, a learning space for African languages, culture and technology. Your learning space is ready whenever you are.\n\nFOUR WAYS TO BEGIN\n\n01 · Learn a language\nBuild everyday vocabulary in Yorùbá, Igbo, Hausa and Kiswahili with guided learning paths.\n\n02 · Listen, speak and explore\nTry voice lessons, hear tones and greetings, and grow your confidence one practice at a time.\n\n03 · Discover stories and culture\nRead and listen to African stories, proverbs and cultural learning made to be shared.\n\n04 · Create with code\nExplore playful coding and K–8 STEAM activities, with pathways for families and educators.\n\nYour journey is yours to shape. Start with one activity, then return whenever you are ready to keep learning.\n\nSign in to open your learning space: ${loginUrl}\n\nIf you did not create this account, you can safely ignore this email. Your password is never included in email.\n\nWith warmth,\nThe Idilewa team`,
     html: `<!doctype html>
 <html lang="en">
   <head>
@@ -35,19 +72,18 @@ export function createWelcomeEmail({ name, loginUrl }) {
           <tr><td style="padding:38px 36px 18px">
             <div style="font-size:14px;font-weight:700;color:#28734d">Ẹ KÁÀBỌ̀ — YOU’RE HOME</div>
             <h1 style="margin:12px 0 16px;font-size:30px;line-height:1.2;color:#173f32">Welcome, ${safeName}.</h1>
-            <p style="margin:0;font-size:16px;line-height:1.7;color:#526358">Your Idilewa learning space is ready. Bring your curiosity and explore Yoruba, African languages, stories, culture and creative coding at your own pace.</p>
+            <p style="margin:0;font-size:16px;line-height:1.7;color:#526358">Idilewa is a learning space for African languages, culture and technology. Bring your curiosity; your learning space is ready whenever you are.</p>
           </td></tr>
-          <tr><td style="padding:14px 36px 28px">
+          <tr><td style="padding:14px 36px 30px">
+            <div style="padding-bottom:14px;font-size:18px;font-weight:700;color:#20372b">Four ways to begin</div>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-              <tr><td style="padding:15px 16px;background:#f5f8f3;border-radius:12px">
-                <div style="font-size:15px;font-weight:700;color:#20372b">A little of everything, made for you</div>
-                <div style="padding-top:7px;font-size:14px;line-height:1.65;color:#526358">Practice a language · Discover a story · Make something with code</div>
-              </td></tr>
+              ${learningPathRows}
             </table>
-            <div style="padding-top:26px">
-              <a href="${safeLoginUrl}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#28734d;color:#fff;text-decoration:none;font-size:15px;font-weight:700">Open your learning space</a>
+            <div style="padding-top:10px;font-size:14px;line-height:1.7;color:#526358">Your journey is yours to shape. Start with one activity, then return whenever you are ready to keep learning.</div>
+            <div style="padding-top:24px">
+              <a href="${safeLoginUrl}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#28734d;color:#fff;text-decoration:none;font-size:15px;font-weight:700">Sign in to your learning space</a>
             </div>
-            <p style="margin:26px 0 0;font-size:13px;line-height:1.65;color:#718076">If you did not create this account, you can safely ignore this email. Your sign-in details are never included in email.</p>
+            <p style="margin:24px 0 0;font-size:13px;line-height:1.65;color:#718076">If you did not create this account, you can safely ignore this email. Your password is never included in email.</p>
           </td></tr>
           <tr><td style="padding:20px 36px;background:#f8faf7;border-top:1px solid #e8eee6;font-size:13px;line-height:1.6;color:#718076">
             With warmth,<br><strong style="color:#365443">The Idilewa team</strong>

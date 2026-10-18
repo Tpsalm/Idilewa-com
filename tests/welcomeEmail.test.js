@@ -93,6 +93,12 @@ test('welcome email includes a clear sign-in action and matching plain text', ()
   assert.match(email.subject, /Welcome to Idilewa/);
   assert.match(email.html, /Welcome, Ayo\./);
   assert.match(email.html, /href="https:\/\/www\.idilewa\.com\/#\/login\?mode=signin"/);
+  assert.match(email.html, /Four ways to begin/);
+  assert.match(email.text, /FOUR WAYS TO BEGIN/);
+  for (const section of ['Learn a language', 'Listen, speak and explore', 'Discover stories and culture', 'Create with code']) {
+    assert.match(email.html, new RegExp(section));
+    assert.match(email.text, new RegExp(section));
+  }
   assert.match(email.text, /https:\/\/www\.idilewa\.com\/#\/login\?mode=signin/);
   assert.match(email.html, /<!doctype html>/i);
 });
