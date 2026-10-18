@@ -3048,7 +3048,7 @@ import {
   }
   function renderVoiceTranslationTools() {
     return `<section class="voice-translation-panel" aria-labelledby="voice-translate-title">
-      <div><span class="section-kicker">Listen, translate, speak</span><h2 id="voice-translate-title">Try a phrase</h2><p>Type or dictate a short English phrase, then compare a phrasebook translation and hear it aloud.</p></div>
+      <div><span class="section-kicker">Listen, translate, speak</span><h2 id="voice-translate-title">Try a phrase</h2><p>Translate an English phrase into Yorùbá or another supported language, then hear the result aloud.</p></div>
       <label class="voice-translation-input-label" for="voice-translation-input">English phrase</label>
       <textarea id="voice-translation-input" rows="3" placeholder="Type a greeting or choose the microphone to dictate"></textarea>
       <div class="voice-translation-controls">
@@ -3060,9 +3060,118 @@ import {
       </div>
       <p id="voice-translation-result" class="voice-translation-result" aria-live="polite"></p>
       <small id="voice-translation-transliteration" aria-live="polite"></small>
+      <small id="voice-translation-provider-status" aria-live="polite">Loading supported translation languages…</small>
       <small id="voice-transcription-status" class="voice-transcription-status">Speech recognition availability depends on your browser.</small>
-      <small>Curated phrasebook matches only. Unlisted sentences are not auto-translated, to avoid presenting incorrect grammar as exact.</small>
+      <small>Curated phrasebook entries are used where available. Other text is sent to Google Cloud Translation. Machine translations can miss context, idiom, or Yoruba tone marks; have a fluent speaker review important text. Do not enter sensitive personal information.</small>
     </section>`;
+  }
+
+  function initializeTranslationLanguages(selectorId, statusId = '') {
+    const selector = document.getElementById(selectorId);
+    const status = statusId ? document.getElementById(statusId) : null;
+    if (!selector || selector.dataset.languageLookupStarted) return;
+    selector.dataset.languageLookupStarted = 'true';
+
+    fetch('/api/translate', { headers: { Accept: 'application/json' } })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.error || 'Translation languages are unavailable.');
+        if (!Array.isArray(result?.languages)) throw new Error('Translation languages are unavailable.');
+        return result.languages;
+      })
+      .then((languages) => {
+        const previousLanguage = selector.value;
+        selector.replaceChildren(...languages.map(({ code, name }) => new Option(name, code)));
+        selector.value = languages.some(({ code }) => code === previousLanguage)
+          ? previousLanguage
+          : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
+        if (status) status.textContent = 'Machine translation is ready. Exact phrasebook matches are used first.';
+      })
+      .catch((error) => {
+        if (status) {
+          status.textContent = `${error.message} Curated phrasebook entries remain available.`;
+        }
+      });
+  }
+
+  async function translateWithGoogle(text, target) {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ text, target }),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(result?.error || 'The translation service could not translate this phrase.');
+    }
+    if (typeof result?.translated !== 'string' || !result.translated.trim()) {
+      throw new Error('The translation service returned no translated text.');
+    }
+    return result;
+  }
+
+  async function translateVoiceText() {
+    const source = document.getElementById('voice-translation-input')?.value || '';
+    const target = document.getElementById('voice-translation-language')?.value || 'yo';
+    const output = document.getElementById('voice-translation-result');
+    const transliteration = document.getElementById('voice-translation-transliteration');
+    const providerStatus = document.getElementById('voice-translation-provider-status');
+    const button = document.querySelector('[data-action="translate-voice-text"]');
+    if (!output) return;
+    if (!source.trim()) {
+      output.textContent = 'Add a phrase before translating.';
+      return;
+    }
+
+    button && (button.disabled = true);
+    output.textContent = 'Translating…';
+    if (transliteration) transliteration.textContent = '';
+    delete output.dataset.translation;
+    try {
+      const phrasebookResult = translateText(source, target);
+      const result = phrasebookResult.exact
+        ? { ...phrasebookResult, machineTranslated: false }
+        : await translateWithGoogle(source, target);
+      output.textContent = result.translated;
+      output.dataset.translation = result.translated;
+      output.dataset.language = target;
+      if (transliteration && result.transliteration) {
+        transliteration.textContent = `Plain-letter spelling: ${result.transliteration}`;
+      }
+      if (providerStatus) {
+        providerStatus.textContent = result.machineTranslated
+          ? 'Machine translation by Google Cloud Translation. No plain-letter transliteration is provided for machine results.'
+          : 'Curated phrasebook translation.';
+      }
+    } catch (error) {
+      output.textContent = error instanceof Error ? error.message : 'The phrase could not be translated.';
+    } finally {
+      if (button?.isConnected) button.disabled = false;
+    }
+  }
+
+  async function translateIdeOutput() {
+    const source = document.getElementById('ide-terminal-logs')?.textContent || '';
+    const target = document.getElementById('ide-output-language')?.value || 'yo';
+    const output = document.getElementById('ide-output-translation');
+    if (!output) return;
+    if (!source.trim()) {
+      output.textContent = 'Add console output before translating.';
+      return;
+    }
+    output.textContent = 'Translating…';
+    delete output.dataset.translation;
+    try {
+      const phrasebookResult = translateText(source, target);
+      const result = phrasebookResult.exact
+        ? phrasebookResult
+        : await translateWithGoogle(source, target);
+      output.textContent = result.translated;
+      output.dataset.translation = result.translated;
+      output.dataset.language = target;
+    } catch (error) {
+      output.textContent = error instanceof Error ? error.message : 'The text could not be translated.';
+    }
   }
 
   async function runRemoteIdeCode(code, language) {
@@ -5809,6 +5918,7 @@ import {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
       initializeIdeRuntimes();
+      initializeTranslationLanguages('ide-output-language');
     } else if (page === 'login') {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
@@ -5830,6 +5940,7 @@ import {
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const audioCanvas = document.getElementById('waveformCanvas');
       if (audioCanvas) init3DAudioVisualizer(audioCanvas);
+      initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
     } else if (page === 'ere' || page === 'oral') {
       const storyCanvas = document.getElementById('story3DCanvasWrap');
       if (storyCanvas) init3DStoryCanvas(storyCanvas);
@@ -6337,17 +6448,7 @@ import {
         break;
       }
       case 'translate-ide-output': {
-        const source = document.getElementById('ide-terminal-logs')?.textContent || '';
-        const lang = document.getElementById('ide-output-language')?.value || 'yo';
-        const result = translateText(source, lang);
-        const output = document.getElementById('ide-output-translation');
-        if (output) {
-          output.textContent = source.trim()
-            ? result.notFound ? 'No verified phrasebook match for this text.' : result.translated
-            : 'Add console output before translating.';
-          output.dataset.translation = result.translated || '';
-          output.dataset.language = lang;
-        }
+        void translateIdeOutput();
         break;
       }
       case 'speak-ide-output': {
@@ -6357,25 +6458,7 @@ import {
         break;
       }
       case 'translate-voice-text': {
-        const source = document.getElementById('voice-translation-input')?.value || '';
-        const lang = document.getElementById('voice-translation-language')?.value || 'yo';
-        const result = translateText(source, lang);
-        const output = document.getElementById('voice-translation-result');
-        const transliteration = document.getElementById('voice-translation-transliteration');
-        if (output) {
-          output.textContent = !source.trim()
-            ? 'Add a phrase before translating.'
-            : result.notFound
-              ? 'No verified phrasebook match for this phrase yet. Try a listed phrase or ask a fluent speaker.'
-              : result.translated;
-          output.dataset.translation = result.translated || '';
-          output.dataset.language = lang;
-        }
-        if (transliteration) {
-          transliteration.textContent = result.transliteration
-            ? `Plain-letter spelling: ${result.transliteration}`
-            : '';
-        }
+        void translateVoiceText();
         break;
       }
       case 'speak-voice-translation': {

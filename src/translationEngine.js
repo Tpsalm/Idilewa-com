@@ -137,9 +137,19 @@ export function speakText(text, lang = 'yo') {
   
   // Choose best matching voice
   const voices = window.speechSynthesis.getVoices();
-  const langCode = lang === 'yo' ? 'yo-NG' : lang === 'ig' ? 'ig-NG' : lang === 'ha' ? 'ha-NG' : lang === 'sw' ? 'sw-KE' : lang === 'pcm' ? 'en-NG' : 'en-US';
+  const defaultVoices = {
+    yo: 'yo-NG',
+    ig: 'ig-NG',
+    ha: 'ha-NG',
+    sw: 'sw-KE',
+    pcm: 'en-NG',
+  };
+  const langCode = defaultVoices[lang] || lang;
   
-  const nativeVoice = voices.find((v) => v.lang.toLowerCase().includes(lang) || v.lang.toLowerCase().includes('ng'));
+  const normalizedLangCode = langCode.toLowerCase();
+  const baseLangCode = normalizedLangCode.split('-')[0];
+  const nativeVoice = voices.find((voice) => voice.lang.toLowerCase() === normalizedLangCode)
+    || voices.find((voice) => voice.lang.toLowerCase().split('-')[0] === baseLangCode);
   if (nativeVoice) {
     utterance.voice = nativeVoice;
   }

@@ -220,6 +220,10 @@ Before serving real users, configure automated database backups/PITR for the sel
 
 Lesson completion and code attempts use the account-backed Supabase tables when a user is signed in; database failures are shown rather than silently treated as successful saves. The client also exposes remote voice-record methods, but the current voice score is simulated and is not persisted or a verified assessment. Guest records and significant learning UI state remain local, so cross-device continuity for every activity is not yet complete.
 
+### Translation service
+
+The language studio uses its curated phrasebook first. For phrases without an exact entry, configure `GOOGLE_TRANSLATE_API_KEY` as a server-only Vercel environment variable to enable free-text translation and dynamic target-language selection through Google Cloud Translation Basic. Enable the Cloud Translation API, restrict the key to that API, and set billing quotas before deployment; never use a `VITE_` prefix or expose the key in browser code. User-entered text sent for machine translation is forwarded to Google; the interface discloses this and warns users not to submit sensitive information. Machine translation may miss idiom, context, and Yoruba tone marks, and the Basic API does not provide transliteration; curated entries may include an explicitly authored plain-letter form. Fluent-speaker review is recommended for important text.
+
 ### Preview Production Build
 ```bash
 npm run preview
