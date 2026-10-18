@@ -34,20 +34,20 @@ test('welcome endpoint rejects unsupported methods and malformed account ids', a
 test('welcome email includes a clear sign-in action and matching plain text', () => {
   const email = createWelcomeEmail({
     name: 'Ayo',
-    loginUrl: 'https://www.idilewa.com/login',
+    loginUrl: 'https://www.idilewa.com/#/login?mode=signin',
   });
 
   assert.match(email.subject, /Welcome to Idilewa/);
   assert.match(email.html, /Welcome, Ayo\./);
-  assert.match(email.html, /href="https:\/\/www\.idilewa\.com\/login"/);
-  assert.match(email.text, /https:\/\/www\.idilewa\.com\/login/);
+  assert.match(email.html, /href="https:\/\/www\.idilewa\.com\/#\/login\?mode=signin"/);
+  assert.match(email.text, /https:\/\/www\.idilewa\.com\/#\/login\?mode=signin/);
   assert.match(email.html, /<!doctype html>/i);
 });
 
 test('welcome email escapes user-controlled name and URL values', () => {
   const email = createWelcomeEmail({
     name: '<img src=x onerror=alert(1)>',
-    loginUrl: 'https://www.idilewa.com/login?a=1&b="2"',
+    loginUrl: 'https://www.idilewa.com/#/login?mode=signin&a=1&b="2"',
   });
 
   assert.doesNotMatch(email.html, /<img src=x/);

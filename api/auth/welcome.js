@@ -83,7 +83,7 @@ export default async function handler(req, res) {
   const name = typeof user.user_metadata?.name === 'string' && user.user_metadata.name.trim()
     ? user.user_metadata.name.trim().slice(0, 80)
     : user.email.split('@')[0];
-  const email = createWelcomeEmail({ name, loginUrl: `${origin}/login` });
+  const email = createWelcomeEmail({ name, loginUrl: `${origin}/#/login?mode=signin` });
 
   let response;
   try {
