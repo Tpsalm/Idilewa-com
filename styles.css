@@ -8093,6 +8093,12 @@ body[data-page="login"] .auth-scene-photo {
   animation: none;
 }
 
+body[data-page="login"] .modern-auth-art,
+body[data-page="login"] .auth-scene-shell {
+  position: relative;
+  top: auto;
+}
+
 body[data-page="login"] #main > .modern-auth-page > .auth-layer-guide {
   display: block;
   grid-column: 1 / -1;
