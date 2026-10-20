@@ -82,7 +82,8 @@ The application is bundled with Vite as an ES module web application:
 
 - **`app.js`:** Central routing, state management, UI rendering, event delegation, and module coordinator.
 - **`src/threeScene.js`:** Three.js 3D scene engine, orbit controls, audio visualizer, card tilt engine, and WebGL fallbacks.
-- **`src/translationEngine.js`:** Multi-language dictionary, word lexicons, Web Speech API audio playback (`speakText`), and Web Audio API tone pitch synthesizer (`playTonePitch` for Dò-Re-Mí).
+- **`src/translationEngine.js`:** Multi-language dictionary, word lexicons, and Web Audio API tone pitch synthesizer (`playTonePitch` for Dò-Re-Mí).
+- **`src/plotweaverClient.js` and `api/plotweaver/[...path].js`:** Browser client and server-side proxy for Plotweaver speech, voice discovery/cloning, translation, and transcription; the API key stays on the server.
 - **`src/yorubaCodeEngine.js`:** *ÈdèKoodu* Yoruba coding keywords, curriculum lessons, transpiler, turtle graphics canvas, and safe sandbox executor (`executeYorubaCode`).
 - **`src/vowelsConsonantsData.js`:** Yoruba oral vowels, nasal vowels, consonants, and tone pitch reference guides with interactive soundboard.
 - **`src/supabaseClient.js`:** Supabase authentication and database persistence layer with local browser storage offline-first fallback.
@@ -90,9 +91,9 @@ The application is bundled with Vite as an ES module web application:
 
 ---
 
-## 5. Page & Route Inventory (36 HTML Entries)
+## 5. Page & Route Inventory (37 HTML Entries)
 
-All 36 HTML entries declared in `vite.config.ts` are supported:
+All 37 HTML entries declared in the active `vite.config.js` are supported:
 
 | Group | Route | Purpose & Key Features |
 | :--- | :--- | :--- |
@@ -110,7 +111,7 @@ All 36 HTML entries declared in `vite.config.ts` are supported:
 | | `#/pricing` (`pricing.html`) | Preview family/explorer plans; explicitly non-billing demonstration. |
 | **Voice & Speech** | `#/trainer` (`trainer.html`) | Voice African Language Trainer: 6 languages, 60 audio lessons, Do-Re-Mi soundboard, 3D visualizer. |
 | | `#/voice_lessons` (`voice_lessons.html`) | Route alias & standalone shell resolving to the Voice Trainer studio. |
-| | `#/voices` (`voices.html`) | Sample greeting library for Yorùbá, Igbo, Hausa, and Swahili with native speech audio. |
+| | `#/voices` (`voices.html`) | Sample greeting library for Yorùbá, Igbo, Hausa, and Swahili with Plotweaver speech audio where supported. |
 | **Culture & Stories** | `#/ere` (`ere.html`) | Living story shelf featuring shared family tales and save controls. |
 | | `#/ere_game` (`ere_game.html`) | “The story that travelled” interactive reading and comprehension reflection. |
 | | `#/oral` (`oral.html`) | Oral traditions gateway (Oríkì, Òwe, spoken word, and song). |
@@ -138,7 +139,7 @@ All 36 HTML entries declared in `vite.config.ts` are supported:
 ## 6. Prototype Boundaries & Safeguarding Disclosures
 
 To ensure transparency and protect learner privacy:
-1. **Speech Recognition & Fluency:** Audio playback utilizes Web Speech API and Web Audio synthesizer tone generators. Voice evaluation is a prototype scoring demonstration and does not claim certified native speech AI. Authentic media requires fluent native speaker verification.
+1. **Speech & Fluency:** Plotweaver provides text-to-speech and supported-language transcription. Transcription returns recognized text only; it does not evaluate pronunciation, tone, or fluency. Provider language coverage differs by service, so the interface loads available languages and does not promise support for every African language in every feature.
 2. **Authentication & Data Storage:** Sign-up, email-code verification, sign-in and sign-out use Supabase Auth when configured. Account metadata and learner-record APIs are available, but not every progress, code or voice interaction in the app is yet connected to remote storage; unconnected state remains browser-local. Remote account/database delivery has not been verified against the production project.
 3. **Child Safeguarding & Consent:** Child sign-up requires a guardian email approval request and one-time code through the Vercel API. The educator path requires a server-verified, single-use invitation. Both paths remain unavailable until their database migration and server email settings are configured. This workflow does not replace legal identity verification or educator background checks; live tutoring remains disabled.
 4. **Payments & Subscriptions:** Pricing cards are preview concepts only. No live financial transactions or payment gateways are configured.
@@ -167,7 +168,7 @@ Open `http://localhost:5173` in your browser.
 ```bash
 npm run build
 ```
-Vite bundles all 36 HTML entry points and compiles assets to the `dist/` directory.
+Vite bundles all 37 HTML entry points and compiles assets to the `dist/` directory.
 
 ### IDE and authentication services
 
@@ -222,7 +223,15 @@ Lesson completion and code attempts use the account-backed Supabase tables when 
 
 ### Translation service
 
-The language studio uses its curated phrasebook first. For phrases without an exact entry, configure `GOOGLE_TRANSLATE_API_KEY` as a server-only Vercel environment variable to enable free-text translation and dynamic target-language selection through Google Cloud Translation Basic. Enable the Cloud Translation API, restrict the key to that API, and set billing quotas before deployment; never use a `VITE_` prefix or expose the key in browser code. User-entered text sent for machine translation is forwarded to Google; the interface discloses this and warns users not to submit sensitive information. Machine translation may miss idiom, context, and Yoruba tone marks, and the Basic API does not provide transliteration; curated entries may include an explicitly authored plain-letter form. Fluent-speaker review is recommended for important text.
+The voice studio uses its curated phrasebook for exact English-to-language matches, then calls the server-side Plotweaver translation proxy for supported source/target languages. Configure `PLOTWEAVER_API_KEY` in Vercel's Production and Preview environments (or migrate the existing `Idilewa` variable to that name); never expose it in a `VITE_` variable or browser bundle. Plotweaver's current translation endpoint supports Yorùbá, Hausa, Igbo, Nigerian Pidgin and English; it does not currently provide translation for every language in its speech catalogue. Text-to-speech and voice cloning use the languages enabled for the key. Speech-to-text currently supports Yorùbá, Hausa, Igbo, Nigerian Pidgin and English. The voice page loads the available language lists from Plotweaver instead of claiming unsupported languages work. Machine translation can miss idiom, context and tone marks; fluent-speaker review is recommended for important text.
+
+### Plotweaver voice services
+
+The `/api/plotweaver/*` Vercel function keeps the API key server-side and proxies language/voice discovery, speech generation, translation, transcription and voice cloning. For local API testing use `vercel dev`; Vite's static development server cannot execute Vercel functions. The voice library, lesson vowels/consonants, lesson playback, free-text speech generator, phrase translation/dictation and recorded lesson transcription use this proxy. Generated audio and recordings are not stored by Idilewa; recordings are sent to Plotweaver for the requested transcription or voice-clone operation.
+
+Voice cloning requires an explicit ownership/permission confirmation and a clean 4–8 second clip. The public application limits uploads to 4 MB to fit serverless request-size limits; non-Nigerian voice samples require an exact transcript. Created voice IDs are saved only in the current browser’s local state; the public API does not expose clone enumeration or deletion. Plotweaver usage may incur charges, so configure provider-side usage limits and monitor consumption. The API endpoint is public; CORS only governs browser access and is not authentication. Do not upload a child’s or another person’s voice without their informed permission. Set `IDILEWA_ALLOWED_ORIGINS` to the exact GitHub Pages frontend origin if using a separate static site; keep API and frontend on the same trusted deployment where possible.
+
+The GitHub Pages workflow publishes only the static frontend and cannot host `/api/plotweaver/*`. For the requested “both” deployment, the Vercel project must host the API functions, and its URL should be set as `VITE_PLOTWEAVER_API_BASE_URL` for the Pages build. Configure the key separately in Vercel; GitHub Pages must never receive the API key. Confirm the actual Pages origin and Vercel project environment before enabling paid API calls.
 
 ### Preview Production Build
 ```bash

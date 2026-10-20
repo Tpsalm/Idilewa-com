@@ -13,9 +13,16 @@ import {
 import {
   DICTIONARY,
   translateText,
-  speakText,
   playTonePitch
 } from './src/translationEngine.js';
+import {
+  createPlotweaverVoice,
+  getPlotweaverLanguages,
+  getPlotweaverVoices,
+  synthesizePlotweaverSpeech,
+  transcribeWithPlotweaver,
+  translateWithPlotweaver
+} from './src/plotweaverClient.js';
 import {
   ORAL_VOWELS,
   NASAL_VOWELS,
@@ -425,6 +432,8 @@ import {
       level: 'beginner',
       activeLessonId: 1,
       speed: 1.0,
+      voiceId: '',
+      clonedVoices: [],
       isRecording: false,
       score: null,
       analysis: null,
@@ -452,6 +461,15 @@ import {
         trainer: {
           ...defaults.trainer,
           ...(stored.trainer || {}),
+          voiceId: typeof stored.trainer?.voiceId === 'string' ? stored.trainer.voiceId.slice(0, 120) : '',
+          clonedVoices: Array.isArray(stored.trainer?.clonedVoices)
+            ? stored.trainer.clonedVoices
+              .filter((voice) => typeof voice?.voice_id === 'string'
+                && voice.voice_id.length <= 120
+                && typeof voice?.name === 'string')
+              .slice(0, 20)
+              .map(({ voice_id, name }) => ({ voice_id, name: name.slice(0, 80), type: 'cloned' }))
+            : [],
           completed: typeof stored.trainer?.completed === 'object' && stored.trainer.completed !== null ? stored.trainer.completed : {}
         },
         coding: {
@@ -1492,6 +1510,90 @@ import {
       case 'move': return `module 0x1::greeting {\n  public fun message(): vector<u8> { b"${g}" }\n}`;
       default: return `// ${tech.name}\nconsole.log("${g}");`;
     }
+  }
+
+  async function toggleVoiceDictation(button) {
+    const status = document.getElementById('voice-transcription-status');
+    const language = document.getElementById('voice-translation-source-language')?.value || 'en';
+    if (voiceDictationRecorder?.state === 'recording') {
+      voiceDictationRecorder.stop();
+      button.disabled = true;
+      button.textContent = 'Transcribing…';
+      if (status) status.textContent = 'Sending your recording to Plotweaver for transcription…';
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      if (status) status.textContent = 'Audio recording is not supported in this browser.';
+      return;
+    }
+
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error
+        ? `Microphone access failed: ${error.message}`
+        : 'Microphone access failed.';
+      return;
+    }
+
+    const chunks = [];
+    let recorder;
+    try {
+      recorder = new MediaRecorder(stream);
+    } catch (error) {
+      stream.getTracks().forEach((track) => track.stop());
+      if (status) status.textContent = error instanceof Error
+        ? `Audio recording could not start: ${error.message}`
+        : 'Audio recording could not start.';
+      return;
+    }
+    voiceDictationRecorder = recorder;
+    recorder.addEventListener('dataavailable', (event) => {
+      if (event.data.size) chunks.push(event.data);
+    });
+    recorder.addEventListener('stop', async () => {
+      stream.getTracks().forEach((track) => track.stop());
+      voiceDictationRecorder = null;
+      const recording = new Blob(chunks, {
+        type: chunks[0]?.type || recorder.mimeType || 'audio/webm',
+      });
+      if (!recording.size) {
+        if (status) status.textContent = 'No audio was recorded. Try again or type your phrase.';
+        if (button.isConnected) {
+          button.disabled = false;
+          button.innerHTML = `${icon('mic', 15)} Dictate`;
+        }
+        return;
+      }
+      try {
+        const result = await transcribeWithPlotweaver(recording, language);
+        const input = document.getElementById('voice-translation-input');
+        if (input) input.value = result.text;
+        if (status) status.textContent = `Transcribed as ${result.language || language}. Select Translate to continue.`;
+      } catch (error) {
+        if (status) status.textContent = error instanceof Error
+          ? error.message
+          : 'The recording could not be transcribed.';
+      } finally {
+        if (button.isConnected) {
+          button.disabled = false;
+          button.innerHTML = `${icon('mic', 15)} Dictate`;
+        }
+      }
+    }, { once: true });
+    try {
+      recorder.start();
+    } catch (error) {
+      voiceDictationRecorder = null;
+      stream.getTracks().forEach((track) => track.stop());
+      if (status) status.textContent = error instanceof Error
+        ? `Audio recording could not start: ${error.message}`
+        : 'Audio recording could not start.';
+      return;
+    }
+    button.innerHTML = 'Stop dictation';
+    if (status) status.textContent = `Recording in ${language}. Select Stop dictation when finished.`;
   }
 
   const IDE_RUNNER_LANGUAGES = [
@@ -3048,12 +3150,14 @@ import {
   }
   function renderVoiceTranslationTools() {
     return `<section class="voice-translation-panel" aria-labelledby="voice-translate-title">
-      <div><span class="section-kicker">Listen, translate, speak</span><h2 id="voice-translate-title">Try a phrase</h2><p>Translate an English phrase into Yorùbá or another supported language, then hear the result aloud.</p></div>
-      <label class="voice-translation-input-label" for="voice-translation-input">English phrase</label>
+      <div><span class="section-kicker">Listen, translate, speak</span><h2 id="voice-translate-title">Try a phrase</h2><p>Translate between supported African languages, dictate a phrase, and hear it in a Plotweaver voice.</p></div>
+      <label class="voice-translation-input-label" for="voice-translation-input">Phrase to translate</label>
       <textarea id="voice-translation-input" rows="3" placeholder="Type a greeting or choose the microphone to dictate"></textarea>
       <div class="voice-translation-controls">
+        <label for="voice-translation-source-language">From</label>
+        <select id="voice-translation-source-language"><option value="en">English</option></select>
         <label for="voice-translation-language">Language</label>
-        <select id="voice-translation-language"><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="sw">Swahili</option></select>
+        <select id="voice-translation-language"><option value="yo">Yorùbá</option></select>
         <button type="button" class="button button-primary" data-action="translate-voice-text">Translate</button>
         <button type="button" class="button button-outline" data-action="speak-voice-translation">Say result</button>
         <button type="button" class="button button-outline" data-action="start-voice-transcription">${icon('mic', 15)} Dictate</button>
@@ -3061,9 +3165,106 @@ import {
       <p id="voice-translation-result" class="voice-translation-result" aria-live="polite"></p>
       <small id="voice-translation-transliteration" aria-live="polite"></small>
       <small id="voice-translation-provider-status" aria-live="polite">Loading supported translation languages…</small>
-      <small id="voice-transcription-status" class="voice-transcription-status">Speech recognition availability depends on your browser.</small>
-      <small>Curated phrasebook entries are used where available. Other text is sent to Google Cloud Translation. Machine translations can miss context, idiom, or Yoruba tone marks; have a fluent speaker review important text. Do not enter sensitive personal information.</small>
+      <small id="voice-transcription-status" class="voice-transcription-status">Your recording is sent securely to Plotweaver for transcription.</small>
+      <small>Translation, transcription, and generated audio are processed by Plotweaver. Machine translation may miss context, idiom, or tone marks; have a fluent speaker review important text. Do not submit sensitive information.</small>
     </section>`;
+  }
+
+  function renderSpeechGenerator() {
+    return `<section class="voice-translation-panel" aria-labelledby="speech-generator-title">
+      <div><span class="section-kicker">African-language text to speech</span><h2 id="speech-generator-title">Hear your own phrase</h2><p>Generate audio for any language currently enabled for speech on your Plotweaver account.</p></div>
+      <label class="voice-translation-input-label" for="plotweaver-speech-text">Text to speak (up to 1,000 characters)</label>
+      <textarea id="plotweaver-speech-text" rows="3" maxlength="1000" placeholder="Enter text in the language you select"></textarea>
+      <div class="voice-translation-controls">
+        <label for="plotweaver-speech-language">Speech language</label>
+        <select id="plotweaver-speech-language"><option value="yo">Yorùbá</option></select>
+        <button type="button" class="button button-primary" data-action="plotweaver-speak-text">Generate and play</button>
+      </div>
+      <small id="plotweaver-speech-status" aria-live="polite">Audio is generated on request and is not saved.</small>
+    </section>`;
+  }
+
+  function renderVoiceCloneTools() {
+    return `<section class="voice-translation-panel" aria-labelledby="voice-tools-title">
+      <div><span class="section-kicker">Plotweaver voice studio</span><h2 id="voice-tools-title">Choose a voice or create one with permission</h2><p>Generated lesson speech uses the selected voice when Plotweaver supports it for your chosen language.</p></div>
+      <label class="voice-translation-input-label" for="plotweaver-voice-select">Speech voice</label>
+      <select id="plotweaver-voice-select" aria-describedby="plotweaver-voice-status"><option value="">Loading Plotweaver voices…</option></select>
+      <small id="plotweaver-voice-status" aria-live="polite">Loading built-in voices and clones saved on this device…</small>
+      <form class="voice-clone-form" data-form="plotweaver-voice-clone">
+        <strong>Create a voice clone</strong>
+        <label for="plotweaver-clone-name">Voice name</label>
+        <input id="plotweaver-clone-name" name="name" maxlength="80" required />
+        <label for="plotweaver-clone-language">Language spoken in recording</label>
+        <select id="plotweaver-clone-language" name="language" required><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option></select>
+        <label for="plotweaver-clone-file">Clean 4–8 second sample (maximum 4 MB)</label>
+        <input id="plotweaver-clone-file" name="file" type="file" accept=".wav,.mp3,.flac,.ogg,.m4a,audio/wav,audio/mpeg,audio/flac,audio/ogg,audio/mp4" required />
+        <label for="plotweaver-clone-transcript">Exact transcript (required for most non-Nigerian languages)</label>
+        <textarea id="plotweaver-clone-transcript" name="reference_text" rows="2" maxlength="500"></textarea>
+        <label class="voice-clone-consent"><input name="consent" type="checkbox" value="yes" required /><span>I own this recording or have the speaker’s informed permission to create and use a voice clone.</span></label>
+        <small>Voice cloning sends the recording to Plotweaver and may incur usage charges. Do not upload a child’s or another person’s voice without their guardian’s/speaker’s explicit permission.</small>
+        <small data-clone-language-status aria-live="polite"></small>
+        <button class="button button-outline" type="submit">Create voice clone</button>
+      </form>
+    </section>`;
+  }
+
+  function initializePlotweaverVoiceTools() {
+    const selector = document.getElementById('plotweaver-voice-select');
+    const status = document.getElementById('plotweaver-voice-status');
+    const languageSelector = document.getElementById('plotweaver-clone-language');
+    if (selector && !selector.dataset.voiceLookupStarted) {
+      selector.dataset.voiceLookupStarted = 'true';
+      getPlotweaverVoices({ type: 'builtin' }).then((builtInVoices) => {
+        const voices = [...builtInVoices, ...state.trainer.clonedVoices];
+        const options = [new Option('Use Plotweaver’s recommended voice', '')];
+        for (const voice of voices) {
+          options.push(new Option(
+            `${voice.name}${voice.type === 'cloned' ? ' · cloned' : ''}`,
+            voice.voice_id,
+          ));
+        }
+        selector.replaceChildren(...options);
+        selector.value = voices.some((voice) => voice.voice_id === state.trainer.voiceId)
+          ? state.trainer.voiceId
+          : '';
+        if (status) {
+          status.textContent = voices.length
+            ? 'Built-in voices and clones saved on this device are ready.'
+            : 'No built-in voices are currently available for this API key.';
+        }
+      }).catch((error) => {
+        selector.replaceChildren(new Option('Recommended voice unavailable', ''));
+        if (status) status.textContent = error instanceof Error ? error.message : 'Plotweaver voices could not be loaded.';
+      });
+    }
+    const speechLanguageSelector = document.getElementById('plotweaver-speech-language');
+    if (speechLanguageSelector && !speechLanguageSelector.dataset.languageLookupStarted) {
+      speechLanguageSelector.dataset.languageLookupStarted = 'true';
+      getPlotweaverLanguages('tts').then((languages) => {
+        const previousLanguage = speechLanguageSelector.value;
+        speechLanguageSelector.replaceChildren(...languages.map(({ code, name }) => new Option(name, code)));
+        speechLanguageSelector.value = languages.some(({ code }) => code === previousLanguage)
+          ? previousLanguage
+          : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
+      }).catch((error) => {
+        const speechStatus = document.getElementById('plotweaver-speech-status');
+        if (speechStatus) speechStatus.textContent = error instanceof Error ? error.message : 'Plotweaver speech languages could not be loaded.';
+      });
+    }
+    if (languageSelector && !languageSelector.dataset.languageLookupStarted) {
+      languageSelector.dataset.languageLookupStarted = 'true';
+      getPlotweaverLanguages('tts_clone').then((languages) => {
+        const previousLanguage = languageSelector.value;
+        languageSelector.replaceChildren(...languages.map(({ code, name }) => new Option(name, code)));
+        languageSelector.value = languages.some(({ code }) => code === previousLanguage)
+          ? previousLanguage
+          : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
+      }).catch((error) => {
+        const form = languageSelector.closest('form');
+        const message = form?.querySelector('[data-clone-language-status]');
+        if (message) message.textContent = error.message;
+      });
+    }
   }
 
   function initializeTranslationLanguages(selectorId, statusId = '') {
@@ -3072,20 +3273,14 @@ import {
     if (!selector || selector.dataset.languageLookupStarted) return;
     selector.dataset.languageLookupStarted = 'true';
 
-    fetch('/api/translate', { headers: { Accept: 'application/json' } })
-      .then(async (response) => {
-        const result = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(result?.error || 'Translation languages are unavailable.');
-        if (!Array.isArray(result?.languages)) throw new Error('Translation languages are unavailable.');
-        return result.languages;
-      })
+    getPlotweaverLanguages('translation')
       .then((languages) => {
         const previousLanguage = selector.value;
         selector.replaceChildren(...languages.map(({ code, name }) => new Option(name, code)));
         selector.value = languages.some(({ code }) => code === previousLanguage)
           ? previousLanguage
           : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
-        if (status) status.textContent = 'Machine translation is ready. Exact phrasebook matches are used first.';
+        if (status) status.textContent = 'Plotweaver translation is ready. Exact phrasebook matches are used first.';
       })
       .catch((error) => {
         if (status) {
@@ -3094,25 +3289,24 @@ import {
       });
   }
 
-  async function translateWithGoogle(text, target) {
-    const response = await fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ text, target }),
+  async function translateWithProvider(text, target, sourceLanguage = 'en') {
+    const result = await translateWithPlotweaver({
+      text,
+      sourceLanguage,
+      targetLanguage: target,
     });
-    const result = await response.json().catch(() => null);
-    if (!response.ok) {
-      throw new Error(result?.error || 'The translation service could not translate this phrase.');
-    }
-    if (typeof result?.translated !== 'string' || !result.translated.trim()) {
-      throw new Error('The translation service returned no translated text.');
-    }
-    return result;
+    return {
+      ...result,
+      translated: result.translated_text,
+      machineTranslated: true,
+      provider: 'Plotweaver',
+    };
   }
 
   async function translateVoiceText() {
     const source = document.getElementById('voice-translation-input')?.value || '';
     const target = document.getElementById('voice-translation-language')?.value || 'yo';
+    const sourceLanguage = document.getElementById('voice-translation-source-language')?.value || 'en';
     const output = document.getElementById('voice-translation-result');
     const transliteration = document.getElementById('voice-translation-transliteration');
     const providerStatus = document.getElementById('voice-translation-provider-status');
@@ -3129,9 +3323,9 @@ import {
     delete output.dataset.translation;
     try {
       const phrasebookResult = translateText(source, target);
-      const result = phrasebookResult.exact
+      const result = phrasebookResult.exact && sourceLanguage === 'en'
         ? { ...phrasebookResult, machineTranslated: false }
-        : await translateWithGoogle(source, target);
+        : await translateWithProvider(source, target, sourceLanguage);
       output.textContent = result.translated;
       output.dataset.translation = result.translated;
       output.dataset.language = target;
@@ -3140,7 +3334,7 @@ import {
       }
       if (providerStatus) {
         providerStatus.textContent = result.machineTranslated
-          ? 'Machine translation by Google Cloud Translation. No plain-letter transliteration is provided for machine results.'
+          ? 'Machine translation by Plotweaver. No plain-letter transliteration is provided for machine results.'
           : 'Curated phrasebook translation.';
       }
     } catch (error) {
@@ -3165,7 +3359,7 @@ import {
       const phrasebookResult = translateText(source, target);
       const result = phrasebookResult.exact
         ? phrasebookResult
-        : await translateWithGoogle(source, target);
+        : await translateWithProvider(source, target);
       output.textContent = result.translated;
       output.dataset.translation = result.translated;
       output.dataset.language = target;
@@ -3975,7 +4169,7 @@ import {
       { lang: 'hausa', speaker: 'Friendly greeting', phrase: 'Sannu', translation: 'Hello', tint: 'blue' },
       { lang: 'swahili', speaker: 'Everyday greeting', phrase: 'Habari', translation: 'How are you?', tint: 'lilac' }
     ];
-    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Audio here is a browser-based prototype sample. Production recordings should be approved by native speakers.</p></div><span class="demo-badge">Sample phrases</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Language audio and pronunciation need review by fluent speakers before public release.</div></section></div>`;
+    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Speech is generated by Plotweaver in the language shown for each sample.</p></div><span class="demo-badge">Plotweaver voices</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); const langCode = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' }[v.lang] || 'en'; return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" data-language="${langCode}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Machine-generated pronunciation can vary. Fluent-speaker review is recommended for learning materials.</div></section></div>`;
   }
 
   function renderGeneric(key) {
@@ -4637,6 +4831,12 @@ import {
     let audioCtx = null;
     let micStream = null;
     let animFrameId = null;
+    let voicePracticeRecorder = null;
+    let voicePracticeChunks = [];
+    let voiceDictationRecorder = null;
+    let voiceTranscriptionResult = null;
+    let activePlotweaverAudio = null;
+    let activePlotweaverObjectUrl = '';
 
     function getAudioContext() {
       if (!audioCtx) {
@@ -4684,29 +4884,111 @@ import {
       });
     }
 
-    function playNativeTrainerVoice(phrase, lang = "yoruba", speed = 1.0, syllables = []) {
-      if (syllables && syllables.length) {
-        playLessonTonalSequence(syllables, speed);
+    function trainerLanguageCode(lang = state.trainer.lang) {
+      return { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw', zulu: 'zu', twi: 'ak' }[lang] || 'yo';
+    }
+
+    async function playPlotweaverSpeech(text, language) {
+      if (typeof text !== 'string' || !text.trim() || text.length > 1_000) {
+        throw new Error('Speech text must contain 1–1,000 characters.');
       }
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(phrase);
-        const langMap = { yoruba: "yo-NG", igbo: "ig-NG", hausa: "ha-NE", swahili: "sw-KE", zulu: "zu-ZA", twi: "ak-GH" };
-        utter.lang = langMap[lang] || "en-NG";
-        utter.rate = speed * 0.92;
-        utter.pitch = 1.08;
-        const waveBox = document.getElementById("trainerWaveAnimation");
-        if (waveBox) waveBox.classList.add("is-playing-wave");
-        utter.onend = () => { if (waveBox) waveBox.classList.remove("is-playing-wave"); };
-        utter.onerror = () => { if (waveBox) waveBox.classList.remove("is-playing-wave"); };
-        window.speechSynthesis.speak(utter);
+      const blob = await synthesizePlotweaverSpeech({
+        text,
+        language,
+        voiceId: document.getElementById('plotweaver-voice-select')?.value
+          || state.trainer.voiceId
+          || undefined,
+      });
+      if (activePlotweaverAudio) {
+        activePlotweaverAudio.pause();
+        activePlotweaverAudio = null;
+      }
+      if (activePlotweaverObjectUrl) URL.revokeObjectURL(activePlotweaverObjectUrl);
+      const objectUrl = URL.createObjectURL(blob);
+      activePlotweaverObjectUrl = objectUrl;
+      activePlotweaverAudio = new Audio(objectUrl);
+      activePlotweaverAudio.addEventListener('ended', () => {
+        if (activePlotweaverObjectUrl === objectUrl) {
+          activePlotweaverAudio = null;
+          URL.revokeObjectURL(objectUrl);
+          activePlotweaverObjectUrl = '';
+        }
+      }, { once: true });
+      try {
+        await activePlotweaverAudio.play();
+      } catch (error) {
+        activePlotweaverAudio = null;
+        if (activePlotweaverObjectUrl === objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          activePlotweaverObjectUrl = '';
+        }
+        throw error;
       }
     }
 
-    function startTrainerRecording(lessonId) {
+    async function playNativeTrainerVoice(phrase, lang = "yoruba", speed = 1.0, syllables = []) {
+      if (syllables?.length) playLessonTonalSequence(syllables, speed);
+      await playPlotweaverSpeech(phrase, trainerLanguageCode(lang));
+    }
+
+    async function startTrainerRecording(lessonId) {
+      if (voicePracticeRecorder?.state === 'recording') return;
+      const language = trainerLanguageCode();
+      if (!['yo', 'ha', 'ig', 'pcm', 'en'].includes(language)) {
+        showToast('Plotweaver speech recognition currently supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English. Choose one of those languages to record.', 'error');
+        return;
+      }
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        showToast('Audio recording is not supported in this browser. Try a modern browser or supported device.', 'error');
+        return;
+      }
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (error) {
+        showToast(error instanceof Error ? `Microphone access failed: ${error.message}` : 'Microphone access failed.', 'error');
+        return;
+      }
+      micStream = stream;
+      voicePracticeChunks = [];
+      try {
+        voicePracticeRecorder = new MediaRecorder(stream);
+      } catch (error) {
+        stream.getTracks().forEach((track) => track.stop());
+        micStream = null;
+        showToast(error instanceof Error ? `Audio recording could not start: ${error.message}` : 'Audio recording could not start.', 'error');
+        return;
+      }
+      voicePracticeRecorder.addEventListener('dataavailable', (event) => {
+        if (event.data.size) voicePracticeChunks.push(event.data);
+      });
+      voicePracticeRecorder.addEventListener('stop', async () => {
+        const recording = new Blob(voicePracticeChunks, {
+          type: voicePracticeChunks[0]?.type || voicePracticeRecorder?.mimeType || 'audio/webm',
+        });
+        voicePracticeRecorder = null;
+        voicePracticeChunks = [];
+        if (micStream) micStream.getTracks().forEach((track) => track.stop());
+        micStream = null;
+        state.trainer.isRecording = false;
+        voiceTranscriptionResult = null;
+        render();
+        if (!recording.size) {
+          showToast('No audio was recorded. Please try again.', 'error');
+          return;
+        }
+        showToast('Sending your recording to Plotweaver for transcription.');
+        try {
+          const result = await transcribeWithPlotweaver(recording, language);
+          voiceTranscriptionResult = { lessonId, language, text: result.text };
+          render();
+          showToast('Transcription ready. It is a text match, not a tone or pronunciation score.', 'success');
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : 'Your recording could not be transcribed.', 'error');
+        }
+      }, { once: true });
       state.trainer.isRecording = true;
-      state.trainer.score = null;
-      state.trainer.analysis = null;
+      voiceTranscriptionResult = null;
       render();
       const canvas = document.getElementById("waveformCanvas");
       if (canvas) {
@@ -4729,49 +5011,30 @@ import {
         }
         drawWave();
       }
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(s => { micStream = s; }).catch(() => {});
+      try {
+        voicePracticeRecorder.start();
+      } catch (error) {
+        voicePracticeRecorder = null;
+        voicePracticeChunks = [];
+        stream.getTracks().forEach((track) => track.stop());
+        micStream = null;
+        state.trainer.isRecording = false;
+        render();
+        showToast(error instanceof Error ? `Audio recording could not start: ${error.message}` : 'Audio recording could not start.', 'error');
+        return;
       }
+      showToast(`Recording lesson ${lessonId}. Speak clearly, then stop to transcribe.`);
     }
 
     function stopTrainerRecordingAndAnalyze(lessonId) {
+      if (!voicePracticeRecorder || voicePracticeRecorder.state !== 'recording') {
+        showToast('There is no active recording to stop.', 'error');
+        return;
+      }
       state.trainer.isRecording = false;
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      if (micStream) {
-        micStream.getTracks().forEach(t => t.stop());
-        micStream = null;
-      }
-      const baseScores = [92, 94, 96, 98, 100];
-      const toneScores = [90, 95, 98, 100];
-      const randomBase = baseScores[Math.floor(Math.random() * baseScores.length)];
-      const randomTone = toneScores[Math.floor(Math.random() * toneScores.length)];
-      const overall = Math.round((randomBase * 0.6) + (randomTone * 0.4));
-      const feedbackComments = [
-        "Outstanding! High (Mí) and Low (Dó) tones perfectly matched the native speaker cadence.",
-        "Brilliant clarity! Your syllable vowel length and tonal pitch rise were pitch-perfect.",
-        "Excellent African rhythm! Your tone curve matches natural Lagos/Ibadan native speech flow.",
-        "Incredible pronunciation! 100% native tone contour detected on all key syllables."
-      ];
-      const analysis = {
-        overall,
-        toneAccuracy: randomTone,
-        rhythmScore: randomBase,
-        clarityScore: Math.min(100, overall + 2),
-        stars: overall >= 95 ? 3 : overall >= 85 ? 2 : 1,
-        feedback: feedbackComments[Math.floor(Math.random() * feedbackComments.length)]
-      };
-      state.trainer.score = overall;
-      state.trainer.analysis = analysis;
-      state.trainer.xp = (state.trainer.xp || 220) + 25;
-      if (!state.trainer.completed[lessonId] || overall > (state.trainer.completed[lessonId].score || 0)) {
-        state.trainer.completed[lessonId] = { stars: analysis.stars, score: overall, date: new Date().toISOString() };
-      }
-      playToneSound(523.25, 0.15, "sine");
-      setTimeout(() => playToneSound(659.25, 0.18, "sine"), 120);
-      setTimeout(() => playToneSound(783.99, 0.28, "sine"), 240);
-      saveState();
-      render();
-      showToast("+25 XP Earned! Fluency Score: " + overall + "% ⭐⭐⭐", "success");
+      voicePracticeRecorder.stop();
+      showToast(`Recording for lesson ${lessonId} stopped.`);
     }
 
     function renderTrainer(params) {
@@ -4792,7 +5055,7 @@ import {
       return `<div class="container route-page trainer-page">
                 <section class="voice-foundations" aria-labelledby="voice-foundations-title">
                   <div class="section-heading">
-                    <div><span class="section-kicker">Start here · Yorùbá sound foundations</span><h2 id="voice-foundations-title">Vowels, consonants &amp; tone</h2><p>Learn the mouth sounds before moving into words and conversation. Choose a sound to hear your browser pronounce it.</p></div>
+                    <div><span class="section-kicker">Start here · Yorùbá sound foundations</span><h2 id="voice-foundations-title">Vowels, consonants &amp; tone</h2><p>Learn the mouth sounds before moving into words and conversation. Choose a sound to hear Plotweaver pronounce it.</p></div>
                   </div>
                   <div class="voice-foundation-grid">
                     <article class="voice-foundation-block"><h3>Oral vowels</h3><p>Seven distinct vowel sounds, each with high, mid and low tone examples.</p><div class="voice-sound-list">${ORAL_VOWELS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.ipa)}">${esc(item.char)} <small>${esc(item.ipa)}</small></button>`).join('')}</div></article>
@@ -4800,6 +5063,8 @@ import {
                     <article class="voice-foundation-block"><h3>Nasal vowels &amp; vowel pairs</h3><p>Let nasal vowels resonate gently. Adjacent vowels are usually pronounced distinctly across syllables, not forced into English-style glides.</p><div class="voice-sound-list">${NASAL_VOWELS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.sound)}">${esc(item.char)} <small>${esc(item.sound)}</small></button>`).join('')}</div><div class="voice-diphthong-note"><strong>Listen for vowel sequences</strong><button type="button" data-action="speak-voice-lesson" data-phrase="A. I. E. O. U.">a · i · e · o · u</button><small>Keep each vowel clear when two meet; local pronunciation can vary by word and speaker.</small></div></article>
                   </div>
                   ${renderVoiceTranslationTools()}
+                  ${renderSpeechGenerator()}
+                  ${renderVoiceCloneTools()}
                 </section>
         <div class="breadcrumbs">
           ${routeLink("index", "Home")}<span>/</span>
@@ -4813,8 +5078,8 @@ import {
               <span>${icon("headphones", 16)}</span>
               <strong>VOICE LESSONS · PRONUNCIATION STUDIO</strong>
             </div>
-            <h1>Speak African Languages<br /><em>with 100% Native Tonal Fluency.</em></h1>
-            <p>Master authentic pitch accents, Do-Re-Mi tone melodies, and pronunciation for kids through 60 structured voice lessons across Beginner, Intermediate, and Advanced tiers.</p>
+            <h1>Practice African Languages<br /><em>with language-aware voice audio.</em></h1>
+            <p>Practice pitch patterns and pronunciation through 60 structured lessons. Plotweaver supplies speech in the selected language; its transcription supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English.</p>
             
             <div class="trainer-stats-strip">
               <div class="trainer-stat-pill">
@@ -4929,7 +5194,7 @@ import {
                 </span>
               </div>
               <div class="studio-speed-control">
-                <span class="speed-label">Playback Speed:</span>
+              <span class="speed-label">Tone exercise speed:</span>
                 <div class="speed-buttons">
                   <button type="button" class="speed-btn ${speed === 0.75 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="0.75">0.75x Slow</button>
                   <button type="button" class="speed-btn ${speed === 1.0 ? "is-active" : ""}" data-action="trainer-set-speed" data-speed="1.0">1.0x Normal</button>
@@ -4976,18 +5241,18 @@ import {
               <div class="studio-buttons-row">
                 <button type="button" class="btn-studio btn-play-native" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">
                   ${icon("volume", 20)}
-                  <span>Listen to Native Voice (${speed}x)</span>
+                  <span>Listen to Plotweaver voice</span>
                 </button>
 
                 ${!state.trainer.isRecording ? `
                   <button type="button" class="btn-studio btn-record-voice" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">
                     ${icon("mic", 20)}
-                    <span>Record Your Voice & Analyze</span>
+                    <span>Record & Transcribe</span>
                   </button>
                 ` : `
                   <button type="button" class="btn-studio btn-stop-recording" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">
                     <span class="recording-pulsar" aria-hidden="true"></span>
-                    <span>Stop & Evaluate Pronunciation</span>
+                    <span>Stop & Get Transcript</span>
                   </button>
                 `}
               </div>
@@ -4995,52 +5260,12 @@ import {
               <div class="studio-visualizer-box">
                 <canvas id="waveformCanvas" width="560" height="70"></canvas>
                 <div class="visualizer-hint">
-                  ${state.trainer.isRecording ? "🔴 Listening closely to your voice pitch... Speak clearly!" : "▶️ Click Listen to hear native speaker, or 🎤 Record to evaluate your pitch."}
+                  ${state.trainer.isRecording ? "🔴 Recording your practice… Speak clearly, then stop to request a transcript." : "▶️ Listen to Plotweaver audio or record your voice for speech-to-text feedback."}
                 </div>
               </div>
             </div>
 
-            ${state.trainer.analysis ? `
-              <div class="studio-analysis-result">
-                <div class="analysis-score-header">
-                  <div class="score-circle">
-                    <strong>${state.trainer.analysis.overall}%</strong>
-                    <small>Fluency Score</small>
-                  </div>
-                  <div class="score-details">
-                    <div class="score-stars">
-                      ${"★".repeat(state.trainer.analysis.stars)}${"☆".repeat(3 - state.trainer.analysis.stars)}
-                    </div>
-                    <h3>${state.trainer.analysis.stars === 3 ? "🎉 Flawless Native Pronunciation!" : state.trainer.analysis.stars === 2 ? "👏 Great Effort! Almost Native!" : "👍 Good Practice! Try again for 3 stars!"}</h3>
-                    <p>${state.trainer.analysis.feedback}</p>
-                  </div>
-                </div>
-
-                <div class="analysis-meters-grid">
-                  <div class="meter-card">
-                    <div class="meter-label">
-                      <span>Tonal Pitch Accuracy</span>
-                      <strong>${state.trainer.analysis.toneAccuracy}%</strong>
-                    </div>
-                    <div class="meter-bar"><div class="meter-fill fill-green" style="width: ${state.trainer.analysis.toneAccuracy}%"></div></div>
-                  </div>
-                  <div class="meter-card">
-                    <div class="meter-label">
-                      <span>Rhythm & Pacing</span>
-                      <strong>${state.trainer.analysis.rhythmScore}%</strong>
-                    </div>
-                    <div class="meter-bar"><div class="meter-fill fill-yellow" style="width: ${state.trainer.analysis.rhythmScore}%"></div></div>
-                  </div>
-                  <div class="meter-card">
-                    <div class="meter-label">
-                      <span>Articulation & Clarity</span>
-                      <strong>${state.trainer.analysis.clarityScore}%</strong>
-                    </div>
-                    <div class="meter-bar"><div class="meter-fill fill-blue" style="width: ${state.trainer.analysis.clarityScore}%"></div></div>
-                  </div>
-                </div>
-              </div>
-            ` : ""}
+            ${voiceTranscriptionResult?.lessonId === activeLesson.id && voiceTranscriptionResult.language === trainerLanguageCode() ? `<div class="studio-analysis-result"><h3>Plotweaver transcription</h3><p lang="${trainerLanguageCode()}">${esc(voiceTranscriptionResult.text)}</p><small>This is speech-to-text feedback, not a verified pronunciation, pitch, or fluency score. Transcripts stay on this page only.</small></div>` : ""}
 
             <div class="studio-nav-footer">
               <button type="button" class="btn-nav-lesson" data-action="trainer-prev-lesson" ${activeLesson.id <= (activeLevel === "beginner" ? 1 : activeLevel === "intermediate" ? 21 : 41) ? "disabled" : ""}>
@@ -5940,6 +6165,8 @@ import {
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const audioCanvas = document.getElementById('waveformCanvas');
       if (audioCanvas) init3DAudioVisualizer(audioCanvas);
+      initializePlotweaverVoiceTools();
+      initializeTranslationLanguages('voice-translation-source-language');
       initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
     } else if (page === 'ere' || page === 'oral') {
       const storyCanvas = document.getElementById('story3DCanvasWrap');
@@ -6187,19 +6414,16 @@ import {
     const phrase = button.dataset.text || 'Hello';
     button.classList.add('is-playing');
     button.setAttribute('aria-pressed', 'true');
-    if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined') {
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(phrase);
-        utterance.rate = 0.82;
-        utterance.onend = utterance.onerror = () => { button.classList.remove('is-playing'); button.setAttribute('aria-pressed', 'false'); };
-        window.speechSynthesis.speak(utterance);
-      } catch (_) { window.setTimeout(() => button.classList.remove('is-playing'), 1100); }
-    } else {
-      window.setTimeout(() => { button.classList.remove('is-playing'); button.setAttribute('aria-pressed', 'false'); }, 1100);
-      showToast('Sample phrase selected. Approved recordings can be connected for launch.');
-    }
-    window.setTimeout(() => { button.classList.remove('is-playing'); button.setAttribute('aria-pressed', 'false'); }, 5000);
+    void playPlotweaverSpeech(phrase, button.dataset.language || 'yo')
+      .catch((error) => {
+        showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this sample.', 'error');
+      })
+      .finally(() => {
+        if (button.isConnected) {
+          button.classList.remove('is-playing');
+          button.setAttribute('aria-pressed', 'false');
+        }
+      });
   }
 
   function handleAction(action, el) {
@@ -6453,7 +6677,10 @@ import {
       }
       case 'speak-ide-output': {
         const output = document.getElementById('ide-output-translation');
-        if (output?.dataset.translation) speakText(output.dataset.translation, output.dataset.language || 'yo');
+        if (output?.dataset.translation) {
+          void playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo')
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this audio.', 'error'));
+        }
         else showToast('Translate the console output first.', 'error');
         break;
       }
@@ -6463,34 +6690,36 @@ import {
       }
       case 'speak-voice-translation': {
         const output = document.getElementById('voice-translation-result');
-        if (output?.dataset.translation) speakText(output.dataset.translation, output.dataset.language || 'yo');
+        if (output?.dataset.translation) {
+          void playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo')
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this audio.', 'error'));
+        }
         else showToast('Translate a phrase first.', 'error');
         break;
       }
       case 'speak-voice-lesson': {
-        speakText(el.dataset.phrase || '', 'yo');
+        void playPlotweaverSpeech(el.dataset.phrase || '', 'yo')
+          .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this sound.', 'error'));
+        break;
+      }
+      case 'plotweaver-speak-text': {
+        const text = document.getElementById('plotweaver-speech-text')?.value.trim() || '';
+        const language = document.getElementById('plotweaver-speech-language')?.value || 'yo';
+        const status = document.getElementById('plotweaver-speech-status');
+        if (!text) {
+          if (status) status.textContent = 'Enter text before generating audio.';
+          break;
+        }
+        if (status) status.textContent = 'Generating audio with Plotweaver…';
+        void playPlotweaverSpeech(text, language).then(() => {
+          if (status) status.textContent = 'Audio is playing. The generated audio is not saved.';
+        }).catch((error) => {
+          if (status) status.textContent = error instanceof Error ? error.message : 'Plotweaver could not generate this audio.';
+        });
         break;
       }
       case 'start-voice-transcription': {
-        const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const status = document.getElementById('voice-transcription-status');
-        if (!Recognition) {
-          if (status) status.textContent = 'Speech recognition is not supported in this browser. Type your phrase instead.';
-          break;
-        }
-        const recognition = new Recognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        if (status) status.textContent = 'Listening for an English phrase…';
-        recognition.onresult = (event) => {
-          const input = document.getElementById('voice-translation-input');
-          if (input) input.value = event.results[0][0].transcript;
-          if (status) status.textContent = 'Phrase transcribed. Select Translate to continue.';
-        };
-        recognition.onerror = () => { if (status) status.textContent = 'Could not transcribe this phrase. Check microphone permission or type it instead.'; };
-        recognition.onend = () => { if (status?.textContent === 'Listening for an English phrase…') status.textContent = 'No speech detected. Try again or type your phrase.'; };
-        recognition.start();
+        void toggleVoiceDictation(el);
         break;
       }
 
@@ -6889,17 +7118,15 @@ import {
         const currentTierLessons = langData[state.trainer.level] || langData.beginner;
         const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
         if (activeLesson) {
-          const lCode = state.trainer.lang === 'yoruba' ? 'yo' : state.trainer.lang === 'igbo' ? 'ig' : state.trainer.lang === 'hausa' ? 'ha' : 'en';
-          try { speakText(activeLesson.phrase, lCode); } catch (_) {}
-          playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables);
-          showToast(`Playing voice (${state.trainer.speed || 1.0}x) · Browser speech synthesis sample`);
+          void playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables)
+            .then(() => showToast('Playing Plotweaver-generated audio.'))
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate lesson audio.', 'error'));
         }
         break;
       }
       case 'trainer-start-record': {
         const lessonId = parseInt(el.dataset.lessonId) || state.trainer.activeLessonId || 1;
-        startTrainerRecording(lessonId);
-        showToast('Listening... Speak the phrase clearly into your microphone!');
+        void startTrainerRecording(lessonId);
         break;
       }
       case 'trainer-stop-record': {
@@ -7053,6 +7280,11 @@ import {
 
   document.addEventListener('change', (event) => {
     const el = event.target;
+    if (el.matches('#plotweaver-voice-select')) {
+      state.trainer.voiceId = el.value || '';
+      saveState();
+      return;
+    }
     if (el.matches('#profile-photo-input')) {
       const file = el.files?.[0];
       el.value = '';
@@ -7154,7 +7386,51 @@ import {
     if (!type) return;
     event.preventDefault();
     const data = new FormData(form);
-    if (type === 'guardian-consent' || type === 'child-consent-check' || type === 'tutor-consent-check') {
+    if (type === 'plotweaver-voice-clone') {
+      const submitButton = form.querySelector('button[type="submit"]');
+      const file = data.get('file');
+      if (!(file instanceof File) || !file.size || file.size > 4 * 1024 * 1024) {
+        showToast('Choose a valid audio sample no larger than 4 MB.', 'error');
+        return;
+      }
+      const cloneRequest = new FormData();
+      for (const name of ['name', 'language', 'reference_text', 'description', 'file', 'consent']) {
+        const value = data.get(name);
+        if (value instanceof File || (typeof value === 'string' && value)) {
+          cloneRequest.append(name, value);
+        }
+      }
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating voice…';
+      }
+      try {
+        const created = await createPlotweaverVoice(cloneRequest);
+        const voiceId = created.voice_id || created.id;
+        if (typeof voiceId !== 'string' || !voiceId) {
+          throw new Error('Plotweaver created a voice but returned no voice ID.');
+        }
+        state.trainer.clonedVoices = [
+          { voice_id: voiceId, name: String(data.get('name') || 'My cloned voice').slice(0, 80), type: 'cloned' },
+          ...state.trainer.clonedVoices.filter((voice) => voice.voice_id !== voiceId),
+        ].slice(0, 20);
+        state.trainer.voiceId = voiceId;
+        saveState();
+        const selector = document.getElementById('plotweaver-voice-select');
+        if (selector) delete selector.dataset.voiceLookupStarted;
+        initializePlotweaverVoiceTools();
+        showToast('Voice clone created. Select it for supported speech languages.', 'success');
+        form.reset();
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'The voice clone could not be created.', 'error');
+      } finally {
+        if (submitButton?.isConnected) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Create voice clone';
+        }
+      }
+      return;
+    } else if (type === 'guardian-consent' || type === 'child-consent-check' || type === 'tutor-consent-check') {
       showToast('Local consent codes are disabled. Use the verified parent-email approval flow for child accounts.', 'error');
       return;
     } else if (type === 'password-reset') {
