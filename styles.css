@@ -8139,28 +8139,18 @@ body[data-page="coding"] .ide-nav-item.is-active {
   background: #268653;
 }
 body[data-page="coding"] .ide-nav-illustration {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 7px;
-  min-height: 0;
+  display: block;
+  flex: 0 0 auto;
   margin: auto 8px 10px;
   overflow: hidden;
   border-radius: 11px;
   background: #20794f;
 }
 body[data-page="coding"] .ide-nav-illustration img {
+  display: block;
   width: 100%;
-  height: 100%;
-  min-height: 80px;
-  object-fit: cover;
-  object-position: center;
-}
-body[data-page="coding"] .ide-nav-illustration figcaption {
-  padding: 0 7px 9px;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1.35;
+  height: auto;
+  object-fit: contain;
 }
 body[data-page="coding"] .ide-explorer-sidebar.ide-sidebar-extensions {
   width: 250px;
@@ -8541,34 +8531,20 @@ body[data-page="coding"] .ide-assistant-header {
 }
 body[data-page="coding"] .ide-assistant-header > span .icon { color: #268653; }
 body[data-page="coding"] .ide-assistant-header > small { color: #59906a; font-size: 8px; }
-body[data-page="coding"] .ide-assistant-robot {
-  height: 160px;
+body[data-page="coding"] .ide-buddy-art {
+  height: 166px;
   flex: 0 0 auto;
-  border-bottom-color: #e5ecdf;
-  background: #edf7e9;
-}
-body[data-page="coding"] .ide-assistant-panel .c4k-code-robot-stage {
-  width: 100%;
-  height: 158px;
   margin: 0;
+  overflow: hidden;
+  border-bottom: 1px solid #e5ecdf;
+  background: #fffef9;
 }
-body[data-page="coding"] .ide-assistant-panel .code-robot-message {
-  top: 9%;
-  right: 9%;
-  min-height: 30px;
-  padding: 0 10px;
-  color: #28563d;
-  background: #fff;
-  font-size: 10px;
-}
-body[data-page="coding"] .ide-assistant-panel .code-robot-xp {
-  bottom: 8%;
-  left: 9%;
-  min-height: 25px;
-  padding: 0 9px;
-  color: #72530c;
-  background: #ffe08a;
-  font-size: 9px;
+body[data-page="coding"] .ide-buddy-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 body[data-page="coding"] .ide-assistant-notice {
   display: grid;
@@ -8694,6 +8670,7 @@ body[data-page="coding"] .ide-statusbar { color: #fff; background: #268653; }
   body[data-page="coding"] .c4k-ide-section.ide-main-standalone .ide-translation-tools label { grid-column: 1 / -1; }
   body[data-page="coding"] .ide-lesson-icon { width: 32px; height: 32px; }
   body[data-page="coding"] .ide-assistant-panel { min-height: 0; }
+  body[data-page="coding"] .ide-buddy-art { height: 156px; }
   body[data-page="coding"] .ide-assistant-messages { min-height: 80px; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -3622,8 +3622,7 @@ import {
       <a class="ide-nav-item" href="#/profile">${icon('user', 18)}<span>Profile</span></a>
     </nav>
     <figure class="ide-nav-illustration">
-      <img src="./assets/code-kids.jpg" alt="Two children learning to code together" />
-      <figcaption>Small steps,<br />big dreams!</figcaption>
+      <img src="./assets/code-reference-children.png" alt="Two children learning to code together with the words Small steps, big dreams!" />
     </figure>`;
   }
 
@@ -3631,7 +3630,7 @@ import {
     const messages = state.coding.ideAssistantMessages || [];
     return `<aside class="ide-assistant-panel" aria-label="Code Buddy">
       <div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Buddy</span><span class="ide-buddy-online">● Ready to help</span></div>
-      <div class="ide-buddy-welcome"><p>Great job!</p><span>You’re learning new things every time you code.</span></div>
+      <figure class="ide-buddy-art"><img src="./assets/code-reference-buddy.png" alt="The Code Buddy robot says, Great job! You just ran your code!" /></figure>
       <div class="ide-assistant-notice"><strong>Need help?</strong><span>Try one step at a time:</span><ul><li>Press Run to see what your code does.</li><li>Keep your code simple.</li><li>Check for spelling mistakes.</li><li>Run your code to see the result.</li></ul></div>
       <div class="ide-assistant-actions">
         <button type="button" data-action="ide-load-sample">${icon('code', 14)} Show me a sample code</button>
