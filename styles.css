@@ -7969,19 +7969,9 @@ body[data-page="coding"] .coding-page.ide-fullscreen-page.ide-page-root { width:
   .footer-bottom-inner p { font-size: 15px; }
 }
 
-body:not([data-page="coding"]) #main p,
-body:not([data-page="coding"]) #main li,
-body:not([data-page="coding"]) #main label,
-body:not([data-page="coding"]) #main small,
-body:not([data-page="coding"]) #main a,
-body:not([data-page="coding"]) #main button,
-body:not([data-page="coding"]) #main input,
-body:not([data-page="coding"]) #main select,
-body:not([data-page="coding"]) #main textarea {
-  font-size: 16px;
-}
-body:not([data-page="coding"]) #main .form-input {
-  font-size: 16px;
+#main :where(p, li, label, small, a, button, input, select, textarea, summary, blockquote, figcaption, dt, dd, span, strong, em):not(.ide-page-root *):not(.brand *):not(h1 *, h2 *, h3 *, h4 *, h5 *, h6 *) {
+  font-family: inherit;
+  font-size: 17px;
 }
 
 @media (min-width: 901px) {
