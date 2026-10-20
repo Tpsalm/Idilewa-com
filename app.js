@@ -586,7 +586,7 @@ import {
     if (!hash) {
       const defaultPage = document.body?.dataset?.defaultRoute || 'login';
       if (defaultPage === 'login' && !defaultAuthEntryInitialized) {
-        state.loginMode = 'signup';
+        state.loginMode = 'signin';
         state.authRole = 'adult';
         defaultAuthEntryInitialized = true;
       }
@@ -4521,15 +4521,10 @@ import {
     const introSplash = authIntroPending ? '<div class="auth-intro-screen" aria-label="Idilewa"><span class="auth-intro-mark"><i></i><i></i><i></i></span><strong>idílẹ́wà</strong></div>' : '';
     authIntroPending = false;
     return `${introSplash}<div class="container route-page auth-page modern-auth-page">
-      <!-- Right-side animated learning scene -->
+      <!-- Right-side learning artwork -->
       <aside class="auth-art modern-auth-art" aria-label="Children exploring languages, stories and technology">
         <div class="auth-scene-shell">
           <img class="auth-scene-photo" src="./assets/auth-learning-reference.png" alt="" />
-          <div class="auth-scene-shade" aria-hidden="true"></div>
-          <div class="auth-globe-stage" aria-hidden="true"><div id="auth3DCanvasWrap"></div></div>
-          <div class="auth-laptop-screen-glow" aria-hidden="true"></div>
-          <span class="auth-laptop-pointer" aria-hidden="true"></span>
-          <span class="auth-scene-light-pass" aria-hidden="true"></span>
         </div>
       </aside>
 
@@ -6234,7 +6229,7 @@ import {
       initializeTranslationLanguages('ide-output-language');
     } else if (page === 'login') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
+      document.getElementById('main').innerHTML = pageMarkup;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
     } else {
