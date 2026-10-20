@@ -4526,6 +4526,34 @@ import {
       <aside class="auth-art modern-auth-art" aria-label="Children exploring languages, stories and technology">
         <div class="auth-scene-shell">
           <img class="auth-scene-photo" src="./assets/auth-learning-reference.png" alt="" />
+          <div class="auth-globe-orbit" aria-hidden="true">
+            <svg class="auth-globe-spin" viewBox="0 0 240 160" role="presentation">
+              <defs>
+                <radialGradient id="auth-globe-fill" cx="38%" cy="32%" r="70%">
+                  <stop offset="0%" stop-color="#c8ffe2" stop-opacity=".38" />
+                  <stop offset="100%" stop-color="#138d69" stop-opacity=".16" />
+                </radialGradient>
+                <clipPath id="auth-globe-clip"><ellipse cx="120" cy="80" rx="110" ry="68" /></clipPath>
+              </defs>
+              <ellipse cx="120" cy="80" rx="110" ry="68" fill="url(#auth-globe-fill)" stroke="#e1fff0" stroke-opacity=".78" stroke-width="2" />
+              <g class="auth-globe-longitudes" clip-path="url(#auth-globe-clip)" fill="none" stroke="#dcfff0" stroke-opacity=".62">
+                <ellipse cx="120" cy="80" rx="78" ry="67" stroke-width="1.4" />
+                <ellipse cx="120" cy="80" rx="38" ry="67" stroke-width="1.4" />
+                <path d="M10 80h220M19 54h202M19 106h202" stroke-width="1.2" />
+                <path d="M16 67h208M16 93h208" stroke-opacity=".38" />
+              </g>
+              <g class="auth-globe-land" clip-path="url(#auth-globe-clip)" fill="#71dda7" fill-opacity=".2">
+                <path d="M45 47l12-13 19 2 7 10 15 4 2 11-12 6-5 15-10 7-4 19-10 7-9-13 2-17-8-11 5-12-7-7zM111 38l12-8 17 5 3 10 17 5-3 10-12 5-2 13-11 7-4 16-10 9-8-13 4-15-7-12 5-11-8-8zM160 92l13-5 13 7 9 16-7 11-13-2-7-12-10-4z" />
+              </g>
+            </svg>
+          </div>
+          <span class="auth-artifact auth-artifact-book" aria-hidden="true"><span class="auth-artifact-glyph">📖</span></span>
+          <span class="auth-artifact auth-artifact-headset" aria-hidden="true"><span class="auth-artifact-glyph">🎧</span></span>
+          <span class="auth-artifact auth-artifact-gamepad" aria-hidden="true"><span class="auth-artifact-glyph">🎮</span></span>
+          <span class="auth-artifact auth-artifact-mask" aria-hidden="true"><span class="auth-artifact-glyph"><svg viewBox="0 0 32 36" role="presentation"><path d="M5 4 16 1l11 3v14c0 8-5 13-11 17C10 31 5 26 5 18z" fill="#c66d3d" stroke="#77402d" stroke-width="1.5"/><path d="M9 14c2-3 5-3 7 0-2 2-5 3-7 0Zm8 0c2-3 5-3 7 0-2 2-5 3-7 0Z" fill="#f6dfb5"/><circle cx="13" cy="14" r="1.2" fill="#332b24"/><circle cx="20" cy="14" r="1.2" fill="#332b24"/><path d="M12 22c2 2 6 2 8 0" fill="none" stroke="#472b24" stroke-linecap="round" stroke-width="2"/></svg></span></span>
+          <span class="auth-artifact auth-artifact-code" aria-hidden="true"><span class="auth-artifact-glyph">&lt;/&gt;</span></span>
+          <span class="auth-laptop-screen-glow" aria-hidden="true"></span>
+          <span class="auth-laptop-pointer" aria-hidden="true"></span>
         </div>
       </aside>
 

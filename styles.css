@@ -8099,6 +8099,118 @@ body[data-page="login"] .auth-scene-shell {
   top: auto;
 }
 
+body[data-page="login"] .auth-scene-photo {
+  animation: auth-photo-life 16s ease-in-out infinite alternate;
+  transform-origin: 50% 48%;
+}
+
+body[data-page="login"] .auth-globe-orbit {
+  position: absolute;
+  z-index: 1;
+  top: 20%;
+  left: 16%;
+  width: 68%;
+  height: 22%;
+  perspective: 520px;
+  pointer-events: none;
+}
+
+.auth-globe-spin {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform-style: preserve-3d;
+  animation: auth-globe-revolution 24s linear infinite;
+  opacity: .52;
+  filter: drop-shadow(0 0 10px rgba(195, 255, 222, .35));
+  mix-blend-mode: screen;
+}
+
+.auth-globe-longitudes,
+.auth-globe-land {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: auth-globe-surface 12s ease-in-out infinite alternate;
+}
+
+.auth-globe-land { animation-duration: 18s; }
+
+.auth-artifact {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  width: clamp(31px, 4vw, 42px);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .62);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .65);
+  box-shadow: 0 5px 14px rgba(12, 58, 39, .16), inset 0 1px 0 rgba(255, 255, 255, .72);
+  backdrop-filter: blur(3px);
+  animation: auth-artifact-orbit 6.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.auth-artifact-glyph {
+  display: grid;
+  place-items: center;
+  font-size: clamp(19px, 2.4vw, 24px);
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(18, 52, 34, .18));
+  animation: auth-artifact-spin 18s linear infinite;
+}
+
+.auth-artifact-book { top: 19%; left: 18%; animation-delay: -.7s; }
+.auth-artifact-headset { top: 13%; left: 53%; animation-delay: -2.3s; }
+.auth-artifact-gamepad { top: 25%; left: 75%; animation-delay: -1.4s; }
+.auth-artifact-mask { top: 32%; left: 91%; animation-delay: -3.2s; }
+.auth-artifact-code { top: 30%; left: 10%; animation-delay: -4s; }
+.auth-artifact-code .auth-artifact-glyph { color: #087b5a; font-size: clamp(12px, 1.8vw, 18px); font-weight: 900; }
+
+@keyframes auth-photo-life {
+  from { transform: scale(1.005) translateY(0); }
+  to { transform: scale(1.022) translateY(-.35%); }
+}
+
+@keyframes auth-globe-revolution {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+@keyframes auth-globe-surface {
+  from { transform: translateX(-4%) scaleX(.92); }
+  to { transform: translateX(4%) scaleX(1.06); }
+}
+
+@keyframes auth-artifact-orbit {
+  0%, 100% { translate: 0 0; }
+  12.5% { translate: 5px -5px; }
+  25% { translate: 7px 0; }
+  37.5% { translate: 5px 5px; }
+  50% { translate: 0 7px; }
+  62.5% { translate: -5px 5px; }
+  75% { translate: -7px 0; }
+  87.5% { translate: -5px -5px; }
+}
+
+@keyframes auth-artifact-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="login"] .auth-scene-photo,
+  .auth-globe-spin,
+  .auth-globe-longitudes,
+  .auth-globe-land,
+  .auth-artifact,
+  .auth-artifact-glyph,
+  .auth-laptop-screen-glow,
+  .auth-laptop-pointer {
+    animation: none;
+  }
+}
+
 body[data-page="login"] #main > .modern-auth-page > .auth-layer-guide {
   display: block;
   grid-column: 1 / -1;
