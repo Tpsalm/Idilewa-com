@@ -7976,13 +7976,13 @@ body[data-page="coding"] {
   color: #214c38;
   background: #f5f7ef;
 }
-body[data-page="coding"] #site-header,
+body[data-page="coding"] #site-header { display: block; }
 body[data-page="coding"] #mobile-nav { display: none; }
-body[data-page="coding"] .main-content { min-height: 100svh; padding: 0; }
+body[data-page="coding"] .main-content { min-height: calc(100svh - 67px); padding: 0; }
 body[data-page="coding"] .coding-page.ide-fullscreen-page.ide-page-root {
   width: 100%;
   max-width: none;
-  min-height: 100svh;
+  min-height: calc(100svh - 67px);
   margin: 0;
   padding: 0;
   background: #f5f7ef;
@@ -8000,7 +8000,7 @@ body[data-page="coding"] .ide-workbench-shell {
   grid-template-columns: 88px minmax(0, 1fr) 286px;
   grid-template-rows: 64px minmax(0, 1fr);
   width: 100%;
-  height: 100svh;
+  height: calc(100svh - 67px);
   min-height: 620px;
   overflow: hidden;
   border: 0;
@@ -8599,7 +8599,7 @@ body[data-page="coding"] .ide-statusbar { color: #fff; background: #268653; }
     grid-template-columns: 72px minmax(0, 1fr);
     grid-template-rows: 58px minmax(680px, 1fr) auto;
     height: auto;
-    min-height: 100svh;
+    min-height: calc(100svh - 67px);
     overflow: visible;
   }
   body[data-page="coding"] .ide-app-topbar { grid-template-columns: minmax(145px, .7fr) auto minmax(120px, .5fr); gap: 8px; padding: 0 12px; }
@@ -8609,6 +8609,11 @@ body[data-page="coding"] .ide-statusbar { color: #fff; background: #268653; }
   body[data-page="coding"] .ide-nav-illustration { display: none; }
   body[data-page="coding"] .ide-workbench-shell:has(.ide-sidebar-extensions) { grid-template-columns: 230px minmax(0, 1fr); }
   body[data-page="coding"] .ide-explorer-sidebar.ide-sidebar-extensions { width: auto; }
+}
+@media (max-width: 800px) {
+  body[data-page="coding"] .main-content,
+  body[data-page="coding"] .coding-page.ide-fullscreen-page.ide-page-root { min-height: calc(100svh - 63px); }
+  body[data-page="coding"] .ide-workbench-shell { min-height: calc(100svh - 63px); }
 }
 @media (max-width: 700px) {
   body[data-page="coding"] .ide-workbench-shell {
@@ -8675,6 +8680,11 @@ body[data-page="coding"] .ide-statusbar { color: #fff; background: #268653; }
   body[data-page="coding"] .ide-assistant-panel { min-height: 0; }
   body[data-page="coding"] .ide-buddy-art { height: 156px; }
   body[data-page="coding"] .ide-assistant-messages { min-height: 80px; }
+}
+@media (max-width: 560px) {
+  body[data-page="coding"] .main-content,
+  body[data-page="coding"] .coding-page.ide-fullscreen-page.ide-page-root { min-height: calc(100svh - 59px); }
+  body[data-page="coding"] .ide-workbench-shell { min-height: calc(100svh - 59px); }
 }
 @media (prefers-reduced-motion: reduce) {
   body[data-page="coding"] .ide-nav-item,
