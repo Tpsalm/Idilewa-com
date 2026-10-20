@@ -3776,7 +3776,6 @@ import {
         renderIdeAssistant() +
         '</div>' +
       '</section>' +
-      renderFooter() +
     '</div>';
   }
 
