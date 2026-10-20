@@ -3620,7 +3620,6 @@ import {
       <a class="ide-nav-item" href="#/oral">${icon('book', 18)}<span>Library</span></a>
       <a class="ide-nav-item" href="#/ere_game">${icon('gamepad', 18)}<span>Games</span></a>
       <a class="ide-nav-item" href="#/profile">${icon('user', 18)}<span>Profile</span></a>
-      <button type="button" class="ide-nav-item ide-nav-tools" data-action="ide-sidebar-mode" data-mode="extensions">${icon('grid', 18)}<span>Tools</span></button>
     </nav>
     <figure class="ide-nav-illustration">
       <img src="./assets/code-kids.jpg" alt="Two children learning to code together" />
@@ -3631,13 +3630,18 @@ import {
   function renderIdeAssistant() {
     const messages = state.coding.ideAssistantMessages || [];
     return `<aside class="ide-assistant-panel" aria-label="Code Buddy">
-      <div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Buddy</span><small>READY TO HELP</small></div>
-      <div class="ide-assistant-robot"><div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Interactive Idilewa coding buddy"><div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div><div class="code-robot-glyph-fallback" aria-hidden="true"><span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span></div><div class="code-robot-message" aria-hidden="true">Great job!</div><div class="code-robot-xp" aria-hidden="true">★ +${state.coding.ideXp || 10} XP</div></div></div>
+      <div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Buddy</span><span class="ide-buddy-online">● Ready to help</span></div>
+      <div class="ide-buddy-welcome"><p>Great job!</p><span>You’re learning new things every time you code.</span></div>
       <div class="ide-assistant-notice"><strong>Need help?</strong><span>Try one step at a time:</span><ul><li>Press Run to see what your code does.</li><li>Keep your code simple.</li><li>Check for spelling mistakes.</li><li>Run your code to see the result.</li></ul></div>
-      <div class="ide-assistant-actions"><button type="button" data-action="ide-assistant-analyze">${icon('search', 14)} Check my code</button><button type="button" data-action="ide-assistant-fix">${icon('sparkles', 14)} Fix safe syntax</button></div>
+      <div class="ide-assistant-actions">
+        <button type="button" data-action="ide-load-sample">${icon('code', 14)} Show me a sample code</button>
+        <button type="button" data-action="ide-explain-code">${icon('book', 14)} Explain this code</button>
+        <button type="button" data-action="ide-next-challenge">${icon('star', 14)} Give me a new challenge</button>
+      </div>
       <p class="ide-assistant-privacy">Code checks happen on this device; no hosted AI service is connected.</p>
       <div class="ide-assistant-messages" id="ide-assistant-messages" aria-live="polite">${messages.length ? messages.map((message) => `<article class="ide-chat-message is-${message.role}"><small>${message.role === 'user' ? 'You' : 'Code Buddy'}</small><p>${esc(message.text)}</p></article>`).join('') : '<article class="ide-chat-message is-assistant"><small>Code Buddy</small><p>Ask about your code or check it for missing brackets and quotes.</p></article>'}</div>
       <form class="ide-assistant-form" data-form="ide-assistant"><textarea name="question" id="ide-assistant-question" rows="3" maxlength="600" placeholder="Ask about this code…"></textarea><button type="submit" aria-label="Send question">${icon('arrow', 15)}</button></form>
+      <div class="ide-keep-going"><span aria-hidden="true">✿</span><div><strong>Keep Going!</strong><small>Every line you write is a new idea taking shape.</small></div></div>
     </aside>`;
   }
 
@@ -3782,14 +3786,14 @@ import {
               IDE_LOCAL_LANGUAGES.slice(0, 4).map((language) => '<button type="button" class="ide-language-chip ' + (language.id === ideLang ? 'is-active' : '') + '" data-action="ide-set-lang" data-lang="' + language.id + '" aria-pressed="' + (language.id === ideLang) + '">' + esc(language.name) + '</button>').join('') +
               '<button type="button" class="ide-language-chip ide-python-chip ' + (ideLang === 'python' ? 'is-active' : '') + '" data-action="ide-set-lang" data-lang="python" aria-pressed="' + (ideLang === 'python') + '">Python</button>' +
             '</nav>' +
-            '<div class="ide-topbar-account"><span class="ide-maker-points">' + icon('star', 14) + ' ' + (flow.ideXp || 10) + ' XP</span><a href="#/profile" aria-label="Open your profile"><span class="ide-avatar-mark">I</span><span>Profile</span></a></div>' +
+            '<div class="ide-topbar-account"><div class="ide-level-progress"><span>Level 1</span><meter min="0" max="100" value="' + Math.min(100, (flow.ideXp || 10) * 2) + '">Level progress</meter></div><span class="ide-maker-points">' + icon('star', 14) + ' ' + (flow.ideXp || 10) + ' XP</span><a href="#/profile" aria-label="Open your profile"><span class="ide-avatar-mark">I</span></a></div>' +
           '</header>' +
           '<aside class="ide-explorer-sidebar ' + (sidebarMode === 'extensions' ? 'ide-sidebar-extensions' : '') + '" aria-label="Learning navigation">' + renderIdeSidebar(currentPreset) + '</aside>' +
           '<div class="ide-main-column">' +
             '<section class="ide-learning-heading"><div><span class="ide-heading-eyebrow">INTERACTIVE BILINGUAL STUDIO</span><h1 id="ide-title">My Code</h1><p>Write, run and see your ideas come to life!</p></div><span class="ide-heading-level">' + icon('sparkles', 15) + ' Beginner</span></section>' +
 
         '<div class="c4k-ide-workspace">' +
-          '<div class="ide-lesson-banner"><div><span>LESSON 1</span><strong>' + esc(currentPreset.title) + '</strong><small>Let’s write your first idea and watch it appear on the screen.</small></div><span class="ide-lesson-tag">Beginner</span></div>' +
+          '<div class="ide-lesson-banner"><span class="ide-lesson-icon">' + icon('sparkles', 21) + '</span><div><span>LESSON 1</span><strong>' + esc(currentPreset.title) + '</strong><small>Let’s write your first idea and watch it appear on the screen.</small></div><span class="ide-lesson-tag">Beginner · ★</span></div>' +
           '<div class="c4k-ide-toolbar">' +
             '<div class="c4k-ide-lang-selector">' +
               '<label class="toolbar-label" for="ide-language-select">Programming language:</label>' +
@@ -3824,7 +3828,7 @@ import {
           '</div>' +
 
           '<!-- Split: Code Area (Left) & Output Area (Right) -->' +
-          '<div class="c4k-ide-split" style="--ide-output-height:' + outputHeight + 'px">' +
+          '<div class="c4k-ide-split">' +
             '<!-- Left: Code Area (Editor) -->' +
             '<div class="c4k-ide-editor-pane">' +
               '<div class="pane-header">' +
@@ -3837,7 +3841,10 @@ import {
                     icon('play', 14) + ' <span>Run My Code</span>' +
                   '</button>' +
                   '<button type="button" class="btn-ide-secondary" data-action="ide-reset-code" title="Reset Code">' +
-                    icon('refresh', 14) + ' <span>Tún Bẹ̀rẹ̀</span>' +
+                    icon('play', 14) + ' <span>Try it!</span>' +
+                  '</button>' +
+                  '<button type="button" class="btn-ide-secondary" data-action="ide-save-code" title="Save code on this device">' +
+                    icon('check', 14) + ' <span>Save</span>' +
                   '</button>' +
                   '<button type="button" class="btn-ide-secondary" data-action="ide-copy-code" title="Copy Code">' +
                     icon('check', 14) + ' <span>Ṣe Àdàkọ</span>' +
@@ -3866,17 +3873,17 @@ import {
               '<div class="pane-header">' +
                 '<div class="output-tab-switcher">' +
                   '<button type="button" class="output-tab ' + (flow.ideTab === 'terminal' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="terminal">' +
-                    '💻 Àbájáde Terminal (Console)' +
+                    'Output' +
                   '</button>' +
                   '<button type="button" class="output-tab ' + (flow.ideTab === 'preview' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="preview">' +
-                    '🖥️ Preview' +
+                    'Preview' +
                   '</button>' +
                   '<button type="button" class="output-tab ' + (flow.ideTab === 'canvas' ? 'active' : '') + '" data-action="ide-switch-tab" data-tab="canvas">' +
-                    '🎨 Ìbòjú Àwòrán (Canvas)' +
+                    'Canvas' +
                   '</button>' +
                 '</div>' +
                 '<button type="button" class="btn-ide-clear" data-action="ide-clear-output" title="Clear output">' +
-                  'Nu Iboju' +
+                  'Clear' +
                 '</button>' +
               '</div>' +
 
@@ -3889,12 +3896,15 @@ import {
                     '<span class="status-xp" id="ide-status-xp">+' + (flow.ideXp || 10) + ' Maker XP</span>' +
                   '</div>' +
                   '<pre class="terminal-logs" id="ide-terminal-logs">' + esc(initialOutput) + '</pre>' +
-                  '<div class="ide-translation-tools" aria-label="Translate console output">' +
-                    '<label for="ide-output-language">Translate output to</label>' +
+                  '<div class="ide-translation-tools" aria-label="Translate output into African languages">' +
+                    '<label>Translations output in other African languages</label>' +
+                    '<div class="ide-translation-language-chips">' +
+                      [['yo', 'Yorùbá'], ['ha', 'Hausa'], ['ig', 'Igbo'], ['sw', 'Swahili'], ['pcm', 'Pidgin']].map(([code, label]) => '<button type="button" class="ide-translation-chip" data-action="ide-translate-to" data-language="' + code + '">' + label + '</button>').join('') +
+                    '</div>' +
                     '<select id="ide-output-language" aria-label="Output language"><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="sw">Swahili</option></select>' +
                     '<button type="button" class="button button-small button-outline" data-action="translate-ide-output">Translate</button>' +
                     '<button type="button" class="button button-small button-outline" data-action="speak-ide-output">Say result</button>' +
-                    '<p id="ide-output-translation" class="ide-translation-result" aria-live="polite"></p>' +
+                    '<p id="ide-output-translation" class="ide-translation-result" aria-live="polite">Choose a language to translate the output.</p>' +
                     '<small>Curated phrasebook matches only; unsupported sentences are not auto-translated.</small>' +
                   '</div>' +
                 '</div>' +
@@ -6892,6 +6902,27 @@ import {
       case 'ide-assistant-fix':
         applyIdeAssistantFix();
         break;
+      case 'ide-explain-code': {
+        const explainer = document.getElementById('ide-explainer-box');
+        explainer?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        showToast('The lesson breakdown below the output explains this sample.');
+        break;
+      }
+      case 'ide-next-challenge': {
+        const selector = document.querySelector('[data-action="ide-select-preset"]');
+        if (!selector || selector.options.length < 2) {
+          showToast('There are no more challenges for this language yet.');
+          break;
+        }
+        selector.selectedIndex = (selector.selectedIndex + 1) % selector.options.length;
+        handleAction('ide-select-preset', selector);
+        break;
+      }
+      case 'ide-save-code':
+        state.coding.ideCode = document.getElementById('ide-code-input')?.value ?? state.coding.ideCode ?? '';
+        saveState();
+        showToast('Your code is saved on this device.', 'success');
+        break;
       case 'ide-select-preset': {
         const presetId = el.value;
         state.coding.idePresetId = presetId;
@@ -7002,7 +7033,8 @@ import {
         });
         break;
       }
-      case 'ide-reset-code': {
+      case 'ide-reset-code':
+      case 'ide-load-sample': {
         const lang = state.coding.ideLang || 'yoruba';
         const presets = getIdePresets(lang);
         const p = presets.find((item) => item.id === state.coding.idePresetId) || presets[0];
@@ -7020,7 +7052,7 @@ import {
         if (termLogs) termLogs.textContent = state.coding.ideOutput;
 
         saveState();
-        showToast('Code reset to default.');
+        showToast(action === 'ide-load-sample' ? 'Sample code loaded.' : 'Code reset to default.');
         break;
       }
       case 'ide-copy-code': {
@@ -7055,6 +7087,13 @@ import {
         }
         saveState();
         showToast('Console output cleared.');
+        break;
+      }
+      case 'ide-translate-to': {
+        const language = document.getElementById('ide-output-language');
+        if (!language || !['yo', 'ha', 'ig', 'sw', 'pcm'].includes(el.dataset.language || '')) break;
+        language.value = el.dataset.language;
+        handleAction('translate-ide-output', el);
         break;
       }
       case 'translate-ide-output': {
