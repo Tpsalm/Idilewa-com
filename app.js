@@ -3199,44 +3199,8 @@ import {
     const translated = document.getElementById('ide-output-translation');
     if (translated) translated.textContent = '';
   }
-  function renderVoiceTranslationTools() {
-    return `<section class="voice-translation-panel" aria-labelledby="voice-translate-title">
-      <div><span class="section-kicker">Listen, translate, speak</span><h2 id="voice-translate-title">Try a phrase</h2><p>Translate between supported African languages, dictate a phrase, and hear it in a Plotweaver voice.</p></div>
-      <label class="voice-translation-input-label" for="voice-translation-input">Phrase to translate</label>
-      <textarea id="voice-translation-input" rows="3" placeholder="Type a greeting or choose the microphone to dictate"></textarea>
-      <div class="voice-translation-controls">
-        <label for="voice-translation-source-language">From</label>
-        <select id="voice-translation-source-language"><option value="en">English</option></select>
-        <label for="voice-translation-language">Language</label>
-        <select id="voice-translation-language"><option value="yo">Yorùbá</option></select>
-        <button type="button" class="button button-primary" data-action="translate-voice-text">Translate</button>
-        <button type="button" class="button button-outline" data-action="speak-voice-translation">Say result</button>
-        <button type="button" class="button button-outline" data-action="start-voice-transcription">${icon('mic', 15)} Dictate</button>
-      </div>
-      <p id="voice-translation-result" class="voice-translation-result" aria-live="polite"></p>
-      <small id="voice-translation-transliteration" aria-live="polite"></small>
-      <small id="voice-translation-provider-status" aria-live="polite">Loading supported translation languages…</small>
-      <small id="voice-transcription-status" class="voice-transcription-status">Your recording is sent securely to Plotweaver for transcription.</small>
-      <small>Translation, transcription, and generated audio are processed by Plotweaver. Machine translation may miss context, idiom, or tone marks; have a fluent speaker review important text. Do not submit sensitive information.</small>
-    </section>`;
-  }
-
-  function renderSpeechGenerator() {
-    return `<section class="voice-translation-panel" aria-labelledby="speech-generator-title">
-      <div><span class="section-kicker">African-language text to speech</span><h2 id="speech-generator-title">Hear your own phrase</h2><p>Generate audio for any language currently enabled for speech on your Plotweaver account.</p></div>
-      <label class="voice-translation-input-label" for="plotweaver-speech-text">Text to speak (up to 1,000 characters)</label>
-      <textarea id="plotweaver-speech-text" rows="3" maxlength="1000" placeholder="Enter text in the language you select"></textarea>
-      <div class="voice-translation-controls">
-        <label for="plotweaver-speech-language">Speech language</label>
-        <select id="plotweaver-speech-language"><option value="yo">Yorùbá</option></select>
-        <button type="button" class="button button-primary" data-action="plotweaver-speak-text">Generate and play</button>
-      </div>
-      <small id="plotweaver-speech-status" aria-live="polite">Audio is generated on request and is not saved.</small>
-    </section>`;
-  }
-
   function renderVoiceCloneTools() {
-    return `<section class="voice-translation-panel" aria-labelledby="voice-tools-title">
+    return `<section id="voice-clone-tools" class="voice-translation-panel" aria-labelledby="voice-tools-title">
       <div><span class="section-kicker">Plotweaver voice studio</span><h2 id="voice-tools-title">Choose a voice or create one with permission</h2><p>Generated lesson speech uses the selected voice when Plotweaver supports it for your chosen language.</p></div>
       <label class="voice-translation-input-label" for="plotweaver-voice-select">Speech voice</label>
       <select id="plotweaver-voice-select" aria-describedby="plotweaver-voice-status"><option value="">Loading Plotweaver voices…</option></select>
@@ -3956,84 +3920,77 @@ import {
     });
 
     const categories = Array.from(new Set(C4K_FREE_LESSONS.map((l) => l.category)));
-    const completedCount = flow.completedLessons.length;
-    const progressPercent = Math.round((completedCount / C4K_FREE_LESSONS.length) * 100);
 
     return '<div class="container route-page curriculum-page c4k-redesigned-page">' +
-      '<section class="curriculum-dashboard" aria-labelledby="curriculum-dashboard-title">' +
-        '<header class="curriculum-welcome-banner">' +
-          '<div class="curriculum-welcome-copy">' +
-            '<span class="curriculum-welcome-kicker">IDÍLẸ́WÀ · LEARN TOGETHER</span>' +
-            '<h1 id="curriculum-dashboard-title">Your Learning Curriculum</h1>' +
-            '<p>Explore powerful tools to listen, speak, create and connect in any language. You can do it!</p>' +
+      '<div class="breadcrumbs">' +
+        routeLink('index', 'Home') + '<span>/</span><strong>Curriculum</strong>' +
+      '</div>' +
+
+      '<!-- Curriculum learning hero artwork -->' +
+      '<section class="c4k-3d-hero-stage scroll-3d-reveal" id="code-hero-stage">' +
+        '<figure class="c4k-curriculum-photo">' +
+          '<img src="./assets/code-kids.jpg" alt="Two young learners working together on a coding activity on a laptop" loading="eager" />' +
+        '</figure>' +
+
+        '<div class="c4k-hero-content-wrapper">' +
+          '<div class="c4k-badge-pill">' +
+            icon('sparkles', 16) + ' <span>IDÍLẸ́WÀ CODE FOR KIDS · K-8 INDIGENOUS STEAM CURRICULUM</span>' +
           '</div>' +
-          '<div class="curriculum-welcome-art">' +
-            '<img src="./assets/code-kids.jpg" alt="Two young learners exploring a coding activity together" loading="eager" />' +
-            '<span class="curriculum-welcome-sticker">Every<br />voice matters!</span>' +
+          '<h1 class="c4k-3d-main-heading">Curriculum</h1>' +
+          '<p class="c4k-3d-sub-lead">' +
+            'From Kindergarten to Grade 8 · Engaging STEAM, Algorithmic Thinking & Indigenous Language Coding for Young African Innovators.' +
+          '</p>' +
+
+          '<!-- Quick Jump Action Pills -->' +
+          '<div class="c4k-quick-pills-row">' +
+            '<button type="button" class="c4k-nav-pill active" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
+            '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
+            routeLink('coding', icon('code', 14) + ' Code IDE', 'c4k-nav-pill') +
+            routeLink('adult', icon('compass', 14) + ' Adult Learning', 'c4k-nav-pill') +
           '</div>' +
-        '</header>' +
 
-        '<div class="curriculum-tools-grid" aria-label="Language learning tools">' +
-          '<article class="curriculum-tool-card curriculum-tool-speech">' +
-            '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('volume', 20) + '</span><div><h2>Text to Speech</h2><p>Type a sentence and hear it spoken in your chosen language.</p></div></div>' +
-            '<label class="curriculum-tool-label" for="plotweaver-speech-text">Your phrase</label>' +
-            '<textarea id="plotweaver-speech-text" rows="2" maxlength="1000" placeholder="Type a phrase to hear...">Ẹ káàárọ̀, báwo ni?</textarea>' +
-            '<div class="curriculum-tool-controls"><label class="sr-only" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="yo">Yorùbá</option></select><button class="curriculum-tool-button" type="button" data-action="plotweaver-speak-text">' + icon('play', 15) + ' Listen</button></div>' +
-            '<small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small>' +
-          '</article>' +
-
-          '<article class="curriculum-tool-card curriculum-tool-clone">' +
-            '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('music', 20) + '</span><div><h2>Voice Cloning</h2><p>Create your own voice or clone a familiar voice with permission.</p></div></div>' +
-            '<ol class="curriculum-clone-steps"><li><span>1</span>Record</li><li><span>2</span>Train</li><li><span>3</span>Use</li></ol>' +
-            '<p class="curriculum-tool-note">Only use a voice you own or have clear permission to use.</p>' +
-            routeLink('trainer', icon('mic', 15) + ' Start Recording', 'curriculum-tool-button curriculum-tool-button-wide') +
-          '</article>' +
-
-          '<article class="curriculum-tool-card curriculum-tool-transcribe">' +
-            '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('mic', 20) + '</span><div><h2>Speech to Text</h2><p>Speak into your microphone and see your words written down.</p></div></div>' +
-            '<div class="curriculum-transcribe-preview"><span class="curriculum-sound-mark" aria-hidden="true">▮ ▮ ▮ ▮ ▮</span><span>I love learning!</span></div>' +
-            '<p class="curriculum-tool-note">Choose your language and practise speaking clearly.</p>' +
-            routeLink('trainer', icon('mic', 15) + ' Start Speaking', 'curriculum-tool-button curriculum-tool-button-wide') +
-          '</article>' +
-
-          '<article class="curriculum-tool-card curriculum-tool-translate">' +
-            '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('globe', 20) + '</span><div><h2>Translation</h2><p>Translate between supported languages and hear the result.</p></div></div>' +
-            '<label class="curriculum-tool-label" for="voice-translation-input">Your phrase</label>' +
-            '<textarea id="voice-translation-input" rows="2" placeholder="Type a phrase to translate">Hello!</textarea>' +
-            '<div class="curriculum-translation-languages"><label><span>From</span><select id="voice-translation-source-language"><option value="en">English</option></select></label><span aria-hidden="true">→</span><label><span>To</span><select id="voice-translation-language"><option value="yo">Yorùbá</option></select></label></div>' +
-            '<button class="curriculum-tool-button curriculum-tool-button-wide" type="button" data-action="translate-voice-text">' + icon('globe', 15) + ' Translate</button>' +
-            '<p id="voice-translation-result" class="curriculum-translation-result" aria-live="polite"></p>' +
-            '<small id="voice-translation-transliteration" aria-live="polite"></small><small id="voice-translation-provider-status" class="curriculum-tool-status" aria-live="polite">Loading supported languages…</small>' +
-          '</article>' +
-        '</div>' +
-
-        '<div class="curriculum-dashboard-bottom">' +
-          '<section class="curriculum-picker-card" aria-labelledby="curriculum-picker-title">' +
-            '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon">' + icon('globe', 18) + '</span><div><h2 id="curriculum-picker-title">Choose Your Language</h2><p>Pick a language to explore and learn.</p></div></div>' +
-              '<div class="curriculum-language-options">' +
-                [['yoruba', 'Yorùbá'], ['igbo', 'Igbo'], ['hausa', 'Hausa'], ['swahili', 'Kiswahili']].map(([id, name]) => '<button type="button" class="curriculum-language-option ' + (flow.helperLanguage === id ? 'is-active' : '') + '" data-action="curriculum-select-language" data-language="' + id + '">' + name + '</button>').join('') +
+          '<!-- 3 Interactive Grade Band 3D Hub Cards -->' +
+          '<div class="c4k-3d-cards-grid" id="curriculum-bands">' +
+            '<div class="c4k-3d-hub-card card-k2" data-action="coding-jump-band" data-band="Lower-Elementary">' +
+              '<div class="c4k-card-3d-inner">' +
+                '<div class="c4k-hub-icon">🌱</div>' +
+                '<div class="c4k-hub-text">' +
+                  '<h3>Lower Elementary</h3>' +
+                  '<p class="c4k-grade-tag">Kindergarten – Grade 2</p>' +
+                  '<p class="c4k-desc">Visual Block Patterns, Unplugged Logic & African Cultural STEAM Storytelling.</p>' +
+                '</div>' +
+                '<div class="c4k-card-cta"><span>Explore Grades K–2</span> ' + icon('arrow-right', 14) + '</div>' +
               '</div>' +
             '</div>' +
-            '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon curriculum-picker-icon-warm">' + icon('layers', 18) + '</span><div><h2>Subjects &amp; Grades</h2><p>Choose a grade to jump into your curriculum.</p></div></div>' +
-              '<div class="curriculum-grade-options">' +
-                [['Kindergarten', 'Lower-Elementary'], ['Grade 1', 'Lower-Elementary'], ['Grade 2', 'Lower-Elementary'], ['Grade 3', 'Upper-Elementary'], ['Grade 4', 'Upper-Elementary'], ['Grade 5', 'Upper-Elementary'], ['Grade 6', 'Middle-School'], ['Grade 7', 'Middle-School'], ['Grade 8', 'Middle-School']].map(([name, band]) => '<button type="button" class="curriculum-grade-option" data-action="coding-jump-band" data-band="' + band + '">' + esc(name) + '</button>').join('') +
+
+            '<div class="c4k-3d-hub-card card-g35" data-action="coding-jump-band" data-band="Upper-Elementary">' +
+              '<div class="c4k-card-3d-inner">' +
+                '<div class="c4k-hub-icon">🌿</div>' +
+                '<div class="c4k-hub-text">' +
+                  '<h3>Upper Elementary</h3>' +
+                  '<p class="c4k-grade-tag">Grade 3 to 5</p>' +
+                  '<p class="c4k-desc">Algorithmic Decision Trees, Turtle Canvas Geometry & Yoruba Logic Syntax.</p>' +
+                '</div>' +
+                '<div class="c4k-card-cta"><span>Explore Grades 3–5</span> ' + icon('arrow-right', 14) + '</div>' +
               '</div>' +
             '</div>' +
-          '</section>' +
 
-          '<aside class="curriculum-path-card" aria-labelledby="curriculum-path-title">' +
-            '<div class="curriculum-path-heading"><span>' + icon('sparkles', 17) + '</span><div><h2 id="curriculum-path-title">My Learning Path</h2><small>Step by step</small></div></div>' +
-            '<div class="curriculum-progress-copy"><strong>' + completedCount + ' of ' + C4K_FREE_LESSONS.length + ' lessons</strong><span>' + progressPercent + '% complete</span></div>' +
-            '<div class="curriculum-progress-track" role="progressbar" aria-label="Curriculum lesson progress" aria-valuemin="0" aria-valuemax="' + C4K_FREE_LESSONS.length + '" aria-valuenow="' + completedCount + '"><span style="width:' + progressPercent + '%"></span></div>' +
-            '<ol class="curriculum-path-steps"><li class="is-complete"><span>' + icon('check', 12) + '</span>Choose your language</li><li><span>2</span>Text to Speech</li><li><span>3</span>Voice Cloning</li><li><span>4</span>Speech to Text</li><li><span>5</span>Translation</li></ol>' +
-            '<button type="button" class="curriculum-path-link" data-action="coding-jump-band" data-band="Lower-Elementary">Start learning ' + icon('arrow', 14) + '</button>' +
-          '</aside>' +
+            '<div class="c4k-3d-hub-card card-g68" data-action="coding-jump-band" data-band="Middle-School">' +
+              '<div class="c4k-card-3d-inner">' +
+                '<div class="c4k-hub-icon">🚀</div>' +
+                '<div class="c4k-hub-text">' +
+                  '<h3>Middle School</h3>' +
+                  '<p class="c4k-grade-tag">Grade 6 to 8</p>' +
+                  '<p class="c4k-desc">Full Syntax Programming, Indigenous Functions, Physical Computing & Web.</p>' +
+                '</div>' +
+                '<div class="c4k-card-cta"><span>Explore Grades 6–8</span> ' + icon('arrow-right', 14) + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
-
-        '<div class="curriculum-progress-banner"><img src="./assets/code-reference-children.png" alt="" loading="lazy" /><div><h2>Small steps. Big progress!</h2><p>Learn · Practise · Share · Explore the world</p></div></div>' +
       '</section>' +
 
-      '<!-- Lower Elementary (K-2) -->' +
+      '<!-- 2. Section: Lower Elementary (K-2) -->' +
       '<section id="Lower-Elementary" class="section-foundation-phase c4k-band-section scroll-3d-reveal">' +
         '<div class="section-container">' +
           '<div class="container-vertical align-center">' +
@@ -4169,6 +4126,101 @@ import {
         '</div>' +
       '</div>' +
     '</div>';
+  }
+
+  function renderVoiceLessonsDashboard() {
+    const completedCount = Object.keys(state.trainer.completed || {}).length;
+    const progressPercent = Math.round((completedCount / 60) * 100);
+    const languages = [
+      ['yoruba', 'Yorùbá'],
+      ['igbo', 'Igbo'],
+      ['hausa', 'Hausa'],
+      ['swahili', 'Kiswahili']
+    ];
+    const grades = [
+      ['Kindergarten', 'beginner'],
+      ['Grade 1', 'beginner'],
+      ['Grade 2', 'beginner'],
+      ['Grade 3', 'intermediate'],
+      ['Grade 4', 'intermediate'],
+      ['Grade 5', 'intermediate'],
+      ['Grade 6', 'advanced'],
+      ['Grade 7', 'advanced'],
+      ['Grade 8', 'advanced']
+    ];
+
+    return '<section class="curriculum-dashboard" aria-labelledby="curriculum-dashboard-title">' +
+      '<header class="curriculum-welcome-banner">' +
+        '<div class="curriculum-welcome-copy">' +
+          '<span class="curriculum-welcome-kicker">IDÍLẸ́WÀ · LEARN TOGETHER</span>' +
+          '<h1 id="curriculum-dashboard-title">Your Learning Curriculum</h1>' +
+          '<p>Explore powerful tools to listen, speak, create and connect in any language. You can do it!</p>' +
+        '</div>' +
+        '<div class="curriculum-welcome-art">' +
+          '<img src="./assets/code-kids.jpg" alt="Two young learners exploring a coding activity together" loading="eager" />' +
+          '<span class="curriculum-welcome-sticker">Every<br />voice matters!</span>' +
+        '</div>' +
+      '</header>' +
+
+      '<div class="curriculum-tools-grid" aria-label="Language learning tools">' +
+        '<article class="curriculum-tool-card curriculum-tool-speech">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('volume', 20) + '</span><div><h2>Text to Speech</h2><p>Type a sentence and hear it spoken in your chosen language.</p></div></div>' +
+          '<label class="curriculum-tool-label" for="plotweaver-speech-text">Your phrase</label>' +
+          '<textarea id="plotweaver-speech-text" rows="2" maxlength="1000" placeholder="Type a phrase to hear...">Ẹ káàárọ̀, báwo ni?</textarea>' +
+          '<div class="curriculum-tool-controls"><label class="sr-only" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="yo">Yorùbá</option></select><button class="curriculum-tool-button" type="button" data-action="plotweaver-speak-text">' + icon('play', 15) + ' Listen</button></div>' +
+          '<small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small>' +
+        '</article>' +
+
+        '<article class="curriculum-tool-card curriculum-tool-clone">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('music', 20) + '</span><div><h2>Voice Cloning</h2><p>Create your own voice or clone a familiar voice with permission.</p></div></div>' +
+          '<ol class="curriculum-clone-steps"><li><span>1</span>Record</li><li><span>2</span>Train</li><li><span>3</span>Use</li></ol>' +
+          '<p class="curriculum-tool-note">Only use a voice you own or have clear permission to use.</p>' +
+          '<button class="curriculum-tool-button curriculum-tool-button-wide" type="button" data-action="voice-lessons-jump" data-target="voice-clone-tools">' + icon('mic', 15) + ' Start Recording</button>' +
+        '</article>' +
+
+        '<article class="curriculum-tool-card curriculum-tool-transcribe">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('mic', 20) + '</span><div><h2>Speech to Text</h2><p>Speak into your microphone and see your words written down.</p></div></div>' +
+          '<div class="curriculum-transcribe-preview"><span class="curriculum-sound-mark" aria-hidden="true">▮ ▮ ▮ ▮ ▮</span><span>I love learning!</span></div>' +
+          '<p class="curriculum-tool-note">Choose your language and practise speaking clearly.</p>' +
+          '<button class="curriculum-tool-button curriculum-tool-button-wide" type="button" data-action="voice-lessons-jump" data-target="trainerStudio">' + icon('mic', 15) + ' Start Speaking</button>' +
+        '</article>' +
+
+        '<article class="curriculum-tool-card curriculum-tool-translate">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('globe', 20) + '</span><div><h2>Translation</h2><p>Translate between supported languages and hear the result.</p></div></div>' +
+          '<label class="curriculum-tool-label" for="voice-translation-input">Your phrase</label>' +
+          '<textarea id="voice-translation-input" rows="2" placeholder="Type a phrase to translate">Hello!</textarea>' +
+          '<div class="curriculum-translation-languages"><label><span>From</span><select id="voice-translation-source-language"><option value="en">English</option></select></label><span aria-hidden="true">→</span><label><span>To</span><select id="voice-translation-language"><option value="yo">Yorùbá</option></select></label></div>' +
+          '<button class="curriculum-tool-button curriculum-tool-button-wide" type="button" data-action="translate-voice-text">' + icon('globe', 15) + ' Translate</button>' +
+          '<p id="voice-translation-result" class="curriculum-translation-result" aria-live="polite"></p>' +
+          '<small id="voice-translation-transliteration" aria-live="polite"></small><small id="voice-translation-provider-status" class="curriculum-tool-status" aria-live="polite">Loading supported languages…</small>' +
+        '</article>' +
+      '</div>' +
+
+      '<div class="curriculum-dashboard-bottom">' +
+        '<section class="curriculum-picker-card" aria-labelledby="curriculum-picker-title">' +
+          '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon">' + icon('globe', 18) + '</span><div><h2 id="curriculum-picker-title">Choose Your Language</h2><p>Pick a language to explore and learn.</p></div></div>' +
+            '<div class="curriculum-language-options">' +
+              languages.map(([id, name]) => '<button type="button" class="curriculum-language-option ' + (state.trainer.lang === id ? 'is-active' : '') + '" data-action="voice-select-language" data-language="' + id + '">' + name + '</button>').join('') +
+            '</div>' +
+          '</div>' +
+          '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon curriculum-picker-icon-warm">' + icon('layers', 18) + '</span><div><h2>Subjects &amp; Grades</h2><p>Choose a grade to jump into your curriculum.</p></div></div>' +
+            '<div class="curriculum-grade-options">' +
+              grades.map(([name, level]) => '<button type="button" class="curriculum-grade-option" data-action="trainer-set-level" data-level="' + level + '">' + name + '</button>').join('') +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+
+        '<aside class="curriculum-path-card" aria-labelledby="curriculum-path-title">' +
+          '<div class="curriculum-path-heading"><span>' + icon('sparkles', 17) + '</span><div><h2 id="curriculum-path-title">My Learning Path</h2><small>Step by step</small></div></div>' +
+          '<div class="curriculum-progress-copy"><strong>' + completedCount + ' of 60 lessons</strong><span>' + progressPercent + '% complete</span></div>' +
+          '<div class="curriculum-progress-track" role="progressbar" aria-label="Voice lesson progress" aria-valuemin="0" aria-valuemax="60" aria-valuenow="' + completedCount + '"><span style="width:' + progressPercent + '%"></span></div>' +
+          '<ol class="curriculum-path-steps"><li class="is-complete"><span>' + icon('check', 12) + '</span>Choose your language</li><li><span>2</span>Text to Speech</li><li><span>3</span>Voice Cloning</li><li><span>4</span>Speech to Text</li><li><span>5</span>Translation</li></ol>' +
+          '<button type="button" class="curriculum-path-link" data-action="voice-lessons-jump" data-target="trainerStudio">Start learning ' + icon('arrow', 14) + '</button>' +
+        '</aside>' +
+      '</div>' +
+
+      '<div class="curriculum-progress-banner"><img src="./assets/code-reference-children.png" alt="" loading="lazy" /><div><h2>Small steps. Big progress!</h2><p>Learn · Practise · Share · Explore the world</p></div></div>' +
+    '</section>';
   }
 
   function renderStories() {
@@ -5233,6 +5285,7 @@ import {
         : 96;
 
       return `<div class="container route-page trainer-page">
+                ${renderVoiceLessonsDashboard()}
                 <section class="voice-foundations" aria-labelledby="voice-foundations-title">
                   <div class="section-heading">
                     <div><span class="section-kicker">Start here · Yorùbá sound foundations</span><h2 id="voice-foundations-title">Vowels, consonants &amp; tone</h2><p>Learn the mouth sounds before moving into words and conversation. Choose a sound to hear Plotweaver pronounce it.</p></div>
@@ -5242,8 +5295,6 @@ import {
                     <article class="voice-foundation-block"><h3>Consonants</h3><p>Notice sounds such as Yorùbá <strong>gb</strong> and <strong>ṣ</strong>, which differ from English.</p><div class="voice-sound-list">${CONSONANTS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.desc)}">${esc(item.char)} <small>${esc(item.sound)}</small></button>`).join('')}</div></article>
                     <article class="voice-foundation-block"><h3>Nasal vowels &amp; vowel pairs</h3><p>Let nasal vowels resonate gently. Adjacent vowels are usually pronounced distinctly across syllables, not forced into English-style glides.</p><div class="voice-sound-list">${NASAL_VOWELS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.sound)}">${esc(item.char)} <small>${esc(item.sound)}</small></button>`).join('')}</div><div class="voice-diphthong-note"><strong>Listen for vowel sequences</strong><button type="button" data-action="speak-voice-lesson" data-phrase="A. I. E. O. U.">a · i · e · o · u</button><small>Keep each vowel clear when two meet; local pronunciation can vary by word and speaker.</small></div></article>
                   </div>
-                  ${renderVoiceTranslationTools()}
-                  ${renderSpeechGenerator()}
                   ${renderVoiceCloneTools()}
                 </section>
         <div class="breadcrumbs">
@@ -6570,10 +6621,6 @@ import {
       initializePlotweaverVoiceTools();
       initializeTranslationLanguages('voice-translation-source-language');
       initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
-    } else if (page === 'curriculum') {
-      initializePlotweaverVoiceTools();
-      initializeTranslationLanguages('voice-translation-source-language');
-      initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
     } else if (page === 'ere' || page === 'oral') {
       const storyCanvas = document.getElementById('story3DCanvasWrap');
       if (storyCanvas) init3DStoryCanvas(storyCanvas);
@@ -7652,14 +7699,19 @@ import {
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
       }
-      case 'curriculum-select-language': {
+      case 'voice-select-language': {
         const language = el.dataset.language;
-        if (!CODE_COPY[language]) break;
-        state.coding.helperLanguage = language;
+        if (!TRAINER_CURRICULUM[language]) break;
+        state.trainer.lang = language;
+        state.trainer.score = null;
+        state.trainer.analysis = null;
         saveState();
-        document.querySelectorAll('.curriculum-language-option').forEach((option) => {
-          option.classList.toggle('is-active', option === el);
-        });
+        render();
+        break;
+      }
+      case 'voice-lessons-jump': {
+        const targetId = ['voice-clone-tools', 'trainerStudio'].includes(el.dataset.target) ? el.dataset.target : 'trainerStudio';
+        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
       }
       case 'coding-filter-band': {
