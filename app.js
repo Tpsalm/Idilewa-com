@@ -41,6 +41,9 @@ import {
   supabase,
   isSupabaseConfigured,
   getCurrentUser,
+  getRoleDashboard,
+  submitEducatorConnectionRequest,
+  withdrawEducatorConnection,
   updateUserProfile,
   signOut as signOutAccount,
   signIn as signInAccount,
@@ -79,7 +82,7 @@ import {
   const ROUTES = [
     'trainer',
     'voice_lessons',
-    'curriculum',
+    'curriculum', 'adult', 'parent_dashboard', 'educator_dashboard',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
     'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
@@ -183,6 +186,19 @@ import {
         { title: 'Lower Elementary', text: 'Visual Block Patterns & African Cultural Storytelling (K–2).', icon: 'sparkles', route: 'curriculum', tone: 'mint' },
         { title: 'Upper Elementary', text: 'Algorithmic Decision Trees & Yoruba Logic Syntax (3–5).', icon: 'layers', route: 'curriculum', tone: 'peach' },
         { title: 'Middle School', text: 'Full Indigenous Syntax, Physical Computing & Web (6–8+).', icon: 'code', route: 'coding', tone: 'blue' }
+      ]
+    },
+    adult: {
+      title: 'Adult Learning',
+      eyebrow: 'For independent adult learners',
+      desc: 'Build practical confidence in African languages, coding, robotics and creative technology at your own pace.',
+      icon: 'compass', image: 'code-kids.jpg', imageAlt: 'Learners exploring creative technology',
+      active: 1, flow: ['Choose a goal', 'Learn a concept', 'Build a project', 'Reflect and grow'],
+      cta: 'Open Code Studio', ctaRoute: 'coding',
+      cards: [
+        { title: 'Learn a language', text: 'Practice real-world listening and speaking in supported African language paths.', icon: 'volume', route: 'languages', tone: 'mint' },
+        { title: 'Build with code', text: 'Strengthen programming foundations with HTML, JavaScript, Python and project-based practice.', icon: 'code', route: 'coding', tone: 'blue' },
+        { title: 'Explore robotics', text: 'Move into sensors, microcontrollers, automation, CAD and responsible AI projects.', icon: 'compass', route: 'coding', tone: 'peach' }
       ]
     },
     coding: {
@@ -347,7 +363,8 @@ import {
     { label: 'Home', route: 'index', group: 'home' },
     { label: 'Curriculum', route: 'curriculum', group: 'curriculum' },
     { label: 'Code', route: 'coding', group: 'code' },
-    { label: 'Voice Lessons', route: 'voice_lessons', group: 'trainer' }
+    { label: 'Voice Lessons', route: 'voice_lessons', group: 'trainer' },
+    { label: 'Adult Learning', route: 'adult', group: 'adult' }
   ];
   const MENU_NAV = [...NAV,
     { label: 'Read & listen', route: 'oral', group: 'read' },
@@ -356,6 +373,7 @@ import {
   ];
 
   const NAV_GROUPS = {
+    adult: 'adult',
     curriculum: 'curriculum',
     coding: 'code',
     trainer: 'trainer', voice_lessons: 'trainer',
@@ -370,6 +388,9 @@ import {
 
   const LABELS = Object.fromEntries(ROUTES.map((r) => [r, r === 'index' ? 'Home' : r.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())]));
   LABELS.curriculum = 'Curriculum';
+  LABELS.adult = 'Adult Learning';
+  LABELS.parent_dashboard = 'Parent Dashboard';
+  LABELS.educator_dashboard = 'Educator Dashboard';
   LABELS.coding = 'Code';
   LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note';
   LABELS.owe_add = 'Share a proverb'; LABELS.owe_detail = 'Owe · translation & meaning';
@@ -611,6 +632,13 @@ import {
     if (typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  function roleHomeRoute(role) {
+    if (role === 'parent') return 'parent_dashboard';
+    if (role === 'educator') return 'educator_dashboard';
+    if (role === 'adult') return 'adult';
+    return 'index';
+  }
+
   function routeLink(route, label, cls = '', attrs = '') {
     return `<a class="${cls}" href="#/${route}" data-route="${route}" ${attrs}>${label}</a>`;
   }
@@ -620,9 +648,23 @@ import {
       document.getElementById('site-header').innerHTML = '';
       return;
     }
+    const currentUser = getCurrentUser();
+    if (currentUser?.role === 'parent' || currentUser?.role === 'educator') {
+      const dashboardRoute = currentUser.role === 'parent' ? 'parent_dashboard' : 'educator_dashboard';
+      const dashboardLabel = currentUser.role === 'parent' ? 'Family dashboard' : 'Educator dashboard';
+      document.getElementById('site-header').innerHTML = `
+        <div class="header-inner role-dashboard-header">
+          <a class="brand" href="#/${dashboardRoute}" data-route="${dashboardRoute}" aria-label="Idilewa dashboard">
+            <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">${dashboardLabel}</span></span>
+          </a>
+          <nav class="desktop-nav" aria-label="Dashboard navigation"><a class="nav-link active" href="#/${dashboardRoute}" data-route="${dashboardRoute}">${dashboardLabel}</a></nav>
+          <div class="header-actions"><button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button></div>
+        </div>`;
+      return;
+    }
     const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
     const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
-    const currentUser = getCurrentUser();
     const avatarLabel = currentUser?.name?.trim()?.charAt(0)?.toUpperCase() || 'S';
     const profileAvatar = profilePhoto
       ? `<img src="${esc(profilePhoto)}" alt="" />`
@@ -656,6 +698,11 @@ import {
   }
 
   function renderMobileNav(page) {
+    const currentUser = getCurrentUser();
+    if (currentUser?.role === 'parent' || currentUser?.role === 'educator') {
+      document.getElementById('mobile-nav').innerHTML = '';
+      return;
+    }
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
       { route: 'library', label: 'Library', ico: 'book' },
@@ -1050,7 +1097,7 @@ import {
         <div class="section-heading"><div><span class="section-kicker">One home, many journeys</span><h2>Made for the way you learn.</h2><p>Welcoming for children, useful for adults and stronger when families learn together.</p></div></div>
         <div class="audience-grid">
           <a class="audience-card audience-kids" href="#/kids" data-route="kids"><span class="audience-icon">${icon('sparkles', 21)}</span><span class="audience-kicker">For young learners</span><strong>Curiosity comes first.</strong><small>Playful lessons, stories and gentle challenges.</small>${icon('arrow', 16)}</a>
-          <a class="audience-card audience-individual" href="#/individuals" data-route="individuals"><span class="audience-icon">${icon('compass', 21)}</span><span class="audience-kicker">For independent learners</span><strong>Your roots. Your pace.</strong><small>A clear, welcoming path for curious minds.</small>${icon('arrow', 16)}</a>
+          <a class="audience-card audience-individual" href="#/adult" data-route="adult"><span class="audience-icon">${icon('compass', 21)}</span><span class="audience-kicker">For adult learners</span><strong>Your roots. Your pace.</strong><small>Languages, coding and robotics for independent learners.</small>${icon('arrow', 16)}</a>
           <a class="audience-card audience-school" href="#/schools" data-route="schools"><span class="audience-icon">${icon('school', 21)}</span><span class="audience-kicker">For schools</span><strong>Bring culture into class.</strong><small>Clear learning paths for educators.</small>${icon('arrow', 16)}</a>
         </div>
       </section>
@@ -1789,7 +1836,7 @@ import {
       id: 'Middle-School',
       bandKey: 'middle',
       title: 'Middle School',
-      range: 'Grade 6 to 8+',
+      range: 'Grade 6 to 8',
       badge: 'Ages 11–15+',
       desc: 'Transition to line-based languages (Python, JavaScript, HTML/CSS), 3D CAD modeling, cybersecurity defense, and artificial intelligence.',
       flowchart: {
@@ -3904,6 +3951,7 @@ import {
             '<button type="button" class="c4k-nav-pill active" data-action="coding-jump-band" data-band="curriculum-bands">' + icon('layers', 14) + ' K-8 Curriculum</button>' +
             '<button type="button" class="c4k-nav-pill" data-action="coding-jump-band" data-band="free-lessons">' + icon('book', 14) + ' Free STEAM Lessons (' + C4K_FREE_LESSONS.length + ')</button>' +
             routeLink('coding', icon('code', 14) + ' Code IDE', 'c4k-nav-pill') +
+            routeLink('adult', icon('compass', 14) + ' Adult Learning', 'c4k-nav-pill') +
           '</div>' +
 
           '<!-- 3 Interactive Grade Band 3D Hub Cards -->' +
@@ -3937,10 +3985,10 @@ import {
                 '<div class="c4k-hub-icon">🚀</div>' +
                 '<div class="c4k-hub-text">' +
                   '<h3>Middle School</h3>' +
-                  '<p class="c4k-grade-tag">Grade 6 to 8+</p>' +
+                  '<p class="c4k-grade-tag">Grade 6 to 8</p>' +
                   '<p class="c4k-desc">Full Syntax Programming, Indigenous Functions, Physical Computing & Web.</p>' +
                 '</div>' +
-                '<div class="c4k-card-cta"><span>Explore Grades 6–8+</span> ' + icon('arrow-right', 14) + '</div>' +
+                '<div class="c4k-card-cta"><span>Explore Grades 6–8</span> ' + icon('arrow-right', 14) + '</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -4002,7 +4050,7 @@ import {
                 '<div class="category-heading-list">' +
                   '<div class="category-heading-item">' +
                     '<span class="section-kicker">Grade Band 03 · Ages 11–14+</span>' +
-                    '<h2 class="heading-4">Middle School (Grade 6 to 8+)</h2>' +
+                    '<h2 class="heading-4">Middle School (Grade 6 to 8)</h2>' +
                   '</div>' +
                 '</div>' +
               '</div>' +
@@ -4507,13 +4555,12 @@ import {
     const isEducator = role === 'educator';
     const isParent = role === 'parent';
     const isAdult = role === 'adult';
-    const childSignupPaused = signUp && isChild;
     const authConfigured = isSupabaseConfigured && Boolean(supabase);
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
     const authLayers = [
       { title: 'Choose your learning path', text: 'Sign in to continue, or create an account to save your learning journey. Choose the learner profile that fits you.', action: '<button class="auth-layer-action" type="button" data-action="login-mode" data-mode="signup">Explore account options</button>' },
-      { title: 'Keep child accounts protected', text: 'Child registration requires parent or guardian approval. New child sign-up may be paused while approval email delivery is unavailable.', action: routeLink('consent', 'Visit the family consent center') },
+      { title: 'Keep child accounts protected', text: 'Every child account requires parent or guardian approval and an email verification code before sign-up is complete.', action: routeLink('consent', 'Visit the family consent center') },
       { title: 'Use an educator invitation', text: 'Educator and tutor accounts need a verified invitation passcode before registration can continue.', action: '<button class="auth-layer-action" type="button" data-action="auth-layer-educator">Start educator sign-up</button>' },
       { title: 'Verify when prompted', text: 'Some sign-in, recovery and account-creation flows send a short-lived code to your email. Enter it only on this page.', action: '<button class="auth-layer-action" type="button" data-action="request-password-reset">Recover your password</button>' },
       { title: 'Explore before creating an account', text: 'You can browse language lessons and learning activities without signing in. Account features require a configured sign-in service.', action: routeLink('languages', 'Browse learning languages') }
@@ -4567,7 +4614,7 @@ import {
         <div class="auth-header-block">
           <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
           <h1 class="auth-title">${passwordResetReady ? 'Choose a new password' : pendingOtpEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
-          <p class="auth-subtitle">${passwordResetReady ? 'Your email is verified. Set a new password to finish recovering your account.' : pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : childSignupPaused ? 'Child account registration is temporarily paused. Existing child accounts can still sign in.' : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
+          <p class="auth-subtitle">${passwordResetReady ? 'Your email is verified. Set a new password to finish recovering your account.' : pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
@@ -4639,14 +4686,6 @@ import {
           </button>
           <button class="text-link" type="button" data-action="cancel-auth-otp">Cancel recovery</button>
         </form>
-        ` : childSignupPaused ? `
-        <div class="auth-safe-note modern-auth-safe-note auth-signup-paused" role="status">
-          <span class="safe-note-icon">${icon('heart', 16)}</span>
-          <div>
-            <strong>Child sign-up is temporarily paused</strong>
-            <span>Guardian approval emails need a verified sender before new child accounts can be created. Existing child accounts can still sign in; adult and invited educator sign-up remain available.</span>
-          </div>
-        </div>
         ` : `
         <form class="auth-form modern-auth-form" data-form="login">
           <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
@@ -5440,8 +5479,146 @@ import {
     }
 
 
+  function renderAdultLearning() {
+    return `<div class="container route-page adult-learning-page">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Adult Learning</strong></div>
+      <section class="adult-learning-hero">
+        <span class="section-kicker">Independent learning · all experience levels</span>
+        <h1>Your next chapter,<br /><em>built at your pace.</em></h1>
+        <p>Grow your African-language confidence, learn to code, and explore practical robotics and creative technology through projects designed for adult learners.</p>
+        <div class="hero-actions">${routeLink('languages', 'Explore language paths ' + icon('arrow', 15), 'button button-primary')}${routeLink('coding', 'Open Code Studio ' + icon('code', 15), 'button button-outline')}</div>
+      </section>
+      <section class="adult-pathway-grid" aria-label="Adult learning pathways">
+        <article class="adult-pathway-card"><span class="adult-pathway-icon">${icon('volume', 24)}</span><span class="section-kicker">Language &amp; culture</span><h2>Reconnect with a language</h2><p>Build practical vocabulary, listening confidence and pronunciation through supported African-language paths.</p>${routeLink('languages', 'Choose a language ' + icon('arrow', 14), 'text-link')}</article>
+        <article class="adult-pathway-card"><span class="adult-pathway-icon">${icon('code', 24)}</span><span class="section-kicker">Programming</span><h2>Learn coding by making</h2><p>Start with web foundations, explore Python and JavaScript, then turn a small idea into a working project.</p>${routeLink('coding', 'Start coding ' + icon('arrow', 14), 'text-link')}</article>
+        <article class="adult-pathway-card"><span class="adult-pathway-icon">${icon('compass', 24)}</span><span class="section-kicker">Robotics &amp; engineering</span><h2>Build beyond the screen</h2><p>Explore circuits, microcontrollers, sensors, CAD, automation and responsible AI as advanced, adult-focused next steps.</p>${routeLink('coding', 'Explore maker tools ' + icon('arrow', 14), 'text-link')}</article>
+      </section>
+      <section class="adult-project-section"><div><span class="section-kicker">A practical progression</span><h2>Choose one small project.</h2><p>Try a learning sequence that combines the concepts you want to practice with a useful outcome.</p></div><div class="adult-project-list">
+        <article><span>01</span><div><strong>Make a personal web page</strong><small>HTML structure · CSS styling · accessible content</small></div></article>
+        <article><span>02</span><div><strong>Program a sensor response</strong><small>Input/output · conditions · a microcontroller or simulator</small></div></article>
+        <article><span>03</span><div><strong>Prototype a helpful device</strong><small>Design thinking · robotics · testing and iteration</small></div></article>
+      </div></section>
+      <p class="adult-learning-note">${icon('info', 15)} Adult projects are learning pathways, not professional certification or safety instructions for unsupervised hardware work.</p>
+    </div>`;
+  }
+
+  function renderParentDashboard() {
+    const user = getCurrentUser();
+    return `<div class="container route-page role-dashboard-page parent-dashboard-page">
+      <section class="role-dashboard-heading"><span class="section-kicker">Family learning space</span><h1>Welcome, ${esc(user?.name || 'Parent or guardian')}.</h1><p>See learning milestones for children whose guardian approval is linked to this verified account.</p></section>
+      <section class="dashboard-stat-grid" id="parent-dashboard-stats" aria-label="Family learning summary"><p class="dashboard-loading" role="status">Loading your family dashboard…</p></section>
+      <section class="dashboard-panel"><div class="section-heading compact-heading"><div><span class="section-kicker">Your family</span><h2>Children’s learning</h2><p>Only approved child accounts linked to your guardian email appear here.</p></div></div><div id="parent-dashboard-content" aria-live="polite"></div></section>
+      <section class="dashboard-panel"><div class="section-heading compact-heading"><div><span class="section-kicker">Tutor consent</span><h2>Educator connection requests</h2><p>Each request is specific to one educator. A pending request shares no learner data.</p></div></div><div id="parent-dashboard-connections"><p class="dashboard-loading" role="status">Checking for consent requests…</p></div></section>
+      <footer class="role-dashboard-footer">${icon('lock', 15)} Private family dashboard · Sign out when you finish.</footer>
+    </div>`;
+  }
+
+  function renderEducatorDashboard() {
+    const user = getCurrentUser();
+    return `<div class="container route-page role-dashboard-page educator-dashboard-page">
+      <section class="role-dashboard-heading"><span class="section-kicker">Educator workspace</span><h1>Your teaching dashboard.</h1><p>Welcome, ${esc(user?.name || 'Educator')}. Request a family’s permission before viewing any learner progress.</p></section>
+      <section class="dashboard-stat-grid" id="educator-dashboard-stats" aria-label="Teaching summary"><p class="dashboard-loading" role="status">Loading your teaching dashboard…</p></section>
+      <section class="dashboard-panel educator-request-panel"><div class="section-heading compact-heading"><div><span class="section-kicker">Start a connection</span><h2>Request parent consent</h2><p>Enter a learner’s email only when it has been shared with you by the learner or family. The parent email is retrieved from the verified guardian record.</p></div></div>
+        <form class="educator-connection-form" data-form="educator-connection-request"><label for="educator-child-email">Learner account email<input id="educator-child-email" type="email" name="childEmail" autocomplete="off" maxlength="254" required placeholder="learner@example.com" /></label><button class="button button-primary" type="submit">Email consent request ${icon('arrow', 15)}</button></form><p class="dashboard-feedback" data-connection-feedback aria-live="polite"></p>
+      </section>
+      <section class="dashboard-panel"><div class="section-heading compact-heading"><div><span class="section-kicker">Your requests</span><h2>Consent and connections</h2><p>Learner analytics become visible only after the parent approves this specific connection.</p></div></div><div id="educator-dashboard-content" aria-live="polite"></div></section>
+      <footer class="role-dashboard-footer">${icon('shield', 15)} Educator access is limited to parent-approved learners.</footer>
+    </div>`;
+  }
+
+  function formatDashboardDate(value) {
+    const date = new Date(value || '');
+    return Number.isNaN(date.getTime()) ? 'Date unavailable' : date.toLocaleDateString();
+  }
+
+  function renderMetricCard(label, value, description, tone = '') {
+    return `<article class="dashboard-metric-card ${tone}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(description)}</small></article>`;
+  }
+
+  function renderParentDashboardData(data) {
+    const children = Array.isArray(data.children) ? data.children : [];
+    const totalLessons = children.reduce((total, child) => total + child.completedLessons, 0);
+    const totalCoding = children.reduce((total, child) => total + child.codingSessions, 0);
+    const voiceScores = children.map((child) => child.averageVoiceScore).filter(Number.isFinite);
+    const averageVoice = voiceScores.length
+      ? `${Math.round(voiceScores.reduce((sum, score) => sum + score, 0) / voiceScores.length)}%`
+      : '—';
+    const stats = document.getElementById('parent-dashboard-stats');
+    const content = document.getElementById('parent-dashboard-content');
+    const requests = document.getElementById('parent-dashboard-connections');
+    if (stats) {
+      stats.innerHTML = [
+        renderMetricCard('Linked learners', children.length, 'Guardian-approved accounts'),
+        renderMetricCard('Lessons completed', totalLessons, 'Across linked children', 'is-mint'),
+        renderMetricCard('Coding sessions', totalCoding, 'Saved practice attempts', 'is-blue'),
+        renderMetricCard('Voice practice', averageVoice, 'Average score when available', 'is-peach'),
+      ].join('');
+    }
+    if (content) {
+      content.innerHTML = children.length ? `<div class="family-learner-grid">${children.map((child) => `
+        <article class="family-learner-card">
+          <div class="family-learner-card-head"><span class="family-learner-avatar">${icon('user', 20)}</span><div><span class="section-kicker">Approved learner</span><h3>${esc(child.name)}</h3></div></div>
+          <div class="family-learner-metrics"><span><strong>${child.completedLessons}</strong><small>lessons</small></span><span><strong>${child.codingSessions}</strong><small>coding sessions</small></span><span><strong>${child.voicePractices}</strong><small>voice practices</small></span></div>
+          <div class="family-learner-note"><span>${child.points} points</span><span>${child.streak} day streak</span>${child.averageVoiceScore === null ? '' : `<span>${child.averageVoiceScore}% voice average</span>`}</div>
+          <div class="family-activity-list"><strong>Recent learning</strong>${child.recentActivity.length ? child.recentActivity.map((item) => `<div><span>${esc(item.lessonType)} · ${esc(item.lessonId)}</span><small>${formatDashboardDate(item.completedAt)}</small></div>`).join('') : '<p>No saved lesson activity yet.</p>'}</div>
+        </article>`).join('')}</div>` : `<div class="dashboard-empty-state"><span>${icon('heart', 22)}</span><h3>Your family space is ready</h3><p>When a child completes guardian-approved sign-up using your verified email, their learning progress will appear here.</p></div>`;
+    }
+    if (requests) {
+      const connectionRequests = Array.isArray(data.connectionRequests) ? data.connectionRequests : [];
+      requests.innerHTML = connectionRequests.length ? `<div class="consent-request-list">${connectionRequests.map((request) => `
+        <article class="consent-request-row"><span class="consent-request-icon">${icon('school', 18)}</span><div><strong>${esc(request.educator)} · ${esc(request.learner)}</strong><small>Requested ${formatDashboardDate(request.requestedAt)}</small></div><span class="consent-status status-${esc(request.status)}">${request.status === 'pending' ? 'Awaiting your decision by email' : 'Approved'}</span>${request.status === 'approved' ? `<button class="text-link consent-withdraw-button" type="button" data-action="withdraw-educator-consent" data-id="${esc(request.id)}">Withdraw consent</button>` : ''}</article>`).join('')}</div>` : '<p class="dashboard-empty-inline">No educator connection requests yet.</p>';
+    }
+  }
+
+  function renderEducatorDashboardData(data) {
+    const learners = Array.isArray(data.learners) ? data.learners : [];
+    const requests = Array.isArray(data.requests) ? data.requests : [];
+    const stats = document.getElementById('educator-dashboard-stats');
+    const content = document.getElementById('educator-dashboard-content');
+    if (stats) {
+      const totalLessons = learners.reduce((sum, learner) => sum + learner.completedLessons, 0);
+      stats.innerHTML = [
+        renderMetricCard('Approved learners', learners.length, 'Parent-consented connections'),
+        renderMetricCard('Lessons completed', totalLessons, 'Across approved learners', 'is-mint'),
+        renderMetricCard('Awaiting consent', requests.filter((request) => request.status === 'pending').length, 'No learner data shared yet', 'is-peach'),
+        renderMetricCard('Active teaching streaks', learners.filter((learner) => learner.streak > 0).length, 'Learners practicing recently', 'is-blue'),
+      ].join('');
+    }
+    if (content) {
+      content.innerHTML = requests.length ? `<div class="educator-learner-grid">${requests.map((request) => {
+        const approved = request.status === 'approved';
+        return `<article class="educator-learner-card"><div class="family-learner-card-head"><span class="family-learner-avatar">${icon(approved ? 'user' : 'lock', 20)}</span><div><span class="section-kicker">${approved ? 'Parent approved' : 'Consent pending'}</span><h3>${esc(request.learner)}</h3></div></div><p>${approved ? `${request.completedLessons || 0} lessons · ${request.codingSessions || 0} coding sessions · ${request.voicePractices || 0} voice practices${request.averageVoiceScore === null ? '' : ` · ${request.averageVoiceScore}% voice average`}` : 'The parent or guardian has not approved this connection. No progress is available.'}</p><small>Requested ${formatDashboardDate(request.requestedAt)}</small></article>`;
+      }).join('')}</div>` : `<div class="dashboard-empty-state"><span>${icon('school', 22)}</span><h3>No learner connections yet</h3><p>Submit a consent request above. The family will receive an Idilewa email and decide whether to share that learner’s progress.</p></div>`;
+    }
+  }
+
+  let dashboardLoadSequence = 0;
+  async function loadRoleDashboard(page) {
+    const sequence = ++dashboardLoadSequence;
+    const endpoint = page === 'parent_dashboard' ? '/api/dashboard/parent' : '/api/dashboard/educator';
+    try {
+      const data = await getRoleDashboard(endpoint);
+      if (sequence !== dashboardLoadSequence || parseLocation().page !== page) return;
+      if (page === 'parent_dashboard') renderParentDashboardData(data);
+      else renderEducatorDashboardData(data);
+    } catch (error) {
+      if (sequence !== dashboardLoadSequence || parseLocation().page !== page) return;
+      const message = error instanceof Error ? error.message : 'The dashboard could not be loaded.';
+      const targetIds = page === 'parent_dashboard'
+        ? ['parent-dashboard-stats', 'parent-dashboard-content', 'parent-dashboard-connections']
+        : ['educator-dashboard-stats', 'educator-dashboard-content'];
+      for (const id of targetIds) {
+        const target = document.getElementById(id);
+        if (target) target.innerHTML = `<div class="dashboard-error" role="alert">${esc(message)}</div>`;
+      }
+    }
+  }
+
   function renderPage(page, params) {
     switch (page) {
+      case 'adult': return renderAdultLearning();
+      case 'parent_dashboard': return renderParentDashboard();
+      case 'educator_dashboard': return renderEducatorDashboard();
       case 'voice_lessons':
       case 'trainer': return renderTrainer(params);
       case 'index': return renderHome();
@@ -6242,6 +6419,27 @@ import {
       activeCodeRobotScene = null;
     }
     const { page, params } = parseLocation();
+    const currentUser = getCurrentUser();
+    const restrictedDashboard = currentUser?.role === 'parent'
+      ? 'parent_dashboard'
+      : currentUser?.role === 'educator' ? 'educator_dashboard' : '';
+    const requiredRole = page === 'parent_dashboard'
+      ? 'parent'
+      : page === 'educator_dashboard' ? 'educator' : '';
+    if (restrictedDashboard && page !== restrictedDashboard) {
+      navigate(restrictedDashboard, {}, true);
+      return;
+    }
+    if (requiredRole && currentUser?.role !== requiredRole) {
+      const destination = restrictedDashboard || (currentUser ? roleHomeRoute(currentUser.role) : 'login');
+      if (destination !== page) {
+        navigate(destination, {}, true);
+        showToast(currentUser
+          ? 'This dashboard is available only to its matching account role.'
+          : 'Sign in with the matching account to open this dashboard.', 'error');
+      }
+      return;
+    }
     if (params.lang && LANGUAGES.some((l) => l.id === params.lang)) state.currentLang = params.lang;
     if (params.level && ['beginner', 'intermediate', 'advanced', 'growing', 'fluent'].includes(params.level)) state.level = normalizeCourseLevel(params.level);
     renderHeader(page);
@@ -6261,6 +6459,10 @@ import {
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
+    } else if (page === 'parent_dashboard' || page === 'educator_dashboard') {
+      document.body.dataset.page = page;
+      document.getElementById('main').innerHTML = pageMarkup;
+      void loadRoleDashboard(page);
     } else {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
@@ -7185,11 +7387,25 @@ import {
         document.getElementById('modal-root').innerHTML = '';
         navigate('profile');
         break;
+      case 'account-sign-out':
       case 'profile-sign-out':
         void signOutAccount().then(() => {
-          render();
+          state.loginMode = 'signin';
+          state.authRole = 'adult';
+          navigate('login', { mode: 'signin' }, true);
           showToast('You have signed out.', 'success');
         }).catch((error) => showToast(error instanceof Error ? error.message : 'Could not sign out.', 'error'));
+        break;
+      case 'withdraw-educator-consent':
+        if (!window.confirm('Withdraw this educator’s access to the learner’s progress?')) break;
+        el.disabled = true;
+        void withdrawEducatorConnection(el.dataset.id || '')
+          .then((result) => {
+            showToast(result.message, 'success');
+            return loadRoleDashboard('parent_dashboard');
+          })
+          .catch((error) => showToast(error instanceof Error ? error.message : 'Consent could not be withdrawn.', 'error'))
+          .finally(() => { if (el.isConnected) el.disabled = false; });
         break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
       case 'trainer-set-lang': {
@@ -7571,7 +7787,7 @@ import {
         sessionStorage.removeItem('idilewa-pending-signin-otp');
         sessionStorage.removeItem('idilewa-password-reset-verified');
         await syncAccountLessonProgress();
-        navigate('index');
+        navigate(roleHomeRoute(getCurrentUser()?.role || state.authRole));
         showToast('Your password has been updated and you are signed in.', 'success');
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Your password could not be updated. Please try again.', 'error');
@@ -7592,10 +7808,12 @@ import {
         verifiedEducatorSignup = null;
         sessionStorage.removeItem('idilewa-guardian-signup');
         sessionStorage.removeItem('idilewa-educator-signup');
-        navigate('index');
+        navigate(roleHomeRoute(getCurrentUser()?.role || state.authRole));
         showToast('Your email is verified and your Idilewa account is ready.', 'success');
-        const profile = getProfileDetails();
-        if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+        if (['adult', 'child'].includes(getCurrentUser()?.role)) {
+          const profile = getProfileDetails();
+          if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+        }
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Email verification failed. Check the code and try again.', 'error');
       }
@@ -7621,7 +7839,7 @@ import {
         pendingSignin = null;
         sessionStorage.removeItem('idilewa-pending-signin-otp');
         await syncAccountLessonProgress();
-        navigate('index');
+        navigate(roleHomeRoute(expectedRole));
         showToast('Your email is verified and you are signed in.', 'success');
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Email sign-in failed. Check the code and try again.', 'error');
@@ -7728,13 +7946,28 @@ import {
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Could not save your profile.', 'error');
       }
+    } else if (type === 'educator-connection-request') {
+      const childEmail = String(data.get('childEmail') || '').trim();
+      const submitButton = form.querySelector('button[type="submit"]');
+      const feedback = document.querySelector('[data-connection-feedback]');
+      if (submitButton) submitButton.disabled = true;
+      if (feedback) feedback.textContent = 'Sending the parent consent request…';
+      try {
+        const result = await submitEducatorConnectionRequest(childEmail);
+        form.reset();
+        if (feedback) feedback.textContent = result.message;
+        showToast(result.message, 'success');
+        await loadRoleDashboard('educator_dashboard');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'The consent request could not be sent.';
+        if (feedback) feedback.textContent = message;
+        showToast(message, 'error');
+      } finally {
+        if (submitButton?.isConnected) submitButton.disabled = false;
+      }
     } else if (type === 'login') {
       const accountType = String(data.get('accountType') || state.authRole || 'child');
       const email = String(data.get('email') || '').trim();
-      if (state.loginMode === 'signup' && accountType === 'child') {
-        showToast('New child registration is temporarily paused until guardian email delivery is configured.', 'error');
-        return;
-      }
       if (state.loginMode === 'signup' && accountType === 'child'
         && (!verifiedGuardianSignup || verifiedGuardianSignup.email !== email.trim().toLowerCase())) {
         showToast('A verified guardian email code for this exact learner email is required before child sign-up.', 'error');
@@ -7810,9 +8043,11 @@ import {
       verifiedEducatorSignup = null;
       sessionStorage.removeItem('idilewa-guardian-signup');
       sessionStorage.removeItem('idilewa-educator-signup');
-      navigate('index');
-      const profile = getProfileDetails();
-      if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+      navigate(roleHomeRoute(accountType));
+      if (['adult', 'child'].includes(accountType)) {
+        const profile = getProfileDetails();
+        if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+      }
     } else if (type === 'interest') {
       showToast('Thanks for your interest. This prototype does not send or store contact details.');
       form.reset();

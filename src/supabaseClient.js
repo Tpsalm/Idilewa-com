@@ -118,11 +118,20 @@ function mapAuthUser(authUser, metadata = authUser.user_metadata || {}) {
 async function loadAccountProfile(client, authUser) {
   const { data: profile, error } = await client
     .from('profiles')
-    .select('name, role, avatar_url, points, streak')
+    .select('name, role, avatar_url, points, streak, parent_consent_request_id')
     .eq('id', authUser.id)
     .maybeSingle();
   if (error) throw new Error('Your account profile could not be loaded.', { cause: error });
   if (!profile) throw new Error('Your account profile is missing. Contact support before continuing.');
+  if (profile.role === 'child') {
+    const { data: guardianApproved, error: guardianError } = await client.rpc('child_guardian_is_approved');
+    if (guardianError) {
+      throw new Error('Child guardian approval could not be confirmed. Please try again later.', { cause: guardianError });
+    }
+    if (guardianApproved !== true || !profile.parent_consent_request_id) {
+      throw new Error('A parent or guardian must approve this child account before sign-in.');
+    }
+  }
   return mapAuthUser(authUser, {
     ...authUser.user_metadata,
     ...profile,
@@ -322,6 +331,78 @@ export async function signOut() {
 
 export function getCurrentUser() {
   return getLocalItem(LOCAL_STORAGE_KEY_USER, null);
+}
+
+export async function getSessionAccessToken() {
+  const client = requireSupabase();
+  const { data, error } = await client.auth.getSession();
+  if (error) throw new Error('Your sign-in session could not be checked.', { cause: error });
+  if (!data.session?.access_token) throw new Error('Sign in again to open this dashboard.');
+  return data.session.access_token;
+}
+
+export async function getRoleDashboard(endpoint) {
+  const token = await getSessionAccessToken();
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The dashboard returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The dashboard could not be loaded.');
+  }
+  return result;
+}
+
+export async function submitEducatorConnectionRequest(childEmail) {
+  const token = await getSessionAccessToken();
+  const response = await fetch('/api/educator/connection-request', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ childEmail }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The consent request returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The consent request could not be sent.');
+  }
+  return result;
+}
+
+export async function withdrawEducatorConnection(connectionRequestId) {
+  const token = await getSessionAccessToken();
+  const response = await fetch('/api/dashboard/parent', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ connectionRequestId }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The consent update returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'Consent could not be withdrawn.');
+  }
+  return result;
 }
 
 export async function updateUserProfile(profile) {
