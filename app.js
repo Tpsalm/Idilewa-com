@@ -3595,17 +3595,36 @@ import {
       { id: 'voice-pronunciation', name: 'Voice & Pronunciation', description: 'Open pronunciation practice alongside code.', icon: 'mic' }
     ];
     if (state.coding.ideSidebar === 'extensions') {
-      return `<div class="ide-sidebar-title"><span>EXTENSIONS</span><small>Idilewa tools</small></div><label class="ide-extension-search-label" for="ide-extension-search">Search extensions</label><input id="ide-extension-search" type="search" placeholder="Search extensions" /><div class="ide-extension-list">${extensions.map((extension) => {
+      return `<div class="ide-sidebar-title"><span>LEARNING TOOLS</span><button type="button" data-action="ide-sidebar-mode" data-mode="explorer" aria-label="Back to learning navigation">${icon('arrow', 14)}</button></div><label class="ide-extension-search-label" for="ide-extension-search">Search tools</label><input id="ide-extension-search" type="search" placeholder="Search tools" /><div class="ide-extension-list">${extensions.map((extension) => {
         const installed = (state.coding.ideInstalledExtensions || []).includes(extension.id);
         return `<article class="ide-extension-card" data-extension-name="${esc(extension.name.toLowerCase())}"><span class="ide-extension-icon">${icon(extension.icon, 18)}</span><div><strong>${esc(extension.name)}</strong><p>${esc(extension.description)}</p><small>Idilewa · Built-in</small></div><button type="button" data-action="ide-toggle-extension" data-extension-id="${extension.id}" aria-pressed="${installed}">${installed ? 'Installed' : 'Install'}</button></article>`;
       }).join('')}</div>`;
     }
-    return `<div class="ide-sidebar-title"><span>EXPLORER</span><button type="button" data-action="ide-sidebar-mode" data-mode="extensions" title="Show extensions">${icon('plus', 14)}</button></div><div class="ide-tree-root">${icon('arrow', 12)} IDILEWA</div><div class="ide-tree-group"><button type="button" class="ide-tree-folder">${icon('arrow', 12)} ${icon('folder', 14)} ${esc(state.coding.ideLang || 'yoruba')}</button><div class="ide-tree-files"><button type="button" class="ide-tree-file is-active">${icon('code', 14)} ${esc(currentPreset.filename)}</button><button type="button" class="ide-tree-file">${icon('book', 14)} README.md</button><button type="button" class="ide-tree-file">${icon('layers', 14)} lessons</button></div></div><div class="ide-sidebar-lower"><span>OPEN EDITORS</span><small>${esc(currentPreset.filename)}</small><button type="button" data-action="ide-sidebar-mode" data-mode="extensions">${icon('grid', 14)} Browse extensions</button></div>`;
+    return `<nav class="ide-learning-nav" aria-label="Learning navigation">
+      <a class="ide-nav-item" href="#/index">${icon('home', 18)}<span>Home</span></a>
+      <a class="ide-nav-item is-active" href="#/coding" aria-current="page">${icon('code', 18)}<span>Code</span></a>
+      <a class="ide-nav-item" href="#/oral">${icon('book', 18)}<span>Library</span></a>
+      <a class="ide-nav-item" href="#/ere_game">${icon('gamepad', 18)}<span>Games</span></a>
+      <a class="ide-nav-item" href="#/profile">${icon('user', 18)}<span>Profile</span></a>
+      <button type="button" class="ide-nav-item ide-nav-tools" data-action="ide-sidebar-mode" data-mode="extensions">${icon('grid', 18)}<span>Tools</span></button>
+    </nav>
+    <figure class="ide-nav-illustration">
+      <img src="./assets/code-kids.jpg" alt="Two children learning to code together" />
+      <figcaption>Small steps,<br />big dreams!</figcaption>
+    </figure>`;
   }
 
   function renderIdeAssistant() {
     const messages = state.coding.ideAssistantMessages || [];
-    return `<aside class="ide-assistant-panel" aria-label="Idilewa code assistant"><div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Assistant</span><small>LOCAL</small></div><div class="ide-assistant-robot"><div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Interactive Idilewa coding assistant"><div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div><div class="code-robot-glyph-fallback" aria-hidden="true"><span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span></div><div class="code-robot-message" aria-hidden="true">Great job!</div><div class="code-robot-xp" aria-hidden="true">★ +50 XP</div></div></div><div class="ide-assistant-notice">Local syntax analysis only. Code stays in this browser; a hosted AI service is not connected.</div><div class="ide-assistant-actions"><button type="button" data-action="ide-assistant-analyze">${icon('search', 14)} Analyze code</button><button type="button" data-action="ide-assistant-fix">${icon('sparkles', 14)} Fix safe syntax</button></div><div class="ide-assistant-messages" id="ide-assistant-messages" aria-live="polite">${messages.length ? messages.map((message) => `<article class="ide-chat-message is-${message.role}"><small>${message.role === 'user' ? 'You' : 'Code Assistant'}</small><p>${esc(message.text)}</p></article>`).join('') : '<article class="ide-chat-message is-assistant"><small>Code Assistant</small><p>Ask about your code or run a local syntax check. I can safely fix missing closing brackets and quotes.</p></article>'}</div><form class="ide-assistant-form" data-form="ide-assistant"><textarea name="question" id="ide-assistant-question" rows="3" maxlength="600" placeholder="Ask about this code…"></textarea><button type="submit" aria-label="Send question">${icon('arrow', 15)}</button></form></aside>`;
+    return `<aside class="ide-assistant-panel" aria-label="Code Buddy">
+      <div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Buddy</span><small>READY TO HELP</small></div>
+      <div class="ide-assistant-robot"><div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Interactive Idilewa coding buddy"><div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div><div class="code-robot-glyph-fallback" aria-hidden="true"><span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span></div><div class="code-robot-message" aria-hidden="true">Great job!</div><div class="code-robot-xp" aria-hidden="true">★ +${state.coding.ideXp || 10} XP</div></div></div>
+      <div class="ide-assistant-notice"><strong>Need help?</strong><span>Try one step at a time:</span><ul><li>Press Run to see what your code does.</li><li>Keep your code simple.</li><li>Check for spelling mistakes.</li><li>Run your code to see the result.</li></ul></div>
+      <div class="ide-assistant-actions"><button type="button" data-action="ide-assistant-analyze">${icon('search', 14)} Check my code</button><button type="button" data-action="ide-assistant-fix">${icon('sparkles', 14)} Fix safe syntax</button></div>
+      <p class="ide-assistant-privacy">Code checks happen on this device; no hosted AI service is connected.</p>
+      <div class="ide-assistant-messages" id="ide-assistant-messages" aria-live="polite">${messages.length ? messages.map((message) => `<article class="ide-chat-message is-${message.role}"><small>${message.role === 'user' ? 'You' : 'Code Buddy'}</small><p>${esc(message.text)}</p></article>`).join('') : '<article class="ide-chat-message is-assistant"><small>Code Buddy</small><p>Ask about your code or check it for missing brackets and quotes.</p></article>'}</div>
+      <form class="ide-assistant-form" data-form="ide-assistant"><textarea name="question" id="ide-assistant-question" rows="3" maxlength="600" placeholder="Ask about this code…"></textarea><button type="submit" aria-label="Send question">${icon('arrow', 15)}</button></form>
+    </aside>`;
   }
 
   function initializeIdeOutputResize() {
@@ -3743,18 +3762,20 @@ import {
     return '<div class="coding-page ide-fullscreen-page ide-page-root">' +
       '<section class="c4k-ide-section ide-main-standalone ide-vscode-shell" id="code-ide" aria-labelledby="ide-title">' +
         '<div class="ide-workbench-shell">' +
-          '<nav class="ide-activity-bar" aria-label="Code workspace views">' +
-            '<button type="button" class="ide-activity-button ' + (sidebarMode === 'explorer' ? 'is-active' : '') + '" data-action="ide-sidebar-mode" data-mode="explorer" title="Explorer" aria-label="Explorer">' + icon('folder', 19) + '</button>' +
-            '<button type="button" class="ide-activity-button ' + (sidebarMode === 'extensions' ? 'is-active' : '') + '" data-action="ide-sidebar-mode" data-mode="extensions" title="Extensions" aria-label="Extensions">' + icon('grid', 19) + '</button>' +
-            '<button type="button" class="ide-activity-button" data-action="ide-assistant-analyze" title="Analyze code" aria-label="Analyze code">' + icon('sparkles', 19) + '</button>' +
-          '</nav>' +
-          '<aside class="ide-explorer-sidebar" aria-label="Project explorer">' + renderIdeSidebar(currentPreset) + '</aside>' +
+          '<header class="ide-app-topbar">' +
+            '<a class="ide-app-brand" href="#/index" aria-label="Idilewa home"><span class="ide-brand-mark">' + icon('leaf', 18) + '</span><span><strong>idílẹ́wà</strong><small>Language · culture · future</small></span></a>' +
+            '<nav class="ide-topbar-languages" aria-label="Choose a coding language">' +
+              IDE_LOCAL_LANGUAGES.slice(0, 4).map((language) => '<button type="button" class="ide-language-chip ' + (language.id === ideLang ? 'is-active' : '') + '" data-action="ide-set-lang" data-lang="' + language.id + '" aria-pressed="' + (language.id === ideLang) + '">' + esc(language.name) + '</button>').join('') +
+              '<button type="button" class="ide-language-chip ide-python-chip ' + (ideLang === 'python' ? 'is-active' : '') + '" data-action="ide-set-lang" data-lang="python" aria-pressed="' + (ideLang === 'python') + '">Python</button>' +
+            '</nav>' +
+            '<div class="ide-topbar-account"><span class="ide-maker-points">' + icon('star', 14) + ' ' + (flow.ideXp || 10) + ' XP</span><a href="#/profile" aria-label="Open your profile"><span class="ide-avatar-mark">I</span><span>Profile</span></a></div>' +
+          '</header>' +
+          '<aside class="ide-explorer-sidebar ' + (sidebarMode === 'extensions' ? 'ide-sidebar-extensions' : '') + '" aria-label="Learning navigation">' + renderIdeSidebar(currentPreset) + '</aside>' +
           '<div class="ide-main-column">' +
-            '<header class="ide-titlebar"><div class="ide-titlebar-brand"><span class="ide-brand-mark">&lt;/&gt;</span><strong>Idilewa Code</strong><span class="ide-titlebar-path">workspace / ' + esc(currentPreset.filename) + '</span></div><div class="ide-titlebar-actions"><button type="button" class="ide-titlebar-run" data-action="ide-run-code" title="Run code">' + icon('play', 14) + '<span>Run</span></button><button type="button" class="ide-titlebar-action" data-action="ide-copy-code" title="Copy code">' + icon('check', 15) + '</button></div></header>' +
-            '<div class="c4k-ide-header-box ide-code-heading"><div><div class="c4k-ide-badge"><span class="badge-code-icon">&lt;/&gt;</span><span>INTERACTIVE BILINGUAL STUDIO</span></div><h1 id="ide-title" class="c4k-ide-title">Kọ Koodu ní Èdè Rẹ</h1><p class="c4k-ide-subtitle">Build in Yorùbá, Igbo, Hausa, Kiswahili, Python, and the web languages.</p></div></div>' +
+            '<section class="ide-learning-heading"><div><span class="ide-heading-eyebrow">INTERACTIVE BILINGUAL STUDIO</span><h1 id="ide-title">My Code</h1><p>Write, run and see your ideas come to life!</p></div><span class="ide-heading-level">' + icon('sparkles', 15) + ' Beginner</span></section>' +
 
         '<div class="c4k-ide-workspace">' +
-          '<!-- Top Control Bar -->' +
+          '<div class="ide-lesson-banner"><div><span>LESSON 1</span><strong>' + esc(currentPreset.title) + '</strong><small>Let’s write your first idea and watch it appear on the screen.</small></div><span class="ide-lesson-tag">Beginner</span></div>' +
           '<div class="c4k-ide-toolbar">' +
             '<div class="c4k-ide-lang-selector">' +
               '<label class="toolbar-label" for="ide-language-select">Programming language:</label>' +
@@ -3799,7 +3820,7 @@ import {
                 '</div>' +
                 '<div class="editor-actions">' +
                   '<button type="button" class="btn-ide-run" data-action="ide-run-code">' +
-                    icon('play', 14) + ' <span>Ṣe Koodu (Run)</span>' +
+                    icon('play', 14) + ' <span>Run My Code</span>' +
                   '</button>' +
                   '<button type="button" class="btn-ide-secondary" data-action="ide-reset-code" title="Reset Code">' +
                     icon('refresh', 14) + ' <span>Tún Bẹ̀rẹ̀</span>' +
