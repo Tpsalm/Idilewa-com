@@ -8,3 +8,5 @@ build/
 scratch/
 
 .vercel
+
+supabase/.temp/
