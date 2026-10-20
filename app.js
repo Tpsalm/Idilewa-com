@@ -4512,10 +4512,11 @@ import {
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
     const authLayers = [
-      { title: 'Choose who is learning', text: 'Select the right account type. Children use a learner alias and need guardian approval before account creation.' },
-      { title: 'Request guardian approval', text: 'A parent or guardian receives an email request and reviews the account permission before approving.' },
-      { title: 'Verify the one-time code', text: 'After approval, the learner verifies the short-lived code sent to their email address.' },
-      { title: 'Create an account and explore', text: 'Adult and educator accounts use Supabase Auth when the deployment is configured; teacher pairing remains unavailable.' }
+      { title: 'Choose your learning path', text: 'Sign in to continue, or create an account to save your learning journey. Choose the learner profile that fits you.', action: '<button class="auth-layer-action" type="button" data-action="login-mode" data-mode="signup">Explore account options</button>' },
+      { title: 'Keep child accounts protected', text: 'Child registration requires parent or guardian approval. New child sign-up may be paused while approval email delivery is unavailable.', action: routeLink('consent', 'Visit the family consent center') },
+      { title: 'Use an educator invitation', text: 'Educator and tutor accounts need a verified invitation passcode before registration can continue.', action: '<button class="auth-layer-action" type="button" data-action="auth-layer-educator">Start educator sign-up</button>' },
+      { title: 'Verify when prompted', text: 'Some sign-in, recovery and account-creation flows send a short-lived code to your email. Enter it only on this page.', action: '<button class="auth-layer-action" type="button" data-action="request-password-reset">Recover your password</button>' },
+      { title: 'Explore before creating an account', text: 'You can browse language lessons and learning activities without signing in. Account features require a configured sign-in service.', action: routeLink('languages', 'Browse learning languages') }
     ];
 
     const introSplash = authIntroPending ? '<div class="auth-intro-screen" aria-label="Idilewa"><span class="auth-intro-mark"><i></i><i></i><i></i></span><strong>idílẹ́wà</strong></div>' : '';
@@ -4733,26 +4734,26 @@ import {
           </div>
         </div>
 
-        <!-- 4-Layer Family-First Access Checks Section -->
-        <section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="4">
-          <div class="auth-layer-guide-heading">
-            <span class="section-kicker">Family-first access checks</span>
-            <h2 id="auth-layer-title">A clear route into learning.</h2>
-            <p>Access follows the learner’s age, guardian permission and the choice to keep exploring safely.</p>
-          </div>
-          <div class="auth-layer-guide-grid">
-            ${authLayers.map((layer, index) => `
-              <article class="auth-layer-card">
-                <span>0${index + 1}</span>
-                <div>
-                  <h3>${layer.title}</h3>
-                  <p>${layer.text}</p>
-                </div>
-              </article>
-            `).join('')}
-          </div>
-        </section>
       </main>
+      <section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="5">
+        <div class="auth-layer-guide-heading">
+          <span class="section-kicker">Your five-step learning journey</span>
+          <h2 id="auth-layer-title">A safer, clearer way to get started.</h2>
+          <p>Know what to expect at every stage, from choosing a profile to continuing as a guest.</p>
+        </div>
+        <div class="auth-layer-guide-grid">
+          ${authLayers.map((layer, index) => `
+            <article class="auth-layer-card">
+              <span>0${index + 1}</span>
+              <div>
+                <h3>${layer.title}</h3>
+                <p>${layer.text}</p>
+                ${layer.action}
+              </div>
+            </article>
+          `).join('')}
+        </div>
+      </section>
     </div>`;
   }
 
@@ -6229,7 +6230,7 @@ import {
       initializeTranslationLanguages('ide-output-language');
     } else if (page === 'login') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = pageMarkup;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
     } else {
@@ -7081,6 +7082,12 @@ import {
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'verify-educator-invite': void verifyEducatorInvite(el); break;
       case 'request-password-reset': void requestPasswordResetCode(el); break;
+      case 'auth-layer-educator':
+        state.loginMode = 'signup';
+        state.authRole = 'educator';
+        saveState();
+        navigate('login', { mode: 'signup' });
+        break;
       case 'educator-use-another-code':
         verifiedEducatorSignup = null;
         sessionStorage.removeItem('idilewa-educator-signup');
