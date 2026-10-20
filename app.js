@@ -424,7 +424,7 @@ import {
       ideLang: 'yoruba', idePresetId: 'hello_world',
       ideCode: '# Kí Ilé Ayé ní Èdè Yorùbá\njẹ́ orúkọ = "Ọmọ Yorùbá"\ntẹ_jade("Ẹ n lẹ́ o, " + orúkọ + "! Ẹ káàbọ̀ sí Idíléwà.")\ntẹ_jade("A n kọ́ koodu ní èdè abínibí wa lónìí! ✨")',
       ideOutput: '> [Idilewa Engine v2.4 Online]\n> Ẹ n lẹ́ o, Ọmọ Yorùbá! Ẹ káàbọ̀ sí Idíléwà.\n> A n kọ́ koodu ní èdè abínibí wa lónìí! ✨\n✓ Àṣeyọrí: Execution completed in 0.02ms (+10 Maker XP)',
-      ideTab: 'terminal', ideRuntime: '0.02ms', ideXp: 10,
+      ideTab: 'terminal', ideRuntime: '0.02ms', ideXp: 10, ideOutputHeight: 240,
       ideSidebar: 'explorer', ideInstalledExtensions: [], ideAssistantMessages: []
     },
     trainer: {
@@ -484,6 +484,9 @@ import {
           questTrail: Array.isArray(stored.coding?.questTrail) ? stored.coding.questTrail.filter((cell) => typeof cell === 'string').slice(0, 20) : [],
           questResult: typeof stored.coding?.questResult === 'string' ? stored.coding.questResult : '',
           ideSidebar: ['explorer', 'extensions'].includes(stored.coding?.ideSidebar) ? stored.coding.ideSidebar : 'explorer',
+          ideOutputHeight: Number.isInteger(stored.coding?.ideOutputHeight)
+            ? Math.min(900, Math.max(170, stored.coding.ideOutputHeight))
+            : defaults.coding.ideOutputHeight,
           ideInstalledExtensions: Array.isArray(stored.coding?.ideInstalledExtensions) ? stored.coding.ideInstalledExtensions.filter((id) => typeof id === 'string') : [],
           ideAssistantMessages: Array.isArray(stored.coding?.ideAssistantMessages) ? stored.coding.ideAssistantMessages.filter((message) => message && ['user', 'assistant'].includes(message.role) && typeof message.text === 'string').slice(-12) : [],
           search: typeof stored.coding?.search === 'string' ? stored.coding.search : '',
@@ -3571,6 +3574,80 @@ import {
     return `<aside class="ide-assistant-panel" aria-label="Idilewa code assistant"><div class="ide-assistant-header"><span>${icon('sparkles', 16)} Code Assistant</span><small>LOCAL</small></div><div class="ide-assistant-robot"><div class="c4k-code-robot-stage" id="codeRobotStage" aria-label="Interactive Idilewa coding assistant"><div class="code-robot-glyph-canvas" id="codeRobotGlyphCanvas" aria-hidden="true"></div><div class="code-robot-glyph-fallback" aria-hidden="true"><span>&lt;/&gt;</span><span>{ }</span><span>JS</span><span>PY</span><span>CSS</span><span>HTML</span></div><div class="code-robot-message" aria-hidden="true">Great job!</div><div class="code-robot-xp" aria-hidden="true">★ +50 XP</div></div></div><div class="ide-assistant-notice">Local syntax analysis only. Code stays in this browser; a hosted AI service is not connected.</div><div class="ide-assistant-actions"><button type="button" data-action="ide-assistant-analyze">${icon('search', 14)} Analyze code</button><button type="button" data-action="ide-assistant-fix">${icon('sparkles', 14)} Fix safe syntax</button></div><div class="ide-assistant-messages" id="ide-assistant-messages" aria-live="polite">${messages.length ? messages.map((message) => `<article class="ide-chat-message is-${message.role}"><small>${message.role === 'user' ? 'You' : 'Code Assistant'}</small><p>${esc(message.text)}</p></article>`).join('') : '<article class="ide-chat-message is-assistant"><small>Code Assistant</small><p>Ask about your code or run a local syntax check. I can safely fix missing closing brackets and quotes.</p></article>'}</div><form class="ide-assistant-form" data-form="ide-assistant"><textarea name="question" id="ide-assistant-question" rows="3" maxlength="600" placeholder="Ask about this code…"></textarea><button type="submit" aria-label="Send question">${icon('arrow', 15)}</button></form></aside>`;
   }
 
+  function initializeIdeOutputResize() {
+    const split = document.querySelector('.c4k-ide-split');
+    const handle = split?.querySelector('.ide-output-resize');
+    if (!split || !handle) return;
+
+    const minOutputHeight = 170;
+    const minEditorHeight = 140;
+    const dividerHeight = 8;
+    const getMaximumHeight = () => Math.max(
+      minOutputHeight,
+      Math.floor(split.getBoundingClientRect().height - minEditorHeight - dividerHeight),
+    );
+    const applyHeight = (requestedHeight, persist = false) => {
+      const maximum = getMaximumHeight();
+      const height = Math.min(maximum, Math.max(minOutputHeight, Math.round(requestedHeight)));
+      split.style.setProperty('--ide-output-height', `${height}px`);
+      handle.setAttribute('aria-valuemax', String(maximum));
+      handle.setAttribute('aria-valuenow', String(height));
+      handle.setAttribute('aria-valuetext', `${height} pixels`);
+      state.coding.ideOutputHeight = height;
+      if (persist) saveState();
+      return height;
+    };
+
+    if (window.matchMedia('(max-width: 620px)').matches) {
+      handle.tabIndex = -1;
+      handle.setAttribute('aria-hidden', 'true');
+      return;
+    }
+
+    applyHeight(state.coding.ideOutputHeight || defaults.coding.ideOutputHeight);
+
+    handle.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      handle.setPointerCapture(event.pointerId);
+      handle.dataset.resizing = 'true';
+    });
+    handle.addEventListener('pointermove', (event) => {
+      if (handle.dataset.resizing !== 'true') return;
+      const bounds = split.getBoundingClientRect();
+      applyHeight(bounds.bottom - event.clientY);
+    });
+    const finishResize = (event) => {
+      if (handle.dataset.resizing !== 'true') return;
+      delete handle.dataset.resizing;
+      if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      applyHeight(state.coding.ideOutputHeight, true);
+    };
+    handle.addEventListener('pointerup', finishResize);
+    handle.addEventListener('pointercancel', finishResize);
+    handle.addEventListener('keydown', (event) => {
+      const currentHeight = state.coding.ideOutputHeight || defaults.coding.ideOutputHeight;
+      const increment = event.shiftKey ? 100 : 24;
+      let nextHeight;
+      if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+        nextHeight = currentHeight + (event.key === 'PageUp' ? 100 : increment);
+      } else if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+        nextHeight = currentHeight - (event.key === 'PageDown' ? 100 : increment);
+      } else if (event.key === 'Home') {
+        nextHeight = minOutputHeight;
+      } else if (event.key === 'End') {
+        nextHeight = getMaximumHeight();
+      } else {
+        return;
+      }
+      event.preventDefault();
+      applyHeight(nextHeight, true);
+    });
+    handle.addEventListener('dblclick', () => {
+      applyHeight(defaults.coding.ideOutputHeight, true);
+    });
+  }
+
   function renderCoding() {
     const flow = state.coding;
     const ideLang = flow.ideLang || 'yoruba';
@@ -3628,6 +3705,7 @@ import {
     );
 
     const sidebarMode = state.coding.ideSidebar || 'explorer';
+    const outputHeight = flow.ideOutputHeight || defaults.coding.ideOutputHeight;
     return '<div class="coding-page ide-fullscreen-page ide-page-root">' +
       '<section class="c4k-ide-section ide-main-standalone ide-vscode-shell" id="code-ide" aria-labelledby="ide-title">' +
         '<div class="ide-workbench-shell">' +
@@ -3677,7 +3755,7 @@ import {
           '</div>' +
 
           '<!-- Split: Code Area (Left) & Output Area (Right) -->' +
-          '<div class="c4k-ide-split">' +
+          '<div class="c4k-ide-split" style="--ide-output-height:' + outputHeight + 'px">' +
             '<!-- Left: Code Area (Editor) -->' +
             '<div class="c4k-ide-editor-pane">' +
               '<div class="pane-header">' +
@@ -3711,6 +3789,8 @@ import {
                 kwList.map(kw => '<button type="button" class="kw-pill" data-action="ide-insert-snippet" data-snippet="' + esc(kw.snippet) + '">' + esc(kw.label) + '</button>').join('') +
               '</div>' +
             '</div>' +
+
+            '<button type="button" class="ide-output-resize" role="separator" aria-orientation="horizontal" aria-label="Resize console output area. Use arrow keys to adjust or drag the divider." aria-valuemin="170" aria-valuemax="900" aria-valuenow="' + outputHeight + '" title="Drag to resize the output panel; use arrow keys when focused"><span aria-hidden="true"></span></button>' +
 
             '<!-- Right: Output Area -->' +
             '<div class="c4k-ide-output-pane">' +
@@ -6123,6 +6203,15 @@ import {
     });
   }
 
+  function ensureSingleSharedFooter() {
+    const main = document.getElementById('main');
+    if (!main) return;
+    const footers = main.querySelectorAll('footer.site-footer');
+    for (let index = 0; index < footers.length - 1; index += 1) {
+      footers[index].remove();
+    }
+  }
+
   function render() {
     if (activeCodeRobotScene) {
       activeCodeRobotScene.destroy();
@@ -6152,6 +6241,8 @@ import {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
     }
+    ensureSingleSharedFooter();
+    if (page === 'coding') initializeIdeOutputResize();
     startHomePreviewMotion();
     if (page === 'index') {
       initHeroParallax();

@@ -174,6 +174,8 @@ Vite bundles all 37 HTML entry points and compiles assets to the `dist/` directo
 
 The Code page runs Yorùbá/Igbo/Hausa/Kiswahili lessons and HTML, CSS, and JavaScript previews in the browser. Additional compiler languages are available only when the app is deployed with its Vercel API routes and a reachable private Judge0 CE service. The API reports installed languages rather than promising that every allowlisted runtime is installed.
 
+In Code Studio, drag the divider above the console to resize the output panel, or focus it and use the arrow keys. The chosen height is saved in the current browser.
+
 Configure these values in `.env.local` for the Vite client and in the Vercel project environment settings for production:
 
 ```dotenv
