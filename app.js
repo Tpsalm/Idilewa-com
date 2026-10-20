@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import brandLogoUrl from './assets/idilewa-brand.svg';
 import {
   init3DHeroCanvas,
   init3DCodeRobotGlyphs,
@@ -644,6 +645,10 @@ import {
     return `<a class="${cls}" href="#/${route}" data-route="${route}" ${attrs}>${label}</a>`;
   }
 
+  function brandLogo(alt = '') {
+    return `<img class="brand-logo" src="${brandLogoUrl}" alt="${esc(alt)}" />`;
+  }
+
   function renderHeader(page) {
     if (page === 'login') {
       document.getElementById('site-header').innerHTML = '';
@@ -656,8 +661,7 @@ import {
       document.getElementById('site-header').innerHTML = `
         <div class="header-inner role-dashboard-header">
           <a class="brand" href="#/${dashboardRoute}" data-route="${dashboardRoute}" aria-label="Idilewa dashboard">
-            <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-            <span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">${dashboardLabel}</span></span>
+            ${brandLogo()}
           </a>
           <nav class="desktop-nav" aria-label="Dashboard navigation"><a class="nav-link active" href="#/${dashboardRoute}" data-route="${dashboardRoute}">${dashboardLabel}</a></nav>
           <div class="header-actions"><button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button></div>
@@ -681,8 +685,7 @@ import {
       ${page === 'index' ? `<div class="home-promo-strip"><span>${icon('sparkles', 14)} A little every day brings your language closer.</span>${routeLink('languages', 'Explore languages ' + icon('arrow', 13))}</div>` : ''}
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span>
+          ${brandLogo()}
         </a>
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
@@ -728,7 +731,7 @@ import {
         </div>
       </div>
       <div class="footer-bottom"><div class="container footer-bottom-inner">
-        <a class="brand footer-brand" href="#/index" data-route="index"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-copy"><span class="brand-word" data-depth="idílẹ́wà">idílẹ́wà</span><span class="brand-caption">Language · culture · future</span></span></a>
+        <a class="brand footer-brand" href="#/index" data-route="index">${brandLogo()}</a>
         <p>© Idilewa · A learning space for languages, culture and technology</p>
       </div></div>
     </footer>`;
@@ -764,7 +767,7 @@ import {
     const renderPreviewCard = (item, index, duplicate = false) => `<article class="home-app-slide" ${duplicate ? 'aria-hidden="true"' : ''}><img src="./assets/${item.image}" alt="${duplicate ? '' : esc(item.title + ' preview')}" loading="lazy" /><div class="home-app-slide-copy"><span>${item.label}</span><h4>${item.title}</h4><p>${item.copy}</p>${routeLink(item.route, `${item.action} ${icon('arrow', 14)}`, 'text-link', duplicate ? 'tabindex="-1"' : '')}</div><span class="home-app-slide-number">0${index + 1}</span></article>`;
     return `<section class="home-app-section home-ribbon-section" aria-labelledby="home-app-title"><div class="container home-app-layout">
       <div class="home-app-device-column"><div class="home-app-heading"><span class="section-kicker">A little Idilewa in your pocket</span><h2 id="home-app-title">Learning that moves with you.</h2><p>Explore languages, stories and creative practice from one welcoming home.</p></div>
-        <div class="android-device" aria-label="Android phone preview of the Idilewa learning app"><div class="android-device-side"></div><div class="android-device-screen"><div class="android-status"><span>9:41</span><span>● ● ▰</span></div><div class="android-appbar"><span class="android-app-mark">È</span><strong>idílẹ́wà</strong><span>${icon('user', 15)}</span></div><div class="android-welcome"><small>Ẹ káàárọ̀, learner</small><strong>What would you like to explore?</strong></div><div class="android-preview-viewport" id="android-preview-viewport" aria-label="Automatically swiping Idilewa learning previews"><div class="android-preview-track">${phonePreviews.map((item, index) => renderPhoneSlide(item, index)).join('')}${renderPhoneSlide(phonePreviews[0], 0, true)}</div></div><div class="android-bottom-nav"><span>${icon('home', 14)}Home</span><span>${icon('book', 14)}Learn</span><span>${icon('user', 14)}Profile</span></div></div></div>
+        <div class="android-device" aria-label="Android phone preview of the Idilewa learning app"><div class="android-device-side"></div><div class="android-device-screen"><div class="android-status"><span>9:41</span><span>● ● ▰</span></div><div class="android-appbar">${brandLogo()}<span>${icon('user', 15)}</span></div><div class="android-welcome"><small>Ẹ káàárọ̀, learner</small><strong>What would you like to explore?</strong></div><div class="android-preview-viewport" id="android-preview-viewport" aria-label="Automatically swiping Idilewa learning previews"><div class="android-preview-track">${phonePreviews.map((item, index) => renderPhoneSlide(item, index)).join('')}${renderPhoneSlide(phonePreviews[0], 0, true)}</div></div><div class="android-bottom-nav"><span>${icon('home', 14)}Home</span><span>${icon('book', 14)}Learn</span><span>${icon('user', 14)}Profile</span></div></div></div>
       </div>
       <div class="home-app-swipe-area"><div class="home-app-swipe-heading"><div><span class="section-kicker">Look around</span><h3>One space. Many ways to grow.</h3></div></div>
         <div class="home-app-swipe-track" id="home-app-swipe-track" tabindex="0" aria-label="Automatically scrolling Idilewa learning previews">${previews.map((item, index) => renderPreviewCard(item, index)).join('')}${previews.map((item, index) => renderPreviewCard(item, index, true)).join('')}</div><div class="home-app-swipe-hint">Swipe or scroll to explore <span aria-hidden="true">→</span></div>
@@ -3744,7 +3747,6 @@ import {
       '<section class="c4k-ide-section ide-main-standalone ide-vscode-shell" id="code-ide" aria-labelledby="ide-title">' +
         '<div class="ide-workbench-shell">' +
           '<header class="ide-app-topbar">' +
-            '<a class="ide-app-brand" href="#/index" aria-label="Idilewa home"><span class="ide-brand-mark">' + icon('leaf', 18) + '</span><span><strong>idílẹ́wà</strong><small>Language · culture · future</small></span></a>' +
             '<nav class="ide-topbar-languages" aria-label="Choose a coding language">' +
               IDE_LOCAL_LANGUAGES.slice(0, 4).map((language) => '<button type="button" class="ide-language-chip ' + (language.id === ideLang ? 'is-active' : '') + '" data-action="ide-set-lang" data-lang="' + language.id + '" aria-pressed="' + (language.id === ideLang) + '">' + esc(language.name) + '</button>').join('') +
               '<button type="button" class="ide-language-chip ide-python-chip ' + (ideLang === 'python' ? 'is-active' : '') + '" data-action="ide-set-lang" data-lang="python" aria-pressed="' + (ideLang === 'python') + '">Python</button>' +
@@ -4656,7 +4658,7 @@ import {
       { title: 'Explore before creating an account', text: 'You can browse language lessons and learning activities without signing in. Account features require a configured sign-in service.', action: routeLink('languages', 'Browse learning languages') }
     ];
 
-    const introSplash = authIntroPending ? '<div class="auth-intro-screen" aria-label="Idilewa"><span class="auth-intro-mark"><i></i><i></i><i></i></span><strong>idílẹ́wà</strong></div>' : '';
+    const introSplash = authIntroPending ? `<div class="auth-intro-screen">${brandLogo('idílẹ́wà — Language · culture · future')}</div>` : '';
     authIntroPending = false;
     return `${introSplash}<div class="container route-page auth-page modern-auth-page">
       <!-- Right-side learning artwork -->
@@ -4697,8 +4699,7 @@ import {
       <!-- Left-side sign-in and account creation form -->
       <main class="auth-panel modern-auth-panel">
         <div class="auth-brand" aria-label="Idilewa">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="auth-brand-word">idílẹ́wà</span>
+          ${brandLogo('idílẹ́wà — Language · culture · future')}
         </div>
 
         <div class="auth-header-block">
