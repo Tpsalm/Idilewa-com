@@ -42,6 +42,7 @@ import {
   isSupabaseConfigured,
   getCurrentUser,
   getRoleDashboard,
+  getAdultLearningSummary,
   submitEducatorConnectionRequest,
   withdrawEducatorConnection,
   updateUserProfile,
@@ -5488,6 +5489,11 @@ import {
         <p>Grow your African-language confidence, learn to code, and explore practical robotics and creative technology through projects designed for adult learners.</p>
         <div class="hero-actions">${routeLink('languages', 'Explore language paths ' + icon('arrow', 15), 'button button-primary')}${routeLink('coding', 'Open Code Studio ' + icon('code', 15), 'button button-outline')}</div>
       </section>
+      <section class="adult-learning-progress" aria-label="Your saved learning progress">
+        <div><span class="section-kicker">Your progress</span><h2>Learning, at your pace.</h2><p>Activity below is based on learning saved to your signed-in account.</p></div>
+        <div class="dashboard-stat-grid" id="adult-dashboard-stats"><p class="dashboard-loading" role="status">Loading your saved progress…</p></div>
+        <div id="adult-dashboard-activity" aria-live="polite"></div>
+      </section>
       <section class="adult-pathway-grid" aria-label="Adult learning pathways">
         <article class="adult-pathway-card"><span class="adult-pathway-icon">${icon('volume', 24)}</span><span class="section-kicker">Language &amp; culture</span><h2>Reconnect with a language</h2><p>Build practical vocabulary, listening confidence and pronunciation through supported African-language paths.</p>${routeLink('languages', 'Choose a language ' + icon('arrow', 14), 'text-link')}</article>
         <article class="adult-pathway-card"><span class="adult-pathway-icon">${icon('code', 24)}</span><span class="section-kicker">Programming</span><h2>Learn coding by making</h2><p>Start with web foundations, explore Python and JavaScript, then turn a small idea into a working project.</p>${routeLink('coding', 'Start coding ' + icon('arrow', 14), 'text-link')}</article>
@@ -5535,6 +5541,15 @@ import {
     return `<article class="dashboard-metric-card ${tone}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(description)}</small></article>`;
   }
 
+  function consentStatusLabel(status) {
+    if (status === 'pending') return 'Awaiting your decision by email';
+    if (status === 'approved') return 'Approved';
+    if (status === 'declined') return 'Declined';
+    if (status === 'withdrawn') return 'Consent withdrawn';
+    if (status === 'expired') return 'Request expired';
+    return 'Status unavailable';
+  }
+
   function renderParentDashboardData(data) {
     const children = Array.isArray(data.children) ? data.children : [];
     const totalLessons = children.reduce((total, child) => total + child.completedLessons, 0);
@@ -5566,7 +5581,7 @@ import {
     if (requests) {
       const connectionRequests = Array.isArray(data.connectionRequests) ? data.connectionRequests : [];
       requests.innerHTML = connectionRequests.length ? `<div class="consent-request-list">${connectionRequests.map((request) => `
-        <article class="consent-request-row"><span class="consent-request-icon">${icon('school', 18)}</span><div><strong>${esc(request.educator)} · ${esc(request.learner)}</strong><small>Requested ${formatDashboardDate(request.requestedAt)}</small></div><span class="consent-status status-${esc(request.status)}">${request.status === 'pending' ? 'Awaiting your decision by email' : 'Approved'}</span>${request.status === 'approved' ? `<button class="text-link consent-withdraw-button" type="button" data-action="withdraw-educator-consent" data-id="${esc(request.id)}">Withdraw consent</button>` : ''}</article>`).join('')}</div>` : '<p class="dashboard-empty-inline">No educator connection requests yet.</p>';
+        <article class="consent-request-row"><span class="consent-request-icon">${icon('school', 18)}</span><div><strong>${esc(request.educator)} · ${esc(request.learner)}</strong><small>Requested ${formatDashboardDate(request.requestedAt)}</small></div><span class="consent-status status-${esc(request.status)}">${esc(consentStatusLabel(request.status))}</span>${request.status === 'approved' ? `<button class="text-link consent-withdraw-button" type="button" data-action="withdraw-educator-consent" data-id="${esc(request.id)}">Withdraw consent</button>` : ''}</article>`).join('')}</div>` : '<p class="dashboard-empty-inline">No educator connection requests yet.</p>';
     }
   }
 
@@ -5587,8 +5602,38 @@ import {
     if (content) {
       content.innerHTML = requests.length ? `<div class="educator-learner-grid">${requests.map((request) => {
         const approved = request.status === 'approved';
-        return `<article class="educator-learner-card"><div class="family-learner-card-head"><span class="family-learner-avatar">${icon(approved ? 'user' : 'lock', 20)}</span><div><span class="section-kicker">${approved ? 'Parent approved' : 'Consent pending'}</span><h3>${esc(request.learner)}</h3></div></div><p>${approved ? `${request.completedLessons || 0} lessons · ${request.codingSessions || 0} coding sessions · ${request.voicePractices || 0} voice practices${request.averageVoiceScore === null ? '' : ` · ${request.averageVoiceScore}% voice average`}` : 'The parent or guardian has not approved this connection. No progress is available.'}</p><small>Requested ${formatDashboardDate(request.requestedAt)}</small></article>`;
+        return `<article class="educator-learner-card"><div class="family-learner-card-head"><span class="family-learner-avatar">${icon(approved ? 'user' : 'lock', 20)}</span><div><span class="section-kicker">${esc(consentStatusLabel(request.status))}</span><h3>${esc(request.learner)}</h3></div></div><p>${approved ? `${request.completedLessons || 0} lessons · ${request.codingSessions || 0} coding sessions · ${request.voicePractices || 0} voice practices${request.averageVoiceScore === null ? '' : ` · ${request.averageVoiceScore}% voice average`}` : 'No learner progress is available through this connection.'}</p><small>Requested ${formatDashboardDate(request.requestedAt)}</small></article>`;
       }).join('')}</div>` : `<div class="dashboard-empty-state"><span>${icon('school', 22)}</span><h3>No learner connections yet</h3><p>Submit a consent request above. The family will receive an Idilewa email and decide whether to share that learner’s progress.</p></div>`;
+    }
+  }
+
+  let adultDashboardLoadSequence = 0;
+  async function loadAdultDashboard() {
+    const sequence = ++adultDashboardLoadSequence;
+    const stats = document.getElementById('adult-dashboard-stats');
+    const activity = document.getElementById('adult-dashboard-activity');
+    try {
+      const user = getCurrentUser();
+      if (!user?.id) throw new Error('Sign in again to view your saved learning progress.');
+      const summary = await getAdultLearningSummary(user.id);
+      if (sequence !== adultDashboardLoadSequence || parseLocation().page !== 'adult') return;
+      if (stats) {
+        stats.innerHTML = [
+          renderMetricCard('Lessons completed', summary.completedLessons, 'Saved to your account', 'is-mint'),
+          renderMetricCard('Coding sessions', summary.codingSessions, 'Saved code exercises', 'is-blue'),
+          renderMetricCard('Voice practices', summary.voicePractices, 'Saved pronunciation practice', 'is-peach'),
+        ].join('');
+      }
+      if (activity) {
+        activity.innerHTML = summary.recentActivity.length
+          ? `<div class="family-activity-list"><strong>Recent learning</strong>${summary.recentActivity.map((item) => `<div><span>${esc(item.lessonId)}</span><small>${formatDashboardDate(item.completedAt)}</small></div>`).join('')}</div>`
+          : '<p class="dashboard-empty-inline">Your saved lesson activity will appear here as you learn.</p>';
+      }
+    } catch (error) {
+      if (sequence !== adultDashboardLoadSequence || parseLocation().page !== 'adult') return;
+      const message = error instanceof Error ? error.message : 'Your learning summary could not be loaded.';
+      if (stats) stats.innerHTML = `<div class="dashboard-error" role="alert">${esc(message)}</div>`;
+      if (activity) activity.innerHTML = '';
     }
   }
 
@@ -6425,7 +6470,7 @@ import {
       : currentUser?.role === 'educator' ? 'educator_dashboard' : '';
     const requiredRole = page === 'parent_dashboard'
       ? 'parent'
-      : page === 'educator_dashboard' ? 'educator' : '';
+      : page === 'educator_dashboard' ? 'educator' : page === 'adult' ? 'adult' : '';
     if (restrictedDashboard && page !== restrictedDashboard) {
       navigate(restrictedDashboard, {}, true);
       return;
@@ -6459,6 +6504,10 @@ import {
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
+    } else if (page === 'adult') {
+      document.body.dataset.page = page;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
+      void loadAdultDashboard();
     } else if (page === 'parent_dashboard' || page === 'educator_dashboard') {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = pageMarkup;

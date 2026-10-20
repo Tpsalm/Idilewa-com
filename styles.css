@@ -8412,6 +8412,10 @@ body[data-page="login"] #main > .modern-auth-page > .auth-layer-guide {
 .adult-learning-hero h1 em { color: #28734d; font-style: normal; }
 .adult-learning-hero p { margin: 0; }
 .adult-learning-hero .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.adult-learning-progress { display: grid; gap: 14px; margin: 0 0 26px; padding: clamp(20px, 4vw, 30px); border: 1px solid #e3ebe3; border-radius: 22px; background: #fff; }
+.adult-learning-progress h2 { margin: 5px 0; color: #173f32; }
+.adult-learning-progress > div:first-child p { margin: 0; color: #607066; }
+.adult-learning-progress .dashboard-stat-grid { margin: 0; }
 .adult-pathway-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .adult-pathway-card { padding: 23px; border: 1px solid #e3ebe3; border-radius: 19px; background: #fff; box-shadow: 0 10px 28px rgba(24, 56, 39, .05); }
 .adult-pathway-icon { display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; margin-bottom: 18px; border-radius: 15px; background: #eaf6ec; color: #28734d; }

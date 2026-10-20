@@ -4,8 +4,10 @@ import {
   escapeEmailHtml,
   getClientAddress,
   hashGuardianValue,
+  normalizeEmail,
   readFormBody,
   renderApprovalResult,
+  sendGuardianEmail,
   sendGuardianHtml,
 } from '../../src/server/guardianConsent.js';
 import {
@@ -42,7 +44,7 @@ async function loadRequest(admin, tokenHash) {
       .eq('id', data.guardian_request_id)
       .maybeSingle(),
     admin.from('profiles')
-      .select('id,name,role')
+      .select('id,name,role,email')
       .eq('id', data.educator_id)
       .maybeSingle(),
   ]);
@@ -55,6 +57,7 @@ async function loadRequest(admin, tokenHash) {
     connection: data,
     learnerAlias: guardian.learner_alias || 'Learner',
     educatorName: educator.name || 'Idilewa educator',
+    educatorEmail: educator.email || '',
   };
 }
 
@@ -87,7 +90,7 @@ export default async function handler(req, res) {
     if (clientAddress) {
       await enforceGuardianRateLimit(admin, clientAddress, 'educator_connection_decision_ip', 8, 900);
     }
-    await loadRequest(admin, tokenHash);
+    const details = await loadRequest(admin, tokenHash);
     const { data: decided, error } = await admin.rpc('decide_educator_connection', {
       p_token_hash: tokenHash,
       p_approve: body.decision === 'approve',
@@ -97,7 +100,23 @@ export default async function handler(req, res) {
     const message = body.decision === 'approve'
       ? 'Your approval was recorded. The educator can now see the learner’s learning progress.'
       : 'Your decision to decline was recorded. No learner data will be shared with this educator.';
-    return sendGuardianHtml(res, 200, renderApprovalResult(message));
+    let notificationWarning = '';
+    try {
+      await sendGuardianEmail({
+        to: normalizeEmail(details.educatorEmail),
+        subject: body.decision === 'approve'
+          ? 'A family approved your Idilewa connection request'
+          : 'A family declined your Idilewa connection request',
+        text: body.decision === 'approve'
+          ? `The parent or guardian approved your request to work with ${details.learnerAlias}. You can now view the learner's permitted progress in your educator dashboard.`
+          : `The parent or guardian declined your request to work with ${details.learnerAlias}. No learner data has been shared.`,
+        html: `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Idilewa connection update</title><body style="margin:0;background:#f3f6f1;color:#20372b;font:16px/1.6 Arial,Helvetica,sans-serif"><main style="max-width:600px;margin:32px auto;background:white;padding:32px;border:1px solid #e4ebe2;border-radius:18px"><p style="color:#28734d;font-weight:bold;letter-spacing:1px">IDÍLẸ́WÀ · CONNECTION UPDATE</p><h1 style="color:#173f32">${body.decision === 'approve' ? 'Connection approved' : 'Request declined'}</h1><p>The family has ${body.decision === 'approve' ? 'approved your request to work with' : 'declined your request to work with'} <strong>${escapeEmailHtml(details.learnerAlias)}</strong>.</p><p>${body.decision === 'approve' ? 'You may now view the learner’s permitted progress in your educator dashboard.' : 'No learner data has been shared with you.'}</p><p style="font-size:13px;color:#718076">With care,<br><strong>The Idilewa team</strong></p></main></body></html>`,
+      });
+    } catch {
+      console.error('[educator/connection-approval] Decision saved but educator notification failed.');
+      notificationWarning = ' Your decision was saved, but we could not email the educator.';
+    }
+    return sendGuardianHtml(res, 200, renderApprovalResult(`${message}${notificationWarning}`));
   } catch (error) {
     if (error instanceof GuardianConsentError) {
       return sendGuardianHtml(res, error.statusCode, renderApprovalResult(error.message));

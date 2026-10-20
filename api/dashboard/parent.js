@@ -5,6 +5,10 @@ import {
   sendApiFailure,
   sendApiJson,
 } from '../../src/server/authenticatedRequest.js';
+import {
+  normalizeEmail,
+  sendGuardianEmail,
+} from '../../src/server/guardianConsent.js';
 import { buildLearnerAnalytics } from '../../src/server/dashboardData.js';
 
 export default async function handler(req, res) {
@@ -35,7 +39,7 @@ export default async function handler(req, res) {
 
       const { data: connection, error: connectionError } = await admin
         .from('educator_connection_requests')
-        .select('id,child_id,guardian_request_id')
+        .select('id,child_id,guardian_request_id,educator_id')
         .eq('id', requestId)
         .eq('status', 'approved')
         .in('child_id', familyChildIds)
@@ -43,6 +47,16 @@ export default async function handler(req, res) {
       if (connectionError) throw new GuardianConsentError(503, 'The educator connection could not be checked.');
       if (!connection || !familyRequestIds.has(connection.guardian_request_id)) {
         throw new GuardianConsentError(404, 'That approved educator connection was not found.');
+      }
+
+      const { data: educator, error: educatorError } = await admin
+        .from('profiles')
+        .select('name,email,role')
+        .eq('id', connection.educator_id)
+        .eq('role', 'educator')
+        .maybeSingle();
+      if (educatorError || !educator) {
+        throw new GuardianConsentError(503, 'The educator notification could not be prepared.');
       }
 
       const { data: updated, error: updateError } = await admin
@@ -54,7 +68,19 @@ export default async function handler(req, res) {
         .maybeSingle();
       if (updateError) throw new GuardianConsentError(503, 'Your consent withdrawal could not be saved.');
       if (!updated) throw new GuardianConsentError(409, 'This educator connection is no longer active.');
-      return sendApiJson(res, 200, { message: 'Consent withdrawn. The educator can no longer access this learner’s dashboard data.' });
+      let message = 'Consent withdrawn. The educator can no longer access this learner’s dashboard data.';
+      try {
+        await sendGuardianEmail({
+          to: normalizeEmail(educator.email),
+          subject: 'A family withdrew an Idilewa learner connection',
+          text: 'A parent or guardian withdrew consent for this learner connection. The learner’s progress is no longer available in your educator dashboard.',
+          html: `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Idilewa consent update</title><body style="margin:0;background:#f3f6f1;color:#20372b;font:16px/1.6 Arial,Helvetica,sans-serif"><main style="max-width:600px;margin:32px auto;background:white;padding:32px;border:1px solid #e4ebe2;border-radius:18px"><p style="color:#28734d;font-weight:bold;letter-spacing:1px">IDÍLẸ́WÀ · CONSENT UPDATE</p><h1 style="color:#173f32">Connection ended</h1><p>A parent or guardian withdrew consent for a learner connection. The learner’s progress is no longer available in your educator dashboard.</p><p style="font-size:13px;color:#718076">With care,<br><strong>The Idilewa team</strong></p></main></body></html>`,
+        });
+      } catch {
+        console.error('[dashboard/parent] Consent withdrawn but educator notification failed.');
+        message += ' The change is saved, but we could not email the educator.';
+      }
+      return sendApiJson(res, 200, { message });
     }
 
     const { data: guardianRequests, error: requestError } = await admin
@@ -69,6 +95,15 @@ export default async function handler(req, res) {
 
     const childIds = [...new Set((guardianRequests || []).map((row) => row.claimed_by).filter(Boolean))];
     if (!childIds.length) return sendApiJson(res, 200, { children: [], connectionRequests: [] });
+
+    const now = new Date().toISOString();
+    const { error: expiryError } = await admin
+      .from('educator_connection_requests')
+      .update({ status: 'expired', decided_at: now })
+      .in('child_id', childIds)
+      .eq('status', 'pending')
+      .lte('expires_at', now);
+    if (expiryError) throw new GuardianConsentError(503, 'Family consent request status could not be updated.');
 
     const [
       { data: profiles, error: profilesError },
@@ -97,7 +132,7 @@ export default async function handler(req, res) {
       admin.from('educator_connection_requests')
         .select('id,child_id,educator_id,status,created_at')
         .in('child_id', childIds)
-        .in('status', ['pending', 'approved'])
+        .in('status', ['pending', 'approved', 'declined', 'withdrawn', 'expired'])
         .order('created_at', { ascending: false })
         .limit(200),
     ]);
@@ -127,7 +162,7 @@ export default async function handler(req, res) {
         .select('id,name,role')
         .in('id', educatorIds);
       if (error) throw new GuardianConsentError(503, 'Consent requests could not be loaded.');
-      educators = data || [];
+      educators = (data || []).filter((educator) => educator.role === 'educator');
     }
     const educatorNames = new Map(educators.map((educator) => [educator.id, educator.name || 'Educator']));
     const childNames = new Map(children.map((child) => [child.id, child.name]));

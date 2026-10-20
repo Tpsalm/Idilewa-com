@@ -62,6 +62,16 @@ export default async function handler(req, res) {
       });
     }
 
+    const now = new Date().toISOString();
+    const { error: expiryError } = await admin
+      .from('educator_connection_requests')
+      .update({ status: 'expired', decided_at: now })
+      .eq('educator_id', profile.id)
+      .eq('child_id', child.id)
+      .eq('status', 'pending')
+      .lte('expires_at', now);
+    if (expiryError) throw new GuardianConsentError(503, 'The connection status could not be checked.');
+
     const { data: existing, error: existingError } = await admin
       .from('educator_connection_requests')
       .select('id')

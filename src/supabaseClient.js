@@ -555,3 +555,47 @@ export async function getUserVoiceRecords(userId) {
   const all = getLocalItem(LOCAL_STORAGE_KEY_VOICE, []);
   return userId ? all.filter((entry) => entry.userId === userId || entry.userId === 'anonymous') : all;
 }
+
+export async function getAdultLearningSummary(userId) {
+  if (!isAuthenticatedUserId(userId)) {
+    throw new Error('Sign in to load your learning summary.');
+  }
+  const client = requireSupabase();
+  const [
+    { count: lessonCount, error: lessonError },
+    { count: codingCount, error: codingError },
+    { count: voiceCount, error: voiceError },
+    { data: recentActivity, error: activityError },
+  ] = await Promise.all([
+    client.from('progress')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('lesson_type', 'lesson'),
+    client.from('code_submissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+    client.from('voice_submissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+    client.from('progress')
+      .select('lesson_type,lesson_id,completed_at')
+      .eq('user_id', userId)
+      .eq('lesson_type', 'lesson')
+      .order('completed_at', { ascending: false })
+      .limit(5),
+  ]);
+  if (lessonError || codingError || voiceError || activityError) {
+    throw new Error('Your learning summary could not be loaded.', {
+      cause: lessonError || codingError || voiceError || activityError,
+    });
+  }
+  if (![lessonCount, codingCount, voiceCount].every(Number.isInteger)) {
+    throw new Error('Your learning summary returned incomplete totals.');
+  }
+  return {
+    completedLessons: lessonCount,
+    codingSessions: codingCount,
+    voicePractices: voiceCount,
+    recentActivity: recentActivity || [],
+  };
+}

@@ -14,11 +14,20 @@ export default async function handler(req, res) {
 
   try {
     const { admin, profile } = await requireAuthenticatedProfile(req, ['educator']);
+    const now = new Date().toISOString();
+    const { error: expiryError } = await admin
+      .from('educator_connection_requests')
+      .update({ status: 'expired', decided_at: now })
+      .eq('educator_id', profile.id)
+      .eq('status', 'pending')
+      .lte('expires_at', now);
+    if (expiryError) throw new GuardianConsentError(503, 'Your learner connection status could not be updated.');
+
     const { data: connections, error: connectionError } = await admin
       .from('educator_connection_requests')
       .select('id,child_id,guardian_request_id,status,created_at')
       .eq('educator_id', profile.id)
-      .in('status', ['pending', 'approved'])
+      .in('status', ['pending', 'approved', 'declined', 'withdrawn', 'expired'])
       .order('created_at', { ascending: false })
       .limit(200);
     if (connectionError) throw new GuardianConsentError(503, 'Your learner connections could not be loaded.');
