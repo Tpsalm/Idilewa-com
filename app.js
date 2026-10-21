@@ -4688,8 +4688,8 @@ import {
     const isSigninOtp = Boolean(pendingSignin?.email && !pendingSignupEmail && !passwordResetReady);
     const authStepPending = Boolean(pendingOtpEmail || passwordResetReady);
     const activeGrant = consentCodeIsActive();
-    const role = 'child';
-    const isChild = true;
+    const role = state.authRole === 'adult' ? 'adult' : 'child';
+    const isChild = role === 'child';
     const authConfigured = isSupabaseConfigured && Boolean(supabase);
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
@@ -4796,6 +4796,25 @@ import {
         ` : `
         <form class="auth-form modern-auth-form" data-form="login">
           <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
+
+          ${signUp ? `
+          <div class="auth-role-selector">
+            <span class="auth-role-label" id="auth-role-label">Choose an account type</span>
+            <div class="auth-role-grid" role="radiogroup" aria-labelledby="auth-role-label">
+              <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child" role="radio" aria-checked="${isChild}">
+                <span class="role-icon tone-green">${icon('smile', 16)}</span>
+                <span class="role-title">Child Learner</span>
+                <span class="role-tag">Guardian approval</span>
+              </button>
+              <button type="button" class="auth-role-card ${!isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="adult" role="radio" aria-checked="${!isChild}">
+                <span class="role-icon tone-blue">${icon('book', 16)}</span>
+                <span class="role-title">Adult Learner</span>
+                <span class="role-tag">No parent consent</span>
+              </button>
+            </div>
+            <p class="form-helper-text">${isChild ? 'Child accounts need a parent or guardian to approve sign-up.' : 'Adult accounts can be created directly and do not require parent or guardian consent.'}</p>
+          </div>
+          ` : ''}
 
           ${signUp ? `
           <div class="form-group">
@@ -7363,6 +7382,15 @@ import {
         else window.location.hash = nextHash;
         break;
       }
+      case 'auth-role-select': {
+        state.authRole = el.dataset.role === 'adult' ? 'adult' : 'child';
+        if (state.authRole !== 'child') {
+          verifiedGuardianSignup = null;
+          sessionStorage.removeItem('idilewa-guardian-signup');
+        }
+        render();
+        break;
+      }
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'request-password-reset': void requestPasswordResetCode(el); break;
@@ -7995,7 +8023,8 @@ import {
         if (submitButton?.isConnected) submitButton.disabled = false;
       }
     } else if (type === 'login') {
-      const accountType = 'child';
+      const accountType = data.get('accountType') === 'adult' ? 'adult' : 'child';
+      state.authRole = accountType;
       const email = String(data.get('email') || '').trim();
       if (state.loginMode === 'signup' && accountType === 'child'
         && (!verifiedGuardianSignup || verifiedGuardianSignup.email !== email.trim().toLowerCase())) {
