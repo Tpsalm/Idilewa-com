@@ -3,28 +3,72 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light">
     <title>Confirm your Idilewa account</title>
   </head>
-  <body style="margin:0;background:#f3f6f1;color:#20372b;font:16px/1.6 Arial,Helvetica,sans-serif">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 14px;background:#f3f6f1">
-      <tr><td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#fff;border:1px solid #e4ebe2;border-radius:18px">
-          <tr><td style="padding:26px 30px;background:#173f32;color:#fff;border-radius:18px 18px 0 0">
-            <strong style="font-size:18px;letter-spacing:2px">idílẹ́wà</strong><br>
-            <span style="font-size:12px;color:#dce9df">LANGUAGE · CULTURE · CURIOSITY</span>
-          </td></tr>
-          <tr><td style="padding:32px 30px">
-            <p style="margin:0;color:#28734d;font-size:13px;font-weight:bold;letter-spacing:1px">WELCOME TO IDILEWA</p>
-            <h1 style="margin:10px 0 14px;color:#173f32;font-size:27px;line-height:1.2">Confirm your email</h1>
-            <p style="margin:0 0 22px;color:#526358">Use this one-time code to confirm your Idilewa account:</p>
-            <p style="margin:0 0 22px;padding:18px;text-align:center;background:#eaf6ec;border-radius:12px;color:#173f32;font-size:30px;font-weight:bold;letter-spacing:7px">{{ .Token }}</p>
-            <p style="margin:0 0 18px;color:#526358">Or confirm with the secure button:</p>
-            <p style="margin:0 0 24px"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:13px 20px;border-radius:999px;background:#28734d;color:#fff;text-decoration:none;font-weight:bold">Confirm email</a></p>
-            <p style="margin:0;color:#718076;font-size:13px">If you did not create an Idilewa account, you can ignore this email. Never share your code.</p>
-          </td></tr>
-          <tr><td style="padding:18px 30px;background:#f8faf7;border-top:1px solid #e8eee6;color:#718076;font-size:13px">With warmth,<br><strong style="color:#365443">The Idilewa team</strong></td></tr>
-        </table>
-      </td></tr>
+  <body style="margin:0;padding:0;background:#f1f5f0;color:#20372b;font-family:Arial,Helvetica,sans-serif">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">Your Idilewa learning space is one step away. Use your secure code to confirm your email.</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f1f5f0" style="width:100%;background:#f1f5f0">
+      <tr>
+        <td align="center" style="padding:36px 14px">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px">
+            <tr>
+              <td style="padding:0 8px 18px">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td width="42" height="42" align="center" valign="middle" bgcolor="#28734d" style="width:42px;height:42px;border-radius:13px;background:#28734d;color:#fff;font-size:22px;font-weight:bold">È</td>
+                    <td style="padding-left:12px;color:#173f32">
+                      <strong style="display:block;font-size:18px;letter-spacing:1px">idílẹ́wà</strong>
+                      <span style="font-size:10px;letter-spacing:1.5px;color:#718076">LANGUAGE · CULTURE · CURIOSITY</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="#ffffff" style="overflow:hidden;border:1px solid #e2eae0;border-radius:20px;background:#fff">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td bgcolor="#173f32" style="padding:30px 34px;background:#173f32">
+                      <p style="margin:0;color:#b9e6c8;font-size:11px;font-weight:bold;letter-spacing:2px">YOUR LEARNING JOURNEY STARTS HERE</p>
+                      <h1 style="margin:10px 0 0;color:#fff;font-size:30px;line-height:1.2;font-weight:700">Welcome to Idilewa</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:32px 34px 28px">
+                      <p style="margin:0 0 12px;color:#263d30;font-size:17px;line-height:1.55">One small step, then a world of language, stories and discovery.</p>
+                      <p style="margin:0 0 24px;color:#5d6c61;font-size:15px;line-height:1.65">Confirm your email address with this one-time code. Enter it on the Idilewa sign-up screen to finish creating your account and continue securely.</p>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#edf6ef" style="width:100%;border:1px solid #d8eadc;border-radius:14px;background:#edf6ef">
+                        <tr>
+                          <td align="center" style="padding:20px 16px 8px;color:#52705b;font-size:11px;font-weight:bold;letter-spacing:1.7px">YOUR CONFIRMATION CODE</td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding:4px 16px 20px;color:#173f32;font-size:34px;font-weight:bold;letter-spacing:9px;line-height:1.35">{{ .Token }}</td>
+                        </tr>
+                      </table>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px">
+                        <tr>
+                          <td style="padding:15px 17px;border-left:3px solid #d8a94e;background:#fff9e9;color:#625438;font-size:13px;line-height:1.55"><strong style="color:#4b3a1d">Keep your code private.</strong> It can only be used once and expires soon. Idilewa will never ask you to share it with anyone.</td>
+                        </tr>
+                      </table>
+                      <p style="margin:24px 0 0;color:#718076;font-size:13px;line-height:1.6">If you didn’t start this sign-up, you can safely ignore this message. No account will be confirmed without your code.</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#f8faf7" style="padding:21px 34px;border-top:1px solid #e8eee6;background:#f8faf7">
+                      <p style="margin:0;color:#365443;font-size:13px;line-height:1.6"><strong>With warmth,</strong><br>The Idilewa team</p>
+                      <p style="margin:10px 0 0;color:#8a968c;font-size:11px;line-height:1.5">Language · Culture · Curiosity</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:18px 16px 0;color:#879187;font-size:11px;line-height:1.6">This is an account security email about a sign-up request for Idilewa.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
   </body>
 </html>

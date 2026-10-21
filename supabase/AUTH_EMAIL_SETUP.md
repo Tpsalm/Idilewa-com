@@ -1,6 +1,6 @@
 # Branded authentication email setup
 
-The application uses Supabase Auth for account verification, email-code sign-in, and password recovery. The welcome message and guardian-consent messages are sent by the Idilewa Resend integration; Supabase Auth verification messages use the SMTP provider configured in the Supabase project.
+The application uses Supabase Auth for account verification, email-code sign-in, and password recovery. The welcome message and guardian-consent messages are sent by the Idilewa Resend integration; Supabase Auth verification messages use the SMTP provider configured in the Supabase project. The four branded Supabase Auth templates are declared in `supabase/config.toml` and deployed from `supabase/templates/`.
 
 ## Database deployment order
 
@@ -18,8 +18,9 @@ To have authentication messages arrive from Idilewa rather than the default Supa
    - Password: the Resend API key, entered directly in Supabase and never committed to this repository
    - Sender name: `Idilewa`
    - Sender email: the verified Idilewa address used by `RESEND_FROM_EMAIL`
-3. In **Authentication → Email Templates**, use the matching HTML from `supabase/templates/` for **Confirm signup**, **Magic link**, **Reset password**, and **Change email address**. Keep the `{{ .Token }}` and `{{ .ConfirmationURL }}` variables intact.
-4. Keep email confirmation enabled. The application expects users to verify before their account can sign in.
-5. Send a test sign-up, email-code sign-in, and password-reset message to confirm sender authentication, branding, and the configured redirect URL.
+3. Preview the auth-template changes with `supabase config diff --project-ref <project-ref>`. The confirmation email deliberately uses a one-time code, not a confirmation link, because the Idilewa sign-up screen verifies the code and signs the new account in as one flow. The other templates retain Supabase's confirmation URL where appropriate.
+4. Apply the reviewed template settings with `supabase config push --project-ref <project-ref>`. This project config declares only the four email templates; it does not configure or replace SMTP credentials.
+5. Keep email confirmation enabled. The application expects users to verify before their account can sign in.
+6. Send a test sign-up, email-code sign-in, and password-reset message to confirm sender authentication, branding, and delivery.
 
 The SMTP and template settings live in the Supabase Auth project configuration; Vercel environment variables alone do not change them. Ordinary password sign-in does not send an email notification. Verification, sign-in-code, recovery, and security emails remain branded and use the configured SMTP delivery service.
