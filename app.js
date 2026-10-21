@@ -720,19 +720,24 @@ import {
   function renderFooter() {
     return `<footer class="site-footer">
       <div class="container footer-main">
-        <div class="footer-directory">
-          <section class="footer-links"><h2>${icon('book', 25)} Curriculum</h2>${routeLink('curriculum', 'K–8 STEAM Curriculum')}${routeLink('coding', 'Code Studio (IDE)')}${routeLink('trainer', 'Voice Language Trainer')}${routeLink('course', 'Learning paths')}</section>
-          <section class="footer-links"><h2>${icon('sparkles', 25)} Discover</h2>${routeLink('library', 'Learning library')}${routeLink('game', 'African word game')}${routeLink('trainer', 'AI Voice & Tone Studio')}${routeLink('oral', 'Read & listen')}${routeLink('ere', 'Stories')}${routeLink('ifa', 'Culture & heritage')}</section>
-          <section class="footer-links"><h2>${icon('layers', 25)} Idilewa</h2>${routeLink('about', 'Our story')}${routeLink('profile', 'Learner profile')}${routeLink('pricing', 'Plans & pricing')}${routeLink('payment', 'Payment information')}${routeLink('individuals', 'For independent learners')}${routeLink('schools', 'For schools')}${routeLink('connect_teachers', 'Connect with teachers')}${routeLink('connect_students', 'Connect with students')}${routeLink('contact', 'Contact us')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</section>
-        </div>
-        <div class="footer-secondary">
-          <section class="footer-support"><h2>${icon('heart', 25)} Support &amp; Feedback</h2><div class="footer-support-copy"><p>Èdè wa, àṣà wa, ìdílé wa.<br />Our language. Our culture. Our family.</p><p>${routeLink('contact', 'Contact us')} · ${routeLink('privacy', 'Privacy policy')}</p></div></section>
-          <section class="footer-purpose"><h2>${icon('sparkles', 25)} Our purpose</h2><p>A learning space for languages, culture and technology.</p><p class="footer-note">A thoughtful beginning, built to grow.</p></section>
-        </div>
+        <section class="footer-contact">
+          <span class="footer-kicker">Contact us</span>
+          <h2>Let’s learn together.</h2>
+          <p>Questions about language, culture or learning? We’d love to hear from you.</p>
+          ${routeLink('contact', `Talk with our team ${icon('arrow', 15)}`, 'button button-primary footer-contact-button')}
+          <div class="footer-email">
+            <span class="footer-kicker">Or email us at</span>
+            <a href="mailto:idilewa2026@gmail.com?subject=Idilewa%20support">idilewa2026@gmail.com</a>
+          </div>
+        </section>
+        <nav class="footer-directory" aria-label="Footer navigation">
+          <section class="footer-links"><h2>Quick links</h2>${routeLink('index', 'Home')}${routeLink('curriculum', 'Curriculum')}${routeLink('library', 'Learning library')}${routeLink('trainer', 'Voice lessons')}${routeLink('ere', 'Stories')}</section>
+          <section class="footer-links"><h2>Information</h2>${routeLink('about', 'About Idilewa')}${routeLink('individuals', 'For families')}${routeLink('schools', 'For schools')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</section>
+        </nav>
       </div>
       <div class="footer-bottom"><div class="container footer-bottom-inner">
-        <a class="brand footer-brand" href="#/index" data-route="index">${brandLogo()}</a>
-        <p>© Idilewa · A learning space for languages, culture and technology</p>
+        <p>© Idilewa · Language · culture · future</p>
+        ${routeLink('contact', 'Contact Idilewa', 'footer-bottom-link')}
       </div></div>
     </footer>`;
   }
