@@ -20,7 +20,15 @@ test('signup confirmation uses one code-based flow supported by the Idilewa sign
   const template = await readFile(new URL('../supabase/templates/confirmation.html', import.meta.url), 'utf8');
   assert.match(template, /Enter it on the Idilewa sign-up screen/);
   assert.match(template, /YOUR CONFIRMATION CODE/);
+  assert.match(template, /https:\/\/www\.idilewa\.com\/assets\/idilewa-email-logo\.png/);
+  assert.match(template, /alt="idílẹ́wà — Language · culture · future"/);
+  assert.doesNotMatch(template, /LANGUAGE · CULTURE · CURIOSITY|>È<\/td>/);
   assert.doesNotMatch(template, /{{ \.ConfirmationURL }}/);
+});
+
+test('email logo is a real PNG that can be served from public assets', async () => {
+  const logo = await readFile(new URL('../public/assets/idilewa-email-logo.png', import.meta.url));
+  assert.deepEqual([...logo.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
 });
 
 test('Supabase project config deploys all four branded authentication templates', async () => {
