@@ -1,6 +1,6 @@
 # Branded authentication email setup
 
-The application uses Supabase Auth for account verification, email-code sign-in, and password recovery. The welcome message and guardian-consent messages are sent by the Idilewa Resend integration; Supabase Auth verification messages use the SMTP provider configured in the Supabase project. The four branded Supabase Auth templates are declared in `supabase/config.toml` and deployed from `supabase/templates/`.
+The application uses Supabase Auth to generate signup, sign-in, and recovery codes. The Vercel `/api/auth/email-code` endpoint sends those codes through the Resend API so delivery errors are surfaced by the application and email delivery does not depend on Supabase SMTP. Welcome and guardian-consent messages also use the Idilewa Resend integration. The four branded Supabase Auth templates remain declared in `supabase/config.toml` for other Auth-generated messages.
 
 ## Database deployment order
 
@@ -23,4 +23,4 @@ To have authentication messages arrive from Idilewa rather than the default Supa
 5. Keep email confirmation enabled. The application expects users to verify before their account can sign in.
 6. Send a test sign-up, email-code sign-in, and password-reset message to confirm sender authentication, branding, and delivery.
 
-The SMTP and template settings live in the Supabase Auth project configuration; Vercel environment variables alone do not change them. Ordinary password sign-in does not send an email notification. Verification, sign-in-code, recovery, and security emails remain branded and use the configured SMTP delivery service.
+The SMTP and template settings live in the Supabase Auth project configuration; Vercel environment variables alone do not change them. Ordinary password sign-in does not send an email notification; users may explicitly request a sign-in code on the sign-in form. Signup verification, sign-in-code, and recovery codes use the configured Resend API sender and are subject to Supabase Auth code expiration and the `auth_email_code` rate limits.

@@ -161,6 +161,23 @@ async function loadAccountProfile(client, authUser) {
   });
 }
 
+async function requestAuthEmailCode(email, purpose) {
+  const response = await fetch('/api/auth/email-code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ email: email.toLowerCase().trim(), purpose }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The email-code service returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The code email could not be sent. Please try again.');
+  }
+}
+
 export async function signUp({ email, password, name, role = 'child', guardianAccessRequestId, educatorInviteId }) {
   const client = requireSupabase();
   if (!['child', 'adult', 'parent', 'educator'].includes(role)) {
@@ -194,6 +211,15 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   if (!data?.user) throw new Error('The authentication service did not return an account.');
   if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
     throw new Error('Could not create an account with this email. If you already registered, sign in or use Forgot password.');
+  }
+
+  let verificationEmailError = '';
+  if (!data.session) {
+    try {
+      await requestAuthEmailCode(normalizedEmail, 'signup');
+    } catch (error) {
+      verificationEmailError = error instanceof Error ? error.message : 'The verification code email could not be sent.';
+    }
   }
 
   let welcomeEmailError = '';
@@ -230,7 +256,7 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
     throw profileError;
   }
   if (data.session) setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
-  return { user: userRecord, session: data.session, error: null, welcomeEmailError };
+  return { user: userRecord, session: data.session, error: null, welcomeEmailError, verificationEmailError };
 }
 
 export async function verifySignupOtp({ email, token }) {
@@ -258,19 +284,13 @@ export async function verifySignupOtp({ email, token }) {
   return userRecord;
 }
 
-export async function requestSigninOtp(email) {
-  const client = requireSupabase();
-  const normalizedEmail = email.toLowerCase().trim();
-  const { error } = await client.auth.signInWithOtp({
-    email: normalizedEmail,
-    options: { shouldCreateUser: false },
-  });
-  if (error) throw new Error(error.message, { cause: error });
+export async function requestSigninOtp(email, purpose = 'signin') {
+  await requestAuthEmailCode(email, purpose);
 }
 
-export async function verifySigninOtp({ email, token, expectedRole }) {
+export async function verifySigninOtp({ email, token, expectedRole, purpose = 'signin' }) {
   const client = requireSupabase();
-  if (!['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
+  if (expectedRole && !['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
     throw new Error('Select a valid account type before using email-code sign-in.');
   }
   const normalizedEmail = email.toLowerCase().trim();
@@ -278,7 +298,7 @@ export async function verifySigninOtp({ email, token, expectedRole }) {
   const { data, error } = await client.auth.verifyOtp({
     email: normalizedEmail,
     token,
-    type: 'email',
+    type: purpose === 'password-reset' ? 'recovery' : 'magiclink',
   });
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
@@ -286,7 +306,7 @@ export async function verifySigninOtp({ email, token, expectedRole }) {
   let userRecord;
   try {
     userRecord = await loadAccountProfile(client, data.user);
-    if (userRecord.role !== expectedRole) {
+    if (expectedRole && userRecord.role !== expectedRole) {
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {
@@ -310,12 +330,7 @@ export async function updateAccountPassword(password) {
 }
 
 export async function resendSignupOtp(email) {
-  const client = requireSupabase();
-  const { error } = await client.auth.resend({
-    type: 'signup',
-    email: email.toLowerCase().trim(),
-  });
-  if (error) throw new Error(error.message, { cause: error });
+  await requestAuthEmailCode(email, 'signup');
 }
 
 export async function signIn({ email, password, expectedRole }) {

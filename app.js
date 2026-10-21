@@ -536,10 +536,10 @@ import {
   let pendingSignin = (() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem('idilewa-pending-signin-otp') || 'null');
-      return saved && typeof saved.email === 'string' && ['child', 'educator', 'adult', 'parent'].includes(saved.role)
+      return saved && typeof saved.email === 'string'
         ? {
           email: saved.email.toLowerCase(),
-          role: saved.role,
+          role: ['child', 'educator', 'adult', 'parent'].includes(saved.role) ? saved.role : '',
           purpose: saved.purpose === 'password-reset' ? 'password-reset' : 'signin'
         }
         : null;
@@ -4889,6 +4889,7 @@ import {
             <span>${signUp ? isChild ? 'Create Child Learning Space' : 'Create Adult Learning Space' : 'Sign In to Learning Space'}</span>
             ${icon('arrow', 16)}
           </button>
+          ${!signUp && authConfigured ? '<button class="button button-outline" type="button" data-action="request-signin-otp">Email me a sign-in code instead</button>' : ''}
         </form>
         `}
 
@@ -6691,18 +6692,12 @@ import {
     const emailInput = document.getElementById('authEmail');
     if (!emailInput?.reportValidity()) return;
     const email = emailInput.value.trim().toLowerCase();
-    const role = state.authRole;
-    if (!['child', 'educator', 'adult', 'parent'].includes(role)) {
-      showToast('Select a valid account type before recovering your password.', 'error');
-      return;
-    }
-
     button.disabled = true;
     const previousText = button.textContent;
     button.textContent = 'Sending recovery code…';
     try {
-      await requestSigninOtp(email);
-      pendingSignin = { email, role, purpose: 'password-reset' };
+      await requestSigninOtp(email, 'password-reset');
+      pendingSignin = { email, purpose: 'password-reset' };
       passwordResetVerified = false;
       state.loginMode = 'signin';
       sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
@@ -7394,6 +7389,22 @@ import {
       case 'request-guardian-approval': void submitGuardianRequest(el); break;
       case 'verify-guardian-code': void verifyGuardianCode(el); break;
       case 'request-password-reset': void requestPasswordResetCode(el); break;
+      case 'request-signin-otp': {
+        const emailInput = document.getElementById('authEmail');
+        if (!emailInput?.reportValidity()) break;
+        const email = emailInput.value.trim().toLowerCase();
+        el.disabled = true;
+        void requestSigninOtp(email)
+          .then(() => {
+            pendingSignin = { email, purpose: 'signin' };
+            sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
+            render();
+            showToast('If the account exists and needs a sign-in code, an email will be sent.', 'success');
+          })
+          .catch((error) => showToast(error instanceof Error ? error.message : 'The sign-in code could not be sent.', 'error'))
+          .finally(() => { if (el.isConnected) el.disabled = false; });
+        break;
+      }
       case 'resend-signup-otp':
         if (!pendingSignupEmail) break;
         el.disabled = true;
@@ -7405,7 +7416,7 @@ import {
       case 'resend-signin-otp':
         if (!pendingSignin?.email) break;
         el.disabled = true;
-        void requestSigninOtp(pendingSignin.email)
+        void requestSigninOtp(pendingSignin.email, pendingSignin.purpose === 'password-reset' ? 'password-reset' : 'signin')
           .then(() => showToast(pendingSignin?.purpose === 'password-reset' ? 'A new recovery code has been sent.' : 'A new sign-in code has been sent.', 'success'))
           .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
           .finally(() => { if (el.isConnected) el.disabled = false; });
@@ -7878,7 +7889,8 @@ import {
         await verifySigninOtp({
           email: pendingSignin?.email || '',
           token,
-          expectedRole: pendingSignin?.role || state.authRole || 'child',
+          expectedRole: pendingSignin?.role,
+          purpose,
         });
         const signedInRole = getCurrentUser()?.role || 'child';
         state.authRole = signedInRole;
@@ -8046,7 +8058,11 @@ import {
             return;
           }
           const name = String(data.get('name') || '').trim();
-          const { session, welcomeEmailError: deliveryError } = await signUpAccount({
+          const {
+            session,
+            welcomeEmailError: deliveryError,
+            verificationEmailError,
+          } = await signUpAccount({
             email,
             password,
             name,
@@ -8059,10 +8075,12 @@ import {
             sessionStorage.setItem('idilewa-pending-signup-email', pendingSignupEmail);
             render();
             showToast(
-              welcomeEmailError
-                ? `Account created. Enter the verification code sent to your email. ${welcomeEmailError}`
-                : 'Account created. Enter the verification code sent to your email.',
-              welcomeEmailError ? 'error' : 'success'
+              verificationEmailError
+                ? `Account created, but the verification code email could not be sent. ${verificationEmailError} Use “Send a new code” to retry.`
+                : welcomeEmailError
+                  ? `Account created. A verification code was sent to your email. ${welcomeEmailError}`
+                  : 'Account created. A verification code was sent to your email.',
+              verificationEmailError ? 'error' : 'success'
             );
             return;
           }
