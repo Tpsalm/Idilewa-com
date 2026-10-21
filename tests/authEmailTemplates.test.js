@@ -19,6 +19,7 @@ test('authentication templates are Idilewa branded and retain their required Sup
 test('signup confirmation uses one code-based flow supported by the Idilewa sign-up screen', async () => {
   const template = await readFile(new URL('../supabase/templates/confirmation.html', import.meta.url), 'utf8');
   assert.match(template, /Enter it on the Idilewa sign-up screen/);
+  assert.match(template, /return to sign-in to enter your email and password/);
   assert.match(template, /YOUR CONFIRMATION CODE/);
   assert.match(template, /https:\/\/www\.idilewa\.com\/assets\/idilewa-email-logo\.png\?v=2/);
   assert.match(template, /alt="idílẹ́wà — Language · culture · future"/);

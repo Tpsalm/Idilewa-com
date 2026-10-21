@@ -244,8 +244,17 @@ export async function verifySignupOtp({ email, token }) {
   });
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
-  const userRecord = await loadAccountProfile(client, data.user);
-  setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
+  let userRecord;
+  try {
+    userRecord = await loadAccountProfile(client, data.user);
+  } catch (profileError) {
+    const { error: signOutError } = await client.auth.signOut();
+    if (signOutError) {
+      throw new Error('The account profile could not be loaded and its verification session could not be cleared.', { cause: signOutError });
+    }
+    throw profileError;
+  }
+  await signOut();
   return userRecord;
 }
 
