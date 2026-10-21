@@ -1,8 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 
-const clientEnv = import.meta.env || {};
-const supabaseUrl = clientEnv.VITE_SUPABASE_URL || clientEnv.SUPABASE_PUBLIC_URL || '';
-const supabaseAnonKey = clientEnv.VITE_SUPABASE_ANON_KEY || clientEnv.SUPABASE_ANON_KEY || '';
+function readEnvValue(...names) {
+  const clientEnv = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
+  for (const name of names) {
+    const value = clientEnv[name];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+function normalizeSupabaseUrl(value) {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (!candidate) return '';
+  try {
+    const url = new URL(candidate);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+  } catch {
+    return '';
+  }
+}
+
+const supabaseUrl = normalizeSupabaseUrl(readEnvValue('VITE_SUPABASE_URL', 'SUPABASE_URL', 'SUPABASE_PUBLIC_URL', 'NEXT_PUBLIC_SUPABASE_URL'));
+const supabaseAnonKey = readEnvValue('VITE_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 export const supabase = isSupabaseConfigured
