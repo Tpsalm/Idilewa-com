@@ -8887,7 +8887,7 @@ body[data-page="coding"] .ide-keep-going > div { display: grid; gap: 2px; }
 body[data-page="coding"] .ide-keep-going strong { color: #35623e; font-size: 10px; }
 body[data-page="coding"] .ide-keep-going small { color: #718171; font-size: 9px; }
 
-#main :where(p, li, label, small, a, button, input, select, textarea, summary, blockquote, figcaption, dt, dd, span, strong, em):not(.ide-page-root *):not(.modern-auth-page *):not(.brand *):not(h1 *, h2 *, h3 *, h4 *, h5 *, h6 *) {
+#main :where(p, li, label, small, a, button, input, select, textarea, summary, blockquote, figcaption, dt, dd, span, strong, em):not(.ide-page-root *):not(.modern-auth-page *):not(.brand *):not(.site-footer *):not(h1 *, h2 *, h3 *, h4 *, h5 *, h6 *) {
   font-family: inherit;
   font-size: 17px;
 }
