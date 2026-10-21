@@ -8201,9 +8201,32 @@ import {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Account authentication failed. Try again.';
+        const isEmailConfirmationIssue = /email.*confirm|not confirmed|confirm.*email/i.test(message);
+
+        if (isEmailConfirmationIssue) {
+          try {
+            await resendSignupOtp(email);
+            pendingSignin = null;
+            pendingSignupEmail = email.toLowerCase();
+            sessionStorage.setItem('idilewa-pending-signup-email', pendingSignupEmail);
+            sessionStorage.removeItem('idilewa-pending-signin-otp');
+            render();
+            showToast('Your email needs confirmation. We resent the account verification code.', 'success');
+            return;
+          } catch (resendError) {
+            showToast(
+              resendError instanceof Error
+                ? `Your email is not confirmed, and we could not resend its verification code: ${resendError.message}`
+                : 'Your email is not confirmed, and we could not resend its verification code. Please try again later.',
+              'error'
+            );
+            return;
+          }
+        }
+
         showToast(
-          state.loginMode !== 'signup' && /invalid login credentials/i.test(message)
-            ? 'That email and password were not accepted. Check them, or use the email code or Forgot password option.'
+          state.loginMode !== 'signup' && /invalid login credentials|wrong password|incorrect password/i.test(message)
+            ? 'That email and password were not accepted. Check your details or use Forgot password to reset your password.'
             : message,
           'error'
         );
