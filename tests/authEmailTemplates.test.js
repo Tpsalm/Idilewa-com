@@ -25,6 +25,7 @@ test('signup confirmation uses one code-based flow supported by the Idilewa sign
 
 test('Supabase project config deploys all four branded authentication templates', async () => {
   const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
+  assert.match(config, /^\[auth\.email\]\s*[\s\S]*?^enable_confirmations = true$/m);
   for (const name of templateNames) {
     assert.match(config, new RegExp(`\\[auth\\.email\\.template\\.${name}\\]`));
     assert.match(config, new RegExp(`content_path = \"\\./supabase/templates/${name}\\.html\"`));
