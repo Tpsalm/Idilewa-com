@@ -12,6 +12,7 @@ import {
   readFormBody,
   readJsonBody,
   renderApprovalPage,
+  sendGuardianHtml,
 } from '../src/server/guardianConsent.js';
 
 test('guardian inputs are normalized, bounded, and escaped', () => {
@@ -63,4 +64,27 @@ test('production approval origin is HTTPS-only and proxy address parsing is boun
 
   assert.equal(getClientAddress({ headers: { 'x-forwarded-for': 'spoofed, 203.0.113.5' } }), '203.0.113.5');
   assert.equal(getClientAddress({ headers: {} }), null);
+});
+
+test('guardian consent pages disable caching and referrer disclosure', () => {
+  const headers = {};
+  const response = {
+    setHeader(name, value) {
+      headers[name] = value;
+    },
+    status(statusCode) {
+      assert.equal(statusCode, 200);
+      return this;
+    },
+    send(html) {
+      assert.equal(html, '<main>Consent</main>');
+      return this;
+    },
+  };
+
+  sendGuardianHtml(response, 200, '<main>Consent</main>');
+
+  assert.equal(headers['Cache-Control'], 'no-store');
+  assert.equal(headers['Referrer-Policy'], 'no-referrer');
+  assert.equal(headers['X-Content-Type-Options'], 'nosniff');
 });

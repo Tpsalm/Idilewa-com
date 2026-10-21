@@ -63,5 +63,11 @@
       "destination": "https://www.idilewa.com/:path*",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/code/languages",
+      "destination": "/api/code/run?operation=languages"
+    }
   ]
 }
