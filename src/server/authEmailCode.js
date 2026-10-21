@@ -6,8 +6,8 @@ import {
   normalizeEmail,
   readJsonBody,
   sendGuardianJson,
-} from '../../src/server/guardianConsent.js';
-import { createAuthCodeEmail } from '../../src/server/authCodeEmail.js';
+} from './guardianConsent.js';
+import { createAuthCodeEmail } from './authCodeEmail.js';
 
 const PURPOSES = new Set(['signup', 'signin', 'recovery']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,7 +32,7 @@ function validateRequestBody(body) {
   return { email, purpose };
 }
 
-export default async function handler(req, res) {
+export default async function handleAuthEmailCode(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return sendGuardianJson(res, 405, { error: 'Method not allowed.' });
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
       response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `******`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ from, to: [email], ...emailContent }),

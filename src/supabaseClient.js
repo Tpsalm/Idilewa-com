@@ -162,7 +162,7 @@ async function loadAccountProfile(client, authUser) {
 }
 
 async function requestAuthEmailCode(email, purpose) {
-  const response = await fetch('/api/auth/email-code', {
+  const response = await fetch('/api/auth/welcome?action=email-code', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ email: email.toLowerCase().trim(), purpose }),
