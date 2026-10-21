@@ -4873,7 +4873,7 @@ import {
           ${signUp ? `
           <label class="consent-check modern-consent-check">
             <input type="checkbox" name="demoOnly" value="yes" required checked />
-            <span>I agree to the <a href="#/privacy" data-route="privacy">privacy notice</a> and understand learning progress may be stored in this browser. For a child account, parent approval is required before creation.</span>
+            <span>I agree to the <a href="#/privacy" data-route="privacy">privacy notice</a> and understand learning progress may be stored in this browser. ${isChild ? 'For a child account, parent approval is required before creation.' : 'Adult accounts do not require parent or guardian approval.'}</span>
           </label>
           ` : `
           <div class="form-options-row">
@@ -4885,8 +4885,8 @@ import {
           </div>
           `}
 
-          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || verifiedGuardianSignup) ? '' : 'disabled'}>
-            <span>${signUp ? 'Create Child Learning Space' : 'Sign In to Learning Space'}</span>
+          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || !isChild || verifiedGuardianSignup) ? '' : 'disabled'}>
+            <span>${signUp ? isChild ? 'Create Child Learning Space' : 'Create Adult Learning Space' : 'Sign In to Learning Space'}</span>
             ${icon('arrow', 16)}
           </button>
         </form>

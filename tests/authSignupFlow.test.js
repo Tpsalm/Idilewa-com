@@ -9,6 +9,8 @@ test('signup offers adult accounts without guardian consent and retains child ap
   assert.match(appSource, /Adult accounts can be created directly and do not require parent or guardian consent/);
   assert.match(appSource, /const accountType = data\.get\('accountType'\) === 'adult' \? 'adult' : 'child';/);
   assert.match(appSource, /accountType === 'child'\s*&&\s*\(!verifiedGuardianSignup/);
+  assert.match(appSource, /!signUp \|\| !isChild \|\| verifiedGuardianSignup/);
+  assert.match(appSource, /Create Adult Learning Space/);
 });
 
 test('successful signup returns to sign-in rather than navigating into the app', () => {
