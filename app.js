@@ -91,6 +91,11 @@ import {
     'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'payment', 'pricing', 'profile', 'schools',
     'tutor', 'voices'
   ];
+  const OWE_ROUTE_SECTIONS = {
+    owe_detail: 'meaning',
+    owe_story: 'story',
+    owe_reflection: 'reflection'
+  };
 
   const LANGUAGES = [
     { id: 'yoruba', name: 'Yorùbá', native: 'Èdè Yorùbá', greeting: 'Ẹ káàárọ̀', hello: 'Báwo ni?', translation: 'Good morning', glyph: 'È', region: 'Nigeria · Benin · Togo', tint: 'mint', lessons: '60 lessons · 3 levels' },
@@ -395,8 +400,9 @@ import {
   LABELS.educator_dashboard = 'Educator Dashboard';
   LABELS.coding = 'Code';
   LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note';
-  LABELS.owe_add = 'Share a proverb'; LABELS.owe_detail = 'Owe · translation & meaning';
-  LABELS.owe_story = 'Owe · moral story'; LABELS.owe_reflection = 'Owe · reflection';
+  LABELS.owe = 'Owe';
+  LABELS.owe_add = 'Share a proverb';
+  LABELS.owe_detail = 'Owe'; LABELS.owe_story = 'Owe'; LABELS.owe_reflection = 'Owe';
   LABELS.connect_students = 'Connect with Students'; LABELS.connect_teachers = 'Connect with Teachers';
   LABELS.consent = 'Parent & guardian consent';
   LABELS.contact = 'Contact';
@@ -608,6 +614,11 @@ import {
     const hash = window.location.hash.replace(/^#\/?/, '');
     if (!hash) {
       const defaultPage = document.body?.dataset?.defaultRoute || 'login';
+      if (OWE_ROUTE_SECTIONS[defaultPage]) {
+        const section = OWE_ROUTE_SECTIONS[defaultPage];
+        history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/owe?section=${section}`);
+        return { page: 'owe', params: { section } };
+      }
       if (defaultPage === 'login' && !defaultAuthEntryInitialized) {
         state.loginMode = 'signin';
         state.authRole = 'adult';
@@ -619,11 +630,21 @@ import {
     let page = path.split('/')[0] || 'index';
     if (page === 'languages' || page === 'learn') page = 'curriculum';
     const params = Object.fromEntries(new URLSearchParams(query));
+    if (OWE_ROUTE_SECTIONS[page]) {
+      params.section = params.section || OWE_ROUTE_SECTIONS[page];
+      page = 'owe';
+      history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/owe?section=${encodeURIComponent(params.section)}`);
+    }
     if (page === 'login' && ['signin', 'signup'].includes(params.mode)) state.loginMode = params.mode;
     return { page: ROUTES.includes(page) ? page : 'base', params };
   }
 
   function navigate(route, params = {}, replace = false) {
+    const section = OWE_ROUTE_SECTIONS[route];
+    if (section) {
+      route = 'owe';
+      params = { ...params, section: params.section || section };
+    }
     const page = ROUTES.includes(route) ? route : 'index';
     const query = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
     const next = `#/${page}${query ? `?${query}` : ''}`;
@@ -642,7 +663,11 @@ import {
   }
 
   function routeLink(route, label, cls = '', attrs = '') {
-    return `<a class="${cls}" href="#/${route}" data-route="${route}" ${attrs}>${label}</a>`;
+    const section = OWE_ROUTE_SECTIONS[route];
+    const destination = section ? 'owe' : route;
+    const query = section ? `?section=${section}` : '';
+    const sectionAttr = section ? `data-section="${section}"` : '';
+    return `<a class="${cls}" href="#/${destination}${query}" data-route="${destination}" ${sectionAttr} ${attrs}>${label}</a>`;
   }
 
   function brandLogo(alt = '') {
@@ -4311,32 +4336,33 @@ import {
   function renderOwe() {
     const meaningDone = state.quizResults['owe-meaning:comprehension'] === 'correct';
     const storyDone = state.quizResults['owe-story:comprehension'] === 'correct';
-    const storyRoute = meaningDone ? 'owe_story' : 'owe_detail';
-    const reflectionRoute = storyDone ? 'owe_reflection' : meaningDone ? 'owe_story' : 'owe_detail';
+    const activeStep = storyDone ? 3 : meaningDone ? 2 : 1;
     const saved = state.savedProverbs.map((item) => `<article class="proverb-card saved-proverb"><span class="proverb-label">Shared on this device</span><blockquote>${esc(item.text)}</blockquote><p>${esc(item.meaning)}</p><small>${esc(item.language)}${item.context ? ` · ${esc(item.context)}` : ''}</small></article>`).join('');
     return `<div class="container route-page owe-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span>${routeLink('oral_genre', 'Oral genres')}<span>/</span><strong>Òwe · Proverbs</strong></div>
       <section class="owe-hero"><div class="owe-hero-copy"><span class="section-kicker">Òwe · Yorùbá proverbs</span><h1>A few words.<br /><em>A world to think about.</em></h1><p>Follow one proverb from its words, to a translation and meaning, into a story and your own reflection. Meaning and use can change with context, speaker and community.</p><div class="hero-actions">${routeLink('owe_detail', `Begin the Owe lesson ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('owe')}</div>${routeLink('owe_add', `Share a proverb ${icon('plus', 15)}`, 'text-link owe-share-link')}</div>
         <div class="owe-feature-photo"><img src="./assets/yoruba-educator-woman.jpg" alt="Yorùbá woman educator in richly woven aso-oke attire" /><div class="owe-feature-shade"></div><div class="owe-feature-content"><span class="section-kicker">A guided proverb · step one</span><blockquote>Sùúrù ni baba ìwà.</blockquote><p>A common classroom rendering: “Patience is the father of good character.”</p><span class="owe-feature-credit">Translations vary; learn with a fluent speaker.</span></div>\n    </section>
-      ${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], 0)}
+      ${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], activeStep)}
       <section class="proverb-sequence"><div class="section-heading"><div><span class="section-kicker">A four-part learning journey</span><h2>Read, understand, imagine, reflect.</h2><p>Each step builds on the words without claiming one translation speaks for everyone.</p></div></div><div class="proverb-learning-row">
-        <a href="#/owe_detail" data-route="owe_detail" class="sequence-card sequence-card-active"><span class="sequence-number">02</span><span class="feature-icon tone-mint">${icon('book', 20)}</span><h3>Translation & meaning</h3><p>Read the proverb, meet one translation and unpack the idea.</p><span class="sequence-link">Start here ${icon('arrow', 14)}</span></a>
-        <a href="#/${storyRoute}" data-route="${storyRoute}" class="sequence-card ${meaningDone ? '' : 'is-locked'}"><span class="sequence-number">03</span><span class="feature-icon tone-blue">${icon(meaningDone ? 'quote' : 'lock', 20)}</span><h3>A story with a lesson</h3><p>See how patience can look in a child’s everyday choices.</p><span class="sequence-link">${meaningDone ? 'Read the story' : 'Finish meaning first'} ${icon('arrow', 14)}</span></a>
-        <a href="#/${reflectionRoute}" data-route="${reflectionRoute}" class="sequence-card ${storyDone ? '' : 'is-locked'}"><span class="sequence-number">04</span><span class="feature-icon tone-peach">${icon(storyDone ? 'heart' : 'lock', 20)}</span><h3>Feel, think & act</h3><p>Choose a feeling and write one thought or action of your own.</p><span class="sequence-link">${storyDone ? 'Reflect' : meaningDone ? 'Finish the story first' : 'Start with the meaning'} ${icon('arrow', 14)}</span></a>
+        ${routeLink('owe_detail', `<span class="sequence-number">02</span><span class="feature-icon tone-mint">${icon('book', 20)}</span><h3>Translation & meaning</h3><p>Read the proverb, meet one translation and unpack the idea.</p><span class="sequence-link">Read this section ${icon('arrow', 14)}</span>`, 'sequence-card sequence-card-active')}
+        ${routeLink('owe_story', `<span class="sequence-number">03</span><span class="feature-icon tone-blue">${icon(meaningDone ? 'quote' : 'lock', 20)}</span><h3>A story with a lesson</h3><p>See how patience can look in a child’s everyday choices.</p><span class="sequence-link">${meaningDone ? 'Read the story' : 'Finish meaning first'} ${icon('arrow', 14)}</span>`, `sequence-card ${meaningDone ? '' : 'is-locked'}`)}
+        ${routeLink('owe_reflection', `<span class="sequence-number">04</span><span class="feature-icon tone-peach">${icon(storyDone ? 'heart' : 'lock', 20)}</span><h3>Feel, think & act</h3><p>Choose a feeling and write one thought or action of your own.</p><span class="sequence-link">${storyDone ? 'Reflect' : meaningDone ? 'Finish the story first' : 'Start with the meaning'} ${icon('arrow', 14)}</span>`, `sequence-card ${storyDone ? '' : 'is-locked'}`)}
       </div></section>
+      ${renderOweDetail()}
+      ${renderOweStory()}
+      ${renderOweReflection()}
       ${saved ? `<section class="saved-proverbs"><div class="section-heading"><div><span class="section-kicker">Your contribution</span><h2>Saved in this demo</h2></div></div><div class="proverb-grid">${saved}</div></section>` : ''}
       <div class="proverb-bottom-note">${icon('shield', 16)} Proverb translations can vary. A community voice can add the nuance a dictionary cannot.</div></div>`;
   }
 
   function renderOweDetail() {
     const result = state.quizResults['owe-meaning:comprehension'] || '';
-    return `<div class="container route-page owe-lesson-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span>${routeLink('owe', 'Òwe')}<span>/</span><strong>Translation & meaning</strong></div>
-      ${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], 1)}
-      <section class="owe-lesson-layout"><article class="owe-lesson-main"><span class="section-kicker">Step 2 · Translation & meaning</span><h1>Words can hold<br /><em>a whole way of seeing.</em></h1><div class="owe-verse-panel"><span class="proverb-label">Yorùbá proverb · Òwe</span><blockquote lang="yo">Sùúrù ni baba ìwà.</blockquote><button class="listen-inline" data-action="play-audio" data-text="Sùúrù ni baba ìwà.">${icon('play', 14)} Hear the words <span>Listen</span></button></div>
+    return `<section class="owe-unified-section" id="owe-meaning"><div class="owe-section-heading"><span class="section-kicker">Step 2 · Translation & meaning</span><h2>Words can hold <em>a whole way of seeing.</em></h2><p>Read one common rendering, then consider how a proverb’s meaning can shift with context.</p></div>
+      <section class="owe-lesson-layout"><article class="owe-lesson-main"><div class="owe-verse-panel"><span class="proverb-label">Yorùbá proverb · Òwe</span><blockquote lang="yo">Sùúrù ni baba ìwà.</blockquote><button class="listen-inline" data-action="play-audio" data-text="Sùúrù ni baba ìwà.">${icon('play', 14)} Hear the words <span>Listen</span></button></div>
         <div class="owe-translation-card"><span class="section-kicker">Translation · one common rendering</span><h2>“Patience is the father of good character.”</h2><p>Some speakers render the final word simply as “character.” This short classroom translation is a starting point, not the only possible interpretation.</p></div>
         <div class="owe-meaning-card"><span class="section-kicker">Meaning · in everyday language</span><h2>Good character grows over time.</h2><p>Patience does not have to mean doing nothing. It can mean caring for something steadily, making thoughtful choices and giving growth the time it needs.</p><div class="detail-prompt"><strong>Pause and wonder</strong><p>When have you had to wait for something? What helpful thing could you do while you wait?</p></div></div>
         <section class="owe-story-quiz owe-meaning-check"><span class="section-kicker">Check the meaning</span><h2>What does patience mean in this example?</h2><div class="story-answer-list">${[['Keep caring while you wait.', true], ['Do nothing and stop trying.', false], ['Give up as soon as it feels slow.', false]].map(([label, correct], i) => `<button class="story-answer ${result === 'correct' && correct ? 'answer-correct' : ''}" data-action="owe-meaning-answer" data-key="comprehension" data-correct="${correct}" ${result === 'correct' ? 'disabled' : ''}><span>${String.fromCharCode(65 + i)}</span>${label}${result === 'correct' && correct ? icon('check', 17) : icon('arrow', 15)}</button>`).join('')}</div>${result === 'retry' ? `<div class="answer-feedback feedback-retry">Think about the care that continues while someone waits.</div>` : ''}${result === 'correct' ? `<div class="answer-feedback feedback-correct">Exactly—patience can include thoughtful action while you wait.</div>` : ''}</section>
-        <div class="owe-lesson-actions">${routeLink('owe', 'Back to Òwe', 'text-link')}${result === 'correct' ? routeLink('owe_story', `Continue to the moral story ${icon('arrow', 15)}`, 'button button-primary') : '<button class="button button-primary" disabled>Answer the meaning check to continue</button>'}</div></article>
-        <aside class="owe-ai-aside"><div class="detail-side-card"><span class="side-card-icon">${icon('sparkles', 21)}</span><span class="section-kicker">A small learning prompt</span><h3>What does patience look like in action?</h3><p>Think of something you can keep caring for, even when the result takes time.</p>${aiHelperButton('owe')}</div><div class="content-note">${icon('info', 16)} Yorùbá proverb wording and interpretation can vary by speaker and context.</div></aside></section></div>`;
+        <div class="owe-lesson-actions">${result === 'correct' ? routeLink('owe_story', `Continue to the moral story ${icon('arrow', 15)}`, 'button button-primary') : '<button class="button button-primary" disabled>Answer the meaning check to continue</button>'}</div></article>
+        <aside class="owe-ai-aside"><div class="detail-side-card"><span class="side-card-icon">${icon('sparkles', 21)}</span><span class="section-kicker">A small learning prompt</span><h3>What does patience look like in action?</h3><p>Think of something you can keep caring for, even when the result takes time.</p>${aiHelperButton('owe')}</div><div class="content-note">${icon('info', 16)} Yorùbá proverb wording and interpretation can vary by speaker and context.</div></aside></section></section>`;
   }
 
   function renderOweSequenceLayers(activeStep) {
@@ -4352,14 +4378,13 @@ import {
   function renderOweStory() {
     const meaningDone = state.quizResults['owe-meaning:comprehension'] === 'correct';
     const result = state.quizResults['owe-story:comprehension'] || '';
-    if (!meaningDone) return `<div class="container route-page owe-story-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('owe', 'Òwe')}<span>/</span><strong>Moral story</strong></div>${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], 1)}<section class="owe-sequence-gate"><span class="section-kicker">Finish step 2 first</span><h1>Understand the proverb<br /><em>before the story.</em></h1><p>Read the translation and meaning, then answer one quick question. The moral story unlocks after that step.</p>${routeLink('owe_detail', `Return to translation & meaning ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('owe')}</section>${renderOweSequenceLayers(1)}</div>`;
-    return `<div class="container route-page owe-story-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('owe', 'Òwe')}<span>/</span>${routeLink('owe_detail', 'Translation & meaning')}<span>/</span><strong>Moral story</strong></div>
-      ${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], 2)}
-      <section class="owe-story-layout"><div class="owe-story-image"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in traditional Yorùbá attire reading together" /><span class="image-caption">A story made for this learning activity.</span></div><article class="owe-story-reading"><span class="section-kicker">Step 3 · An original learning story · 3 min</span><h1>Dami and the<br /><em>okra seed.</em></h1><p class="story-subhead">A new classroom story about patience, care and letting things grow.</p><div class="story-credit-note">${icon('info', 16)} This story was written for the Idilewa lesson. It is not presented as a traditional folktale.</div>
+    if (!meaningDone) return `<section class="owe-unified-section owe-story-page" id="owe-story"><section class="owe-sequence-gate"><span class="section-kicker">Step 3 · Moral story · locked</span><h2>Understand the proverb<br /><em>before the story.</em></h2><p>Read the translation and meaning, then answer one quick question. The moral story unlocks after that step.</p>${routeLink('owe_detail', `Return to translation & meaning ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('owe')}</section></section>`;
+    return `<section class="owe-unified-section owe-story-page" id="owe-story"><div class="owe-section-heading"><span class="section-kicker">Step 3 · Moral story</span><h2>A story about patience, care and growth.</h2><p>Continue after completing the meaning check.</p></div>
+      <section class="owe-story-layout"><div class="owe-story-image"><img src="./assets/yoruba-kids-culture.jpg" alt="Children in traditional Yorùbá attire reading together" /><span class="image-caption">A story made for this learning activity.</span></div><article class="owe-story-reading"><span class="section-kicker">Step 3 · An original learning story · 3 min</span><h2>Dami and the<br /><em>okra seed.</em></h2><p class="story-subhead">A new classroom story about patience, care and letting things grow.</p><div class="story-credit-note">${icon('info', 16)} This story was written for the Idilewa lesson. It is not presented as a traditional folktale.</div>
         <div class="story-text"><p>At the start of the rainy season, Dami planted an okra seed beside her grandmother’s garden. Each day, she watered it and checked the soft earth.</p><p>On the second day, nothing had changed. Dami wondered if the seed had forgotten her. Her grandmother smiled and reminded her that caring for something includes giving it time.</p><p>Dami kept watering the seed and clearing away little weeds. Later, a green shoot appeared. She felt proud: patience had not meant sitting still. It meant caring steadily while something grew.</p></div>
         <section class="owe-story-quiz"><span class="section-kicker">Check what you noticed</span><h2>What did Dami do while she waited?</h2><div class="story-answer-list">${[['She kept caring for the seed.', true], ['She stopped visiting the garden.', false], ['She dug up the seed each morning.', false]].map(([label, correct], i) => `<button class="story-answer ${result === 'correct' && correct ? 'answer-correct' : ''}" data-action="owe-story-answer" data-key="comprehension" data-correct="${correct}" ${result === 'correct' ? 'disabled' : ''}><span>${String.fromCharCode(65 + i)}</span>${label}${result === 'correct' && correct ? icon('check', 17) : icon('arrow', 15)}</button>`).join('')}</div>${result === 'retry' ? `<div class="answer-feedback feedback-retry">Try again: what was Dami doing in the garden each day?</div>` : ''}${result === 'correct' ? `<div class="answer-feedback feedback-correct">Exactly—she kept caring for the seed as she waited.</div>` : ''}</section>
         <div class="owe-lesson-actions">${routeLink('owe_detail', 'Review the meaning', 'text-link')}${result === 'correct' ? routeLink('owe_reflection', `Continue to your reflection ${icon('arrow', 15)}`, 'button button-primary') : '<button class="button button-primary" disabled>Answer the story question to continue</button>'}</div>
-      </article></section><div class="owe-story-ai">${aiHelperButton('story')}<span>Use it as a prompt, then talk the story through with a trusted adult.</span></div></div>`;
+      </article></section><div class="owe-story-ai">${aiHelperButton('story')}<span>Use it as a prompt, then talk the story through with a trusted adult.</span></div></section>`;
   }
 
   function renderOweReflection() {
@@ -4368,18 +4393,17 @@ import {
     if (!storyDone) {
       const nextRoute = meaningDone ? 'owe_story' : 'owe_detail';
       const nextLabel = meaningDone ? 'Finish the moral story' : 'Start with translation & meaning';
-      return `<div class="container route-page owe-reflection-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('owe', 'Òwe')}<span>/</span><strong>Your reflection</strong></div>${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], meaningDone ? 2 : 1)}<section class="owe-sequence-gate"><span class="section-kicker">Reflection unlocks after the story</span><h1>Your turn is next.</h1><p>Complete the proverb meaning and answer the story question first. Then this space will invite the child to name a feeling, share a thought and choose a small action.</p>${routeLink(nextRoute, `${nextLabel} ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('owe')}</section>${renderOweSequenceLayers(meaningDone ? 2 : 1)}</div>`;
+      return `<section class="owe-unified-section owe-reflection-page" id="owe-reflection"><section class="owe-sequence-gate"><span class="section-kicker">Step 4 · Reflection · locked</span><h2>Your turn is next.</h2><p>Complete the proverb meaning and answer the story question first. Then this space will invite the child to name a feeling, share a thought and choose a small action.</p>${routeLink(nextRoute, `${nextLabel} ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('owe')}</section></section>`;
     }
     const feelings = ['Curious', 'Calm', 'Impatient', 'Proud', 'Unsure'];
     const latest = state.reflections[0];
-    return `<div class="container route-page owe-reflection-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('owe', 'Òwe')}<span>/</span>${routeLink('owe_story', 'Moral story')}<span>/</span><strong>Your reflection</strong></div>
-      ${renderStepper(['Proverb', 'Translation & meaning', 'Moral story', 'Reflect'], 3)}
-      <section class="reflection-layout"><article class="reflection-main"><span class="section-kicker">Step 4 · Your turn</span><h1>What do you<br /><em>feel and think?</em></h1><p class="reflection-intro">There is no single right answer. You can name a feeling, share an idea or think of one small action you could try when something takes time.</p>
+    return `<section class="owe-unified-section owe-reflection-page" id="owe-reflection"><div class="owe-section-heading"><span class="section-kicker">Step 4 · Reflection</span><h2>Make the lesson your own.</h2><p>The final step is personal. There is no single right answer.</p></div>
+      <section class="reflection-layout"><article class="reflection-main"><h2>What do you<br /><em>feel and think?</em></h2><p class="reflection-intro">There is no single right answer. You can name a feeling, share an idea or think of one small action you could try when something takes time.</p>
         <fieldset class="feeling-fieldset"><legend>How might you feel when you have to wait?</legend><div class="feeling-picker">${feelings.map((feeling) => `<button type="button" class="feeling-chip ${state.reflectionFeeling === feeling ? 'is-selected' : ''}" data-action="select-feeling" data-feeling="${feeling}" aria-pressed="${state.reflectionFeeling === feeling}">${feeling}</button>`).join('')}</div></fieldset>
         <form class="reflection-form" data-form="owe-reflection"><label for="oweThought">What do you think? What could you do with patience?</label><textarea id="oweThought" name="thought" rows="5" maxlength="600" placeholder="You could write a sentence, a plan or a question…" required></textarea><small>Keep it general—please do not write a full name, address or other private details.</small><button class="button button-primary" type="submit">Save my reflection on this device ${icon('arrow', 15)}</button></form>
         ${latest ? `<div class="reflection-saved"><span class="section-kicker">Saved locally on this browser</span><strong>${esc(latest.feeling || 'A thought')} · ${new Date(latest.createdAt).toLocaleDateString()}</strong><p>${esc(latest.thought)}</p><small>This is visible to people who use this device. Nothing is sent to a server.</small></div>` : ''}
       </article><aside class="reflection-aside"><div class="detail-side-card"><span class="side-card-icon">${icon('heart', 21)}</span><span class="section-kicker">A gentle reminder</span><h3>Waiting can still include action.</h3><p>Dami cared for her seed. What is one kind or helpful thing you might do while you wait?</p>${aiHelperButton('owe')}</div><img class="reflection-kids-photo" src="./assets/yoruba-kids-culture.jpg" alt="Friends learning together in traditional Yorùbá clothing" /></aside></section>
-      <div class="owe-lesson-actions reflection-back-actions">${routeLink('owe_story', 'Back to the story', 'text-link')}${routeLink('owe', `Return to all proverbs ${icon('arrow', 15)}`, 'button button-outline')}</div></div>`;
+      <div class="owe-lesson-actions reflection-back-actions">${routeLink('owe_story', 'Back to the story', 'text-link')}</div></section>`;
   }
 
   function renderOweAdd() {
@@ -4595,7 +4619,64 @@ import {
   }
 
   function renderProfile() {
-    return renderLegacyProfile().replace('<strong>My progress</strong></div>', '<strong>My profile</strong></div>' + renderProfileEditor());
+    const profile = getProfileDetails();
+    const name = profile.name.trim() || 'Learner';
+    const initial = name.charAt(0).toUpperCase();
+    const language = getLanguage(profile.language);
+    const completedCount = state.completed.length;
+    const progress = Math.min(100, Math.round((completedCount / 8) * 100));
+    const latestReflection = state.reflections[0];
+    const reflectionText = latestReflection?.thought ? `${esc(latestReflection.thought.slice(0, 72))}${latestReflection.thought.length > 72 ? '…' : ''}` : 'Your reflections will appear here after you save one.';
+    return `<div class="container route-page profile-page profile-dashboard">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>My profile</strong></div>
+      <section class="profile-cover" aria-label="Your Idilewa learning space">
+        <img src="./assets/page-profile-1.jpg" alt="" />
+        <div class="profile-cover-overlay"></div>
+        <div class="profile-cover-copy"><span class="section-kicker">My Idilewa</span><p>A place to learn, grow and celebrate every step.</p></div>
+      </section>
+      <div class="profile-dashboard-grid">
+        <aside class="profile-identity-card">
+          <div class="profile-photo-wrap">
+            <div class="profile-avatar">${profilePhoto ? `<img src="${esc(profilePhoto)}" alt="${esc(name)}'s profile photo" />` : `<span aria-hidden="true">${esc(initial)}</span>`}</div>
+            <label class="profile-photo-button" for="profile-photo-input">${icon('edit', 14)} Change photo</label>
+            <input id="profile-photo-input" type="file" accept="image/jpeg,image/png,image/webp" />
+          </div>
+          <span class="profile-identity-label">Learner profile</span>
+          <h1>${esc(name)}</h1>
+          <p class="profile-identity-email">${profile.email ? esc(profile.email) : 'Learning as a guest'}</p>
+          <div class="profile-identity-tags"><span>${esc(language.name)}</span><span>${esc(profile.level.charAt(0).toUpperCase() + profile.level.slice(1))}</span></div>
+          <p class="profile-identity-goal">${profile.goal ? esc(profile.goal) : 'Your learning goals and interests belong here.'}</p>
+          <div class="profile-identity-actions">
+            ${getCurrentUser() ? '<button class="button button-outline" data-action="profile-sign-out">Sign out</button>' : routeLink('login', 'Sign in to sync', 'button button-primary', 'data-mode="signin"')}
+          </div>
+          <small class="profile-photo-note">Your photo stays on this device.</small>
+        </aside>
+        <main class="profile-dashboard-main">
+          <header class="profile-dashboard-heading"><div><span class="section-kicker">Your learning space</span><h2>Welcome back, ${esc(name)}.</h2><p>Keep your language journey moving, one small step at a time.</p></div><span class="profile-member-mark">${icon('sparkles', 19)} Idilewa learner</span></header>
+          <section class="profile-stat-grid" aria-label="Learning statistics">
+            <article class="profile-stat-card"><span class="profile-stat-icon">${icon('book', 18)}</span><div><small>Lessons completed</small><strong>${completedCount}</strong></div><span class="profile-stat-foot">${progress}% of your starter path</span></article>
+            <article class="profile-stat-card"><span class="profile-stat-icon profile-stat-streak">${icon('sparkles', 18)}</span><div><small>Learning streak</small><strong>${state.streak} <em>days</em></strong></div><span class="profile-stat-foot">Every day is a fresh start</span></article>
+            <article class="profile-stat-card"><span class="profile-stat-icon profile-stat-points">${icon('star', 18)}</span><div><small>Practice points</small><strong>${state.points}</strong></div><span class="profile-stat-foot">Earned as you explore</span></article>
+          </section>
+          <section class="profile-progress-panel" aria-labelledby="profile-progress-title">
+            <div class="profile-panel-heading"><div><span class="section-kicker">Your current path</span><h3 id="profile-progress-title">${esc(language.name)} · ${esc(profile.level.charAt(0).toUpperCase() + profile.level.slice(1))}</h3><p>Build confidence with a little practice at a time.</p></div><span class="profile-progress-icon">${icon('leaf', 21)}</span></div>
+            <div class="profile-progress-track" role="progressbar" aria-label="Starter path progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><span style="width:${progress}%"></span></div>
+            <div class="profile-progress-footer"><span>${completedCount} of 8 starter lessons completed</span>${routeLink('course', `Continue learning ${icon('arrow', 14)}`, 'text-link')}</div>
+          </section>
+          <div class="profile-content-grid">
+            <section class="profile-activity-card">
+              <div class="profile-panel-heading"><div><span class="section-kicker">Keep your rhythm</span><h3>Recent activity</h3></div>${routeLink('course', 'View learning path', 'text-link')}</div>
+              <div class="profile-activity-row"><span class="profile-activity-icon">${icon(completedCount ? 'check' : 'book', 16)}</span><div><strong>${completedCount ? 'Language practice completed' : 'Your first lesson is ready'}</strong><small>${esc(language.name)} · ${completedCount ? `${completedCount} lesson${completedCount === 1 ? '' : 's'} completed` : 'Start with a greeting'}</small></div>${completedCount ? '<span class="profile-activity-status">Done</span>' : routeLink('course', 'Start', 'text-link')}</div>
+              <div class="profile-activity-row"><span class="profile-activity-icon profile-activity-culture">${icon('book', 16)}</span><div><strong>Your personal reflection</strong><small>${reflectionText}</small></div>${latestReflection ? '<span class="profile-activity-status">Saved here</span>' : routeLink('owe', 'Explore Òwe', 'text-link')}</div>
+              <div class="profile-activity-row"><span class="profile-activity-icon profile-activity-listen">${icon('volume', 16)}</span><div><strong>Listen and speak</strong><small>Practice sounds in a guided voice lesson</small></div>${routeLink('voice_lessons', 'Explore', 'text-link')}</div>
+            </section>
+            <aside class="profile-highlights-card"><span class="section-kicker">Small steps matter</span><h3>Your learning highlights</h3><div class="profile-highlight-row"><span class="profile-highlight-icon">${icon('leaf', 17)}</span><div><strong>First steps</strong><small>${completedCount ? 'You have started your learning path' : 'Ready when you are'}</small></div></div><div class="profile-highlight-row"><span class="profile-highlight-icon profile-highlight-gold">${icon('heart', 17)}</span><div><strong>Learning with care</strong><small>Language and culture grow together</small></div></div><div class="profile-highlight-note">${icon('lock', 14)} Your progress is stored on this device.</div></aside>
+          </div>
+          <details class="profile-edit-disclosure"><summary>${icon('edit', 16)} Edit profile and learning preferences</summary>${renderProfileEditor()}</details>
+        </main>
+      </div>
+      <p class="profile-privacy-note">${icon('lock', 15)} Photos and guest profile details stay in this browser. Sign in to connect your learning preferences to your account.</p>
+    </div>`;
   }
 
   function renderContact() {
@@ -6611,6 +6692,11 @@ import {
       document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
     }
     ensureSingleSharedFooter();
+      if (page === 'owe' && ['meaning', 'story', 'reflection'].includes(params.section)) {
+        window.requestAnimationFrame(() => {
+          document.getElementById(`owe-${params.section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
     if (page === 'coding') initializeIdeOutputResize();
     startHomePreviewMotion();
     if (page === 'index') {
@@ -7787,7 +7873,7 @@ import {
       if (modalRoot) modalRoot.innerHTML = '';
       const route = routeEl.dataset.route;
       const params = {};
-      ['lang', 'level', 'module', 'lesson', 'mode'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
+      ['lang', 'level', 'module', 'lesson', 'mode', 'section'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
       navigate(route, params);
       return;
     }
