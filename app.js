@@ -1544,7 +1544,7 @@ import {
       voiceDictationRecorder.stop();
       button.disabled = true;
       button.textContent = 'Transcribing…';
-      if (status) status.textContent = 'Sending your recording to Plotweaver for transcription…';
+      if (status) status.textContent = 'Sending your recording to Idilewa for transcription…';
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -3175,9 +3175,9 @@ import {
   }
   function renderVoiceCloneTools() {
     return `<section id="voice-clone-tools" class="voice-translation-panel" aria-labelledby="voice-tools-title">
-      <div><span class="section-kicker">Plotweaver voice studio</span><h2 id="voice-tools-title">Choose a voice or create one with permission</h2><p>Generated lesson speech uses the selected voice when Plotweaver supports it for your chosen language.</p></div>
+      <div><span class="section-kicker">Idilewa Voice Lessons</span><h2 id="voice-tools-title">Choose a voice or create one with permission</h2><p>Generated lesson speech uses the selected voice when Idilewa supports it for your chosen language.</p></div>
       <label class="voice-translation-input-label" for="plotweaver-voice-select">Speech voice</label>
-      <select id="plotweaver-voice-select" aria-describedby="plotweaver-voice-status"><option value="">Loading Plotweaver voices…</option></select>
+      <select id="plotweaver-voice-select" aria-describedby="plotweaver-voice-status"><option value="">Loading Idilewa voices…</option></select>
       <small id="plotweaver-voice-status" aria-live="polite">Loading built-in voices and clones saved on this device…</small>
       <form class="voice-clone-form" data-form="plotweaver-voice-clone">
         <strong>Create a voice clone</strong>
@@ -3190,7 +3190,7 @@ import {
         <label for="plotweaver-clone-transcript">Exact transcript (required for most non-Nigerian languages)</label>
         <textarea id="plotweaver-clone-transcript" name="reference_text" rows="2" maxlength="500"></textarea>
         <label class="voice-clone-consent"><input name="consent" type="checkbox" value="yes" required /><span>I own this recording or have the speaker’s informed permission to create and use a voice clone.</span></label>
-        <small>Voice cloning sends the recording to Plotweaver and may incur usage charges. Do not upload a child’s or another person’s voice without their guardian’s/speaker’s explicit permission.</small>
+        <small>Voice cloning sends the recording to Idilewa’s external voice service and may incur usage charges. Do not upload a child’s or another person’s voice without their guardian’s/speaker’s explicit permission.</small>
         <small data-clone-language-status aria-live="polite"></small>
         <button class="button button-outline" type="submit">Create voice clone</button>
       </form>
@@ -3205,7 +3205,7 @@ import {
       selector.dataset.voiceLookupStarted = 'true';
       getPlotweaverVoices({ type: 'builtin' }).then((builtInVoices) => {
         const voices = [...builtInVoices, ...state.trainer.clonedVoices];
-        const options = [new Option('Use Plotweaver’s recommended voice', '')];
+        const options = [new Option('Use Idilewa’s recommended voice', '')];
         for (const voice of voices) {
           options.push(new Option(
             `${voice.name}${voice.type === 'cloned' ? ' · cloned' : ''}`,
@@ -3223,7 +3223,7 @@ import {
         }
       }).catch((error) => {
         selector.replaceChildren(new Option('Recommended voice unavailable', ''));
-        if (status) status.textContent = error instanceof Error ? error.message : 'Plotweaver voices could not be loaded.';
+        if (status) status.textContent = error instanceof Error ? error.message : 'Idilewa voices could not be loaded.';
       });
     }
     const speechLanguageSelector = document.getElementById('plotweaver-speech-language');
@@ -3237,7 +3237,7 @@ import {
           : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
       }).catch((error) => {
         const speechStatus = document.getElementById('plotweaver-speech-status');
-        if (speechStatus) speechStatus.textContent = error instanceof Error ? error.message : 'Plotweaver speech languages could not be loaded.';
+        if (speechStatus) speechStatus.textContent = error instanceof Error ? error.message : 'Idilewa speech languages could not be loaded.';
       });
     }
     if (languageSelector && !languageSelector.dataset.languageLookupStarted) {
@@ -3269,7 +3269,7 @@ import {
         selector.value = languages.some(({ code }) => code === previousLanguage)
           ? previousLanguage
           : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
-        if (status) status.textContent = 'Plotweaver translation is ready. Exact phrasebook matches are used first.';
+        if (status) status.textContent = 'Idilewa translation is ready. Exact phrasebook matches are used first.';
       })
       .catch((error) => {
         if (status) {
@@ -3288,7 +3288,7 @@ import {
       ...result,
       translated: result.translated_text,
       machineTranslated: true,
-      provider: 'Plotweaver',
+      provider: 'Idilewa',
     };
   }
 
@@ -3323,7 +3323,7 @@ import {
       }
       if (providerStatus) {
         providerStatus.textContent = result.machineTranslated
-          ? 'Machine translation by Plotweaver. No plain-letter transliteration is provided for machine results.'
+          ? 'Machine translation by Idilewa. No plain-letter transliteration is provided for machine results.'
           : 'Curated phrasebook translation.';
       }
     } catch (error) {
@@ -4357,7 +4357,7 @@ import {
       { lang: 'hausa', speaker: 'Friendly greeting', phrase: 'Sannu', translation: 'Hello', tint: 'blue' },
       { lang: 'swahili', speaker: 'Everyday greeting', phrase: 'Habari', translation: 'How are you?', tint: 'lilac' }
     ];
-    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Speech is generated by Plotweaver in the language shown for each sample.</p></div><span class="demo-badge">Plotweaver voices</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); const langCode = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' }[v.lang] || 'en'; return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" data-language="${langCode}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Machine-generated pronunciation can vary. Fluent-speaker review is recommended for learning materials.</div></section></div>`;
+    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Speech is generated by Idilewa in the language shown for each sample.</p></div><span class="demo-badge">Idilewa voices</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); const langCode = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' }[v.lang] || 'en'; return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" data-language="${langCode}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Machine-generated pronunciation can vary. Fluent-speaker review is recommended for learning materials.</div></section></div>`;
   }
 
   function renderGeneric(key) {
@@ -5168,7 +5168,7 @@ import {
       if (voicePracticeRecorder?.state === 'recording') return;
       const language = trainerLanguageCode();
       if (!['yo', 'ha', 'ig', 'pcm', 'en'].includes(language)) {
-        showToast('Plotweaver speech recognition currently supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English. Choose one of those languages to record.', 'error');
+        showToast('Idilewa speech recognition currently supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English. Choose one of those languages to record.', 'error');
         return;
       }
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -5210,7 +5210,7 @@ import {
           showToast('No audio was recorded. Please try again.', 'error');
           return;
         }
-        showToast('Sending your recording to Plotweaver for transcription.');
+        showToast('Sending your recording to Idilewa for transcription.');
         try {
           const result = await transcribeWithPlotweaver(recording, language);
           voiceTranscriptionResult = { lessonId, language, text: result.text };
@@ -5289,7 +5289,7 @@ import {
                 ${renderVoiceLessonsDashboard()}
                 <section class="voice-foundations" aria-labelledby="voice-foundations-title">
                   <div class="section-heading">
-                    <div><span class="section-kicker">Start here · Yorùbá sound foundations</span><h2 id="voice-foundations-title">Vowels, consonants &amp; tone</h2><p>Learn the mouth sounds before moving into words and conversation. Choose a sound to hear Plotweaver pronounce it.</p></div>
+                    <div><span class="section-kicker">Start here · Yorùbá sound foundations</span><h2 id="voice-foundations-title">Vowels, consonants &amp; tone</h2><p>Learn the mouth sounds before moving into words and conversation. Choose a sound to hear Idilewa pronounce it.</p></div>
                   </div>
                   <div class="voice-foundation-grid">
                     <article class="voice-foundation-block"><h3>Oral vowels</h3><p>Seven distinct vowel sounds, each with high, mid and low tone examples.</p><div class="voice-sound-list">${ORAL_VOWELS.map((item) => `<button type="button" data-action="speak-voice-lesson" data-phrase="${esc(item.char)}. ${esc(item.example)}" title="${esc(item.ipa)}">${esc(item.char)} <small>${esc(item.ipa)}</small></button>`).join('')}</div></article>
@@ -5311,7 +5311,7 @@ import {
               <strong>VOICE LESSONS · PRONUNCIATION STUDIO</strong>
             </div>
             <h1>Practice African Languages<br /><em>with language-aware voice audio.</em></h1>
-            <p>Practice pitch patterns and pronunciation through 60 structured lessons. Plotweaver supplies speech in the selected language; its transcription supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English.</p>
+            <p>Practice pitch patterns and pronunciation through 60 structured lessons. Idilewa supplies speech in the selected language; transcription supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English.</p>
             
             <div class="trainer-stats-strip">
               <div class="trainer-stat-pill">
@@ -5473,7 +5473,7 @@ import {
               <div class="studio-buttons-row">
                 <button type="button" class="btn-studio btn-play-native" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">
                   ${icon("volume", 20)}
-                  <span>Listen to Plotweaver voice</span>
+                  <span>Listen to Idilewa voice</span>
                 </button>
 
                 ${!state.trainer.isRecording ? `
@@ -5492,12 +5492,12 @@ import {
               <div class="studio-visualizer-box">
                 <canvas id="waveformCanvas" width="560" height="70"></canvas>
                 <div class="visualizer-hint">
-                  ${state.trainer.isRecording ? "🔴 Recording your practice… Speak clearly, then stop to request a transcript." : "▶️ Listen to Plotweaver audio or record your voice for speech-to-text feedback."}
+                  ${state.trainer.isRecording ? "🔴 Recording your practice… Speak clearly, then stop to request a transcript." : "▶️ Listen to Idilewa audio or record your voice for speech-to-text feedback."}
                 </div>
               </div>
             </div>
 
-            ${voiceTranscriptionResult?.lessonId === activeLesson.id && voiceTranscriptionResult.language === trainerLanguageCode() ? `<div class="studio-analysis-result"><h3>Plotweaver transcription</h3><p lang="${trainerLanguageCode()}">${esc(voiceTranscriptionResult.text)}</p><small>This is speech-to-text feedback, not a verified pronunciation, pitch, or fluency score. Transcripts stay on this page only.</small></div>` : ""}
+            ${voiceTranscriptionResult?.lessonId === activeLesson.id && voiceTranscriptionResult.language === trainerLanguageCode() ? `<div class="studio-analysis-result"><h3>Idilewa transcription</h3><p lang="${trainerLanguageCode()}">${esc(voiceTranscriptionResult.text)}</p><small>This is speech-to-text feedback, not a verified pronunciation, pitch, or fluency score. Transcripts stay on this page only.</small></div>` : ""}
 
             <div class="studio-nav-footer">
               <button type="button" class="btn-nav-lesson" data-action="trainer-prev-lesson" ${activeLesson.id <= (activeLevel === "beginner" ? 1 : activeLevel === "intermediate" ? 21 : 41) ? "disabled" : ""}>
@@ -6750,7 +6750,7 @@ import {
     button.setAttribute('aria-pressed', 'true');
     void playPlotweaverSpeech(phrase, button.dataset.language || 'yo')
       .catch((error) => {
-        showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this sample.', 'error');
+        showToast(error instanceof Error ? error.message : 'Idilewa could not generate this sample.', 'error');
       })
       .finally(() => {
         if (button.isConnected) {
@@ -7018,7 +7018,7 @@ import {
         const output = document.getElementById('ide-output-translation');
         if (output?.dataset.translation) {
           void playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo')
-            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this audio.', 'error'));
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this audio.', 'error'));
         }
         else showToast('Translate the console output first.', 'error');
         break;
@@ -7031,14 +7031,14 @@ import {
         const output = document.getElementById('voice-translation-result');
         if (output?.dataset.translation) {
           void playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo')
-            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this audio.', 'error'));
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this audio.', 'error'));
         }
         else showToast('Translate a phrase first.', 'error');
         break;
       }
       case 'speak-voice-lesson': {
         void playPlotweaverSpeech(el.dataset.phrase || '', 'yo')
-          .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this sound.', 'error'));
+          .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this sound.', 'error'));
         break;
       }
       case 'plotweaver-speak-text': {
@@ -7049,11 +7049,11 @@ import {
           if (status) status.textContent = 'Enter text before generating audio.';
           break;
         }
-        if (status) status.textContent = 'Generating audio with Plotweaver…';
+        if (status) status.textContent = 'Generating audio with Idilewa…';
         void playPlotweaverSpeech(text, language).then(() => {
           if (status) status.textContent = 'Audio is playing. The generated audio is not saved.';
         }).catch((error) => {
-          if (status) status.textContent = error instanceof Error ? error.message : 'Plotweaver could not generate this audio.';
+          if (status) status.textContent = error instanceof Error ? error.message : 'Idilewa could not generate this audio.';
         });
         break;
       }
@@ -7466,8 +7466,8 @@ import {
         const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
         if (activeLesson) {
           void playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables)
-            .then(() => showToast('Playing Plotweaver-generated audio.'))
-            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate lesson audio.', 'error'));
+            .then(() => showToast('Playing Idilewa-generated audio.'))
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate lesson audio.', 'error'));
         }
         break;
       }
@@ -7770,7 +7770,7 @@ import {
         const created = await createPlotweaverVoice(cloneRequest);
         const voiceId = created.voice_id || created.id;
         if (typeof voiceId !== 'string' || !voiceId) {
-          throw new Error('Plotweaver created a voice but returned no voice ID.');
+          throw new Error('Idilewa created a voice but returned no voice ID.');
         }
         state.trainer.clonedVoices = [
           { voice_id: voiceId, name: String(data.get('name') || 'My cloned voice').slice(0, 80), type: 'cloned' },

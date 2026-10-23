@@ -18,7 +18,7 @@ async function responseError(response) {
   } catch {
     result = null;
   }
-  return new Error(result?.error || `Plotweaver request failed (${response.status}).`);
+  return new Error(result?.error || `Idilewa voice service request failed (${response.status}).`);
 }
 
 export async function getPlotweaverLanguages(service) {
@@ -28,7 +28,7 @@ export async function getPlotweaverLanguages(service) {
   });
   if (!response.ok) throw await responseError(response);
   const languages = await response.json();
-  if (!Array.isArray(languages)) throw new Error('Plotweaver returned an invalid language list.');
+  if (!Array.isArray(languages)) throw new Error('Idilewa voice service returned an invalid language list.');
   return languages.filter((language) => typeof language?.code === 'string'
     && typeof language?.name === 'string'
     && Array.isArray(language?.services));
@@ -44,7 +44,7 @@ export async function getPlotweaverVoices({ language, type } = {}) {
   });
   if (!response.ok) throw await responseError(response);
   const voices = await response.json();
-  if (!Array.isArray(voices)) throw new Error('Plotweaver returned an invalid voice list.');
+  if (!Array.isArray(voices)) throw new Error('Idilewa voice service returned an invalid voice list.');
   return voices.filter((voice) => typeof voice?.voice_id === 'string'
     && typeof voice?.name === 'string');
 }
@@ -76,7 +76,7 @@ export async function translateWithPlotweaver({ text, sourceLanguage, targetLang
   if (!response.ok) throw await responseError(response);
   const result = await response.json();
   if (typeof result?.translated_text !== 'string' || !result.translated_text.trim()) {
-    throw new Error('Plotweaver returned no translated text.');
+    throw new Error('Idilewa voice service returned no translated text.');
   }
   return result;
 }
@@ -96,7 +96,7 @@ export async function transcribeWithPlotweaver(audio, language) {
   });
   if (!response.ok) throw await responseError(response);
   const result = await response.json();
-  if (typeof result?.text !== 'string') throw new Error('Plotweaver returned no transcription.');
+  if (typeof result?.text !== 'string') throw new Error('Idilewa voice service returned no transcription.');
   return result;
 }
 
