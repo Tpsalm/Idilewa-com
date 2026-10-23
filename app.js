@@ -703,8 +703,9 @@ import {
     document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
   }
 
-  function renderFooter() {
+  function renderFooter(page) {
     return `<footer class="site-footer">
+      ${page === 'index' ? renderHomeBenefits() : ''}
       <div class="container footer-main">
         <section class="footer-contact">
           <span class="footer-kicker">Contact us</span>
@@ -857,7 +858,6 @@ import {
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
       </section>
 
-      ${renderHomeBenefits()}
       ${renderHomeAppPreview()}
 
       <!-- 5 Pathways Learning Cards (Five Pillars of Idilewa) -->
@@ -6514,17 +6514,17 @@ import {
       .replace(/Voice Studio/gi, 'Voice Lessons');
     if (page === 'coding') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
       initializeIdeRuntimes();
       initializeTranslationLanguages('ide-output-language');
     } else if (page === 'login') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
     } else {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter(page)}`;
     }
     ensureSingleSharedFooter();
     if (page === 'owe' && ['meaning', 'story', 'reflection'].includes(params.section)) {
