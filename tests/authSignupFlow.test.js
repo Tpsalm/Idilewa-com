@@ -25,3 +25,13 @@ test('sign-in page offers email-code login and recovery', () => {
   assert.match(appSource, /requestSigninOtp\(email, 'password-reset'\)/);
   assert.match(supabaseClientSource, /purpose === 'password-reset' \? 'recovery' : 'magiclink'/);
 });
+
+test('sign-out clears pending verification and recovery steps before returning to sign-in', () => {
+  assert.match(appSource, /function clearPendingAuthFlow\(\) \{[\s\S]*?pendingSignupEmail = '';[\s\S]*?pendingSignin = null;[\s\S]*?passwordResetVerified = false;[\s\S]*?idilewa-pending-signup-email[\s\S]*?idilewa-pending-signin-otp[\s\S]*?idilewa-password-reset-verified/);
+  assert.match(appSource, /case 'account-sign-out':\s*case 'profile-sign-out':\s*clearPendingAuthFlow\(\);\s*void signOutAccount\(\)\.then/);
+  assert.match(appSource, /catch\(\(error\) => \{\s*state\.loginMode = 'signin';\s*state\.authRole = 'child';\s*navigate\('login', \{ mode: 'signin' \}, true\);/);
+});
+
+test('sign-out clears the current device session without relying on global logout', () => {
+  assert.match(supabaseClientSource, /supabase\.auth\.signOut\(\{ scope: 'local' \}\)/);
+});

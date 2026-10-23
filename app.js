@@ -6306,6 +6306,15 @@ import {
     }
   }
 
+  function clearPendingAuthFlow() {
+    pendingSignupEmail = '';
+    pendingSignin = null;
+    passwordResetVerified = false;
+    sessionStorage.removeItem('idilewa-pending-signup-email');
+    sessionStorage.removeItem('idilewa-pending-signin-otp');
+    sessionStorage.removeItem('idilewa-password-reset-verified');
+  }
+
   function render() {
     if (activeCodeRobotScene) {
       activeCodeRobotScene.destroy();
@@ -7168,12 +7177,18 @@ import {
         break;
       case 'account-sign-out':
       case 'profile-sign-out':
+        clearPendingAuthFlow();
         void signOutAccount().then(() => {
           state.loginMode = 'signin';
           state.authRole = 'child';
           navigate('login', { mode: 'signin' }, true);
           showToast('You have signed out.', 'success');
-        }).catch((error) => showToast(error instanceof Error ? error.message : 'Could not sign out.', 'error'));
+        }).catch((error) => {
+          state.loginMode = 'signin';
+          state.authRole = 'child';
+          navigate('login', { mode: 'signin' }, true);
+          showToast(error instanceof Error ? error.message : 'Signed out on this device, but Supabase could not confirm the session revocation.', 'error');
+        });
         break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
       case 'trainer-set-lang': {

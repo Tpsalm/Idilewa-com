@@ -363,14 +363,22 @@ export async function signIn({ email, password, expectedRole }) {
 }
 
 export async function signOut() {
+  let authError = null;
   if (supabase) {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw new Error(error.message, { cause: error });
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      authError = error;
+    } catch (error) {
+      authError = error;
+    }
   }
   try {
     localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
   } catch (error) {
     throw new Error('Signed out, but the local account cache could not be cleared.', { cause: error });
+  }
+  if (authError) {
+    throw new Error('Signed out on this device, but Supabase could not confirm the session revocation.', { cause: authError });
   }
   return true;
 }
