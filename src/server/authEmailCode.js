@@ -9,12 +9,12 @@ import {
 } from './guardianConsent.js';
 import { createAuthCodeEmail } from './authCodeEmail.js';
 
-const PURPOSES = new Set(['signup', 'signin', 'recovery']);
+const PURPOSES = new Set(['child-signin', 'recovery']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function enforceEmailCodeLimit(admin, bucket, action, limit, windowSeconds) {
   const { data, error } = await admin.rpc('guardian_rate_limit', {
-    p_bucket_hash: hashGuardianValue(`${action}:${bucket}`),
+    p_bucket_hash: hashGuardianValue(`auth_email_code:${action}:${bucket}`),
     p_action: action,
     p_limit: limit,
     p_window_seconds: windowSeconds,
@@ -41,22 +41,43 @@ export default async function handleAuthEmailCode(req, res) {
   try {
     const { email, purpose } = validateRequestBody(readJsonBody(req));
     const admin = createGuardianAdmin();
-    await enforceEmailCodeLimit(admin, email, 'auth_email_code', 4, 3_600);
+    await enforceEmailCodeLimit(admin, email, 'request', 4, 3_600);
     const clientAddress = getClientAddress(req);
     if (clientAddress) {
-      await enforceEmailCodeLimit(admin, clientAddress, 'auth_email_code_ip', 20, 3_600);
+      await enforceEmailCodeLimit(admin, clientAddress, 'request_ip', 20, 3_600);
     }
 
     const { data: profile, error: profileError } = await admin
       .from('profiles')
-      .select('id')
+      .select('id, role, parent_consent_request_id')
       .eq('email', email)
       .maybeSingle();
     if (profileError) {
       throw new GuardianConsentError(503, 'Email verification is temporarily unavailable.');
     }
     if (!profile?.id) {
-      return sendGuardianJson(res, 202, { message: 'If the account exists and needs a code, an email will be sent.' });
+      return sendGuardianJson(res, 202, { message: 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.' });
+    }
+
+    let recipientEmail = email;
+    if (purpose === 'child-signin') {
+      if (profile.role !== 'child' || !profile.parent_consent_request_id) {
+        return sendGuardianJson(res, 202, { message: 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.' });
+      }
+      const { data: guardianRequest, error: guardianError } = await admin
+        .from('guardian_access_requests')
+        .select('parent_email')
+        .eq('id', profile.parent_consent_request_id)
+        .eq('claimed_by', profile.id)
+        .eq('status', 'used')
+        .maybeSingle();
+      if (guardianError) {
+        throw new GuardianConsentError(503, 'Parent passcode delivery is temporarily unavailable.');
+      }
+      if (!guardianRequest?.parent_email || guardianRequest.parent_email.toLowerCase() === email) {
+        return sendGuardianJson(res, 202, { message: 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.' });
+      }
+      recipientEmail = guardianRequest.parent_email.toLowerCase();
     }
 
     const { data: userData, error: userError } = await admin.auth.admin.getUserById(profile.id);
@@ -64,8 +85,8 @@ export default async function handleAuthEmailCode(req, res) {
     if (userError || !user || user.email?.toLowerCase() !== email) {
       throw new GuardianConsentError(503, 'Email verification is temporarily unavailable.');
     }
-    if (purpose === 'signup' ? Boolean(user.email_confirmed_at) : !user.email_confirmed_at) {
-      return sendGuardianJson(res, 202, { message: 'If the account exists and needs a code, an email will be sent.' });
+    if (purpose === 'child-signin' && (profile.role !== 'child' || !profile.parent_consent_request_id)) {
+      return sendGuardianJson(res, 202, { message: 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.' });
     }
 
     const apiKey = process.env.RESEND_API_KEY;
@@ -76,7 +97,7 @@ export default async function handleAuthEmailCode(req, res) {
     }
 
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-      type: purpose === 'signup' ? 'signup' : purpose === 'recovery' ? 'recovery' : 'magiclink',
+      type: purpose === 'recovery' ? 'recovery' : 'magiclink',
       email,
     });
     const code = linkData?.properties?.email_otp;
@@ -97,7 +118,7 @@ export default async function handleAuthEmailCode(req, res) {
           Authorization: `******`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ from, to: [email], ...emailContent }),
+        body: JSON.stringify({ from, to: [recipientEmail], ...emailContent }),
         signal: AbortSignal.timeout(10_000),
       });
     } catch (error) {
@@ -122,7 +143,11 @@ export default async function handleAuthEmailCode(req, res) {
       throw new GuardianConsentError(502, 'The code email could not be sent. Please try again shortly.');
     }
 
-    return sendGuardianJson(res, 202, { message: 'If the account exists and needs a code, an email will be sent.' });
+    return sendGuardianJson(res, 202, {
+      message: purpose === 'child-signin'
+        ? 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.'
+        : 'If the account exists and needs a code, an email will be sent.',
+    });
   } catch (error) {
     if (error instanceof GuardianConsentError) {
       return sendGuardianJson(res, error.statusCode, { error: error.message });

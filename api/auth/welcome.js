@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import handleAuthEmailCode from '../../src/server/authEmailCode.js';
+import handleAuthActivity from '../../src/server/authActivity.js';
 import { createWelcomeEmail } from '../../src/server/welcomeEmail.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,6 +47,9 @@ function getConfiguredOrigin() {
 export default async function handler(req, res) {
   if (req.query?.action === 'email-code') {
     return handleAuthEmailCode(req, res);
+  }
+  if (req.query?.action === 'activity') {
+    return handleAuthActivity(req, res);
   }
 
   if (req.method !== 'POST') {

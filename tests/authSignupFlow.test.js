@@ -14,22 +14,40 @@ test('signup offers adult accounts without guardian consent and retains child ap
   assert.match(appSource, /Create Adult Learning Space/);
 });
 
-test('successful signup returns to sign-in rather than navigating into the app', () => {
-  assert.match(appSource, /await signOutAccount\(\);\s*signupEmailForSignin = email\.toLowerCase\(\);[\s\S]*?navigate\('login', \{ mode: 'signin' \}, true\);/);
-  assert.match(appSource, /await verifySignupOtp\(\{ email: pendingSignupEmail, token \}\);[\s\S]*?navigate\('login', \{ mode: 'signin' \}, true\);/);
-  assert.match(appSource, /Your account is ready; sign in with your email and password\./);
+test('successful signup returns to sign-in rather than navigating into the app', async () => {
+  assert.match(appSource, /await signOutAccount\(\{ notify: false \}\);\s*signupEmailForSignin = email\.toLowerCase\(\);[\s\S]*?navigate\('login', \{ mode: 'signin' \}, true\);/);
+  assert.match(appSource, /Account created\. Sign in with your email and password\./);
+  assert.match(supabaseClientSource, /if \(!data\.session\) \{\s*throw new Error\('The account was created, but Supabase did not start a session/);
+  assert.match(await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8'), /\[auth\.email\]\s*enable_confirmations = false/);
 });
 
-test('sign-in page offers email-code login and recovery', () => {
-  assert.match(appSource, /data-action="request-signin-otp">Email me a sign-in code instead/);
+test('homepage no longer displays the Family Living View image', () => {
+  assert.match(appSource, /home-hero-illustration\.svg/);
+  assert.doesNotMatch(appSource, /idilewa-family-view\.png/);
+});
+
+test('adult sign-in is password-based and child sign-in uses a parent-issued passcode', () => {
+  assert.doesNotMatch(appSource, /request-signin-otp|resend-signup-otp|signup-otp/);
+  assert.match(appSource, /data-action="request-child-signin-code"/);
+  assert.match(appSource, /requestSigninOtp\(email, 'child-signin'\)/);
+  assert.match(appSource, /expectedRole: purpose === 'child-signin' \? 'child'/);
+  assert.match(appSource, /signInAccount\(\{ email, password, expectedRole: 'adult' \}\)/);
+  assert.match(supabaseClientSource, /expectedRole === 'adult' && \['parent', 'educator'\]\.includes\(userRecord\.role\)/);
+  assert.match(supabaseClientSource, /Email codes are only available for child sign-in and password recovery/);
+  assert.match(supabaseClientSource, /requestAuthEmailCode\(email, purpose === 'password-reset' \? 'recovery' : purpose\)/);
+});
+
+test('sign-in and sign-out activity emails are sent without blocking local logout', () => {
+  assert.match(appSource, /await sendAuthActivityEmail\('sign-in'\)/);
+  assert.match(supabaseClientSource, /body: JSON\.stringify\(\{ event: 'sign-out' \}\)/);
   assert.match(appSource, /requestSigninOtp\(email, 'password-reset'\)/);
-  assert.match(supabaseClientSource, /purpose === 'password-reset' \? 'recovery' : 'magiclink'/);
+  assert.match(supabaseClientSource, /supabase\.auth\.signOut\(\{ scope: 'local' \}\)/);
 });
 
 test('sign-out clears pending verification and recovery steps before returning to sign-in', () => {
   assert.match(appSource, /function clearPendingAuthFlow\(\) \{[\s\S]*?pendingSignupEmail = '';[\s\S]*?pendingSignin = null;[\s\S]*?passwordResetVerified = false;[\s\S]*?idilewa-pending-signup-email[\s\S]*?idilewa-pending-signin-otp[\s\S]*?idilewa-password-reset-verified/);
-  assert.match(appSource, /case 'account-sign-out':\s*case 'profile-sign-out':\s*clearPendingAuthFlow\(\);\s*void signOutAccount\(\)\.then/);
-  assert.match(appSource, /catch\(\(error\) => \{\s*state\.loginMode = 'signin';\s*state\.authRole = 'child';\s*navigate\('login', \{ mode: 'signin' \}, true\);/);
+  assert.match(appSource, /case 'account-sign-out':\s*case 'profile-sign-out':\s*const authStorageError = clearPendingAuthFlow\(\);\s*void signOutAccount\(\)\.then/);
+  assert.match(appSource, /catch\(\(error\) => \{\s*state\.loginMode = 'signin';\s*state\.authRole = 'adult';\s*navigate\('login', \{ mode: 'signin' \}, true\);/);
 });
 
 test('sign-out clears the current device session without relying on global logout', () => {

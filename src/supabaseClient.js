@@ -162,6 +162,9 @@ async function loadAccountProfile(client, authUser) {
 }
 
 async function requestAuthEmailCode(email, purpose) {
+  if (!['child-signin', 'password-reset'].includes(purpose)) {
+    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  }
   const response = await fetch('/api/auth/welcome?action=email-code', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -213,13 +216,8 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
     throw new Error('Could not create an account with this email. If you already registered, sign in or use Forgot password.');
   }
 
-  let verificationEmailError = '';
   if (!data.session) {
-    try {
-      await requestAuthEmailCode(normalizedEmail, 'signup');
-    } catch (error) {
-      verificationEmailError = error instanceof Error ? error.message : 'The verification code email could not be sent.';
-    }
+    throw new Error('The account was created, but Supabase did not start a session. Email confirmation must be disabled in the hosted Supabase auth settings before sign-up can complete.');
   }
 
   let welcomeEmailError = '';
@@ -256,40 +254,24 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
     throw profileError;
   }
   if (data.session) setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
-  return { user: userRecord, session: data.session, error: null, welcomeEmailError, verificationEmailError };
+  return { user: userRecord, session: data.session, error: null, welcomeEmailError };
 }
 
-export async function verifySignupOtp({ email, token }) {
-  const client = requireSupabase();
-  const normalizedEmail = email.toLowerCase().trim();
-  if (!/^\d{6,8}$/.test(token)) throw new Error('Enter the verification code from your email.');
-  const { data, error } = await client.auth.verifyOtp({
-    email: normalizedEmail,
-    token,
-    type: 'signup',
-  });
-  if (error) throw new Error(error.message, { cause: error });
-  if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
-  let userRecord;
-  try {
-    userRecord = await loadAccountProfile(client, data.user);
-  } catch (profileError) {
-    const { error: signOutError } = await client.auth.signOut();
-    if (signOutError) {
-      throw new Error('The account profile could not be loaded and its verification session could not be cleared.', { cause: signOutError });
-    }
-    throw profileError;
+export async function requestSigninOtp(email, purpose = 'child-signin') {
+  if (!['child-signin', 'password-reset'].includes(purpose)) {
+    throw new Error('Email codes are only available for child sign-in and password recovery.');
   }
-  await signOut();
-  return userRecord;
+  await requestAuthEmailCode(email, purpose === 'password-reset' ? 'recovery' : purpose);
 }
 
-export async function requestSigninOtp(email, purpose = 'signin') {
-  await requestAuthEmailCode(email, purpose);
-}
-
-export async function verifySigninOtp({ email, token, expectedRole, purpose = 'signin' }) {
+export async function verifySigninOtp({ email, token, expectedRole, purpose = 'child-signin' }) {
   const client = requireSupabase();
+  if (!['child-signin', 'password-reset'].includes(purpose)) {
+    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  }
+  if (purpose === 'child-signin' && expectedRole !== 'child') {
+    throw new Error('Child sign-in codes can only be used for a child account.');
+  }
   if (expectedRole && !['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
     throw new Error('Select a valid account type before using email-code sign-in.');
   }
@@ -307,6 +289,10 @@ export async function verifySigninOtp({ email, token, expectedRole, purpose = 's
   try {
     userRecord = await loadAccountProfile(client, data.user);
     if (expectedRole && userRecord.role !== expectedRole) {
+      if (expectedRole === 'adult' && ['parent', 'educator'].includes(userRecord.role)) {
+        setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
+        return { user: userRecord, session: data.session, error: null };
+      }
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {
@@ -327,10 +313,6 @@ export async function updateAccountPassword(password) {
   const { data, error } = await client.auth.updateUser({ password });
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user) throw new Error('The authentication service did not confirm your new password.');
-}
-
-export async function resendSignupOtp(email) {
-  await requestAuthEmailCode(email, 'signup');
 }
 
 export async function signIn({ email, password, expectedRole }) {
@@ -362,9 +344,33 @@ export async function signIn({ email, password, expectedRole }) {
   return { user: userRecord, session: data.session, error: null };
 }
 
-export async function signOut() {
+export async function signOut({ notify = true } = {}) {
   let authError = null;
+  let activityEmailError = null;
   if (supabase) {
+    if (notify) {
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (sessionData.session?.access_token) {
+          const response = await fetch('/api/auth/welcome?action=activity', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${sessionData.session.access_token}`,
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ event: 'sign-out' }),
+          });
+          if (!response.ok) {
+            const result = await response.json().catch(() => null);
+            throw new Error(result?.error || 'The sign-out notification could not be sent.');
+          }
+        }
+      } catch (error) {
+        activityEmailError = error;
+      }
+    }
     try {
       const { error } = await supabase.auth.signOut({ scope: 'local' });
       authError = error;
@@ -380,7 +386,30 @@ export async function signOut() {
   if (authError) {
     throw new Error('Signed out on this device, but Supabase could not confirm the session revocation.', { cause: authError });
   }
+  if (activityEmailError) {
+    throw new Error('You are signed out on this device, but the Idilewa sign-out email could not be sent.', { cause: activityEmailError });
+  }
   return true;
+}
+
+export async function sendAuthActivityEmail(event) {
+  if (!['sign-in'].includes(event)) {
+    throw new Error('The authentication activity is not supported.');
+  }
+  const accessToken = await getSessionAccessToken();
+  const response = await fetch('/api/auth/welcome?action=activity', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ event }),
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The Idilewa sign-in email could not be sent.');
+  }
 }
 
 export function getCurrentUser() {

@@ -1,10 +1,10 @@
 project_id = "idilewa-com"
 
 [auth.email]
-enable_confirmations = true
+enable_confirmations = false
 
 [auth.email.template.confirmation]
-subject = "Welcome to Idilewa — confirm your email"
+subject = "Welcome to Idilewa"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.magic_link]
