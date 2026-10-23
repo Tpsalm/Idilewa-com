@@ -6441,7 +6441,6 @@ main, #main, .main-content, .page-container {
   align-items: center;
 }
 
-.hero-3d-stage-container,
 .hero-3d-artifact-stage,
 .story-3d-canvas-wrap,
 .auth-3d-canvas-wrap {
@@ -6458,79 +6457,22 @@ main, #main, .main-content, .page-container {
   justify-content: center;
 }
 
-.hero-3d-stage-container:active,
 .hero-3d-artifact-stage:active,
 .story-3d-canvas-wrap:active,
 .auth-3d-canvas-wrap:active {
   cursor: grabbing;
 }
 
-.hero-3d-stage-container,
 .hero-3d-artifact-stage {
   min-height: 380px;
   height: 440px;
 }
 
-.hero-3d-stage-container,
 .hero-photo-wrap.family-view-reference {
   aspect-ratio: 4 / 3;
   min-height: 0;
   height: auto;
   flex: 0 0 auto;
-}
-
-.hero-3d-canvas-wrap {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.hero-3d-floating-badge {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(21, 118, 74, 0.22);
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--green-dark, #0c5737);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 2;
-}
-
-.hero-3d-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  animation: heroPulse 2s infinite;
-}
-
-@keyframes heroPulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
 }
 
 .story-3d-canvas-wrap {
@@ -6557,46 +6499,6 @@ main, #main, .main-content, .page-container {
     height: 300px;
     min-height: 280px;
   }
-  .hero-3d-floating-badge {
-    font-size: 11px;
-    padding: 5px 12px;
-    bottom: 10px;
-  }
-}
-
-/* 3. Hero Visual Switcher Tabs (Photo / 3D Artifact) */
-.hero-visual-switcher {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.hero-switch-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-soft);
-  background: var(--cream);
-  border: 1px solid var(--line);
-  padding: 6px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.hero-switch-btn.is-active {
-  background: var(--green-dark);
-  color: #ffffff;
-  border-color: var(--green-dark);
-}
-
-.hero-switch-btn:hover:not(.is-active) {
-  background: var(--mint);
-  border-color: var(--green);
 }
 
 /* 4. WebGL Fallback Card */

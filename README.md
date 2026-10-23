@@ -51,11 +51,9 @@ The visual identity is warm, calm, editorial, and rooted in nature. It strictly 
 
 The application incorporates a restrained, performant Three.js 3D engine integrated directly into the live application runtime (`src/threeScene.js`):
 
-1. **3D Hero Talking Drum Stage (`init3DHeroCanvas`):**
-   - Realistic 3D African talking drum (*Gángan*) featuring curved cedarwood body, tension cords, brass resonance rings, and an emerald gem belt.
-   - Orbiting Yoruba glyph spheres (`È`, `Ẹ`, `Ọ`, `Ṣ`) with soft emissive glow.
-   - Golden ambient dust and firefly particle cloud.
-   - Interactive touch/drag rotation and gentle floating parallax.
+1. **Family Living View homepage hero:**
+   - Shows the family learning together as the single homepage hero visual.
+   - Includes interactive language-greeting and story hotspots.
 2. **Scroll-Driven 5-Pillar Visual Journey:**
    - Landing page visual timeline smoothly transitioning across:
      - **Pillar 01 (Èdè):** Language & Everyday Speech

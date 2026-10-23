@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import brandLogoUrl from './assets/idilewa-brand.svg';
 import {
-  init3DHeroCanvas,
   init3DCodeRobotGlyphs,
   init3DAuthCanvas,
   init3DStoryCanvas,
@@ -773,13 +772,13 @@ import {
       { title: 'Code in your language', desc: 'Interactive bilingual coding studio for kids.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Interactive IDE', image: 'code-kids.jpg' },
       { title: 'Voice Lessons', desc: 'Start with Yorùbá sounds, then practice pitch and pronunciation across African languages.', icon: 'mic', route: 'voice_lessons', tone: 'mint', tag: 'Interactive Audio Lessons', image: 'listening-reader.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
-      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
+      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'story-grandmother.jpg' },
       { title: 'Connect with Students', desc: 'A respectful space for educators to meet learners.', icon: 'people', route: 'connect_students', tone: 'peach', tag: 'For educators', image: 'african-kids-friends.jpg' },
       { title: 'Connect with Teachers', desc: 'Browse educator profiles, learning hours and experience.', icon: 'school', route: 'connect_teachers', tone: 'lilac', tag: 'For learners', image: 'yoruba-educator-man.jpg' }
     ];
     const books = [
       { title: 'A Morning Greeting', label: 'Yorùbá · Beginner', bg: 'cover-green', shape: 'È', route: 'course' },
-      { title: 'The Talking Drum', label: 'Story · Read & listen', bg: 'cover-blue', shape: '♫', route: 'ere' },
+      { title: 'Stories We Share', label: 'Story · Read & listen', bg: 'cover-blue', shape: '♫', route: 'ere' },
       { title: 'Little Code Garden', label: 'English + Yorùbá', bg: 'cover-yellow', shape: '</>', route: 'coding' },
       { title: 'Wisdom We Carry', label: 'Culture · Short read', bg: 'cover-pink', shape: '“', route: 'oral' }
     ];
@@ -798,31 +797,12 @@ import {
             </div>
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
-          <!-- Hero Visual: 3D Talking Drum (Default Active Centerpiece) & Living Family View Switcher -->
+          <!-- Hero Visual: Family Living View -->
           <div class="hero-visual modern-hero-visual" id="heroVisualStage">
             <div class="hero-ambient-glow" aria-hidden="true"></div>
             
             <div class="hero-visual-stage-inner">
-              <div class="hero-visual-switcher" role="tablist" aria-label="Hero visual display mode">
-                <button type="button" class="hero-switch-btn is-active" id="btnShow3D" data-action="hero-show-3d" role="tab" aria-selected="true">
-                  <span>🥁 3D Talking Drum &amp; Glyphs</span>
-                </button>
-                <button type="button" class="hero-switch-btn" id="btnShowPhoto" data-action="hero-show-photo" role="tab" aria-selected="false">
-                  <span>📸 Living Family View</span>
-                </button>
-              </div>
-
-              <!-- 3D Interactive Talking Drum Stage (Visible By Default on Page Load) -->
-              <div class="hero-3d-stage-container" id="hero3DStageWrap" style="display: block; width: 100%; position: relative;">
-                <div id="hero3DCanvasWrap" class="hero-3d-canvas-wrap" data-3d-scene="hero" title="Drag to rotate 3D African Gángan Drum and living glyphs" aria-label="Interactive 3D African Talking Drum and orbiting Yoruba glyphs"></div>
-                <div class="hero-3d-floating-badge">
-                  <span class="hero-3d-pulse-dot"></span>
-                  <span>🪐 3D Gángan Drum &amp; Glyphs · Drag &amp; Rotate · Three.js</span>
-                </div>
-              </div>
-
-              <!-- 2D Photographic & Greeting Hotspots View (Hidden By Default) -->
-              <div class="hero-photo-wrap family-view-reference" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap" style="display: none;">
+              <div class="hero-photo-wrap family-view-reference" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap">
                 <div class="hero-photo-frame">
                   <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo cinematic-living-image" />
                   <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
@@ -6557,8 +6537,6 @@ import {
     if (page === 'index') {
       initHeroParallax();
       initHeroCinematicVideoEngine();
-      const heroCanvas = document.getElementById('hero3DCanvasWrap');
-      if (heroCanvas) init3DHeroCanvas(heroCanvas);
     } else if (page === 'coding') {
       const codeRobotGlyphs = document.getElementById('codeRobotGlyphCanvas');
       if (codeRobotGlyphs) activeCodeRobotScene = init3DCodeRobotGlyphs(codeRobotGlyphs);
@@ -6785,30 +6763,6 @@ import {
   function handleAction(action, el) {
     const lang = el.dataset.lang;
     switch (action) {
-      case 'hero-show-photo': {
-        const photoWrap = document.getElementById('heroPhotoWrap');
-        const stage3d = document.getElementById('hero3DStageWrap');
-        const btnPhoto = document.getElementById('btnShowPhoto');
-        const btn3d = document.getElementById('btnShow3D');
-        if (photoWrap) photoWrap.style.display = 'block';
-        if (stage3d) stage3d.style.display = 'none';
-        if (btnPhoto) { btnPhoto.classList.add('is-active'); btnPhoto.setAttribute('aria-selected', 'true'); }
-        if (btn3d) { btn3d.classList.remove('is-active'); btn3d.setAttribute('aria-selected', 'false'); }
-        break;
-      }
-      case 'hero-show-3d': {
-        const photoWrap = document.getElementById('heroPhotoWrap');
-        const stage3d = document.getElementById('hero3DStageWrap');
-        const btnPhoto = document.getElementById('btnShowPhoto');
-        const btn3d = document.getElementById('btnShow3D');
-        if (photoWrap) photoWrap.style.display = 'none';
-        if (stage3d) stage3d.style.display = 'block';
-        if (btn3d) { btn3d.classList.add('is-active'); btn3d.setAttribute('aria-selected', 'true'); }
-        if (btnPhoto) { btnPhoto.classList.remove('is-active'); btnPhoto.setAttribute('aria-selected', 'false'); }
-        const canvasWrap = document.getElementById('hero3DCanvasWrap');
-        if (canvasWrap) init3DHeroCanvas(canvasWrap);
-        break;
-      }
       case 'toggle-menu': toggleMobileMenu(); break;
       case 'open-search': openSearch(); break;
       case 'close-modal': document.getElementById('modal-root').innerHTML = ''; break;
