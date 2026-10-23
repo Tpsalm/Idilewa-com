@@ -328,7 +328,8 @@ export async function signIn({ email, password, expectedRole }) {
   let userRecord;
   try {
     userRecord = await loadAccountProfile(client, data.user);
-    if (expectedRole && userRecord.role !== expectedRole) {
+    if (expectedRole && userRecord.role !== expectedRole
+      && !(expectedRole === 'adult' && ['parent', 'educator'].includes(userRecord.role))) {
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {

@@ -233,20 +233,6 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   border-radius: 34px;
   box-shadow: 0 30px 70px rgba(31, 78, 51, 0.16);
 }
-.home-hero-art-label {
-  position: absolute;
-  right: 26px;
-  bottom: 22px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  border-radius: 999px;
-  background: rgba(255, 253, 246, 0.92);
-  color: #20553b;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  box-shadow: 0 8px 24px rgba(22, 61, 42, 0.12);
-}
 .hero-photo-wrap {
   position: relative;
   width: 100%;
@@ -1435,6 +1421,8 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
 .toast-root { position: fixed; z-index: 200; right: 19px; bottom: 19px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
 .toast { max-width: min(360px, calc(100vw - 28px)); display: flex; align-items: center; gap: 8px; padding: 11px 14px; border: 1px solid #d8e9da; border-radius: 12px; color: #245b35; background: #f7fff6; box-shadow: 0 12px 38px rgba(25,60,35,.16); font-size: 10px; font-weight: 700; animation: toast-in .22s ease-out both; }
 .toast-error { color: #8b5824; border-color: #f1dfc3; background: #fff9ed; }
+.auth-inline-error { margin: 0; padding: 11px 13px; border: 1px solid #f1dfc3; border-radius: 12px; color: #7d4c1d; background: #fff9ed; font-size: 12px; font-weight: 650; line-height: 1.5; }
+.auth-inline-error[hidden] { display: none; }
 .toast-out { opacity: 0; transform: translateY(7px); transition: .22s; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -1906,7 +1894,6 @@ h3 { font-size: 17px; line-height: 1.25; font-weight: 760; }
   .hero-visual { height: 238px; }
   .home-hero-art { height: auto; }
   .home-hero-art img { border-radius: 20px; }
-  .home-hero-art-label { right: 10px; bottom: 10px; padding: 6px 9px; font-size: 8px; }
   .hero-lang-pills span { padding: 4px 6px; font-size: 8px; }
   .hero-language-row .text-link { font-size: 8px; }
   .feature-card { min-height: 145px; padding: 11px; }

@@ -21,9 +21,12 @@ test('successful signup returns to sign-in rather than navigating into the app',
   assert.match(await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8'), /\[auth\.email\]\s*enable_confirmations = false/);
 });
 
-test('homepage no longer displays the Family Living View image', () => {
-  assert.match(appSource, /home-hero-illustration\.svg/);
+test('homepage uses only the supplied family learning photo as the hero artwork', async () => {
+  assert.match(appSource, /home-family-learning\.jpg/);
+  assert.doesNotMatch(appSource, /home-hero-illustration\.svg|home-hero-art-label/);
   assert.doesNotMatch(appSource, /idilewa-family-view\.png/);
+  const photo = await readFile(new URL('../public/assets/home-family-learning.jpg', import.meta.url));
+  assert.deepEqual([...photo.subarray(0, 2)], [0xff, 0xd8]);
 });
 
 test('adult sign-in is password-based and child sign-in uses a parent-issued passcode', () => {
@@ -33,8 +36,14 @@ test('adult sign-in is password-based and child sign-in uses a parent-issued pas
   assert.match(appSource, /expectedRole: purpose === 'child-signin' \? 'child'/);
   assert.match(appSource, /signInAccount\(\{ email, password, expectedRole: 'adult' \}\)/);
   assert.match(supabaseClientSource, /expectedRole === 'adult' && \['parent', 'educator'\]\.includes\(userRecord\.role\)/);
+  assert.match(supabaseClientSource, /if \(expectedRole && userRecord\.role !== expectedRole\s*&& !\(expectedRole === 'adult' && \['parent', 'educator'\]\.includes\(userRecord\.role\)\)\)/);
   assert.match(supabaseClientSource, /Email codes are only available for child sign-in and password recovery/);
   assert.match(supabaseClientSource, /requestAuthEmailCode\(email, purpose === 'password-reset' \? 'recovery' : purpose\)/);
+});
+
+test('invalid password sign-in displays guidance inline instead of an overlapping toast', () => {
+  assert.match(appSource, /id="authInlineError" class="auth-inline-error" role="alert"/);
+  assert.match(appSource, /We couldn’t sign you in with those details\.[\s\S]*?inlineError\.hidden = false/);
 });
 
 test('sign-in and sign-out activity emails are sent without blocking local logout', () => {

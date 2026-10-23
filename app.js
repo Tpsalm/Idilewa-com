@@ -780,8 +780,7 @@ import {
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
           <div class="hero-visual home-hero-art">
-            <img src="./assets/home-hero-illustration.svg" alt="A colorful Idilewa learning world bringing African languages, stories, culture and technology together" />
-            <span class="home-hero-art-label">Language · Culture · Code</span>
+            <img src="./assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" />
           </div>
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
@@ -4813,6 +4812,7 @@ import {
           </div>
           `}
 
+          <p id="authInlineError" class="auth-inline-error" role="alert" aria-live="polite" hidden></p>
           ${!signUp && isChild ? `
           <button class="button button-primary modern-auth-submit" type="button" data-action="request-child-signin-code" ${authConfigured ? '' : 'disabled'}>
             <span>Send a passcode to my parent</span>${icon('arrow', 16)}
@@ -7819,12 +7819,17 @@ import {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Account authentication failed. Try again.';
-        showToast(
+        const userMessage =
           state.loginMode !== 'signup' && /invalid login credentials|wrong password|incorrect password/i.test(message)
-            ? 'That email and password were not accepted. Check your details or use Forgot password to reset your password.'
-            : message,
-          'error'
-        );
+            ? 'We couldn’t sign you in with those details. Check that you selected Adult / Family and use Forgot password if needed. New here? Choose Create Account.'
+            : message;
+        const inlineError = document.getElementById('authInlineError');
+        if (inlineError) {
+          inlineError.textContent = userMessage;
+          inlineError.hidden = false;
+        } else {
+          showToast(userMessage, 'error');
+        }
         return;
       }
 
