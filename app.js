@@ -803,7 +803,7 @@ import {
             <div class="hero-visual-stage-inner">
               <div class="hero-photo-wrap family-view-reference">
                 <div class="hero-photo-frame">
-                  <img src="./assets/page-families-1.jpg" alt="A family sharing African-language learning at home" class="hero-photo" />
+                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" />
                 </div>
               </div>
             </div>
