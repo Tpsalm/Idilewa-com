@@ -800,56 +800,10 @@ import {
           </div>
           <!-- Hero Visual: Family Living View -->
           <div class="hero-visual modern-hero-visual" id="heroVisualStage">
-            <div class="hero-ambient-glow" aria-hidden="true"></div>
-            
             <div class="hero-visual-stage-inner">
-              <div class="hero-photo-wrap family-view-reference" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap">
+              <div class="hero-photo-wrap family-view-reference">
                 <div class="hero-photo-frame">
-                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo cinematic-living-image" />
-                  <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
-                  <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
-                  <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
-                  <div class="cinematic-jewelry-glints" aria-hidden="true">
-                    <span class="jewelry-glint j1" style="left: 54.2%; top: 48.5%;"></span>
-                    <span class="jewelry-glint j2" style="left: 56.5%; top: 44.2%;"></span>
-                    <span class="jewelry-glint j3" style="left: 52.8%; top: 22.8%;"></span>
-                    <span class="jewelry-glint j4" style="left: 33.6%; top: 62.4%;"></span>
-                  </div>
-                  <div class="cinematic-lens-flare" aria-hidden="true"></div>
-                  <div class="hero-vignette-overlay" aria-hidden="true"></div>
-                  <div class="cinematic-live-badge" aria-label="4K Ultra-HD Living Studio">
-                    <span class="cinematic-pulse-dot"></span>
-                    <span>Living Studio</span>
-                  </div>
-                </div>
-                <div class="hero-interactive-hotspots-container" aria-label="Interactive Audio Learning Hotspots">
-                  <button type="button" class="hero-interactive-hotspot hotspot-yoruba" data-action="hero-play-greeting" data-lang="yoruba" data-phrase="Ẹ káàárọ̀" data-translation="Good morning" title="Click to hear Yorùbá: Ẹ káàárọ̀ (Good morning)" aria-label="Yorùbá greeting: Ẹ káàárọ̀, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <button type="button" class="hero-interactive-hotspot hotspot-hausa" data-action="hero-play-greeting" data-lang="hausa" data-phrase="Sannu" data-translation="Good morning" title="Click to hear Hausa: Sannu (Good morning)" aria-label="Hausa greeting: Sannu, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <button type="button" class="hero-interactive-hotspot hotspot-igbo" data-action="hero-play-greeting" data-lang="igbo" data-phrase="Ndewo" data-translation="Good morning" title="Click to hear Igbo: Ndewo (Good morning)" aria-label="Igbo greeting: Ndewo, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <button type="button" class="hero-interactive-hotspot hotspot-swahili" data-action="hero-play-greeting" data-lang="swahili" data-phrase="Habari" data-translation="Good morning" title="Click to hear Swahili: Habari (Good morning)" aria-label="Swahili greeting: Habari, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <a href="#/languages" data-route="languages" class="hero-interactive-hotspot hotspot-sun" title="Learn African Languages with Joy" aria-label="Learn African Languages with Joy">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-sun-glow" aria-hidden="true"></span>
-                  </a>
-                  <a href="#/ere" data-route="ere" class="hero-interactive-hotspot hotspot-stories" title="Explore African Stories &amp; Folktales" aria-label="Explore African Stories &amp; Folktales">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-shimmer-bar" aria-hidden="true"></span>
-                  </a>
-                  <button type="button" class="hero-interactive-hotspot hotspot-motto" data-action="hero-motto-click" title="Click to see Idilewa daily learning motto" aria-label="Idilewa learning motto">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  </button>
+                  <img src="./assets/page-families-1.jpg" alt="A family sharing African-language learning at home" class="hero-photo" />
                 </div>
               </div>
             </div>
@@ -6239,146 +6193,6 @@ import {
         </div>\n    </section>`;
   }
 
-  let heroCanvasAnimId = null;
-
-  function initHeroCinematicVideoEngine() {
-    if (heroCanvasAnimId) {
-      cancelAnimationFrame(heroCanvasAnimId);
-      heroCanvasAnimId = null;
-    }
-    const canvas = document.getElementById('heroCinematicCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    function resize() {
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resize();
-
-    // Volumetric golden light dust motes
-    const motes = Array.from({ length: 38 }, () => ({
-      x: Math.random() * (canvas.getBoundingClientRect().width || 800),
-      y: Math.random() * (canvas.getBoundingClientRect().height || 400),
-      r: 0.9 + Math.random() * 2.4,
-      vx: (Math.random() - 0.5) * 0.3 + 0.12,
-      vy: (Math.random() - 0.5) * 0.4 - 0.18,
-      baseAlpha: 0.25 + Math.random() * 0.55,
-      phase: Math.random() * Math.PI * 2,
-      hue: 42 + (Math.random() - 0.5) * 14
-    }));
-
-    const startTime = performance.now();
-
-    function renderFrame(now) {
-      const w = canvas.getBoundingClientRect().width || 800;
-      const h = canvas.getBoundingClientRect().height || 400;
-      if (!w || !h) return;
-
-      const elapsed = (now - startTime) * 0.001;
-      ctx.clearRect(0, 0, w, h);
-
-      // 1. Digital Tablet Screen Ambient Radiance (soft blue-green glow bounce)
-      const tabletPulse = 0.5 + 0.5 * Math.sin(elapsed * 1.6);
-      const tx = w * 0.54;
-      const ty = h * 0.74;
-      const tGrad = ctx.createRadialGradient(tx, ty, 8, tx, ty - h * 0.12, w * 0.26);
-      tGrad.addColorStop(0, `rgba(34, 211, 238, ${0.11 + 0.05 * tabletPulse})`);
-      tGrad.addColorStop(0.45, `rgba(16, 185, 129, ${0.07 + 0.03 * tabletPulse})`);
-      tGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
-      ctx.fillStyle = tGrad;
-      ctx.beginPath();
-      ctx.ellipse(tx, ty - h * 0.06, w * 0.24, h * 0.18, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. Volumetric Dust Particles in Golden Light Shaft
-      motes.forEach((m) => {
-        m.x += m.vx + Math.sin(elapsed + m.phase) * 0.18;
-        m.y += m.vy + Math.cos(elapsed * 0.8 + m.phase) * 0.12;
-
-        if (m.x < 0) m.x = w;
-        if (m.x > w) m.x = 0;
-        if (m.y < 0) m.y = h;
-        if (m.y > h) m.y = 0;
-
-        const inLightShaft = Math.max(0, (m.x / w) * 0.65 + ((h - m.y) / h) * 0.35);
-        const alpha = m.baseAlpha * (0.6 + 0.4 * Math.sin(elapsed * 2 + m.phase)) * (0.7 + 0.6 * inLightShaft);
-
-        const radGrad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.r * 2.0);
-        radGrad.addColorStop(0, `hsla(${m.hue}, 90%, 80%, ${alpha})`);
-        radGrad.addColorStop(0.5, `hsla(${m.hue}, 85%, 65%, ${alpha * 0.45})`);
-        radGrad.addColorStop(1, `hsla(${m.hue}, 80%, 50%, 0)`);
-
-        ctx.fillStyle = radGrad;
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, m.r * 2.0, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      heroCanvasAnimId = requestAnimationFrame(renderFrame);
-    }
-
-    heroCanvasAnimId = requestAnimationFrame(renderFrame);
-  }
-
-  function initHeroParallax() {
-    const stage = document.getElementById('heroVisualStage');
-    const wrap = document.getElementById('heroPhotoWrap');
-    if (!stage || !wrap || typeof stage.addEventListener !== 'function') return;
-
-    let targetRotX = 0;
-    let targetRotY = 0;
-    let currRotX = 0;
-    let currRotY = 0;
-    let animId = null;
-
-    function updateTilt() {
-      currRotX += (targetRotX - currRotX) * 0.12;
-      currRotY += (targetRotY - currRotY) * 0.12;
-      wrap.style.setProperty('--rot-x', `${currRotX.toFixed(2)}deg`);
-      wrap.style.setProperty('--rot-y', `${currRotY.toFixed(2)}deg`);
-
-      if (Math.abs(targetRotX - currRotX) > 0.01 || Math.abs(targetRotY - currRotY) > 0.01) {
-        animId = requestAnimationFrame(updateTilt);
-      } else {
-        animId = null;
-      }
-    }
-
-    function onMouseMove(e) {
-      const rect = stage.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const normX = (x / rect.width) - 0.5;
-      const normY = (y / rect.height) - 0.5;
-
-      targetRotX = -normY * 10;
-      targetRotY = normX * 12;
-
-      if (!animId) {
-        animId = requestAnimationFrame(updateTilt);
-      }
-    }
-
-    function onMouseLeave() {
-      targetRotX = 0;
-      targetRotY = 0;
-      if (!animId) {
-        animId = requestAnimationFrame(updateTilt);
-      }
-    }
-
-    stage.addEventListener('mousemove', onMouseMove, { passive: true });
-    stage.addEventListener('mouseleave', onMouseLeave, { passive: true });
-  }
-
-  
   function init3DScrollObserver() {
     if (typeof IntersectionObserver === 'undefined') return;
 
@@ -6534,10 +6348,7 @@ import {
     }
     if (page === 'coding') initializeIdeOutputResize();
     startHomePreviewMotion();
-    if (page === 'index') {
-      initHeroParallax();
-      initHeroCinematicVideoEngine();
-    } else if (page === 'coding') {
+    if (page === 'coding') {
       const codeRobotGlyphs = document.getElementById('codeRobotGlyphCanvas');
       if (codeRobotGlyphs) activeCodeRobotScene = init3DCodeRobotGlyphs(codeRobotGlyphs);
     } else if (page === 'trainer' || page === 'voice_lessons') {
@@ -7259,60 +7070,6 @@ import {
         saveState(); showToast(getCurrentUser() ? 'Lesson complete. Syncing progress to your account.' : 'Lesson complete. Progress is saved on this device.'); navigate('course', { lang: lang || state.currentLang, level: el.dataset.level || state.level }); break;
       }
       case 'play-audio': playSample(el); break;
-      case 'hero-play-greeting': {
-        const phrase = el.dataset.phrase || 'Ẹ káàárọ̀';
-        const lang = el.dataset.lang || 'yoruba';
-        const translation = el.dataset.translation || 'Good morning';
-        
-        el.classList.add('is-speaking-active');
-        playNativeTrainerVoice(phrase, lang);
-        playToneSound(440, 0.15, 'sine');
-        setTimeout(() => playToneSound(554.37, 0.15, 'sine'), 100);
-        setTimeout(() => playToneSound(659.25, 0.22, 'sine'), 200);
-
-        const langName = getLanguage(lang)?.name || lang;
-        showToast(`🔊 “${phrase}” — ${translation} in ${langName}!`, 'success');
-
-        setTimeout(() => {
-          el.classList.remove('is-speaking-active');
-        }, 2600);
-        break;
-      }
-      case 'hero-listen-speak': {
-        el.classList.add('is-active-pulse');
-        showToast('🔊 African Voice Studio: Listening & speaking across 4 African languages!', 'success');
-        
-        const greetings = [
-          { lang: 'yoruba', phrase: 'Ẹ káàárọ̀', trans: 'Good morning in Yorùbá', sel: '.float-card-yoruba' },
-          { lang: 'hausa', phrase: 'Sannu', trans: 'Good morning in Hausa', sel: '.float-card-hausa' },
-          { lang: 'igbo', phrase: 'Ndewo', trans: 'Good morning in Igbo', sel: '.float-card-igbo' },
-          { lang: 'swahili', phrase: 'Habari', trans: 'Good morning in Swahili', sel: '.float-card-swahili' }
-        ];
-
-        greetings.forEach((g, idx) => {
-          setTimeout(() => {
-            const card = document.querySelector(g.sel);
-            if (card) card.classList.add('is-speaking-active');
-            playNativeTrainerVoice(g.phrase, g.lang);
-            playToneSound(523.25 + idx * 80, 0.2, 'triangle');
-            showToast(`“${g.phrase}” — ${g.trans}`);
-            setTimeout(() => {
-              if (card) card.classList.remove('is-speaking-active');
-            }, 1400);
-          }, idx * 1600);
-        });
-
-        setTimeout(() => {
-          el.classList.remove('is-active-pulse');
-        }, greetings.length * 1600 + 400);
-        break;
-      }
-      case 'hero-motto-click': {
-        playToneSound(587.33, 0.2, 'sine');
-        setTimeout(() => playToneSound(880, 0.25, 'sine'), 120);
-        showToast('💡 “A little every day makes a language feel closer.” Consistency is the key to fluency!', 'success');
-        break;
-      }
       case 'pair-language': break;
       case 'save-item': {
         const item = el.dataset.item;
