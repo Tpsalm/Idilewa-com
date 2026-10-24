@@ -672,10 +672,10 @@ import {
     ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
     const menu = MENU_NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts + routeLink('base', `${icon('layers', 19)}<span>All pages</span>${icon('arrow', 16)}`, 'mobile-menu-link');
     document.getElementById('site-header').innerHTML = `
-      ${page === 'index' ? `<div class="home-promo-strip"><span>${icon('sparkles', 14)} A little every day brings your language closer.</span>${routeLink('languages', 'Explore languages ' + icon('arrow', 13))}</div>` : ''}
+      ${page === 'index' ? `<div class="home-promo-strip"><span>A little every day brings you closer to your language.</span></div>` : ''}
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
-          ${brandLogo()}
+          ${page === 'index' ? `<span class="landing-brand-mark">${icon('leaf', 24)}</span><span class="landing-brand-copy"><strong>Ìdíléwà</strong><small>Language · Culture · Future</small></span>` : brandLogo()}
         </a>
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
@@ -1079,12 +1079,12 @@ import {
       <section class="landing-hero">
         <div class="container landing-hero-grid">
           <div class="landing-hero-copy">
-            <span class="landing-eyebrow">African roots <i>·</i> brighter futures</span>
-            <h1>Preserving<br /><span>African Culture.</span><br />Promoting<br /><span>Technology.</span></h1>
+            <span class="landing-eyebrow">African Roots <i>•</i> Brighter Futures</span>
+            <h1>Preserving African Culture.<br /><span>Promoting Technology.</span></h1>
             <p>Learn African languages, hear our stories, build real skills and belong to a global community.</p>
             <div class="landing-hero-actions">
               ${routeLink('voice-language', `Start Learning ${icon('arrow', 16)}`, 'button button-primary')}
-              ${routeLink('about', `${icon('play', 14)} Watch Video`, 'button button-outline')}
+              ${routeLink('ere', `Explore Stories ${icon('arrow', 16)}`, 'button button-outline')}
             </div>
             <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
           </div>
@@ -4321,16 +4321,87 @@ import {
     '</section>';
   }
 
+  const STORY_READINGS = [
+    {
+      id: 'story-travelled',
+      title: 'The story that travelled',
+      desc: 'A family story told, remembered and shared again.',
+      image: 'story-grandmother.jpg',
+      tag: 'Oral tradition',
+      lang: 'Yorùbá · English',
+      subhead: 'An original family learning story about listening, memory and sharing.',
+      paragraphs: [
+        ['Ní ìrọ̀lẹ́ ọjọ́ kan, ìyá àgbà bẹ̀rẹ̀ sí í sọ ìtàn kan nínú ọgbà. Àwọn ọmọ sún mọ́ ọn bí àwọn ọ̀rọ̀ àkọ́kọ́ ṣe wọ inú ìdákẹ́jẹ̀.', 'One evening, a grandmother began a story in the garden. The children leaned closer as the first words settled into the quiet.'],
+        ['Nígbà tí ìtàn náà parí, ọ̀kan nínú àwọn ọmọ béèrè pé kí wọ́n tún sọ ọ́. Nígbà kejì, wọ́n tẹ́tí sí ohun kékeré kan tí wọn kò kíyè sí tẹ́lẹ̀, wọ́n sì fi kún bí wọ́n ṣe tún sọ ìtàn náà.', 'When the story ended, one child asked to hear it again. The next time, they listened for a detail they had missed and carried it into their own retelling.'],
+        ['Ní òwúrọ̀, ìtàn náà ti dé ọ̀dọ̀ àwọn ẹlòmíràn. Ó ṣì jẹ́ ìtàn kan náà, ó sì gba ohùn tuntun láàyè.', 'By morning, the story had travelled. It was still familiar, and it had room for a new voice.']
+      ],
+      question: 'What helped the story travel?',
+      answers: [
+        ['Someone listened and shared it with care.', true],
+        ['The children forgot the details.', false],
+        ['The garden grew the story by itself.', false]
+      ]
+    },
+    {
+      id: 'garden-words',
+      title: 'Words from the garden',
+      desc: 'Notice new words as a small garden begins to grow.',
+      image: 'yoruba-kids-culture.jpg',
+      tag: 'Read together',
+      lang: 'Yorùbá · English',
+      subhead: 'An original beginner story about patience, plants and learning new words.',
+      paragraphs: [
+        ['Àwọn ọ̀rẹ́ méjì gbìn irúgbìn sínú ọgbà kékeré kan. Wọ́n yan àkókò láti máa fún un ní omi.', 'Two friends planted seeds in a little garden. They chose a time each day to water them.'],
+        ['Ní gbogbo ọjọ́, wọ́n máa ń ṣàkíyèsí àwọn ewé tuntun. Wọ́n kọ ọ̀rọ̀ tuntun kan sílẹ̀ fún ohun tí wọ́n rí.', 'Each day, they looked for new leaves. They wrote down a new word for something they noticed.'],
+        ['Lẹ́yìn ọ̀pọ̀ ọjọ́, àwọn ewé túbọ̀ pọ̀ sí i. Àwọn ọ̀rẹ́ náà rí i pé sùúrù àti ìtọ́jú ń ran ọgbà àti ọgbọ́n lọ́wọ́ láti dàgbà.', 'After many days, more leaves appeared. The friends saw that patience and care help both gardens and knowledge grow.']
+      ],
+      question: 'What did the friends do each day?',
+      answers: [
+        ['They watered the seeds and noticed new leaves.', true],
+        ['They moved to a different garden.', false],
+        ['They stopped looking at the plants.', false]
+      ]
+    },
+    {
+      id: 'little-builders',
+      title: 'A team of little builders',
+      desc: 'Follow two friends as they solve a puzzle with code.',
+      image: 'code-kids.jpg',
+      tag: 'Code & create',
+      lang: 'Yorùbá · English',
+      subhead: 'An original story about two friends solving a problem together.',
+      paragraphs: [
+        ['Àwọn ọ̀rẹ́ méjì fẹ́ kí robọ́ọ̀tì kékeré kan dé ọ̀dọ̀ igi kan. Wọ́n ṣètò àwọn àṣẹ kóòdù láti tọ́ ọ sí ọ̀nà tó tọ́.', 'Two friends wanted a small robot to reach a tree. They arranged code instructions to guide it along the right path.'],
+        ['Ní ìgbà àkọ́kọ́, robọ́ọ̀tì náà yí sí ọ̀nà tí kò tọ́. Àwọn ọ̀rẹ́ náà wo àwọn àṣẹ náà papọ̀, wọ́n sì tún ọ̀kan ṣe.', 'At first, the robot turned the wrong way. The friends checked the instructions together and changed one of them.'],
+        ['Nígbà tí wọ́n tún gbìyànjú, robọ́ọ̀tì náà dé ibi tí wọ́n fẹ́. Wọ́n yọ̀ pé ìfọwọ́sowọ́pọ̀ ràn wọ́n lọ́wọ́ láti yanjú ìṣòro náà.', 'When they tried again, the robot reached its goal. They were glad that working together helped them solve the problem.']
+      ],
+      question: 'How did the friends help the robot reach the tree?',
+      answers: [
+        ['They checked and changed one instruction together.', true],
+        ['They left the robot without instructions.', false],
+        ['They asked the robot to grow wings.', false]
+      ]
+    }
+  ];
+
   function renderStories() {
-    const stories = [
-      { title: 'The story that travelled', desc: 'A family story told, remembered and shared again.', image: 'story-grandmother.jpg', tag: 'Oral tradition', lang: 'Yorùbá · English', tone: 'peach' },
-      { title: 'Words from the garden', desc: 'Notice new words as a small garden begins to grow.', image: 'yoruba-kids-culture.jpg', tag: 'Read together', lang: 'Beginner · 5 min', tone: 'mint' },
-      { title: 'A team of little builders', desc: 'Follow two friends as they solve a puzzle with code.', image: 'code-kids.jpg', tag: 'Code & create', lang: 'English + Yorùbá', tone: 'blue' }
-    ];
-    return `<div class="container route-page stories-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories</strong></div><section class="stories-hero"><div><span class="section-kicker">Stories & imagination</span><h1>Some things are best<br /><em>shared as a story.</em></h1><p>Read, listen and notice the words, voices and moments that bring a story to life.</p>${routeLink('ere_game', `Try a story game ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('story')}</div><div class="stories-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a folktale with two children" /><span class="story-image-chip">${icon('headphones', 16)} Listen together</span></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 0)}<div class="stories-topline"><div><span class="section-kicker">The story shelf</span><h2>Pick up where curiosity takes you.</h2></div><div class="story-filter">${icon('filter', 15)} Stories for everyone</div></div><div class="story-grid">${stories.map((s, i) => `<article class="story-card"><a class="story-card-image story-card-art story-card-art-${i + 1}" href="#/ere_game" data-route="ere_game" aria-label="Open story: ${esc(s.title)}"><span class="story-card-art-icon" aria-hidden="true">${icon(i === 0 ? 'book' : i === 1 ? 'quote' : 'music', 34)}</span><span class="story-card-tag">${s.tag}</span><span class="story-card-number">0${i + 1}</span></a><div class="story-card-body"><span class="story-language">${s.lang}</span><h3>${s.title}</h3><p>${s.desc}</p><div class="story-card-actions"><a class="text-link" href="#/ere_game" data-route="ere_game">Read & listen ${icon('arrow', 14)}</a><button class="save-button ${state.saved.includes(s.title) ? 'is-saved' : ''}" aria-label="Save ${s.title}" data-action="save-item" data-item="${esc(s.title)}">${icon('bookmark', 17)}</button></div></div></article>`).join('')}</div><section class="stories-bottom"><div><span class="section-kicker">More than a story</span><h2>Explore the voices behind the words.</h2><p>Discover oral genres, proverbs and language audio.</p></div><div class="stories-bottom-links">${routeLink('oral', 'Oral traditions ' + icon('arrow', 14), 'button button-outline')}${routeLink('voices', 'Voice library ' + icon('arrow', 14), 'button button-soft')}</div></section></div>`;
+    return `<div class="container route-page stories-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories</strong></div><section class="stories-hero"><div><span class="section-kicker">Stories & imagination</span><h1>Some things are best<br /><em>shared as a story.</em></h1><p>Read, listen and notice the words, voices and moments that bring a story to life.</p>${routeLink('ere_game', `Try a story ${icon('arrow', 15)}`, 'button button-primary', `data-story="${STORY_READINGS[0].id}"`)}${aiHelperButton('story')}</div><div class="stories-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with two children" /><span class="story-image-chip">${icon('headphones', 16)} Listen together</span></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 0)}<div class="stories-topline"><div><span class="section-kicker">The story shelf</span><h2>Pick up where curiosity takes you.</h2></div><div class="story-filter">${icon('filter', 15)} Stories for everyone</div></div><div class="story-grid">${STORY_READINGS.map((story, index) => `<article class="story-card"><a class="story-card-image story-card-art story-card-art-${index + 1}" href="#/ere_game?story=${story.id}" data-route="ere_game" data-story="${story.id}" aria-label="Open story: ${esc(story.title)}"><span class="story-card-art-icon" aria-hidden="true">${icon(index === 0 ? 'book' : index === 1 ? 'quote' : 'music', 34)}</span><span class="story-card-tag">${story.tag}</span><span class="story-card-number">0${index + 1}</span></a><div class="story-card-body"><span class="story-language">${story.lang}</span><h3>${story.title}</h3><p>${story.desc}</p><div class="story-card-actions"><a class="text-link" href="#/ere_game?story=${story.id}" data-route="ere_game" data-story="${story.id}">Read & listen ${icon('arrow', 14)}</a><button class="save-button ${state.saved.includes(story.title) ? 'is-saved' : ''}" aria-label="Save ${esc(story.title)}" data-action="save-item" data-item="${esc(story.title)}">${icon('bookmark', 17)}</button></div></div></article>`).join('')}</div><section class="stories-bottom"><div><span class="section-kicker">More than a story</span><h2>Explore the voices behind the words.</h2><p>Discover oral genres, proverbs and language audio.</p></div><div class="stories-bottom-links">${routeLink('oral', 'Oral traditions ' + icon('arrow', 14), 'button button-outline')}${routeLink('voices', 'Voice library ' + icon('arrow', 14), 'button button-soft')}</div></section></div>`;
   }
 
-  function renderStoryGame() {
+  function renderStoryGame(params = {}) {
+    const requestedIndex = STORY_READINGS.findIndex((story) => story.id === params.story);
+    const storyIndex = requestedIndex < 0 ? 0 : requestedIndex;
+    const story = STORY_READINGS[storyIndex];
+    const result = state.quizResults[`story:${story.id}`] || '';
+    const previousStory = STORY_READINGS[storyIndex - 1];
+    const nextStory = STORY_READINGS[storyIndex + 1];
+    const storyNavigationLink = (item, label, disabled = false) => disabled
+      ? `<span class="story-navigation-link is-disabled" aria-disabled="true">${icon('arrow', 15)}<span>${label}</span></span>`
+      : `<a class="story-navigation-link" href="#/ere_game?story=${item.id}" data-route="ere_game" data-story="${item.id}" aria-label="${label}: ${esc(item.title)}">${icon('arrow', 15)}<span>${label}</span></a>`;
+    return `<div class="container route-page story-game-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('ere', 'Stories')}<span>/</span><strong>${esc(story.title)}</strong></div><section class="story-game-layout"><div class="story-game-image"><img src="./assets/${story.image}" alt="${esc(story.title)} story illustration" /><span class="story-audio-pill">${icon('volume', 15)} Read aloud together</span></div><div class="story-reading"><span class="section-kicker">Original Idilewa learning story · ${storyIndex + 1} of ${STORY_READINGS.length}</span><h1>${esc(story.title)}</h1><p class="story-subhead">${esc(story.subhead)}</p><button class="listen-inline" data-action="play-audio" data-language="en-US" data-text="${esc(story.paragraphs.map((paragraph) => paragraph[1]).join(' '))}">${icon('play', 14)} Listen to the English translation</button><div class="story-text">${story.paragraphs.map(([yoruba, english]) => `<section class="story-paragraph-pair"><div><span class="story-translation-label" lang="yo">Yorùbá</span><p lang="yo">${esc(yoruba)}</p></div><div><span class="story-translation-label">English translation</span><p lang="en">${esc(english)}</p></div></section>`).join('')}</div><div class="story-credit-note">${icon('heart', 16)} This is an original Idilewa learning story, not a traditional folktale. The English translation is shown beside each Yorùbá passage.</div></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 3)}<nav class="story-navigation" aria-label="Story navigation">${storyNavigationLink(previousStory, 'Previous story', !previousStory)}${routeLink('ere', `${icon('book', 15)} All stories`, 'story-navigation-link')}${storyNavigationLink(nextStory, 'Next story', !nextStory)}</nav><section class="story-quiz"><div><span class="section-kicker">A little reflection</span><h2>${esc(story.question)}</h2><p>Choose the idea that best fits what you read.</p></div><div class="story-answer-list">${story.answers.map(([label, correct], index) => `<button class="story-answer ${result === 'correct' && correct ? 'answer-correct' : ''}" data-action="story-answer" data-key="${story.id}" data-correct="${correct}" ${result === 'correct' ? 'disabled' : ''}><span>${String.fromCharCode(65 + index)}</span>${esc(label)}${result === 'correct' && correct ? icon('check', 17) : icon('arrow', 15)}</button>`).join('')}</div>${result ? `<div class="answer-feedback ${result === 'correct' ? 'feedback-correct' : 'feedback-retry'}">${icon(result === 'correct' ? 'check' : 'refresh', 16)} ${result === 'correct' ? 'Lovely reading. Keep noticing how each story unfolds.' : 'Try again—look for what the characters did in the story.'}</div>` : ''}</section><div class="story-related">${routeLink('oral', 'Explore oral traditions ' + icon('arrow', 14), 'text-link')}${routeLink('ere', 'Back to stories ' + icon('arrow', 14), 'text-link')}${aiHelperButton('story')}</div></div>`;
+  }
+
+  function renderLegacyStoryGame() {
     const result = state.quizResults['story:comprehension'] || '';
     return `<div class="container route-page story-game-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('ere', 'Stories')}<span>/</span><strong>Story time</strong></div><section class="story-game-layout"><div class="story-game-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with two children" /><span class="story-audio-pill">${icon('volume', 15)} Read aloud together</span></div><div class="story-reading"><span class="section-kicker">A story for the whole family · 4 min</span><h1>The story that<br /><em>travelled.</em></h1><p class="story-subhead">A gentle listening story about how a tale can move from one person to another.</p><button class="listen-inline" data-action="play-audio" data-text="A story travels when someone listens, remembers and shares it with care.">${icon('play', 14)} Listen to this story <span>01:24</span></button><div class="story-text"><p>One evening, a grandmother began a story in the garden. The children leaned closer as the first words settled into the quiet.</p><p>When the story ended, one child asked to hear it again. The next time, they listened for a detail they had missed—and carried that detail into their own retelling.</p><p>By morning, the story had travelled. It was still familiar, and it had room for a new voice.</p></div><div class="story-credit-note">${icon('heart', 16)} Stories belong to the people and communities who share them. Listen with care, and ask before retelling.</div>\n    </section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 3)}<section class="story-quiz"><div><span class="section-kicker">A little reflection</span><h2>What helped the story travel?</h2><p>Choose the idea that best fits what you heard.</p></div><div class="story-answer-list">${[['Someone listened and shared it with care.', true], ['The story was written down by a stranger.', false], ['The children forgot the details.', false]].map(([label, correct], i) => `<button class="story-answer ${result === 'correct' && correct ? 'answer-correct' : ''}" data-action="story-answer" data-key="comprehension" data-correct="${correct}" ${result === 'correct' ? 'disabled' : ''}><span>${String.fromCharCode(65 + i)}</span>${label}${result === 'correct' && correct ? icon('check', 17) : icon('arrow', 15)}</button>`).join('')}</div>${result ? `<div class="answer-feedback ${result === 'correct' ? 'feedback-correct' : 'feedback-retry'}">${icon(result === 'correct' ? 'check' : 'refresh', 16)} ${result === 'correct' ? 'Lovely listening. Stories grow when people share them with care.' : 'Think about what the children did after hearing the story.'}</div>` : ''}</section><div class="story-related">${routeLink('oral', 'Explore oral traditions ' + icon('arrow', 14), 'text-link')}${routeLink('ere', 'Back to stories ' + icon('arrow', 14), 'text-link')}${aiHelperButton('story')}</div></div>`;
   }
@@ -5865,7 +5936,7 @@ import {
       case 'lesson': return renderLesson(params);
       case 'coding': return renderCoding();
       case 'ere': return renderStories();
-      case 'ere_game': return renderStoryGame();
+      case 'ere_game': return renderStoryGame(params);
       case 'oral': return renderOral();
       case 'oral_genre': return renderOralGenre();
       case 'oriki': return renderOriki();
@@ -7632,7 +7703,7 @@ import {
       if (modalRoot) modalRoot.innerHTML = '';
       const route = routeEl.dataset.route;
       const params = {};
-      ['lang', 'level', 'module', 'lesson', 'grade', 'mode', 'section'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
+      ['lang', 'level', 'module', 'lesson', 'grade', 'mode', 'section', 'story'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
       if (route.startsWith('voice-')) {
         if (['yoruba', 'igbo', 'hausa', 'swahili', 'zulu', 'twi'].includes(params.lang)) state.trainer.lang = params.lang;
         if (['beginner', 'intermediate', 'advanced'].includes(params.level)) {
