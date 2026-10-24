@@ -9570,11 +9570,11 @@ body[data-page="login"] #main > .modern-auth-page > .auth-layer-guide {
   .landing-how-card li strong, .landing-how-card li small { display: block; }
   .landing-how-card li strong { font-size: 11px; }
   .landing-how-card li small { margin-top: 2px; color: #79847c; font-size: 9px; }
-  .landing-future-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 17px; border-radius: 16px; color: #fff; background: #063c2b; }
-  .landing-future-card > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; color: #d3f0db; background: rgba(255,255,255,.1); }
+  .landing-future-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 17px; border: 1px solid #dcebdd; border-radius: 16px; color: var(--ink); background: var(--mint); }
+  .landing-future-card > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; color: var(--green); background: #fff; }
   .landing-future-card strong { font-size: 12px; }
-  .landing-future-card p { margin: 4px 0 7px; color: #d4e6d8; font-size: 10px; line-height: 1.5; }
-  .landing-future-card .text-link { color: #c6efd1; font-size: 10px; }
+  .landing-future-card p { margin: 4px 0 7px; color: var(--ink-soft); font-size: 10px; line-height: 1.5; }
+  .landing-future-card .text-link { color: var(--green-dark); font-size: 10px; }
   .voice-grade-choice-grid .voice-feature-choice { align-items: flex-start; text-align: left; }
   .voice-grade-choice-grid .voice-feature-choice > span { align-self: flex-start; }
   .voice-grade-choice-grid .voice-feature-choice small + small { margin-top: 6px; color: #68766d; font-size: 11px; line-height: 1.45; }

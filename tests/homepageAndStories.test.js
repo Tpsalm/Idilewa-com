@@ -32,5 +32,7 @@ test('every story card opens its own bilingual reader with previous and next nav
 test('mobile landing layouts and story navigation have responsive no-overflow rules', () => {
   assert.match(styleSource, /@media \(max-width: 620px\)[\s\S]*?landing-home \.container \{ width: calc\(100% - 40px\)/);
   assert.match(styleSource, /@media \(max-width: 359px\)[\s\S]*?landing-home \.container \{ width: calc\(100% - 32px\)/);
+  assert.match(styleSource, /\.landing-future-card \{[^}]*color: var\(--ink\);[^}]*background: var\(--mint\)/);
+  assert.match(styleSource, /\.landing-future-card \.text-link \{ color: var\(--green-dark\);/);
   assert.match(styleSource, /\.story-navigation-link \{[\s\S]*?min-height: 44px/);
 });
