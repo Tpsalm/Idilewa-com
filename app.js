@@ -58,6 +58,11 @@ import {
   getUserProgress,
   saveCodeSubmission
 } from './src/supabaseClient.js';
+import {
+  getVoiceGradeLessonSlice,
+  getVoiceGradePath,
+  VOICE_GRADE_PATHS
+} from './src/voiceGradeCurriculum.js';
 
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
 (() => {
@@ -527,7 +532,7 @@ import {
         libraryFilter: typeof stored.libraryFilter === 'string' ? stored.libraryFilter : 'all',
         librarySearch: typeof stored.librarySearch === 'string' ? stored.librarySearch : '',
         reflectionFeeling: typeof stored.reflectionFeeling === 'string' ? stored.reflectionFeeling : '',
-        authRole: 'child',
+        authRole: stored.authRole === 'child' ? 'child' : 'adult',
         completed: Array.isArray(stored.completed) ? stored.completed : defaults.completed.slice(),
         interested: Array.isArray(stored.interested) ? stored.interested : []
       };
@@ -587,7 +592,7 @@ import {
       }
       if (defaultPage === 'login' && !defaultAuthEntryInitialized) {
         state.loginMode = 'signin';
-        state.authRole = 'child';
+        state.authRole = 'adult';
         defaultAuthEntryInitialized = true;
       }
       return { page: ROUTES.includes(defaultPage) ? defaultPage : 'index', params: {}, removedRoute: false };
@@ -601,7 +606,10 @@ import {
       page = 'owe';
       history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/owe?section=${encodeURIComponent(params.section)}`);
     }
-    if (page === 'login' && ['signin', 'signup'].includes(params.mode)) state.loginMode = params.mode;
+    if (page === 'login' && ['signin', 'signup'].includes(params.mode)) {
+      state.loginMode = params.mode;
+      state.authRole = 'adult';
+    }
     return {
       page: REMOVED_ROUTES.has(page) ? 'index' : ROUTES.includes(page) ? page : 'base',
       params,
@@ -653,6 +661,9 @@ import {
     const profileAvatar = profilePhoto
       ? `<img src="${esc(profilePhoto)}" alt="" />`
       : esc(avatarLabel);
+    const accountActions = currentUser
+      ? `<a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${esc(currentUser.name || 'Profile')}</span></a><button class="header-signout" type="button" data-action="account-sign-out">Sign out</button>`
+      : `${routeLink('login', 'Log in', 'header-signin', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary header-cta', 'data-mode="signup"')}`;
     const mobileShortcuts = [
       { route: 'library', label: 'Library', ico: 'book' },
       { route: 'game', label: 'Tile game', ico: 'sparkles' },
@@ -669,14 +680,16 @@ import {
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
           <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
-          <a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${currentUser ? esc(currentUser.name || 'Profile') : 'Profile'}</span></a>
+          ${accountActions}
           <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
         </div>
       </div>
       <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
         <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
-        <div class="mobile-menu-bottom">${routeLink('profile', `${icon('user', 15)} Open your profile ${icon('arrow', 14)}`, 'button button-primary')}</div>
+        <div class="mobile-menu-bottom">${currentUser
+          ? `${routeLink('profile', `${icon('user', 15)} Open your profile ${icon('arrow', 14)}`, 'button button-primary')}<button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button>`
+          : `${routeLink('login', 'Log in', 'button button-outline', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary', 'data-mode="signup"')}`}</div>
       </div>`;
   }
 
@@ -760,7 +773,7 @@ import {
     </div></section><section class="home-principles-strip" aria-label="Idilewa learning principles"><div class="container"><span>${icon('globe', 17)} African languages</span><span>${icon('people', 17)} Family learning</span><span>${icon('leaf', 17)} Culture with context</span><span>${icon('code', 17)} STEAM for young makers</span></div></section>`;
   }
 
-  function renderHome() {
+  function renderLegacyHome() {
     const featureCards = [
       { title: 'K–8 STEAM Curriculum', desc: 'Standards-aligned lessons infused with African culture.', icon: 'layers', route: 'curriculum', tone: 'blue', tag: 'Curriculum', image: 'page-languages-1.jpg' },
       { title: 'Code in your language', desc: 'Interactive bilingual coding studio for kids.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Interactive IDE', image: 'code-kids.jpg' },
@@ -1047,6 +1060,86 @@ import {
       </section>
 
       <section class="container home-cta-section home-ribbon-section"><div class="home-cta"><div><span class="section-kicker">Your next word is waiting</span><h2>Let’s keep the good things growing.</h2><p>Choose a language and take your first small step today.</p></div>${routeLink('languages', `Find your language ${icon('arrow', 17)}`, 'button button-white')}</div></section>`;
+  }
+
+  function renderHome() {
+    const languages = [
+      { id: 'yoruba', name: 'Yorùbá', flag: '🇳🇬', image: 'yoruba-kids-culture.jpg', alt: 'Young learners exploring Yorùbá culture' },
+      { id: 'igbo', name: 'Igbo', flag: '🇳🇬', image: 'african-kids-friends.jpg', alt: 'Children learning together' },
+      { id: 'hausa', name: 'Hausa', flag: '🇳🇬', image: 'yoruba-educator-man.jpg', alt: 'An educator sharing language learning' },
+      { id: 'swahili', name: 'Kiswahili', flag: '🇹🇿', image: 'listening-reader.jpg', alt: 'A learner listening to a language lesson' }
+    ];
+    const pathways = [
+      { icon: 'book', title: 'Learn', copy: 'African languages', route: 'voice-language' },
+      { icon: 'volume', title: 'Listen', copy: 'Stories & audiobooks', route: 'voices' },
+      { icon: 'code', title: 'Code', copy: 'Build skills in your language', route: 'coding' },
+      { icon: 'people', title: 'Join', copy: 'A global community', route: 'connect_students' }
+    ];
+    return `<div class="landing-home">
+      <section class="landing-hero">
+        <div class="container landing-hero-grid">
+          <div class="landing-hero-copy">
+            <span class="landing-eyebrow">African roots <i>·</i> brighter futures</span>
+            <h1>Preserving<br /><span>African Culture.</span><br />Promoting<br /><span>Technology.</span></h1>
+            <p>Learn African languages, hear our stories, build real skills and belong to a global community.</p>
+            <div class="landing-hero-actions">
+              ${routeLink('voice-language', `Start Learning ${icon('arrow', 16)}`, 'button button-primary')}
+              ${routeLink('about', `${icon('play', 14)} Watch Video`, 'button button-outline')}
+            </div>
+            <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
+          </div>
+          <figure class="landing-hero-image">
+            <img src="./assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" fetchpriority="high" />
+          </figure>
+        </div>
+      </section>
+
+      <section class="container landing-pathways" aria-label="Explore Idilewa">
+        ${pathways.map((item) => `<a class="landing-pathway" href="#/${item.route}" data-route="${item.route}"><span>${icon(item.icon, 23)}</span><strong>${item.title}</strong><small>${item.copy}</small></a>`).join('')}
+      </section>
+
+      <div class="container landing-content-grid">
+        <main class="landing-main-column">
+          <section class="landing-languages" aria-labelledby="landing-languages-title">
+            <div class="landing-section-heading"><div><span class="section-kicker">Our languages</span><h2 id="landing-languages-title">Start with your language</h2><p>Choose a language to begin your learning journey.</p></div>${routeLink('languages', `View all ${icon('arrow', 14)}`, 'text-link')}</div>
+            <div class="landing-language-grid">
+              ${languages.map((language) => `<a class="landing-language-card" href="#/voice-grade?lang=${language.id}" data-route="voice-grade" data-lang="${language.id}" aria-label="Choose a grade for ${language.name}"><img src="./assets/${language.image}" alt="${language.alt}" loading="lazy" /><span class="landing-language-flag" aria-hidden="true">${language.flag}</span><span class="landing-language-name">${language.name}</span><span class="landing-language-action">Learn · Speak · Explore ${icon('arrow', 13)}</span></a>`).join('')}
+            </div>
+          </section>
+
+          <section class="landing-voice-card" aria-labelledby="landing-voice-title">
+            <div class="landing-voice-icon">${icon('mic', 24)}</div>
+            <div><span class="section-kicker">Listen · practise · grow</span><h2 id="landing-voice-title">Your voice belongs here.</h2><p>Build pronunciation confidence with lessons for every grade, from first sounds to fluent expression.</p></div>
+            ${routeLink('voice_lessons', `Start Voice Lessons ${icon('arrow', 15)}`, 'button button-primary')}
+          </section>
+
+          <section class="landing-story-card">
+            <img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with children" loading="lazy" />
+            <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore stories ${icon('arrow', 14)}`, 'text-link')}</div>
+          </section>
+        </main>
+
+        <aside class="landing-side-column">
+          <section class="landing-side-card landing-why-card">
+            <span class="section-kicker">Rooted in community</span><h2>Why choose Idilewa?</h2>
+            <div class="landing-why-grid">
+              <div><span>${icon('leaf', 19)}</span><strong>Authentic</strong><small>Culture with context</small></div>
+              <div><span>${icon('people', 19)}</span><strong>For all ages</strong><small>Learn together</small></div>
+              <div><span>${icon('sparkles', 19)}</span><strong>Interactive</strong><small>Practice by doing</small></div>
+              <div><span>${icon('globe', 19)}</span><strong>Global</strong><small>Community connected</small></div>
+            </div>
+          </section>
+          <section class="landing-community-card">
+            <span class="section-kicker">From our heritage to new opportunities</span><h2>Keep your language close.</h2><p>Discover the words, stories and skills that connect us.</p>${routeLink('languages', `Explore Idilewa ${icon('arrow', 14)}`, 'button button-white')}
+          </section>
+          <section class="landing-side-card landing-how-card">
+            <span class="section-kicker">A simple path</span><h2>How it works</h2>
+            <ol><li><span>1</span><div><strong>Choose a language</strong><small>Start with a language you love.</small></div></li><li><span>2</span><div><strong>Pick your grade</strong><small>Find a level made for you.</small></div></li><li><span>3</span><div><strong>Learn and practise</strong><small>Listen, speak and celebrate.</small></div></li></ol>
+          </section>
+          <section class="landing-future-card"><span>${icon('people', 22)}</span><div><strong>Be part of a brighter future.</strong><p>Grow with a community learning and sharing across generations.</p>${routeLink('connect_students', `Join Idilewa ${icon('arrow', 13)}`, 'text-link')}</div></section>
+        </aside>
+      </div>
+    </div>`;
   }
 
   function renderLanguageCard(l) {
@@ -4085,28 +4178,22 @@ import {
 
   function renderVoiceFeaturePage(page, params = {}) {
     const languageNames = {
-      yoruba: 'Yorùbá', igbo: 'Igbo', hausa: 'Hausa', swahili: 'Kiswahili',
-      zulu: 'isiZulu', twi: 'Twi / Akan',
+      yoruba: 'Yorùbá', igbo: 'Igbo', hausa: 'Hausa', swahili: 'Kiswahili'
     };
     const languages = Object.entries(languageNames);
-    const levels = {
-      kindergarten: ['Kindergarten', 'beginner'],
-      'grade-1': ['Grade 1', 'beginner'],
-      'grade-2': ['Grade 2', 'beginner'],
-      'grade-3': ['Grade 3', 'intermediate'],
-      'grade-4': ['Grade 4', 'intermediate'],
-      'grade-5': ['Grade 5', 'intermediate'],
-      'grade-6': ['Grade 6', 'advanced'],
-      'grade-7': ['Grade 7', 'advanced'],
-      'grade-8': ['Grade 8', 'advanced'],
-    };
-    const selectedLanguage = languageNames[params.lang] ? params.lang : state.trainer.lang || 'yoruba';
-    const selectedGrade = levels[params.grade] ? params.grade : 'kindergarten';
-    const selectedLevel = levels[selectedGrade][1];
+    const selectedLanguage = languageNames[params.lang]
+      ? params.lang
+      : languageNames[state.trainer.lang] ? state.trainer.lang : 'yoruba';
+    const gradePath = getVoiceGradePath(params.grade);
     const langName = languageNames[selectedLanguage];
     const langData = TRAINER_CURRICULUM[selectedLanguage] || TRAINER_CURRICULUM.yoruba;
-    const lessonLevel = ['beginner', 'intermediate', 'advanced'].includes(params.level) ? params.level : state.trainer.level || 'beginner';
+    const lessonLevel = ['beginner', 'intermediate', 'advanced'].includes(params.level)
+      ? params.level
+      : gradePath?.level || state.trainer.level || 'beginner';
     const lessons = langData[lessonLevel] || langData.beginner;
+    const gradeLessons = gradePath && gradePath.level === lessonLevel
+      ? getVoiceGradeLessonSlice(gradePath.id, lessons)
+      : lessons;
     const selectedLessonId = Number(params.lesson) || state.trainer.activeLessonId || lessons[0]?.id || 1;
     const activeLesson = lessons.find((lesson) => lesson.id === selectedLessonId) || lessons[0];
     const titles = {
@@ -4119,22 +4206,32 @@ import {
       'voice-speech-to-text': ['Speech to Text', 'Record a phrase and turn your speech into text.', 'Transcribe'],
       'voice-translation': ['Translation', 'Translate a phrase between supported languages, then listen to the result.', 'Translate'],
     };
-    const [title, description, kicker] = titles[page] || titles['voice-language'];
+    const [defaultTitle, defaultDescription, kicker] = titles[page] || titles['voice-language'];
+    const title = page === 'voice-audio' && gradePath
+      ? `${gradePath.name} · ${langName}`
+      : defaultTitle;
+    const description = page === 'voice-audio' && gradePath
+      ? `${gradePath.ages}: ${gradePath.focus} ${gradePath.challenge}`
+      : defaultDescription;
     let content = '';
 
     if (page === 'voice-language') {
       content = `<div class="voice-feature-choice-grid">${languages.map(([id, name]) => `<button type="button" class="voice-feature-choice ${selectedLanguage === id ? 'is-selected' : ''}" data-route="voice-language" data-lang="${id}"><span>${icon('globe', 20)}</span><strong>${name}</strong><small>Choose ${name} for your lessons</small></button>`).join('')}</div>
         <div class="voice-feature-next">${routeLink('voice-grade', `Continue with ${langName} ${icon('arrow', 15)}`, 'button button-primary', `data-lang="${selectedLanguage}"`)}</div>`;
     } else if (page === 'voice-grade') {
-      content = `<p class="voice-feature-current">Learning language: <strong>${langName}</strong></p><div class="voice-feature-choice-grid voice-grade-choice-grid">${Object.entries(levels).map(([grade, [name, level]]) => `<button type="button" class="voice-feature-choice ${selectedGrade === grade ? 'is-selected' : ''}" data-route="voice-grade" data-grade="${grade}" data-lang="${selectedLanguage}"><span>${icon('layers', 20)}</span><strong>${name}</strong><small>${level.charAt(0).toUpperCase() + level.slice(1)} lessons</small></button>`).join('')}</div>
-        <div class="voice-feature-next">${routeLink('voice-audio', `Browse ${levels[selectedGrade][0]} lessons ${icon('arrow', 15)}`, 'button button-primary', `data-lang="${selectedLanguage}" data-level="${selectedLevel}" data-grade="${selectedGrade}"`)}</div>`;
+      content = `<p class="voice-feature-current">Learning language: <strong>${langName}</strong>. Each grade opens its own lesson path with age-appropriate goals and a different lesson set.</p><div class="voice-feature-choice-grid voice-grade-choice-grid">${VOICE_GRADE_PATHS.map((grade) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-grade="${grade.id}" data-lang="${selectedLanguage}" data-level="${grade.level}"><span>${icon('layers', 20)}</span><strong>${grade.name}</strong><small>${grade.ages} · ${grade.level} pathway</small><small>${grade.focus}</small></button>`).join('')}</div>`;
     } else if (page === 'voice-audio') {
-      content = `<div class="voice-feature-filters"><label>Language<select data-action="voice-feature-language">${languages.map(([id, name]) => `<option value="${id}" ${selectedLanguage === id ? 'selected' : ''}>${name}</option>`).join('')}</select></label><label>Level<select data-action="voice-feature-level">${['beginner', 'intermediate', 'advanced'].map((level) => `<option value="${level}" ${lessonLevel === level ? 'selected' : ''}>${level.charAt(0).toUpperCase() + level.slice(1)}</option>`).join('')}</select></label></div>
-        <div class="voice-audio-lesson-grid">${lessons.map((lesson) => `<article class="voice-audio-lesson-card"><span class="section-kicker">Lesson ${String(lesson.id).padStart(2, '0')} · ${esc(lesson.category || 'Speaking practice')}</span><h2>${esc(lesson.title || lesson.phrase)}</h2><p>${esc(lesson.translation || '')}</p><button type="button" class="button button-primary" data-route="voice-practice" data-lang="${selectedLanguage}" data-level="${lessonLevel}" data-lesson="${lesson.id}">${icon('play', 14)} Start lesson</button></article>`).join('')}</div>`;
+      const languageFilter = `<label>Language<select data-action="voice-feature-language">${languages.map(([id, name]) => `<option value="${id}" ${selectedLanguage === id ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`;
+      const gradeContext = gradePath
+        ? `<div class="voice-grade-path-summary"><div><span class="section-kicker">${gradePath.name} · ${gradePath.ages}</span><p>${gradePath.focus}</p><strong>Challenge: ${gradePath.challenge}</strong></div>${routeLink('voice-grade', 'Choose another grade', 'button button-outline', `data-lang="${selectedLanguage}"`)}</div>`
+        : '';
+      const levelFilter = gradePath ? '' : `<label>Level<select data-action="voice-feature-level">${['beginner', 'intermediate', 'advanced'].map((level) => `<option value="${level}" ${lessonLevel === level ? 'selected' : ''}>${level.charAt(0).toUpperCase() + level.slice(1)}</option>`).join('')}</select></label>`;
+      content = `${gradeContext}<div class="voice-feature-filters">${languageFilter}${levelFilter}</div>
+        <div class="voice-audio-lesson-grid">${gradeLessons.map((lesson) => `<article class="voice-audio-lesson-card"><span class="section-kicker">${gradePath ? `${esc(gradePath.name)} · ` : ''}Lesson ${String(lesson.id).padStart(2, '0')} · ${esc(lesson.category || 'Speaking practice')}</span><h2>${esc(lesson.title || lesson.phrase)}</h2><p>${esc(lesson.translation || '')}</p><button type="button" class="button button-primary" data-route="voice-practice" data-lang="${selectedLanguage}" data-level="${lessonLevel}" data-grade="${gradePath?.id || ''}" data-lesson="${lesson.id}">${icon('play', 14)} Start lesson</button></article>`).join('')}</div>`;
     } else if (page === 'voice-practice' && activeLesson) {
       const isRecording = Boolean(state.trainer.isRecording);
       const transcription = voiceTranscriptionResult?.lessonId === activeLesson.id ? voiceTranscriptionResult.text : '';
-      content = `<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}</span><h2>${esc(activeLesson.phrase)}</h2><p>${esc(activeLesson.phonetic || '')}</p><strong>${esc(activeLesson.translation || '')}</strong></div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>`;
+      content = `<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${gradePath ? `${gradePath.name} · ` : ''}${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}</span><h2>${esc(activeLesson.phrase)}</h2><p>${esc(activeLesson.phonetic || '')}</p><strong>${esc(activeLesson.translation || '')}</strong></div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>`;
     } else if (page === 'voice-text-to-speech') {
       content = `<div class="voice-feature-tool"><label class="curriculum-tool-label" for="plotweaver-speech-text">Your phrase</label><textarea id="plotweaver-speech-text" rows="4" maxlength="1000" placeholder="Type a phrase to hear…">Ẹ káàárọ̀, báwo ni?</textarea><label class="curriculum-tool-label" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="yo">Yorùbá</option></select><button class="button button-primary" type="button" data-action="plotweaver-speak-text">${icon('volume', 15)} Listen</button><small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small></div>`;
     } else if (page === 'voice-cloning') {
@@ -4157,18 +4254,6 @@ import {
       ['hausa', 'Hausa'],
       ['swahili', 'Kiswahili']
     ];
-    const grades = [
-      ['Kindergarten', 'beginner'],
-      ['Grade 1', 'beginner'],
-      ['Grade 2', 'beginner'],
-      ['Grade 3', 'intermediate'],
-      ['Grade 4', 'intermediate'],
-      ['Grade 5', 'intermediate'],
-      ['Grade 6', 'advanced'],
-      ['Grade 7', 'advanced'],
-      ['Grade 8', 'advanced']
-    ];
-
     return '<section class="curriculum-dashboard" aria-labelledby="curriculum-dashboard-title">' +
       '<header class="curriculum-welcome-banner">' +
         '<div class="curriculum-welcome-copy">' +
@@ -4218,7 +4303,7 @@ import {
           '</div>' +
           '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon curriculum-picker-icon-warm">' + icon('layers', 18) + '</span><div><h2>Subjects &amp; Grades</h2><p>Choose a grade to jump into your curriculum.</p></div></div>' +
             '<div class="curriculum-grade-options">' +
-              grades.map(([name, level], index) => '<button type="button" class="curriculum-grade-option" data-route="voice-grade" data-grade="' + ['kindergarten', 'grade-1', 'grade-2', 'grade-3', 'grade-4', 'grade-5', 'grade-6', 'grade-7', 'grade-8'][index] + '" data-level="' + level + '" data-lang="' + state.trainer.lang + '">' + name + '</button>').join('') +
+              VOICE_GRADE_PATHS.map((grade) => '<button type="button" class="curriculum-grade-option" data-route="voice-audio" data-grade="' + grade.id + '" data-level="' + grade.level + '" data-lang="' + state.trainer.lang + '">' + grade.name + '</button>').join('') +
             '</div>' +
           '</div>' +
         '</section>' +
@@ -6459,7 +6544,12 @@ import {
     if (params.level && ['beginner', 'intermediate', 'advanced', 'growing', 'fluent'].includes(params.level)) state.level = normalizeCourseLevel(params.level);
     renderHeader(page);
     renderMobileNav(page);
-    const title = page === 'index' ? 'Preserving African culture. Promoting technology.' : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
+    const gradeTitle = page === 'voice-audio' ? getVoiceGradePath(params.grade)?.name : '';
+    const title = page === 'index'
+      ? 'Preserving African culture. Promoting technology.'
+      : gradeTitle
+        ? `${gradeTitle} voice lessons`
+        : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
     document.title = `${title} · Idilewa`;
     const pageMarkup = assignUniqueRouteImages(page, renderPage(page, params))
       .replace(/(?:African )?Voice (?:African Language )?Trainer/gi, 'Voice Lessons')
@@ -7316,11 +7406,16 @@ import {
       case 'account-sign-out':
       case 'profile-sign-out':
         const authStorageError = clearPendingAuthFlow();
-        void signOutAccount().then(() => {
+        void signOutAccount().then((result) => {
           state.loginMode = 'signin';
           state.authRole = 'adult';
           navigate('login', { mode: 'signin' }, true);
-          showToast(authStorageError ? 'You signed out, but pending sign-in state could not be fully cleared. Close this tab and sign in again.' : 'You have signed out.', authStorageError ? 'error' : 'success');
+          const notice = result.activityEmailError
+            ? `You have signed out. ${result.activityEmailError}`
+            : authStorageError
+              ? 'You signed out, but pending sign-in state could not be fully cleared. Close this tab and sign in again.'
+              : 'You have signed out.';
+          showToast(notice, authStorageError || result.activityEmailError ? 'error' : 'success');
         }).catch((error) => {
           state.loginMode = 'signin';
           state.authRole = 'adult';
@@ -7606,7 +7701,13 @@ import {
       if (tutorBox && !el.value) tutorBox.checked = false;
     }
     if (el.matches('[data-action="voice-feature-language"]')) {
-      navigate('voice-audio', { lang: el.value, level: state.trainer.level });
+      const { grade } = parseLocation().params;
+      const gradePath = getVoiceGradePath(grade);
+      navigate('voice-audio', {
+        lang: el.value,
+        level: gradePath?.level || state.trainer.level,
+        ...(gradePath ? { grade: gradePath.id } : {})
+      });
     }
     if (el.matches('[data-action="voice-feature-level"]')) {
       navigate('voice-audio', { lang: state.trainer.lang, level: el.value });

@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+import {
+  getVoiceGradeLessonSlice,
+  getVoiceGradePath,
+  VOICE_GRADE_PATHS
+} from '../src/voiceGradeCurriculum.js';
+
+const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
+
+test('each grade has its own non-overlapping lesson set within its difficulty band', () => {
+  const lessons = Array.from({ length: 20 }, (_, index) => ({ id: index + 1 }));
+  for (const level of ['beginner', 'intermediate', 'advanced']) {
+    const grades = VOICE_GRADE_PATHS.filter((grade) => grade.level === level);
+    const assigned = grades.map((grade) => getVoiceGradeLessonSlice(grade.id, lessons).map((lesson) => lesson.id));
+    assert.ok(assigned.every((set) => set.length > 0));
+    assert.equal(new Set(assigned.flat()).size, lessons.length);
+    assert.ok(assigned.every((set, index) => index === 0 || set[0] > assigned[index - 1].at(-1)));
+  }
+});
+
+test('all four supported languages provide distinct lesson content for every grade', () => {
+  const curriculumMatch = appSource.match(/const TRAINER_CURRICULUM = (\{[\s\S]*?\});/);
+  assert.ok(curriculumMatch, 'Voice lesson curriculum data should be present');
+  const curricula = JSON.parse(curriculumMatch[1]);
+  for (const language of ['yoruba', 'igbo', 'hausa', 'swahili']) {
+    const assignedLessonIds = new Set();
+    for (const grade of VOICE_GRADE_PATHS) {
+      const lessons = curricula[language][grade.level];
+      const gradeLessons = getVoiceGradeLessonSlice(grade.id, lessons);
+      assert.ok(gradeLessons.length > 0, `${language} ${grade.name} should have lessons`);
+      for (const lesson of gradeLessons) {
+        assert.ok(!assignedLessonIds.has(lesson.id), `${language} lesson ${lesson.id} should belong to one grade only`);
+        assignedLessonIds.add(lesson.id);
+      }
+    }
+    assert.equal(assignedLessonIds.size, 60, `${language} should assign all 60 lessons exactly once`);
+  }
+});
+
+test('grade paths increase in difficulty and provide distinct developmental goals', () => {
+  assert.equal(VOICE_GRADE_PATHS.length, 9);
+  assert.equal(getVoiceGradePath('kindergarten').level, 'beginner');
+  assert.equal(getVoiceGradePath('grade-3').level, 'intermediate');
+  assert.equal(getVoiceGradePath('grade-6').level, 'advanced');
+  assert.notEqual(getVoiceGradePath('kindergarten').focus, getVoiceGradePath('grade-8').focus);
+  assert.equal(getVoiceGradePath('unknown'), null);
+});

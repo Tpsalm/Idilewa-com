@@ -41,6 +41,12 @@ test('adult sign-in is password-based and child sign-in uses a parent-issued pas
   assert.match(supabaseClientSource, /requestAuthEmailCode\(email, purpose === 'password-reset' \? 'recovery' : purpose\)/);
 });
 
+test('direct sign-in and signup routes default to the adult email-and-password flow', () => {
+  assert.match(appSource, /authRole: stored\.authRole === 'child' \? 'child' : 'adult'/);
+  assert.match(appSource, /if \(defaultPage === 'login' && !defaultAuthEntryInitialized\) \{\s*state\.loginMode = 'signin';\s*state\.authRole = 'adult';/);
+  assert.match(appSource, /if \(page === 'login' && \['signin', 'signup'\]\.includes\(params\.mode\)\) \{\s*state\.loginMode = params\.mode;\s*state\.authRole = 'adult';/);
+});
+
 test('invalid password sign-in displays guidance inline instead of an overlapping toast', () => {
   assert.match(appSource, /id="authInlineError" class="auth-inline-error" role="alert"/);
   assert.match(appSource, /We couldn’t sign you in with those details\.[\s\S]*?inlineError\.hidden = false/);
@@ -51,6 +57,8 @@ test('sign-in and sign-out activity emails are sent without blocking local logou
   assert.match(supabaseClientSource, /body: JSON\.stringify\(\{ event: 'sign-out' \}\)/);
   assert.match(appSource, /requestSigninOtp\(email, 'password-reset'\)/);
   assert.match(supabaseClientSource, /supabase\.auth\.signOut\(\{ scope: 'local' \}\)/);
+  assert.match(supabaseClientSource, /return \{\s*signedOut: true,\s*activityEmailError:/);
+  assert.doesNotMatch(supabaseClientSource, /if \(activityEmailError\) \{\s*throw new Error\('You are signed out/);
 });
 
 test('sign-out clears pending verification and recovery steps before returning to sign-in', () => {

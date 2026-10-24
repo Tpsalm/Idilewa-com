@@ -387,10 +387,12 @@ export async function signOut({ notify = true } = {}) {
   if (authError) {
     throw new Error('Signed out on this device, but Supabase could not confirm the session revocation.', { cause: authError });
   }
-  if (activityEmailError) {
-    throw new Error('You are signed out on this device, but the Idilewa sign-out email could not be sent.', { cause: activityEmailError });
-  }
-  return true;
+  return {
+    signedOut: true,
+    activityEmailError: activityEmailError instanceof Error
+      ? activityEmailError.message
+      : activityEmailError ? 'The Idilewa sign-out email could not be sent.' : '',
+  };
 }
 
 export async function sendAuthActivityEmail(event) {
