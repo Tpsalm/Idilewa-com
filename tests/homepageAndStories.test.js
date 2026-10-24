@@ -8,6 +8,7 @@ const indexSource = await readFile(new URL('../index.html', import.meta.url), 'u
 
 test('homepage uses the approved bilingual font families and removes the video CTA', () => {
   const homeSource = appSource.slice(appSource.indexOf('function renderHome()'), appSource.indexOf('function renderLanguageCard'));
+  assert.match(indexSource, /<body data-default-route="index">/);
   assert.match(indexSource, /family=Inter:wght@400;500;600;700&family=Plus\+Jakarta\+Sans:wght@600;700;800/);
   assert.match(homeSource, /Preserving African Culture\.<br \/><span>Promoting Technology\.<\/span>/);
   assert.match(homeSource, /Explore Stories/);
