@@ -29,10 +29,9 @@ test('auth code email templates validate codes and explain each purpose', () => 
   assert.match(childSignin.html, />12345678</);
   assert.match(childSignin.html, /idilewa-email-logo\.png/);
 
-  const recovery = createAuthCodeEmail({ code: '123456', purpose: 'recovery' });
-  assert.match(recovery.subject, /Reset your Idilewa password/);
   assert.throws(() => createAuthCodeEmail({ code: '<script>', purpose: 'child-signin' }));
   assert.throws(() => createAuthCodeEmail({ code: '123456', purpose: 'signin' }));
+  assert.throws(() => createAuthCodeEmail({ code: '123456', purpose: 'recovery' }));
 });
 
 test('auth code endpoint validates methods and malformed requests', async () => {
@@ -58,6 +57,14 @@ test('auth code endpoint validates methods and malformed requests', async () => 
     body: { email: 'learner@example.com', purpose: 'admin' },
   }, invalidPurposeResponse);
   assert.equal(invalidPurposeResponse.statusCode, 400);
+  const disabledPasswordCodeResponse = createResponse();
+  await authHandler({
+    method: 'POST',
+    headers: {},
+    query: { action: 'email-code' },
+    body: { email: 'adult@example.com', purpose: 'password-reset' },
+  }, disabledPasswordCodeResponse);
+  assert.equal(disabledPasswordCodeResponse.statusCode, 400);
   const disabledAdultCodeResponse = createResponse();
   await authHandler({
     method: 'POST',

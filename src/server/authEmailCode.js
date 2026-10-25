@@ -9,7 +9,7 @@ import {
 } from './guardianConsent.js';
 import { createAuthCodeEmail } from './authCodeEmail.js';
 
-const PURPOSES = new Set(['child-signin', 'recovery']);
+const PURPOSES = new Set(['child-signin']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function enforceEmailCodeLimit(admin, bucket, action, limit, windowSeconds) {
@@ -25,7 +25,7 @@ async function enforceEmailCodeLimit(admin, bucket, action, limit, windowSeconds
 
 function validateRequestBody(body) {
   const email = normalizeEmail(body.email);
-  const purpose = body.purpose === 'password-reset' ? 'recovery' : body.purpose;
+  const purpose = body.purpose;
   if (!PURPOSES.has(purpose)) {
     throw new GuardianConsentError(400, 'Choose a valid email-code request.');
   }
@@ -97,7 +97,7 @@ export default async function handleAuthEmailCode(req, res) {
     }
 
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-      type: purpose === 'recovery' ? 'recovery' : 'magiclink',
+      type: 'magiclink',
       email,
     });
     const code = linkData?.properties?.email_otp;
@@ -144,9 +144,7 @@ export default async function handleAuthEmailCode(req, res) {
     }
 
     return sendGuardianJson(res, 202, {
-      message: purpose === 'child-signin'
-        ? 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.'
-        : 'If the account exists and needs a code, an email will be sent.',
+      message: 'If the account exists and is eligible, a passcode will be sent to its parent or guardian.',
     });
   } catch (error) {
     if (error instanceof GuardianConsentError) {

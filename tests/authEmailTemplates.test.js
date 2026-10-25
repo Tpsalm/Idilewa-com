@@ -18,15 +18,19 @@ test('authentication templates are Idilewa branded and retain their required Sup
   }
 });
 
-test('direct signup disables confirmation and the frontend has no signup code step', async () => {
+test('signup confirmation uses a link and the app handles optional email confirmation', async () => {
   const template = await readFile(new URL('../supabase/templates/confirmation.html', import.meta.url), 'utf8');
   const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
   const app = await readFile(new URL('../app.js', import.meta.url), 'utf8');
   assert.match(config, /^\[auth\.email\]\s*[\s\S]*?^enable_confirmations = false$/m);
+  assert.match(config, /https:\/\/www\.idilewa\.com\/auth-callback\.html/);
   assert.doesNotMatch(app, /signup-otp|verifySignupOtp|resendSignupOtp/);
   assert.doesNotMatch(template, /YOUR CONFIRMATION CODE/);
+  assert.match(template, /{{ \.ConfirmationURL }}/);
+  assert.match(template, /Confirm your email/);
   assert.match(template, /https:\/\/www\.idilewa\.com\/assets\/idilewa-email-logo\.png\?v=2/);
   assert.match(template, /alt="idílẹ́wà — Language · culture · future"/);
+  assert.doesNotMatch(template, /No email confirmation code is needed/);
   assert.doesNotMatch(template, /LANGUAGE · CULTURE · CURIOSITY|>È<\/td>/);
 });
 
