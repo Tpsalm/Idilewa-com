@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 650" fill="none">
+  <defs>
+    <linearGradient id="scene" x1="84" y1="56" x2="750" y2="608" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2F8EE"/>
+      <stop offset=".52" stop-color="#E4F3E7"/>
+      <stop offset="1" stop-color="#DCEFE9"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="427" y1="189" x2="688" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#153F32"/>
+      <stop offset="1" stop-color="#286B51"/>
+    </linearGradient>
+    <linearGradient id="book" x1="193" y1="298" x2="421" y2="475" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF6"/>
+      <stop offset="1" stop-color="#F4EBD6"/>
+    </linearGradient>
+    <filter id="shadow" x="60" y="85" width="700" height="530" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect x="24" y="22" width="772" height="606" rx="54" fill="url(#scene)"/>
+  <circle cx="658" cy="135" r="76" fill="#F6D77C" fill-opacity=".72"/>
+  <path d="M25 442c116-58 200-44 293 12 79 47 160 47 242 4 85-45 157-39 236 8v108H25V442Z" fill="#C5E3CC"/>
+  <path d="M25 504c105-43 193-33 281 10 90 44 169 42 259-4 83-43 155-42 231 0v90H25v-96Z" fill="#A9D3B4"/>
+  <ellipse cx="420" cy="535" rx="296" ry="44" fill="#1C503C" fill-opacity=".18" filter="url(#shadow)"/>
+  <g opacity=".75">
+    <path d="M117 277c-41-63-23-111 35-137 30 63 18 111-35 137Z" fill="#4E9B69"/>
+    <path d="M133 288c2-67 39-103 101-96-5 68-39 101-101 96Z" fill="#72B77D"/>
+    <path d="M701 314c-38-58-25-100 26-124 30 58 21 100-26 124Z" fill="#438C5D"/>
+    <path d="M688 325c0-62 32-95 89-91-2 61-32 92-89 91Z" fill="#6BAE76"/>
+    <path d="M121 297c23-33 43-58 66-82" stroke="#236344" stroke-width="5" stroke-linecap="round"/>
+    <path d="M688 337c19-30 39-57 64-77" stroke="#236344" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(-5 315 394)">
+    <path d="M190 324c57-28 105-25 139 3 32-28 78-31 138-3v158c-58-23-104-20-138 8-34-28-82-31-139-8V324Z" fill="url(#book)" stroke="#D6C7A8" stroke-width="4"/>
+    <path d="M329 329v158" stroke="#D6C7A8" stroke-width="4"/>
+    <path d="M214 354c31-9 61-9 89 1M214 379c31-9 61-9 89 1M214 404c28-8 54-9 78-2" stroke="#7A9C7C" stroke-width="6" stroke-linecap="round"/>
+    <path d="M353 354c31-9 61-9 89 1M353 379c31-9 61-9 89 1M353 404c28-8 54-9 78-2" stroke="#7A9C7C" stroke-width="6" stroke-linecap="round"/>
+    <text x="235" y="451" fill="#B8743C" font-family="Arial,sans-serif" font-size="25" font-weight="700">Ẹ káàbọ̀</text>
+    <text x="363" y="451" fill="#B8743C" font-family="Arial,sans-serif" font-size="25" font-weight="700">Ndewo</text>
+  </g>
+  <g transform="rotate(5 560 310)">
+    <rect x="431" y="174" width="264" height="273" rx="27" fill="#244A37"/>
+    <rect x="444" y="187" width="238" height="236" rx="16" fill="url(#screen)"/>
+    <circle cx="563" cy="181" r="3" fill="#94BDA0"/>
+    <rect x="467" y="211" width="78" height="11" rx="5.5" fill="#F3D879"/>
+    <rect x="467" y="238" width="145" height="8" rx="4" fill="#D4F1D9" fill-opacity=".85"/>
+    <rect x="467" y="256" width="126" height="8" rx="4" fill="#95D7AB" fill-opacity=".9"/>
+    <rect x="467" y="274" width="164" height="8" rx="4" fill="#F7C58E" fill-opacity=".9"/>
+    <rect x="467" y="292" width="103" height="8" rx="4" fill="#D4F1D9" fill-opacity=".85"/>
+    <rect x="467" y="310" width="141" height="8" rx="4" fill="#95D7AB" fill-opacity=".9"/>
+    <rect x="466" y="344" width="192" height="55" rx="13" fill="#F4F8ED"/>
+    <text x="481" y="368" fill="#17432F" font-family="Arial,sans-serif" font-size="14" font-weight="700">Learn it. Speak it.</text>
+    <text x="481" y="387" fill="#587363" font-family="Arial,sans-serif" font-size="12">Then make something new.</text>
+    <path d="m524 447 79 0 22 30H502l22-30Z" fill="#C6D9CB"/>
+  </g>
+  <g transform="rotate(-9 160 181)">
+    <rect x="83" y="126" width="183" height="73" rx="22" fill="#fff" fill-opacity=".94"/>
+    <circle cx="116" cy="162" r="18" fill="#F4D77D"/>
+    <path d="M111 161c0-3 2-5 5-5s5 2 5 5v5h-10v-5Zm-3 7h16v3h-16z" fill="#795B21"/>
+    <text x="145" y="157" fill="#20553B" font-family="Arial,sans-serif" font-size="14" font-weight="700">Ẹ káàárọ̀</text>
+    <text x="145" y="177" fill="#718276" font-family="Arial,sans-serif" font-size="11">Good morning · Yorùbá</text>
+  </g>
+  <g transform="rotate(8 700 463)">
+    <rect x="606" y="423" width="142" height="63" rx="19" fill="#FFFDF6"/>
+    <circle cx="633" cy="454" r="13" fill="#E8A27E"/>
+    <path d="M626 453c2-5 12-5 14 0M628 459c3 3 7 3 10 0" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="656" y="451" fill="#20553B" font-family="Arial,sans-serif" font-size="12" font-weight="700">Stories</text>
+    <text x="656" y="468" fill="#718276" font-family="Arial,sans-serif" font-size="10">we share</text>
+  </g>
+  <path d="M376 154c11-20 28-25 45-15-7 19-22 25-45 15Z" fill="#77B683"/>
+  <path d="M391 159c2-14 12-23 27-25" stroke="#276547" stroke-width="3" stroke-linecap="round"/>
+  <path d="M368 193c10-17 23-22 38-15-6 17-19 22-38 15Z" fill="#E2AD59"/>
+  <path d="M382 198c3-12 12-20 25-21" stroke="#9B6A2D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M279 245c7-13 19-17 31-11-5 13-16 18-31 11Z" fill="#80B987"/>
+  <path d="M290 250c2-10 9-16 20-17" stroke="#276547" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="389" cy="281" r="7" fill="#E9AD70"/>
+  <circle cx="710" cy="376" r="6" fill="#F4D77D"/>
+  <circle cx="98" cy="383" r="7" fill="#F4D77D"/>
+</svg>

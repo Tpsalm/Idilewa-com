@@ -47,20 +47,30 @@ import {
   supabase,
   isSupabaseConfigured,
   getCurrentUser,
+  getRoleDashboard,
+  getAdultLearningSummary,
+  submitEducatorConnectionRequest,
+  withdrawEducatorConnection,
   updateUserProfile,
   signOut as signOutAccount,
   signIn as signInAccount,
   signUp as signUpAccount,
-  verifySignupOtp,
-  resendSignupOtp,
   requestSigninOtp,
   verifySigninOtp,
+  sendAuthActivityEmail,
   updateAccountPassword,
   isSignupPasswordValid,
   saveProgress,
   getUserProgress,
   saveCodeSubmission
 } from './src/supabaseClient.js';
+import {
+  getVoiceFeatureLessonSlice,
+  getVoiceGradeLessonSlice,
+  getVoiceGradePath,
+  VOICE_FEATURE_LESSON_COUNT,
+  VOICE_GRADE_PATHS
+} from './src/voiceGradeCurriculum.js';
 
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
 (() => {
@@ -85,14 +95,16 @@ import {
   const ROUTES = [
     'trainer',
     'voice_lessons',
-    'voice-translation', 'voice-text-to-speech', 'voice-speech-to-text', 'voice-cloning',
+    'voice-language', 'voice-grade', 'voice-audio', 'voice-practice',
+    'voice-text-to-speech', 'voice-cloning', 'voice-speech-to-text', 'voice-translation',
     'curriculum',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
     'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
     'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'payment', 'pricing', 'profile', 'schools',
-    'tutor', 'voices'
+    'voices'
   ];
+  const REMOVED_ROUTES = new Set(['adult', 'parent_dashboard', 'educator_dashboard', 'tutor']);
   const OWE_ROUTE_SECTIONS = {
     owe_detail: 'meaning',
     owe_story: 'story',
@@ -199,6 +211,19 @@ import {
         { title: 'Middle School', text: 'Full Indigenous Syntax, Physical Computing & Web (6–8+).', icon: 'code', route: 'coding', tone: 'blue' }
       ]
     },
+    adult: {
+      title: 'Adult Learning',
+      eyebrow: 'For independent adult learners',
+      desc: 'Build practical confidence in African languages, coding, robotics and creative technology at your own pace.',
+      icon: 'compass', image: 'code-kids.jpg', imageAlt: 'Learners exploring creative technology',
+      active: 1, flow: ['Choose a goal', 'Learn a concept', 'Build a project', 'Reflect and grow'],
+      cta: 'Open Code Studio', ctaRoute: 'coding',
+      cards: [
+        { title: 'Learn a language', text: 'Practice real-world listening and speaking in supported African language paths.', icon: 'volume', route: 'languages', tone: 'mint' },
+        { title: 'Build with code', text: 'Strengthen programming foundations with HTML, JavaScript, Python and project-based practice.', icon: 'code', route: 'coding', tone: 'blue' },
+        { title: 'Explore robotics', text: 'Move into sensors, microcontrollers, automation, CAD and responsible AI projects.', icon: 'compass', route: 'coding', tone: 'peach' }
+      ]
+    },
     coding: {
       title: 'Kọ Koodu ní Èdè Rẹ · Code.',
       eyebrow: 'Interactive Bilingual Studio',
@@ -264,19 +289,6 @@ import {
         { title: 'Designed with care', text: 'A calm, age-aware experience supports teachers and keeps children’s privacy in view.', icon: 'shield', route: 'method', tone: 'blue' }
       ]
     },
-    tutor: {
-      title: 'A thoughtful guide can make learning click.',
-      eyebrow: 'Tutor-led learning',
-      desc: 'Pair independent practice with a supportive teacher or language guide. Keep the learner and family in control.',
-      icon: 'people', image: 'story', imageAlt: 'An elder and children sharing a story',
-      active: 2, flow: ['Set a goal', 'Find a guide', 'Learn together', 'Reflect'],
-      cta: 'Browse the learning paths', ctaRoute: 'languages', form: 'tutor',
-      cards: [
-        { title: 'Guided conversation', text: 'Practice everyday phrases in a patient, encouraging learning space.', icon: 'volume', route: 'voices', tone: 'mint' },
-        { title: 'Cultural context', text: 'Learn with people who can explain where words, stories and customs come from.', icon: 'leaf', route: 'keepers', tone: 'peach' },
-        { title: 'Visible next steps', text: 'Lessons and practice stay organized so learners can build confidence over time.', icon: 'layers', route: 'course', tone: 'blue' }
-      ]
-    },
     method: {
       title: 'Learn through listening, doing and belonging.',
       eyebrow: 'The Idilewa method',
@@ -311,7 +323,7 @@ import {
       active: 2, flow: ['Listen', 'Learn the context', 'Share respectfully', 'Keep it growing'],
       cta: 'Meet culture keepers', ctaRoute: 'keepers',
       cards: [
-        { title: 'Language educators', text: 'Teachers help learners turn curiosity into a steady practice.', icon: 'school', route: 'tutor', tone: 'mint' },
+        { title: 'Language educators', text: 'Teachers help learners turn curiosity into a steady practice.', icon: 'school', route: 'schools', tone: 'mint' },
         { title: 'Story keepers', text: 'Elders and storytellers carry expressions, memories and local knowledge.', icon: 'quote', route: 'oral', tone: 'peach' },
         { title: 'Creative learners', text: 'Children and adults bring their own questions, ideas and futures.', icon: 'sparkles', route: 'individuals', tone: 'yellow' }
       ]
@@ -325,7 +337,7 @@ import {
       cta: 'Explore our approach', ctaRoute: 'method',
       cards: [
         { title: 'Oral historians', text: 'Help place stories and expressions in their local and historical context.', icon: 'quote', route: 'oral', tone: 'peach' },
-        { title: 'Language teachers', text: 'Support accurate, welcoming learning experiences for every level.', icon: 'school', route: 'tutor', tone: 'mint' },
+        { title: 'Language teachers', text: 'Support accurate, welcoming learning experiences for every level.', icon: 'school', route: 'schools', tone: 'mint' },
         { title: 'Community voices', text: 'Shape what is shared, how it is attributed and what should remain private.', icon: 'shield', route: 'about', tone: 'blue' }
       ]
     },
@@ -385,6 +397,16 @@ import {
   const LABELS = Object.fromEntries(ROUTES.map((r) => [r, r === 'index' ? 'Home' : r.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())]));
   LABELS.curriculum = 'Curriculum';
   LABELS.coding = 'Code';
+  Object.assign(LABELS, {
+    'voice-language': 'Choose a voice lesson language',
+    'voice-grade': 'Choose a voice lesson grade',
+    'voice-audio': 'Voice audio lessons',
+    'voice-practice': 'Voice lesson practice',
+    'voice-text-to-speech': 'Text to Speech',
+    'voice-cloning': 'Voice Cloning',
+    'voice-speech-to-text': 'Speech to Text',
+    'voice-translation': 'Translation',
+  });
   LABELS.ere = 'Stories'; LABELS.ere_game = 'Story game'; LABELS.ifa_odu = 'Odu culture note';
   LABELS.owe = 'Owe';
   LABELS.owe_add = 'Share a proverb';
@@ -553,57 +575,30 @@ import {
         libraryFilter: typeof stored.libraryFilter === 'string' ? stored.libraryFilter : 'all',
         librarySearch: typeof stored.librarySearch === 'string' ? stored.librarySearch : '',
         reflectionFeeling: typeof stored.reflectionFeeling === 'string' ? stored.reflectionFeeling : '',
-        authRole: typeof stored.authRole === 'string' ? stored.authRole : defaults.authRole,
+        authRole: stored.authRole === 'child' ? 'child' : 'adult',
         completed: Array.isArray(stored.completed) ? stored.completed : defaults.completed.slice(),
         interested: Array.isArray(stored.interested) ? stored.interested : []
       };
     } catch (_) { return { ...defaults, available: { ...defaults.available }, trainer: { ...defaults.trainer } }; }
   }
   const state = readState();
-  let pendingSignupEmail = (() => {
-    try {
-      const saved = sessionStorage.getItem('idilewa-pending-signup-email') || '';
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(saved) ? saved.toLowerCase() : '';
-    } catch (_) {
-      return '';
-    }
-  })();
-  let pendingSignin = (() => {
-    try {
-      const saved = JSON.parse(sessionStorage.getItem('idilewa-pending-signin-otp') || 'null');
-      return saved && typeof saved.email === 'string' && ['child', 'educator', 'adult', 'parent'].includes(saved.role)
-        ? {
-          email: saved.email.toLowerCase(),
-          role: saved.role,
-          purpose: saved.purpose === 'password-reset' ? 'password-reset' : 'signin'
-        }
-        : null;
-    } catch (_) {
-      return null;
-    }
-  })();
-  let passwordResetVerified = (() => {
-    try {
-      return sessionStorage.getItem('idilewa-password-reset-verified') === 'true';
-    } catch (_) {
-      return false;
-    }
-  })();
+  let pendingSignupEmail = '';
+  for (const key of [
+    'idilewa-pending-signup-email',
+    'idilewa-pending-signin-otp',
+    'idilewa-password-reset-verified',
+    'idilewa-guardian-signup',
+  ]) {
+    try { sessionStorage.removeItem(key); } catch (_) {}
+  }
+  let signupEmailForSignin = '';
+  let pendingSignin = null;
+  let passwordResetVerified = false;
   let verifiedGuardianSignup = (() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem('idilewa-guardian-signup') || 'null');
       return saved && /^[0-9a-f-]{36}$/i.test(saved.approvalId || '') && typeof saved.email === 'string'
         ? { approvalId: saved.approvalId, email: saved.email.toLowerCase() }
-        : null;
-    } catch (_) {
-      return null;
-    }
-  })();
-  let verifiedEducatorSignup = (() => {
-    try {
-      const saved = JSON.parse(sessionStorage.getItem('idilewa-educator-signup') || 'null');
-      return saved && /^[0-9a-f-]{36}$/i.test(saved.inviteId || '') && typeof saved.email === 'string'
-        ? { inviteId: saved.inviteId, email: saved.email.toLowerCase() }
         : null;
     } catch (_) {
       return null;
@@ -636,14 +631,14 @@ import {
       if (OWE_ROUTE_SECTIONS[defaultPage]) {
         const section = OWE_ROUTE_SECTIONS[defaultPage];
         history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/owe?section=${section}`);
-        return { page: 'owe', params: { section } };
+        return { page: 'owe', params: { section }, removedRoute: false };
       }
       if (defaultPage === 'login' && !defaultAuthEntryInitialized) {
         state.loginMode = 'signin';
         state.authRole = 'adult';
         defaultAuthEntryInitialized = true;
       }
-      return { page: ROUTES.includes(defaultPage) ? defaultPage : 'index', params: {} };
+      return { page: ROUTES.includes(defaultPage) ? defaultPage : 'index', params: {}, removedRoute: false };
     }
     const [path, query = ''] = hash.split('?');
     let page = path.split('/')[0] || 'index';
@@ -654,8 +649,15 @@ import {
       page = 'owe';
       history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/owe?section=${encodeURIComponent(params.section)}`);
     }
-    if (page === 'login' && ['signin', 'signup'].includes(params.mode)) state.loginMode = params.mode;
-    return { page: ROUTES.includes(page) ? page : 'base', params };
+    if (page === 'login' && ['signin', 'signup'].includes(params.mode)) {
+      state.loginMode = params.mode;
+      state.authRole = 'adult';
+    }
+    return {
+      page: REMOVED_ROUTES.has(page) ? 'index' : ROUTES.includes(page) ? page : 'base',
+      params,
+      removedRoute: REMOVED_ROUTES.has(page)
+    };
   }
 
   function navigate(route, params = {}, replace = false) {
@@ -672,6 +674,10 @@ import {
     else window.location.hash = next;
     closeMobileMenu();
     if (typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function roleHomeRoute() {
+    return 'index';
   }
 
   function routeLink(route, label, cls = '', attrs = '') {
@@ -691,13 +697,16 @@ import {
       document.getElementById('site-header').innerHTML = '';
       return;
     }
+    const currentUser = getCurrentUser();
     const currentGroup = NAV_GROUPS[page] || (page === 'index' ? 'home' : '');
     const nav = NAV.map((item) => `<a class="nav-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${item.label}</a>`).join('');
-    const currentUser = getCurrentUser();
     const avatarLabel = currentUser?.name?.trim()?.charAt(0)?.toUpperCase() || 'S';
     const profileAvatar = profilePhoto
       ? `<img src="${esc(profilePhoto)}" alt="" />`
       : esc(avatarLabel);
+    const accountActions = currentUser
+      ? `<a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${esc(currentUser.name || 'Profile')}</span></a><button class="header-signout" type="button" data-action="account-sign-out">Sign out</button>`
+      : `${routeLink('login', 'Log in', 'header-signin', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary header-cta', 'data-mode="signup"')}`;
     const mobileShortcuts = [
       { route: 'library', label: 'Library', ico: 'book' },
       { route: 'game', label: 'Tile game', ico: 'sparkles' },
@@ -706,26 +715,33 @@ import {
     ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
     const menu = MENU_NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts + routeLink('base', `${icon('layers', 19)}<span>All pages</span>${icon('arrow', 16)}`, 'mobile-menu-link');
     document.getElementById('site-header').innerHTML = `
-      ${page === 'index' ? `<div class="home-promo-strip"><span>${icon('sparkles', 14)} A little every day brings your language closer.</span>${routeLink('languages', 'Explore languages ' + icon('arrow', 13))}</div>` : ''}
+      ${page === 'index' ? `<div class="home-promo-strip"><span>A little every day brings you closer to your language.</span></div>` : ''}
       <div class="header-inner">
         <a class="brand" href="#/index" data-route="index" aria-label="Idilewa home">
-          ${brandLogo()}
+          ${page === 'index' ? `<span class="landing-brand-mark">${icon('leaf', 24)}</span><span class="landing-brand-copy"><strong>Idilewa</strong><small>Language · Culture · Future</small></span>` : brandLogo()}
         </a>
         <nav class="desktop-nav" aria-label="Main navigation">${nav}</nav>
         <div class="header-actions">
           <button class="icon-button search-button" type="button" data-action="open-search" aria-label="Search Idilewa">${icon('search', 18)}</button>
-          <a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${currentUser ? esc(currentUser.name || 'Profile') : 'Profile'}</span></a>
+          ${accountActions}
           <button class="icon-button menu-toggle" type="button" data-action="toggle-menu" aria-label="Open navigation" aria-expanded="false">${icon('menu', 21)}</button>
         </div>
       </div>
       <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
         <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
-        <div class="mobile-menu-bottom">${routeLink('profile', `${icon('user', 15)} Open your profile ${icon('arrow', 14)}`, 'button button-primary')}</div>
+        <div class="mobile-menu-bottom">${currentUser
+          ? `${routeLink('profile', `${icon('user', 15)} Open your profile ${icon('arrow', 14)}`, 'button button-primary')}<button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button>`
+          : `${routeLink('login', 'Log in', 'button button-outline', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary', 'data-mode="signup"')}`}</div>
       </div>`;
   }
 
   function renderMobileNav(page) {
+    const currentUser = getCurrentUser();
+    if (currentUser?.role === 'parent' || currentUser?.role === 'educator') {
+      document.getElementById('mobile-nav').innerHTML = '';
+      return;
+    }
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
       { route: 'library', label: 'Library', ico: 'book' },
@@ -736,8 +752,9 @@ import {
     document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
   }
 
-  function renderFooter() {
+  function renderFooter(page) {
     return `<footer class="site-footer">
+      ${page === 'index' ? renderHomeBenefits() : ''}
       <div class="container footer-main">
         <section class="footer-contact">
           <span class="footer-kicker">Contact us</span>
@@ -799,7 +816,7 @@ import {
     </div></section><section class="home-principles-strip" aria-label="Idilewa learning principles"><div class="container"><span>${icon('globe', 17)} African languages</span><span>${icon('people', 17)} Family learning</span><span>${icon('leaf', 17)} Culture with context</span><span>${icon('code', 17)} STEAM for young makers</span></div></section>`;
   }
 
-  function renderHome() {
+  function renderLegacyHome() {
     const featureCards = [
       { title: 'K–8 STEAM Curriculum', desc: 'Standards-aligned lessons infused with African culture.', icon: 'layers', route: 'curriculum', tone: 'blue', tag: 'Curriculum', image: 'page-languages-1.jpg' },
       { title: 'Code in your language', desc: 'Interactive bilingual coding studio for kids.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Interactive IDE', image: 'code-kids.jpg' },
@@ -831,7 +848,7 @@ import {
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
           <div class="hero-visual home-hero-art">
-            <img src="./assets/yoruba-kids-culture.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" />
+            <img src="./assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" />
             <section class="home-voice-promo" aria-labelledby="home-voice-promo-title">
               <div class="home-voice-promo-copy">
                 <span class="home-voice-promo-kicker">${icon('headphones', 14)} Voice lessons · sound &amp; tonal practice</span>
@@ -1086,6 +1103,86 @@ import {
       </section>
 
       <section class="container home-cta-section home-ribbon-section"><div class="home-cta"><div><span class="section-kicker">Your next word is waiting</span><h2>Let’s keep the good things growing.</h2><p>Choose a language and take your first small step today.</p></div>${routeLink('languages', `Find your language ${icon('arrow', 17)}`, 'button button-white')}</div></section>`;
+  }
+
+  function renderHome() {
+    const languages = [
+      { id: 'yoruba', name: 'Yorùbá', flag: '🇳🇬', image: 'yoruba-kids-culture.jpg', alt: 'Young learners exploring Yorùbá culture' },
+      { id: 'igbo', name: 'Igbo', flag: '🇳🇬', image: 'african-kids-friends.jpg', alt: 'Children learning together' },
+      { id: 'hausa', name: 'Hausa', flag: '🇳🇬', image: 'yoruba-educator-man.jpg', alt: 'An educator sharing language learning' },
+      { id: 'swahili', name: 'Kiswahili', flag: '🇹🇿', image: 'listening-reader.jpg', alt: 'A learner listening to a language lesson' }
+    ];
+    const pathways = [
+      { icon: 'book', title: 'Learn', copy: 'African languages', route: 'voice-language' },
+      { icon: 'volume', title: 'Listen', copy: 'Stories & audiobooks', route: 'voices' },
+      { icon: 'code', title: 'Code', copy: 'Build skills in your language', route: 'coding' },
+      { icon: 'people', title: 'Join', copy: 'A global community', route: 'connect_students' }
+    ];
+    return `<div class="landing-home">
+      <section class="landing-hero">
+        <div class="container landing-hero-grid">
+          <div class="landing-hero-copy">
+            <span class="landing-eyebrow">African Roots <i>•</i> Brighter Futures</span>
+            <h1>Preserving African Culture.<br /><span>Promoting Technology.</span></h1>
+            <p>Learn African languages, hear our stories, build real skills and belong to a global community.</p>
+            <div class="landing-hero-actions">
+              ${routeLink('voice-language', `Start Learning ${icon('arrow', 16)}`, 'button button-primary')}
+              ${routeLink('ere', `Explore Stories ${icon('arrow', 16)}`, 'button button-outline')}
+            </div>
+            <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
+          </div>
+          <figure class="landing-hero-image">
+            <img src="/assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" fetchpriority="high" />
+          </figure>
+        </div>
+      </section>
+
+      <section class="container landing-pathways" aria-label="Explore Idilewa">
+        ${pathways.map((item) => `<a class="landing-pathway" href="#/${item.route}" data-route="${item.route}"><span>${icon(item.icon, 23)}</span><strong>${item.title}</strong><small>${item.copy}</small></a>`).join('')}
+      </section>
+
+      <div class="container landing-content-grid">
+        <main class="landing-main-column">
+          <section class="landing-languages" aria-labelledby="landing-languages-title">
+            <div class="landing-section-heading"><div><span class="section-kicker">Our languages</span><h2 id="landing-languages-title">Start with your language</h2><p>Choose a language to begin your learning journey.</p></div>${routeLink('languages', `View all ${icon('arrow', 14)}`, 'text-link')}</div>
+            <div class="landing-language-grid">
+              ${languages.map((language) => `<a class="landing-language-card" href="#/voice-grade?lang=${language.id}" data-route="voice-grade" data-lang="${language.id}" aria-label="Choose a grade for ${language.name}"><img src="/assets/${language.image}" alt="${language.alt}" loading="lazy" /><span class="landing-language-flag" aria-hidden="true">${language.flag}</span><span class="landing-language-name">${language.name}</span><span class="landing-language-action">Learn · Speak · Explore ${icon('arrow', 13)}</span></a>`).join('')}
+            </div>
+          </section>
+
+          <section class="landing-voice-card" aria-labelledby="landing-voice-title">
+            <div class="landing-voice-icon">${icon('mic', 24)}</div>
+            <div><span class="section-kicker">Listen · practise · grow</span><h2 id="landing-voice-title">Your voice belongs here.</h2><p>Build pronunciation confidence with lessons for every grade, from first sounds to fluent expression.</p></div>
+            ${routeLink('voice_lessons', `Start Voice Lessons ${icon('arrow', 15)}`, 'button button-primary')}
+          </section>
+
+          <section class="landing-story-card">
+            <img src="/assets/story-grandmother.jpg" alt="A grandmother sharing a story with children" loading="lazy" />
+            <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore stories ${icon('arrow', 14)}`, 'text-link')}</div>
+          </section>
+        </main>
+
+        <aside class="landing-side-column">
+          <section class="landing-side-card landing-why-card">
+            <span class="section-kicker">Rooted in community</span><h2>Why choose Idilewa?</h2>
+            <div class="landing-why-grid">
+              <div><span>${icon('leaf', 19)}</span><strong>Authentic</strong><small>Culture with context</small></div>
+              <div><span>${icon('people', 19)}</span><strong>For all ages</strong><small>Learn together</small></div>
+              <div><span>${icon('sparkles', 19)}</span><strong>Interactive</strong><small>Practice by doing</small></div>
+              <div><span>${icon('globe', 19)}</span><strong>Global</strong><small>Community connected</small></div>
+            </div>
+          </section>
+          <section class="landing-community-card">
+            <span class="section-kicker">From our heritage to new opportunities</span><h2>Keep your language close.</h2><p>Discover the words, stories and skills that connect us.</p>${routeLink('languages', `Explore Idilewa ${icon('arrow', 14)}`, 'button button-white')}
+          </section>
+          <section class="landing-side-card landing-how-card">
+            <span class="section-kicker">A simple path</span><h2>How it works</h2>
+            <ol><li><span>1</span><div><strong>Choose a language</strong><small>Start with a language you love.</small></div></li><li><span>2</span><div><strong>Pick your grade</strong><small>Find a level made for you.</small></div></li><li><span>3</span><div><strong>Learn and practise</strong><small>Listen, speak and celebrate.</small></div></li></ol>
+          </section>
+          <section class="landing-future-card"><span>${icon('people', 22)}</span><div><strong>Be part of a brighter future.</strong><p>Grow with a community learning and sharing across generations.</p>${routeLink('connect_students', `Join Idilewa ${icon('arrow', 13)}`, 'text-link')}</div></section>
+        </aside>
+      </div>
+    </div>`;
   }
 
   function renderLanguageCard(l) {
@@ -1552,7 +1649,7 @@ import {
       voiceDictationRecorder.stop();
       button.disabled = true;
       button.textContent = 'Transcribing…';
-      if (status) status.textContent = 'Sending your recording to Plotweaver for transcription…';
+      if (status) status.textContent = 'Sending your recording to Idilewa for transcription…';
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -1833,7 +1930,7 @@ import {
       id: 'Middle-School',
       bandKey: 'middle',
       title: 'Middle School',
-      range: 'Grade 6 to 8+',
+      range: 'Grade 6 to 8',
       badge: 'Ages 11–15+',
       desc: 'Transition to line-based languages (Python, JavaScript, HTML/CSS), 3D CAD modeling, cybersecurity defense, and artificial intelligence.',
       flowchart: {
@@ -3230,12 +3327,11 @@ import {
       <small id="plotweaver-speech-status" aria-live="polite">Audio is generated on request and is not saved.</small>
     </section>`;
   }
-
   function renderVoiceCloneTools() {
-    return `<section class="voice-translation-panel" aria-labelledby="voice-tools-title">
-      <div><span class="section-kicker">Plotweaver voice studio</span><h2 id="voice-tools-title">Choose a voice or create one with permission</h2><p>Generated lesson speech uses the selected voice when Plotweaver supports it for your chosen language.</p></div>
+    return `<section id="voice-clone-tools" class="voice-translation-panel" aria-labelledby="voice-tools-title">
+      <div><span class="section-kicker">Idilewa Voice Lessons</span><h2 id="voice-tools-title">Choose a voice or create one with permission</h2><p>Generated lesson speech uses the selected voice when Idilewa supports it for your chosen language.</p></div>
       <label class="voice-translation-input-label" for="plotweaver-voice-select">Speech voice</label>
-      <select id="plotweaver-voice-select" aria-describedby="plotweaver-voice-status"><option value="">Loading Plotweaver voices…</option></select>
+      <select id="plotweaver-voice-select" aria-describedby="plotweaver-voice-status"><option value="">Loading Idilewa voices…</option></select>
       <small id="plotweaver-voice-status" aria-live="polite">Loading built-in voices and clones saved on this device…</small>
       <form class="voice-clone-form" data-form="plotweaver-voice-clone">
         <strong>Create a voice clone</strong>
@@ -3248,7 +3344,7 @@ import {
         <label for="plotweaver-clone-transcript">Exact transcript (required for most non-Nigerian languages)</label>
         <textarea id="plotweaver-clone-transcript" name="reference_text" rows="2" maxlength="500"></textarea>
         <label class="voice-clone-consent"><input name="consent" type="checkbox" value="yes" required /><span>I own this recording or have the speaker’s informed permission to create and use a voice clone.</span></label>
-        <small>Voice cloning sends the recording to Plotweaver and may incur usage charges. Do not upload a child’s or another person’s voice without their guardian’s/speaker’s explicit permission.</small>
+        <small>Voice cloning sends the recording to Idilewa’s external voice service and may incur usage charges. Do not upload a child’s or another person’s voice without their guardian’s/speaker’s explicit permission.</small>
         <small data-clone-language-status aria-live="polite"></small>
         <button class="button button-outline" type="submit">Create voice clone</button>
       </form>
@@ -3263,7 +3359,7 @@ import {
       selector.dataset.voiceLookupStarted = 'true';
       getPlotweaverVoices({ type: 'builtin' }).then((builtInVoices) => {
         const voices = [...builtInVoices, ...state.trainer.clonedVoices];
-        const options = [new Option('Use Plotweaver’s recommended voice', '')];
+        const options = [new Option('Use Idilewa’s recommended voice', '')];
         for (const voice of voices) {
           options.push(new Option(
             `${voice.name}${voice.type === 'cloned' ? ' · cloned' : ''}`,
@@ -3281,7 +3377,7 @@ import {
         }
       }).catch((error) => {
         selector.replaceChildren(new Option('Recommended voice unavailable', ''));
-        if (status) status.textContent = error instanceof Error ? error.message : 'Plotweaver voices could not be loaded.';
+        if (status) status.textContent = error instanceof Error ? error.message : 'Idilewa voices could not be loaded.';
       });
     }
     const speechLanguageSelector = document.getElementById('plotweaver-speech-language');
@@ -3295,7 +3391,7 @@ import {
           : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
       }).catch((error) => {
         const speechStatus = document.getElementById('plotweaver-speech-status');
-        if (speechStatus) speechStatus.textContent = error instanceof Error ? error.message : 'Plotweaver speech languages could not be loaded.';
+        if (speechStatus) speechStatus.textContent = error instanceof Error ? error.message : 'Idilewa speech languages could not be loaded.';
       });
     }
     if (languageSelector && !languageSelector.dataset.languageLookupStarted) {
@@ -3327,6 +3423,7 @@ import {
         selector.value = languages.some(({ code }) => code === previousLanguage)
           ? previousLanguage
           : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
+        if (status) status.textContent = 'Idilewa translation is ready. Exact phrasebook matches are used first.';
         if (status) status.textContent = 'Plotweaver translation is ready. Exact phrasebook matches are used first.';
         if (selectorId === 'voice-translation-language') {
           document.querySelectorAll('[data-action="choose-translation-language"]').forEach((button) => {
@@ -3351,7 +3448,7 @@ import {
       ...result,
       translated: result.translated_text,
       machineTranslated: true,
-      provider: 'Plotweaver',
+      provider: 'Idilewa',
     };
   }
 
@@ -3392,7 +3489,7 @@ import {
       }
       if (providerStatus) {
         providerStatus.textContent = result.machineTranslated
-          ? 'Machine translation by Plotweaver. No plain-letter transliteration is provided for machine results.'
+          ? 'Machine translation by Idilewa. No plain-letter transliteration is provided for machine results.'
           : 'Curated phrasebook translation.';
       }
     } catch (error) {
@@ -4022,10 +4119,10 @@ import {
                 '<div class="c4k-hub-icon">🚀</div>' +
                 '<div class="c4k-hub-text">' +
                   '<h3>Middle School</h3>' +
-                  '<p class="c4k-grade-tag">Grade 6 to 8+</p>' +
+                  '<p class="c4k-grade-tag">Grade 6 to 8</p>' +
                   '<p class="c4k-desc">Full Syntax Programming, Indigenous Functions, Physical Computing & Web.</p>' +
                 '</div>' +
-                '<div class="c4k-card-cta"><span>Explore Grades 6–8+</span> ' + icon('arrow-right', 14) + '</div>' +
+                '<div class="c4k-card-cta"><span>Explore Grades 6–8</span> ' + icon('arrow-right', 14) + '</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -4087,7 +4184,7 @@ import {
                 '<div class="category-heading-list">' +
                   '<div class="category-heading-item">' +
                     '<span class="section-kicker">Grade Band 03 · Ages 11–14+</span>' +
-                    '<h2 class="heading-4">Middle School (Grade 6 to 8+)</h2>' +
+                    '<h2 class="heading-4">Middle School (Grade 6 to 8)</h2>' +
                   '</div>' +
                 '</div>' +
               '</div>' +
@@ -4170,14 +4267,18 @@ import {
     '</div>';
   }
 
-
-  function renderVoiceTranslationTool({ showDictation = true, initialText } = {}) {
+  function renderVoiceTranslationTool({ showDictation = true, lesson = null, language = 'yoruba', initialText } = {}) {
     const selectedTranslation = [...state.savedTranslations, ...state.translationLessons]
       .find((item) => item.id === state.activeTranslationId);
-    const sourceText = initialText ?? (selectedTranslation?.source || 'Good morning, how are you?');
-    const targetLanguage = initialText !== undefined ? 'yo' : selectedTranslation?.targetLanguage || 'yo';
+    const languageCodes = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' };
+    const sourceText = initialText ?? (lesson?.translation || selectedTranslation?.source || 'Good morning, how are you?');
+    const targetLanguage = initialText !== undefined
+      ? 'yo'
+      : lesson ? languageCodes[language] || 'yo' : selectedTranslation?.targetLanguage || 'yo';
     const targetName = translationLanguageName(targetLanguage);
-    const translatedText = initialText !== undefined ? '' : selectedTranslation?.translated || 'Ẹ káàárọ̀, báwo ni?';
+    const translatedText = initialText !== undefined || lesson
+      ? ''
+      : selectedTranslation?.translated || 'Ẹ káàárọ̀, báwo ni?';
     return `<div class="translation-studio">
       <header class="translation-studio-hero">
         <div class="translation-studio-hero-copy">
@@ -4311,16 +4412,303 @@ import {
     }
     return '';
   }
+
   function renderStories() {
-    const stories = [
-      { title: 'The story that travelled', desc: 'A family story told, remembered and shared again.', image: 'story-grandmother.jpg', tag: 'Oral tradition', lang: 'Yorùbá · English', tone: 'peach' },
-      { title: 'Words from the garden', desc: 'Notice new words as a small garden begins to grow.', image: 'yoruba-kids-culture.jpg', tag: 'Read together', lang: 'Beginner · 5 min', tone: 'mint' },
-      { title: 'A team of little builders', desc: 'Follow two friends as they solve a puzzle with code.', image: 'code-kids.jpg', tag: 'Code & create', lang: 'English + Yorùbá', tone: 'blue' }
-    ];
-    return `<div class="container route-page stories-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories</strong></div><section class="stories-hero"><div><span class="section-kicker">Stories & imagination</span><h1>Some things are best<br /><em>shared as a story.</em></h1><p>Read, listen and notice the words, voices and moments that bring a story to life.</p>${routeLink('ere_game', `Try a story game ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('story')}</div><div class="stories-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a folktale with two children" /><span class="story-image-chip">${icon('headphones', 16)} Listen together</span></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 0)}<div class="stories-topline"><div><span class="section-kicker">The story shelf</span><h2>Pick up where curiosity takes you.</h2></div><div class="story-filter">${icon('filter', 15)} Stories for everyone</div></div><div class="story-grid">${stories.map((s, i) => `<article class="story-card"><a class="story-card-image story-card-art story-card-art-${i + 1}" href="#/ere_game" data-route="ere_game" aria-label="Open story: ${esc(s.title)}"><span class="story-card-art-icon" aria-hidden="true">${icon(i === 0 ? 'book' : i === 1 ? 'quote' : 'music', 34)}</span><span class="story-card-tag">${s.tag}</span><span class="story-card-number">0${i + 1}</span></a><div class="story-card-body"><span class="story-language">${s.lang}</span><h3>${s.title}</h3><p>${s.desc}</p><div class="story-card-actions"><a class="text-link" href="#/ere_game" data-route="ere_game">Read & listen ${icon('arrow', 14)}</a><button class="save-button ${state.saved.includes(s.title) ? 'is-saved' : ''}" aria-label="Save ${s.title}" data-action="save-item" data-item="${esc(s.title)}">${icon('bookmark', 17)}</button></div></div></article>`).join('')}</div><section class="stories-bottom"><div><span class="section-kicker">More than a story</span><h2>Explore the voices behind the words.</h2><p>Discover oral genres, proverbs and language audio.</p></div><div class="stories-bottom-links">${routeLink('oral', 'Oral traditions ' + icon('arrow', 14), 'button button-outline')}${routeLink('voices', 'Voice library ' + icon('arrow', 14), 'button button-soft')}</div></section></div>`;
+    const stories = STORY_READINGS;
+    return `<div class="container route-page stories-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Stories</strong></div><section class="stories-hero"><div><span class="section-kicker">Stories & imagination</span><h1>Some things are best<br /><em>shared as a story.</em></h1><p>Read, listen and notice the words, voices and moments that bring a story to life.</p>${routeLink('ere_game', `Try a story game ${icon('arrow', 15)}`, 'button button-primary')}${aiHelperButton('story')}</div><div class="stories-hero-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a folktale with two children" /><span class="story-image-chip">${icon('headphones', 16)} Listen together</span></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 0)}<div class="stories-topline"><div><span class="section-kicker">The story shelf</span><h2>Pick up where curiosity takes you.</h2></div><div class="story-filter">${icon('filter', 15)} Stories for everyone</div></div><div class="story-grid">${stories.map((story, i) => `<article class="story-card"><a class="story-card-image story-card-art story-card-art-${i + 1}" href="#/ere_game?story=${encodeURIComponent(story.id)}" data-route="ere_game" data-story="${story.id}" aria-label="Open story: ${esc(story.title)}"><span class="story-card-art-icon" aria-hidden="true">${icon(i === 0 ? 'book' : i === 1 ? 'quote' : 'music', 34)}</span><span class="story-card-tag">${story.tag}</span><span class="story-card-number">0${i + 1}</span></a><div class="story-card-body"><span class="story-language">${story.lang}</span><h3>${story.title}</h3><p>${story.desc}</p><div class="story-card-actions"><a class="text-link" href="#/ere_game?story=${encodeURIComponent(story.id)}" data-route="ere_game" data-story="${story.id}">Read & listen ${icon('arrow', 14)}</a><button class="save-button ${state.saved.includes(story.title) ? 'is-saved' : ''}" aria-label="Save ${story.title}" data-action="save-item" data-item="${esc(story.title)}">${icon('bookmark', 17)}</button></div></div></article>`).join('')}</div><section class="stories-bottom"><div><span class="section-kicker">More than a story</span><h2>Explore the voices behind the words.</h2><p>Discover oral genres, proverbs and language audio.</p></div><div class="stories-bottom-links">${routeLink('oral', 'Oral traditions ' + icon('arrow', 14), 'button button-outline')}${routeLink('voices', 'Voice library ' + icon('arrow', 14), 'button button-soft')}</div></section></div>`;
   }
 
-  function renderStoryGame() {
+  function renderVoiceFeatureLessonNavigation(page, language, lessonNumber, lessonCount) {
+    const route = `#/${page}?lang=${encodeURIComponent(language)}&lesson=`;
+    const previous = lessonNumber > 1
+      ? `<a class="button button-outline" href="${route}${lessonNumber - 1}">${icon('arrow', 14, 'voice-arrow-back')} Back</a>`
+      : `<button class="button button-outline" type="button" disabled>${icon('arrow', 14, 'voice-arrow-back')} Back</button>`;
+    const next = lessonNumber < lessonCount
+      ? `<a class="button button-primary" href="${route}${lessonNumber + 1}">Next lesson ${icon('arrow', 14)}</a>`
+      : `<button class="button button-primary" type="button" disabled>Course complete ${icon('arrow', 14)}</button>`;
+    const progress = Math.round((lessonNumber / lessonCount) * 100);
+    return `<div class="voice-feature-lesson-progress">
+      <div><span>Lesson ${String(lessonNumber).padStart(2, '0')} of ${lessonCount}</span><span>${progress}%</span></div>
+      <progress value="${lessonNumber}" max="${lessonCount}" aria-label="Lesson ${lessonNumber} of ${lessonCount}"></progress>
+    </div>
+    <nav class="voice-feature-lesson-navigation" aria-label="Lesson navigation">
+      ${previous}
+      ${routeLink('voice_lessons', 'All voice tools', 'button button-outline')}
+      ${next}
+    </nav>`;
+  }
+
+  function renderVoicePracticeLessonNavigation(language, level, gradePath, lessons, activeLesson) {
+    const currentIndex = lessons.findIndex((lesson) => lesson.id === activeLesson.id);
+    const lessonRoute = (lesson) => {
+      const params = new URLSearchParams({ lang: language, level, lesson: String(lesson.id) });
+      if (gradePath) params.set('grade', gradePath.id);
+      return `#/voice-practice?${params}`;
+    };
+    const routeAttributes = (lesson) => `data-route="voice-practice" data-lang="${language}" data-level="${level}" data-lesson="${lesson.id}"${gradePath ? ` data-grade="${gradePath.id}"` : ''}`;
+    const previous = currentIndex > 0
+      ? `<a class="button button-outline" href="${lessonRoute(lessons[currentIndex - 1])}" ${routeAttributes(lessons[currentIndex - 1])}>${icon('arrow', 15, 'voice-arrow-back')} Previous lesson</a>`
+      : `<button class="button button-outline" type="button" disabled>${icon('arrow', 15, 'voice-arrow-back')} Previous lesson</button>`;
+    const next = currentIndex < lessons.length - 1
+      ? `<a class="button button-primary" href="${lessonRoute(lessons[currentIndex + 1])}" ${routeAttributes(lessons[currentIndex + 1])}>Next lesson ${icon('arrow', 15)}</a>`
+      : `<button class="button button-primary" type="button" disabled>Course complete ${icon('arrow', 15)}</button>`;
+    const audioParams = new URLSearchParams({ lang: language, level });
+    if (gradePath) audioParams.set('grade', gradePath.id);
+    return `<nav class="voice-practice-lesson-navigation" aria-label="Lesson navigation">
+      <a class="button button-outline" href="#/voice-audio?${audioParams}" data-route="voice-audio" data-lang="${language}" data-level="${level}"${gradePath ? ` data-grade="${gradePath.id}"` : ''}>${icon('arrow', 15, 'voice-arrow-back')} All lessons</a>
+      ${previous}
+      ${next}
+    </nav>`;
+  }
+
+  function renderVoiceFeaturePage(page, params = {}) {
+    const languageNames = {
+      yoruba: 'Yorùbá', igbo: 'Igbo', hausa: 'Hausa', swahili: 'Kiswahili'
+    };
+    const languages = Object.entries(languageNames);
+    const selectedLanguage = languageNames[params.lang]
+      ? params.lang
+      : languageNames[state.trainer.lang] ? state.trainer.lang : 'yoruba';
+    const gradePath = getVoiceGradePath(params.grade);
+    const langName = languageNames[selectedLanguage];
+    const langData = TRAINER_CURRICULUM[selectedLanguage] || TRAINER_CURRICULUM.yoruba;
+    const lessonLevel = ['beginner', 'intermediate', 'advanced'].includes(params.level)
+      ? params.level
+      : gradePath?.level || state.trainer.level || 'beginner';
+    const lessons = langData[lessonLevel] || langData.beginner;
+    const gradeLessons = gradePath && gradePath.level === lessonLevel
+      ? getVoiceGradeLessonSlice(gradePath.id, lessons)
+      : lessons;
+    const practiceLessons = gradePath && gradePath.level === lessonLevel ? gradeLessons : lessons;
+    const featureLessonPages = ['voice-text-to-speech', 'voice-speech-to-text', 'voice-translation', 'voice-cloning'];
+    const featureLessons = featureLessonPages.includes(page)
+      ? getVoiceFeatureLessonSlice(Object.values(langData).flat())
+      : [];
+    const requestedFeatureLesson = Number.parseInt(params.lesson || '1', 10);
+    const featureLessonNumber = Number.isInteger(requestedFeatureLesson)
+      ? Math.min(Math.max(requestedFeatureLesson, 1), featureLessons.length || 1)
+      : 1;
+    const featureLesson = featureLessons[featureLessonNumber - 1] || null;
+    const selectedLessonId = Number(params.lesson) || state.trainer.activeLessonId || lessons[0]?.id || 1;
+    const activeLesson = practiceLessons.find((lesson) => lesson.id === selectedLessonId) || practiceLessons[0];
+    const hasEnglishTranslation = activeLesson?.translation
+      && !/^Interactive voice training phrase #\d+ for native speech fluency\.$/.test(activeLesson.translation);
+    const titles = {
+      'voice-language': ['Choose your language', 'Choose a language to personalize your listening and speaking practice.', 'Language'],
+      'voice-grade': ['Choose your grade', `Select a learning level for ${langName} lessons.`, 'Subjects & grades'],
+      'voice-audio': ['Explore audio lessons', `Choose a ${langName} lesson and practise at your own pace.`, 'Audio lessons'],
+      'voice-practice': [activeLesson?.title || `Lesson ${selectedLessonId}`, `Listen, practise the phrase and record your voice in ${langName}.`, 'Practice'],
+      'voice-text-to-speech': ['Text to Speech', 'Write a phrase and hear it spoken in your chosen language.', 'Speak'],
+      'voice-cloning': ['Voice Cloning', 'Create a voice only when you own the recording or have the speaker’s informed permission.', 'Create'],
+      'voice-speech-to-text': ['Speech to Text', 'Record a phrase and turn your speech into text.', 'Transcribe'],
+      'voice-translation': ['Translation', 'Translate a phrase between supported languages, then listen to the result.', 'Translate'],
+    };
+    const [defaultTitle, defaultDescription, kicker] = titles[page] || titles['voice-language'];
+    const title = page === 'voice-audio' && gradePath
+      ? `${gradePath.name} · ${langName}`
+      : defaultTitle;
+    const description = page === 'voice-audio' && gradePath
+      ? `${gradePath.ages}: ${gradePath.focus} ${gradePath.challenge}`
+      : defaultDescription;
+    let content = '';
+
+    if (page === 'voice-language') {
+      content = `<div class="voice-feature-choice-grid">${languages.map(([id, name]) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-lang="${id}" data-level="${lessonLevel}"><span>${icon('globe', 20)}</span><strong>${name}</strong></button>`).join('')}</div>`;
+    } else if (page === 'voice-grade') {
+      content = `<p class="voice-feature-current">Learning language: <strong>${langName}</strong>. Each grade opens its own lesson path with age-appropriate goals and a different lesson set.</p><div class="voice-feature-choice-grid voice-grade-choice-grid">${VOICE_GRADE_PATHS.map((grade) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-grade="${grade.id}" data-lang="${selectedLanguage}" data-level="${grade.level}"><span>${icon('layers', 20)}</span><strong>${grade.name}</strong><small>${grade.ages} · ${grade.level} pathway</small><small>${grade.focus}</small></button>`).join('')}</div>`;
+    } else if (page === 'voice-audio') {
+      const languageFilter = `<label>Language<select data-action="voice-feature-language">${languages.map(([id, name]) => `<option value="${id}" ${selectedLanguage === id ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`;
+      const gradeContext = gradePath
+        ? `<div class="voice-grade-path-summary"><div><span class="section-kicker">${gradePath.name} · ${gradePath.ages}</span><p>${gradePath.focus}</p><strong>Challenge: ${gradePath.challenge}</strong></div>${routeLink('voice-grade', 'Choose another grade', 'button button-outline', `data-lang="${selectedLanguage}"`)}</div>`
+        : '';
+      const levelFilter = gradePath ? '' : `<label>Level<select data-action="voice-feature-level">${['beginner', 'intermediate', 'advanced'].map((level) => `<option value="${level}" ${lessonLevel === level ? 'selected' : ''}>${level.charAt(0).toUpperCase() + level.slice(1)}</option>`).join('')}</select></label>`;
+      content = `${gradeContext}<div class="voice-feature-filters">${languageFilter}${levelFilter}</div>
+        <div class="voice-audio-lesson-grid">${gradeLessons.map((lesson) => `<article class="voice-audio-lesson-card"><span class="section-kicker">${gradePath ? `${esc(gradePath.name)} · ` : ''}Lesson ${String(lesson.id).padStart(2, '0')} · ${esc(lesson.category || 'Speaking practice')}</span><h2>${esc(lesson.title || lesson.phrase)}</h2><p>${esc(lesson.translation || '')}</p><button type="button" class="button button-primary" data-route="voice-practice" data-lang="${selectedLanguage}" data-level="${lessonLevel}" data-grade="${gradePath?.id || ''}" data-lesson="${lesson.id}">${icon('play', 14)} Start lesson</button></article>`).join('')}</div>`;
+    } else if (page === 'voice-practice' && activeLesson) {
+      const isRecording = Boolean(state.trainer.isRecording);
+      const transcription = voiceTranscriptionResult?.lessonId === activeLesson.id ? voiceTranscriptionResult.text : '';
+      const phraseMeaning = hasEnglishTranslation
+        ? `<p class="voice-practice-translation"><span>English translation</span>${esc(activeLesson.translation)}</p>`
+        : `<p>${esc(activeLesson.phonetic || '')}</p><strong>${esc(activeLesson.translation || '')}</strong>`;
+      content = `${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${gradePath ? `${gradePath.name} · ` : ''}${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}</span><h2>${esc(activeLesson.phrase)}</h2>${phraseMeaning}</div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}`;
+    } else if (page === 'voice-text-to-speech') {
+      const languageCodes = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' };
+      content = `<div class="voice-feature-lesson-prompt"><span class="section-kicker">Lesson ${String(featureLessonNumber).padStart(2, '0')}</span><h2>${esc(featureLesson?.title || featureLesson?.phrase || 'Speak and listen')}</h2><p>${esc(featureLesson?.translation || '')}</p><small>Listen to the phrase, repeat it aloud, and notice its rhythm.</small></div><div class="voice-feature-tool"><label class="curriculum-tool-label" for="plotweaver-speech-text">Your phrase</label><textarea id="plotweaver-speech-text" rows="4" maxlength="1000" placeholder="Type a phrase to hear…">${esc(featureLesson?.phrase || '')}</textarea><label class="curriculum-tool-label" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="${languageCodes[selectedLanguage] || 'yo'}">${esc(langName)}</option></select><button class="button button-primary" type="button" data-action="plotweaver-speak-text">${icon('volume', 15)} Listen</button><small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small></div>`;
+    } else if (page === 'voice-cloning') {
+      const languageCodes = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' };
+      content = `<div class="voice-feature-lesson-prompt"><span class="section-kicker">Lesson ${String(featureLessonNumber).padStart(2, '0')}</span><h2>${esc(featureLesson?.title || featureLesson?.phrase || 'Practice with a voice')}</h2><p>Choose an Idilewa voice or a clone you are permitted to use, then listen and repeat.</p><strong lang="${languageCodes[selectedLanguage] || 'yo'}">${esc(featureLesson?.phrase || '')}</strong><small>${esc(featureLesson?.translation || '')}</small></div><div class="voice-feature-tool"><label class="curriculum-tool-label" for="plotweaver-speech-text">Practice phrase</label><textarea id="plotweaver-speech-text" rows="3" maxlength="1000">${esc(featureLesson?.phrase || '')}</textarea><label class="curriculum-tool-label" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="${languageCodes[selectedLanguage] || 'yo'}">${esc(langName)}</option></select><button class="button button-primary" type="button" data-action="plotweaver-speak-text">${icon('volume', 15)} Listen with selected voice</button><small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small></div>${renderVoiceCloneTools()}`;
+    } else if (page === 'voice-speech-to-text') {
+      const languageCodes = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' };
+      content = `<div class="voice-feature-lesson-prompt"><span class="section-kicker">Lesson ${String(featureLessonNumber).padStart(2, '0')}</span><h2>${esc(featureLesson?.title || featureLesson?.phrase || 'Speak and transcribe')}</h2><p>Say this phrase clearly, then compare your transcription with the sample.</p><strong lang="${selectedLanguage === 'yoruba' ? 'yo' : selectedLanguage === 'igbo' ? 'ig' : selectedLanguage === 'hausa' ? 'ha' : 'sw'}">${esc(featureLesson?.phrase || '')}</strong><small>${esc(featureLesson?.translation || '')}</small></div><div class="voice-feature-tool"><label class="curriculum-tool-label" for="voice-translation-input">Your recording transcription</label><textarea id="voice-translation-input" rows="5" maxlength="1000" placeholder="Your recognized words will appear here"></textarea><label class="curriculum-tool-label" for="voice-translation-source-language">Spoken language</label><select id="voice-translation-source-language"><option value="${languageCodes[selectedLanguage] || 'yo'}">${esc(langName)}</option></select><button class="button button-primary" type="button" data-action="start-voice-transcription">${icon('mic', 15)} Start recording</button><small id="voice-transcription-status" class="curriculum-tool-status" aria-live="polite">Microphone permission is requested only when you begin recording.</small></div>`;
+    } else if (page === 'voice-translation') {
+      content = `<div class="voice-feature-lesson-prompt"><span class="section-kicker">Lesson ${String(featureLessonNumber).padStart(2, '0')}</span><h2>${esc(featureLesson?.title || featureLesson?.phrase || 'Translate a phrase')}</h2><p>Translate the English phrase, then check the sample to compare.</p></div>${renderVoiceTranslationTool({ lesson: featureLesson, language: selectedLanguage })}<details class="voice-feature-answer"><summary>Show sample translation</summary><p lang="${selectedLanguage === 'yoruba' ? 'yo' : selectedLanguage === 'igbo' ? 'ig' : selectedLanguage === 'hausa' ? 'ha' : 'sw'}">${esc(featureLesson?.phrase || '')}</p></details>`;
+    }
+
+    const isFeatureLessonPage = featureLessonPages.includes(page);
+    const lessonNavigation = isFeatureLessonPage
+      ? renderVoiceFeatureLessonNavigation(page, selectedLanguage, featureLessonNumber, featureLessons.length)
+      : '';
+    const titleText = isFeatureLessonPage ? `${title} · Lesson ${featureLessonNumber} of ${VOICE_FEATURE_LESSON_COUNT}` : title;
+    const pageClass = page === 'voice-translation' ? 'voice-feature-page translation-page' : 'voice-feature-page';
+    return `<div class="container route-page ${pageClass}"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('voice_lessons', 'Voice Lessons')}<span>/</span><strong>${esc(title)}</strong></div><section class="voice-feature-header"><div><span class="section-kicker">${esc(kicker)} · Voice Lessons</span><h1>${esc(titleText)}</h1><p>${esc(description)}</p></div>${routeLink('voice_lessons', `${icon('arrow', 14, 'voice-arrow-back')} All Voice Lessons`, 'button button-outline')}</section>${lessonNavigation}<section class="voice-feature-content">${content}</section>${lessonNavigation}</div>`;
+  }
+
+  function renderVoiceLessonsDashboard() {
+    const completedCount = Object.keys(state.trainer.completed || {}).length;
+    const progressPercent = Math.round((completedCount / 60) * 100);
+    const languages = [
+      ['yoruba', 'Yorùbá'],
+      ['igbo', 'Igbo'],
+      ['hausa', 'Hausa'],
+      ['swahili', 'Kiswahili']
+    ];
+    return '<section class="curriculum-dashboard" aria-labelledby="curriculum-dashboard-title">' +
+      '<header class="curriculum-welcome-banner">' +
+        '<div class="curriculum-welcome-copy">' +
+          '<span class="curriculum-welcome-kicker">IDILEWA · LEARN TOGETHER</span>' +
+          '<h1 id="curriculum-dashboard-title">Your Learning Curriculum</h1>' +
+          '<p>Explore powerful tools to listen, speak, create and connect in any language. You can do it!</p>' +
+        '</div>' +
+        '<div class="curriculum-welcome-art">' +
+          '<img src="./assets/code-kids.jpg" alt="Two young learners exploring a coding activity together" loading="eager" />' +
+          '<span class="curriculum-welcome-sticker">Every<br />voice matters!</span>' +
+        '</div>' +
+      '</header>' +
+
+      '<div class="curriculum-tools-grid" aria-label="Language learning tools">' +
+        '<article class="curriculum-tool-card curriculum-tool-translate">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('globe', 20) + '</span><div><h2>Translation</h2><p>Translate between supported languages and hear the result.</p></div></div>' +
+          '<p class="curriculum-tool-note">Work through 50 guided phrases, then compare your translation with the sample.</p>' +
+          routeLink('voice-translation', `${icon('globe', 15)} Open Translation ${icon('arrow', 14)}`, 'curriculum-tool-button curriculum-tool-button-wide') +
+        '</article>' +
+        '<article class="curriculum-tool-card curriculum-tool-speech">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('volume', 20) + '</span><div><h2>Text to Speech</h2><p>Type a sentence and hear it spoken in your chosen language.</p></div></div>' +
+          '<p class="curriculum-tool-note">Practise listening and pronunciation with 50 guided lessons.</p>' +
+          routeLink('voice-text-to-speech', `${icon('volume', 15)} Open Text to Speech ${icon('arrow', 14)}`, 'curriculum-tool-button curriculum-tool-button-wide') +
+        '</article>' +
+
+        '<article class="curriculum-tool-card curriculum-tool-transcribe">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('mic', 20) + '</span><div><h2>Speech to Text</h2><p>Speak into your microphone and see your words written down.</p></div></div>' +
+          '<div class="curriculum-transcribe-preview"><span class="curriculum-sound-mark" aria-hidden="true">▮ ▮ ▮ ▮ ▮</span><span>I love learning!</span></div>' +
+          '<p class="curriculum-tool-note">Speak 50 guided phrases and compare each transcription with its sample.</p>' +
+          routeLink('voice-speech-to-text', `${icon('mic', 15)} Open Speech to Text ${icon('arrow', 14)}`, 'curriculum-tool-button curriculum-tool-button-wide') +
+        '</article>' +
+
+        '<article class="curriculum-tool-card curriculum-tool-clone">' +
+          '<div class="curriculum-tool-heading"><span class="curriculum-tool-icon">' + icon('music', 20) + '</span><div><h2>Voice Cloning</h2><p>Create your own voice or clone a familiar voice with permission.</p></div></div>' +
+          '<ol class="curriculum-clone-steps"><li><span>1</span>Record</li><li><span>2</span>Train</li><li><span>3</span>Use</li></ol>' +
+          '<p class="curriculum-tool-note">Practise 50 guided phrases with a built-in voice or a clone you are permitted to use.</p>' +
+          routeLink('voice-cloning', `${icon('mic', 15)} Open Voice Cloning ${icon('arrow', 14)}`, 'curriculum-tool-button curriculum-tool-button-wide') +
+        '</article>' +
+
+      '</div>' +
+
+      (state.translationLessons.length ? '<section class="translation-saved-lessons" aria-labelledby="translation-saved-lessons-title"><span class="section-kicker">Your practice list</span><h2 id="translation-saved-lessons-title">Translations added to lessons</h2><div>' + state.translationLessons.map((item) => `<article><div><strong>${esc(item.translated)}</strong><small>${esc(item.source)} · ${esc(item.languageName)}</small></div><button type="button" data-action="open-saved-translation" data-id="${esc(item.id)}">Practice</button></article>`).join('') + '</div></section>' : '') +
+
+      '<div class="curriculum-dashboard-bottom">' +
+        '<section class="curriculum-picker-card" aria-labelledby="curriculum-picker-title">' +
+          '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon">' + icon('globe', 18) + '</span><div><h2 id="curriculum-picker-title">Choose Your Language</h2><p>Pick a language to explore and learn.</p></div></div>' +
+            '<div class="curriculum-language-options">' +
+              languages.map(([id, name]) => '<button type="button" class="curriculum-language-option ' + (state.trainer.lang === id ? 'is-active' : '') + '" data-route="voice-language" data-lang="' + id + '">' + name + '</button>').join('') +
+            '</div>' +
+          '</div>' +
+          '<div class="curriculum-picker-section"><div class="curriculum-picker-heading"><span class="curriculum-picker-icon curriculum-picker-icon-warm">' + icon('layers', 18) + '</span><div><h2>Subjects &amp; Grades</h2><p>Choose a grade to jump into your curriculum.</p></div></div>' +
+            '<div class="curriculum-grade-options">' +
+              VOICE_GRADE_PATHS.map((grade) => '<button type="button" class="curriculum-grade-option" data-route="voice-audio" data-grade="' + grade.id + '" data-level="' + grade.level + '" data-lang="' + state.trainer.lang + '">' + grade.name + '</button>').join('') +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+
+        '<aside class="curriculum-path-card" aria-labelledby="curriculum-path-title">' +
+          '<div class="curriculum-path-heading"><span>' + icon('sparkles', 17) + '</span><div><h2 id="curriculum-path-title">My Learning Path</h2><small>Step by step</small></div></div>' +
+          '<div class="curriculum-progress-copy"><strong>' + completedCount + ' of 60 lessons</strong><span>' + progressPercent + '% complete</span></div>' +
+          '<div class="curriculum-progress-track" role="progressbar" aria-label="Voice lesson progress" aria-valuemin="0" aria-valuemax="60" aria-valuenow="' + completedCount + '"><span style="width:' + progressPercent + '%"></span></div>' +
+          '<ol class="curriculum-path-steps"><li class="is-complete"><a href="#/voice-language" data-route="voice-language"><span>' + icon('check', 12) + '</span>Choose your language</a></li><li><a href="#/voice-text-to-speech" data-route="voice-text-to-speech"><span>2</span>Text to Speech</a></li><li><a href="#/voice-cloning" data-route="voice-cloning"><span>3</span>Voice Cloning</a></li><li><a href="#/voice-speech-to-text" data-route="voice-speech-to-text"><span>4</span>Speech to Text</a></li><li><a href="#/voice-translation" data-route="voice-translation"><span>5</span>Translation</a></li></ol>' +
+          '<a href="#/voice-audio" class="curriculum-path-link" data-route="voice-audio" data-lang="' + state.trainer.lang + '" data-level="' + state.trainer.level + '">Start learning ' + icon('arrow', 14) + '</a>' +
+        '</aside>' +
+      '</div>' +
+
+      '<div class="curriculum-progress-banner"><img src="./assets/code-reference-children.png" alt="" loading="lazy" /><div><h2>Small steps. Big progress!</h2><p>Learn · Practise · Share · Explore the world</p></div></div>' +
+    '</section>';
+  }
+
+  const STORY_READINGS = [
+    {
+      id: 'story-travelled',
+      title: 'The story that travelled',
+      desc: 'A family story told, remembered and shared again.',
+      image: 'story-grandmother.jpg',
+      tag: 'Oral tradition',
+      lang: 'Yorùbá · English',
+      subhead: 'An original family learning story about listening, memory and sharing.',
+      paragraphs: [
+        ['Ní ìrọ̀lẹ́ ọjọ́ kan, ìyá àgbà bẹ̀rẹ̀ sí í sọ ìtàn kan nínú ọgbà. Àwọn ọmọ sún mọ́ ọn bí àwọn ọ̀rọ̀ àkọ́kọ́ ṣe wọ inú ìdákẹ́jẹ̀.', 'One evening, a grandmother began a story in the garden. The children leaned closer as the first words settled into the quiet.'],
+        ['Nígbà tí ìtàn náà parí, ọ̀kan nínú àwọn ọmọ béèrè pé kí wọ́n tún sọ ọ́. Nígbà kejì, wọ́n tẹ́tí sí ohun kékeré kan tí wọn kò kíyè sí tẹ́lẹ̀, wọ́n sì fi kún bí wọ́n ṣe tún sọ ìtàn náà.', 'When the story ended, one child asked to hear it again. The next time, they listened for a detail they had missed and carried it into their own retelling.'],
+        ['Ní òwúrọ̀, ìtàn náà ti dé ọ̀dọ̀ àwọn ẹlòmíràn. Ó ṣì jẹ́ ìtàn kan náà, ó sì gba ohùn tuntun láàyè.', 'By morning, the story had travelled. It was still familiar, and it had room for a new voice.']
+      ],
+      question: 'What helped the story travel?',
+      answers: [
+        ['Someone listened and shared it with care.', true],
+        ['The children forgot the details.', false],
+        ['The garden grew the story by itself.', false]
+      ]
+    },
+    {
+      id: 'garden-words',
+      title: 'Words from the garden',
+      desc: 'Notice new words as a small garden begins to grow.',
+      image: 'yoruba-kids-culture.jpg',
+      tag: 'Read together',
+      lang: 'Yorùbá · English',
+      subhead: 'An original beginner story about patience, plants and learning new words.',
+      paragraphs: [
+        ['Àwọn ọ̀rẹ́ méjì gbìn irúgbìn sínú ọgbà kékeré kan. Wọ́n yan àkókò láti máa fún un ní omi.', 'Two friends planted seeds in a little garden. They chose a time each day to water them.'],
+        ['Ní gbogbo ọjọ́, wọ́n máa ń ṣàkíyèsí àwọn ewé tuntun. Wọ́n kọ ọ̀rọ̀ tuntun kan sílẹ̀ fún ohun tí wọ́n rí.', 'Each day, they looked for new leaves. They wrote down a new word for something they noticed.'],
+        ['Lẹ́yìn ọ̀pọ̀ ọjọ́, àwọn ewé túbọ̀ pọ̀ sí i. Àwọn ọ̀rẹ́ náà rí i pé sùúrù àti ìtọ́jú ń ran ọgbà àti ọgbọ́n lọ́wọ́ láti dàgbà.', 'After many days, more leaves appeared. The friends saw that patience and care help both gardens and knowledge grow.']
+      ],
+      question: 'What did the friends do each day?',
+      answers: [
+        ['They watered the seeds and noticed new leaves.', true],
+        ['They moved to a different garden.', false],
+        ['They stopped looking at the plants.', false]
+      ]
+    },
+    {
+      id: 'little-builders',
+      title: 'A team of little builders',
+      desc: 'Follow two friends as they solve a puzzle with code.',
+      image: 'code-kids.jpg',
+      tag: 'Code & create',
+      lang: 'Yorùbá · English',
+      subhead: 'An original story about two friends solving a problem together.',
+      paragraphs: [
+        ['Àwọn ọ̀rẹ́ méjì fẹ́ kí robọ́ọ̀tì kékeré kan dé ọ̀dọ̀ igi kan. Wọ́n ṣètò àwọn àṣẹ kóòdù láti tọ́ ọ sí ọ̀nà tó tọ́.', 'Two friends wanted a small robot to reach a tree. They arranged code instructions to guide it along the right path.'],
+        ['Ní ìgbà àkọ́kọ́, robọ́ọ̀tì náà yí sí ọ̀nà tí kò tọ́. Àwọn ọ̀rẹ́ náà wo àwọn àṣẹ náà papọ̀, wọ́n sì tún ọ̀kan ṣe.', 'At first, the robot turned the wrong way. The friends checked the instructions together and changed one of them.'],
+        ['Nígbà tí wọ́n tún gbìyànjú, robọ́ọ̀tì náà dé ibi tí wọ́n fẹ́. Wọ́n yọ̀ pé ìfọwọ́sowọ́pọ̀ ràn wọ́n lọ́wọ́ láti yanjú ìṣòro náà.', 'When they tried again, the robot reached its goal. They were glad that working together helped them solve the problem.']
+      ],
+      question: 'How did the friends help the robot reach the tree?',
+      answers: [
+        ['They checked and changed one instruction together.', true],
+        ['They left the robot without instructions.', false],
+        ['They asked the robot to grow wings.', false]
+      ]
+    }
+  ];
+
+  function renderStoryGame(params = {}) {
+    const requestedIndex = STORY_READINGS.findIndex((story) => story.id === params.story);
+    const storyIndex = requestedIndex < 0 ? 0 : requestedIndex;
+    const story = STORY_READINGS[storyIndex];
+    const result = state.quizResults[`story:${story.id}`] || '';
+    const previousStory = STORY_READINGS[storyIndex - 1];
+    const nextStory = STORY_READINGS[storyIndex + 1];
+    const storyNavigationLink = (item, label, disabled = false) => disabled
+      ? `<span class="story-navigation-link is-disabled" aria-disabled="true">${icon('arrow', 15)}<span>${label}</span></span>`
+      : `<a class="story-navigation-link" href="#/ere_game?story=${item.id}" data-route="ere_game" data-story="${item.id}" aria-label="${label}: ${esc(item.title)}">${icon('arrow', 15)}<span>${label}</span></a>`;
+    return `<div class="container route-page story-game-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('ere', 'Stories')}<span>/</span><strong>${esc(story.title)}</strong></div><section class="story-game-layout"><div class="story-game-image"><img src="./assets/${story.image}" alt="${esc(story.title)} story illustration" /><span class="story-audio-pill">${icon('volume', 15)} Read aloud together</span></div><div class="story-reading"><span class="section-kicker">Original Idilewa learning story · ${storyIndex + 1} of ${STORY_READINGS.length}</span><h1>${esc(story.title)}</h1><p class="story-subhead">${esc(story.subhead)}</p><button class="listen-inline" data-action="play-audio" data-language="en-US" data-text="${esc(story.paragraphs.map((paragraph) => paragraph[1]).join(' '))}">${icon('play', 14)} Listen to the English translation</button><div class="story-text">${story.paragraphs.map(([yoruba, english]) => `<section class="story-paragraph-pair"><div><span class="story-translation-label" lang="yo">Yorùbá</span><p lang="yo">${esc(yoruba)}</p></div><div><span class="story-translation-label">English translation</span><p lang="en">${esc(english)}</p></div></section>`).join('')}</div><div class="story-credit-note">${icon('heart', 16)} This is an original Idilewa learning story, not a traditional folktale. The English translation is shown beside each Yorùbá passage.</div></div></section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 3)}<nav class="story-navigation" aria-label="Story navigation">${storyNavigationLink(previousStory, 'Previous story', !previousStory)}${routeLink('ere', `${icon('book', 15)} All stories`, 'story-navigation-link')}${storyNavigationLink(nextStory, 'Next story', !nextStory)}</nav><section class="story-quiz"><div><span class="section-kicker">A little reflection</span><h2>${esc(story.question)}</h2><p>Choose the idea that best fits what you read.</p></div><div class="story-answer-list">${story.answers.map(([label, correct], index) => `<button class="story-answer ${result === 'correct' && correct ? 'answer-correct' : ''}" data-action="story-answer" data-key="${story.id}" data-correct="${correct}" ${result === 'correct' ? 'disabled' : ''}><span>${String.fromCharCode(65 + index)}</span>${esc(label)}${result === 'correct' && correct ? icon('check', 17) : icon('arrow', 15)}</button>`).join('')}</div>${result ? `<div class="answer-feedback ${result === 'correct' ? 'feedback-correct' : 'feedback-retry'}">${icon(result === 'correct' ? 'check' : 'refresh', 16)} ${result === 'correct' ? 'Lovely reading. Keep noticing how each story unfolds.' : 'Try again—look for what the characters did in the story.'}</div>` : ''}</section><div class="story-related">${routeLink('oral', 'Explore oral traditions ' + icon('arrow', 14), 'text-link')}${routeLink('ere', 'Back to stories ' + icon('arrow', 14), 'text-link')}${aiHelperButton('story')}</div></div>`;
+  }
+
+  function renderLegacyStoryGame() {
     const result = state.quizResults['story:comprehension'] || '';
     return `<div class="container route-page story-game-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('ere', 'Stories')}<span>/</span><strong>Story time</strong></div><section class="story-game-layout"><div class="story-game-image"><img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with two children" /><span class="story-audio-pill">${icon('volume', 15)} Read aloud together</span></div><div class="story-reading"><span class="section-kicker">A story for the whole family · 4 min</span><h1>The story that<br /><em>travelled.</em></h1><p class="story-subhead">A gentle listening story about how a tale can move from one person to another.</p><button class="listen-inline" data-action="play-audio" data-text="A story travels when someone listens, remembers and shares it with care.">${icon('play', 14)} Listen to this story <span>01:24</span></button><div class="story-text"><p>One evening, a grandmother began a story in the garden. The children leaned closer as the first words settled into the quiet.</p><p>When the story ended, one child asked to hear it again. The next time, they listened for a detail they had missed—and carried that detail into their own retelling.</p><p>By morning, the story had travelled. It was still familiar, and it had room for a new voice.</p></div><div class="story-credit-note">${icon('heart', 16)} Stories belong to the people and communities who share them. Listen with care, and ask before retelling.</div>\n    </section>${renderStepper(['Choose a story', 'Read', 'Listen', 'Reflect'], 3)}<section class="story-quiz"><div><span class="section-kicker">A little reflection</span><h2>What helped the story travel?</h2><p>Choose the idea that best fits what you heard.</p></div><div class="story-answer-list">${[['Someone listened and shared it with care.', true], ['The story was written down by a stranger.', false], ['The children forgot the details.', false]].map(([label, correct], i) => `<button class="story-answer ${result === 'correct' && correct ? 'answer-correct' : ''}" data-action="story-answer" data-key="comprehension" data-correct="${correct}" ${result === 'correct' ? 'disabled' : ''}><span>${String.fromCharCode(65 + i)}</span>${label}${result === 'correct' && correct ? icon('check', 17) : icon('arrow', 15)}</button>`).join('')}</div>${result ? `<div class="answer-feedback ${result === 'correct' ? 'feedback-correct' : 'feedback-retry'}">${icon(result === 'correct' ? 'check' : 'refresh', 16)} ${result === 'correct' ? 'Lovely listening. Stories grow when people share them with care.' : 'Think about what the children did after hearing the story.'}</div>` : ''}</section><div class="story-related">${routeLink('oral', 'Explore oral traditions ' + icon('arrow', 14), 'text-link')}${routeLink('ere', 'Back to stories ' + icon('arrow', 14), 'text-link')}${aiHelperButton('story')}</div></div>`;
   }
@@ -4473,7 +4861,7 @@ import {
       { lang: 'hausa', speaker: 'Friendly greeting', phrase: 'Sannu', translation: 'Hello', tint: 'blue' },
       { lang: 'swahili', speaker: 'Everyday greeting', phrase: 'Habari', translation: 'How are you?', tint: 'lilac' }
     ];
-    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Speech is generated by Plotweaver in the language shown for each sample.</p></div><span class="demo-badge">Plotweaver voices</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); const langCode = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' }[v.lang] || 'en'; return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" data-language="${langCode}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Machine-generated pronunciation can vary. Fluent-speaker review is recommended for learning materials.</div></section></div>`;
+    return `<div class="container route-page voices-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('oral', 'Read & listen')}<span>/</span><strong>Voice library</strong></div><section class="voices-hero"><div><span class="section-kicker">Listen close · speak with confidence</span><h1>Every word has<br /><em>a voice of its own.</em></h1><p>Listen to short sample phrases, notice the rhythm and practice at your own pace.</p><div class="hero-actions">${routeLink('trainer', `Voice African Language Trainer ${icon('arrow', 15)}`, 'button button-primary')}</div></div><div class="voice-orbit"><span class="orbit-core">${icon('volume', 30)}</span><span class="orbit-word orbit-one">Ẹ káàárọ̀</span><span class="orbit-word orbit-two">Ndewo</span><span class="orbit-word orbit-three">Sannu</span><span class="orbit-word orbit-four">Habari</span></div></section>${renderStepper(['Choose a language', 'Hear a phrase', 'Practice', 'Remember'], 1)}<section class="voice-list-section"><div class="section-heading"><div><span class="section-kicker">Try a greeting</span><h2>Choose a phrase and listen.</h2><p>Speech is generated by Idilewa in the language shown for each sample.</p></div><span class="demo-badge">Idilewa voices</span></div><div class="voice-list">${voices.map((v) => { const l = getLanguage(v.lang); const langCode = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' }[v.lang] || 'en'; return `<article class="voice-row"><span class="voice-language-mark lang-${v.tint}">${l.glyph}</span><div class="voice-row-copy"><span class="voice-row-lang">${l.name} · ${v.speaker}</span><strong>${v.phrase}</strong><small>${v.translation}</small></div><div class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="voice-play" data-action="play-audio" data-text="${esc(v.phrase)}" data-language="${langCode}" aria-label="Play ${esc(v.phrase)}">${icon('play', 16)}</button></article>`; }).join('')}</div><div class="voice-access-note">${icon('shield', 16)} Machine-generated pronunciation can vary. Fluent-speaker review is recommended for learning materials.</div></section></div>`;
   }
 
   function renderGeneric(key) {
@@ -4491,7 +4879,7 @@ import {
 
   function renderDirectory() {
     const groups = [
-      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'library', 'game', 'kids', 'individuals', 'schools', 'tutor', 'profile', 'connect_teachers', 'connect_students'] },
+      { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'library', 'game', 'kids', 'individuals', 'schools', 'profile', 'connect_teachers', 'connect_students'] },
       { title: 'Stories & living culture', text: 'Explore oral traditions, voices, guides and cultural context.', pages: ['ere', 'ere_game', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'voices', 'ifa', 'ifa_odu', 'guides', 'human', 'keepers'] },
       { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'payment', 'login', 'consent', 'base'] }
     ];
@@ -4780,29 +5168,23 @@ import {
   function renderLogin() {
     const signUp = state.loginMode === 'signup';
     const passwordResetReady = Boolean(pendingSignin?.purpose === 'password-reset' && passwordResetVerified);
-    const pendingOtpEmail = pendingSignupEmail || (passwordResetReady ? '' : pendingSignin?.email || '');
+    const pendingOtpEmail = passwordResetReady ? '' : pendingSignin?.email || '';
     const pendingOtpRole = pendingSignin?.role || state.authRole;
-    const isSigninOtp = Boolean(pendingSignin?.email && !pendingSignupEmail && !passwordResetReady);
     const authStepPending = Boolean(pendingOtpEmail || passwordResetReady);
     const activeGrant = consentCodeIsActive();
-    const role = state.authRole || 'child';
+    const role = state.authRole === 'adult' ? 'adult' : 'child';
     const isChild = role === 'child';
-    const isEducator = role === 'educator';
-    const isParent = role === 'parent';
-    const isAdult = role === 'adult';
-    const childSignupPaused = signUp && isChild;
     const authConfigured = isSupabaseConfigured && Boolean(supabase);
 
     const loginJourneyStep = activeGrant ? (signUp ? 2 : 1) : 0;
     const authLayers = [
-      { title: 'Choose your learning path', text: 'Sign in to continue, or create an account to save your learning journey. Choose the learner profile that fits you.', action: '<button class="auth-layer-action" type="button" data-action="login-mode" data-mode="signup">Explore account options</button>' },
-      { title: 'Keep child accounts protected', text: 'Child registration requires parent or guardian approval. New child sign-up may be paused while approval email delivery is unavailable.', action: routeLink('consent', 'Visit the family consent center') },
-      { title: 'Use an educator invitation', text: 'Educator and tutor accounts need a verified invitation passcode before registration can continue.', action: '<button class="auth-layer-action" type="button" data-action="auth-layer-educator">Start educator sign-up</button>' },
-      { title: 'Verify when prompted', text: 'Some sign-in, recovery and account-creation flows send a short-lived code to your email. Enter it only on this page.', action: '<button class="auth-layer-action" type="button" data-action="request-password-reset">Recover your password</button>' },
+      { title: 'Choose your learning path', text: 'Adults sign in with email and password. Child sign-in passcodes go to the approved parent or guardian.', action: '<button class="auth-layer-action" type="button" data-action="login-mode" data-mode="signup">Create an account</button>' },
+      { title: 'Keep child accounts protected', text: 'A parent or guardian approves a child account and receives the child’s one-time sign-in passcodes.', action: routeLink('consent', 'Visit the family consent center') },
+      { title: 'Recover your password', text: 'Email verification codes are only used when an adult requests password recovery or a parent receives a child sign-in passcode.', action: '<button class="auth-layer-action" type="button" data-action="request-password-reset">Recover your password</button>' },
       { title: 'Explore before creating an account', text: 'You can browse language lessons and learning activities without signing in. Account features require a configured sign-in service.', action: routeLink('languages', 'Browse learning languages') }
     ];
 
-    const introSplash = authIntroPending ? '<div class="auth-intro-screen" aria-label="Idilewa"><span class="auth-intro-mark"><i></i><i></i><i></i></span><strong>idílẹ́wà</strong></div>' : '';
+    const introSplash = authIntroPending ? `<div class="auth-intro-screen">${brandLogo('Idilewa — Language · culture · future')}</div>` : '';
     authIntroPending = false;
     return `${introSplash}<div class="container route-page auth-page modern-auth-page">
       <!-- Right-side learning artwork -->
@@ -4849,7 +5231,7 @@ import {
         <div class="auth-header-block">
           <span class="section-kicker">${signUp ? 'A learning space for you' : 'Good to see you again'}</span>
           <h1 class="auth-title">${passwordResetReady ? 'Choose a new password' : pendingOtpEmail ? 'Check your email' : signUp ? 'Create your account' : 'Welcome back'}</h1>
-          <p class="auth-subtitle">${passwordResetReady ? 'Your email is verified. Set a new password to finish recovering your account.' : pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : childSignupPaused ? 'Child account registration is temporarily paused. Existing child accounts can still sign in.' : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
+          <p class="auth-subtitle">${passwordResetReady ? 'Your email is verified. Set a new password to finish recovering your account.' : pendingOtpEmail ? `Enter the verification code sent to ${esc(pendingOtpEmail)}.` : signUp ? 'Save your learning journey and pick up where you left off.' : 'Sign in to continue your language and coding practice.'}</p>
         </div>
 
         <!-- Mode Selector Switcher Tabs -->
@@ -4863,47 +5245,21 @@ import {
         </div>
 
         <!-- Persona Role Selector Cards -->
-        <div class="auth-role-selector" ${authStepPending ? 'hidden' : ''}>
-          <label class="auth-role-label">Choose Learning Persona:</label>
-          <div class="auth-role-grid">
-            <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child">
-              <span class="role-icon tone-green">${icon('smile', 16)}</span>
-              <span class="role-title">Child Learner</span>
-              <span class="role-tag">Parent Code</span>
-            </button>
-            <button type="button" class="auth-role-card ${isAdult ? 'is-selected' : ''}" data-action="auth-role-select" data-role="adult">
-              <span class="role-icon tone-blue">${icon('book', 16)}</span>
-              <span class="role-title">Adult Learner</span>
-              <span class="role-tag">Self-Paced</span>
-            </button>
-            <button type="button" class="auth-role-card ${isParent ? 'is-selected' : ''}" data-action="auth-role-select" data-role="parent">
-              <span class="role-icon tone-warm">${icon('heart', 16)}</span>
-              <span class="role-title">Parent/Guardian</span>
-              <span class="role-tag">Supervisor</span>
-            </button>
-            <button type="button" class="auth-role-card ${isEducator ? 'is-selected' : ''}" data-action="auth-role-select" data-role="educator">
-              <span class="role-icon tone-pink">${icon('school', 16)}</span>
-              <span class="role-title">Educator/Tutor</span>
-              <span class="role-tag">Teacher</span>
-            </button>
-          </div>
-        </div>
-
         <!-- Modern Auth Form -->
         ${pendingOtpEmail ? `
-        <form class="auth-form modern-auth-form" data-form="${isSigninOtp ? 'signin-otp' : 'signup-otp'}" data-otp-role="${esc(pendingOtpRole)}">
+        <form class="auth-form modern-auth-form" data-form="signin-otp" data-otp-role="${esc(pendingOtpRole)}">
           <div class="form-group">
-            <label for="signupOtp" class="form-label">Email verification code</label>
+            <label for="signupOtp" class="form-label">${pendingSignin?.purpose === 'child-signin' ? 'Parent-issued child sign-in passcode' : 'Password recovery code'}</label>
             <div class="input-with-icon">
               <input id="signupOtp" type="text" name="token" class="form-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,8}" minlength="6" maxlength="8" placeholder="6–8 digit code" required />
             </div>
-            <p class="form-helper-text">${isSigninOtp ? pendingSignin?.purpose === 'password-reset' ? 'This code verifies access to your account. You can choose a new password after confirming it.' : 'This code signs you in securely. It is valid only for this email and expires shortly.' : 'This code confirms your email address and completes account sign-up.'}</p>
+            <p class="form-helper-text">${pendingSignin?.purpose === 'child-signin' ? 'Ask your parent or guardian for the one-time passcode sent to their approved email address.' : 'This code verifies access to your account. You can choose a new password after confirming it.'}</p>
           </div>
           <button class="button button-primary modern-auth-submit" type="submit">
-            <span>${isSigninOtp ? pendingSignin?.purpose === 'password-reset' ? 'Verify code and continue' : 'Verify code and sign in' : 'Verify email and continue'}</span>${icon('arrow', 16)}
+            <span>${pendingSignin?.purpose === 'child-signin' ? 'Sign in as child' : 'Verify code and continue'}</span>${icon('arrow', 16)}
           </button>
-          <button class="button button-outline" type="button" data-action="${isSigninOtp ? 'resend-signin-otp' : 'resend-signup-otp'}">Send a new code</button>
-          <button class="text-link" type="button" data-action="cancel-auth-otp">${isSigninOtp ? 'Back to sign in' : 'Back to sign up'}</button>
+          <button class="button button-outline" type="button" data-action="resend-signin-otp">${pendingSignin?.purpose === 'child-signin' ? 'Send another passcode to my parent' : 'Send a new recovery code'}</button>
+          <button class="text-link" type="button" data-action="cancel-auth-otp">Back to sign in</button>
         </form>
         ` : passwordResetReady ? `
         <form class="auth-form modern-auth-form" data-form="password-reset">
@@ -4921,17 +5277,46 @@ import {
           </button>
           <button class="text-link" type="button" data-action="cancel-auth-otp">Cancel recovery</button>
         </form>
-        ` : childSignupPaused ? `
-        <div class="auth-safe-note modern-auth-safe-note auth-signup-paused" role="status">
-          <span class="safe-note-icon">${icon('heart', 16)}</span>
-          <div>
-            <strong>Child sign-up is temporarily paused</strong>
-            <span>Guardian approval emails need a verified sender before new child accounts can be created. Existing child accounts can still sign in; adult and invited educator sign-up remain available.</span>
-          </div>
-        </div>
         ` : `
         <form class="auth-form modern-auth-form" data-form="login">
           <input type="hidden" name="accountType" id="authAccountType" value="${role}" />
+
+          ${!signUp ? `
+          <div class="auth-role-selector">
+            <span class="auth-role-label" id="auth-role-label">Choose your account type</span>
+            <div class="auth-role-grid" role="radiogroup" aria-labelledby="auth-role-label">
+              <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child" role="radio" aria-checked="${isChild}">
+                <span class="role-icon tone-green">${icon('smile', 16)}</span>
+                <span class="role-title">Child Learner</span>
+                <span class="role-tag">Parent passcode</span>
+              </button>
+              <button type="button" class="auth-role-card ${!isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="adult" role="radio" aria-checked="${!isChild}">
+                <span class="role-icon tone-blue">${icon('book', 16)}</span>
+                <span class="role-title">Adult / Family</span>
+                <span class="role-tag">Email + password</span>
+              </button>
+            </div>
+          </div>
+          ` : ''}
+
+          ${signUp ? `
+          <div class="auth-role-selector">
+            <span class="auth-role-label" id="auth-role-label">Choose an account type</span>
+            <div class="auth-role-grid" role="radiogroup" aria-labelledby="auth-role-label">
+              <button type="button" class="auth-role-card ${isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="child" role="radio" aria-checked="${isChild}">
+                <span class="role-icon tone-green">${icon('smile', 16)}</span>
+                <span class="role-title">Child Learner</span>
+                <span class="role-tag">Guardian approval</span>
+              </button>
+              <button type="button" class="auth-role-card ${!isChild ? 'is-selected' : ''}" data-action="auth-role-select" data-role="adult" role="radio" aria-checked="${!isChild}">
+                <span class="role-icon tone-blue">${icon('book', 16)}</span>
+                <span class="role-title">Adult Learner</span>
+                <span class="role-tag">No parent consent</span>
+              </button>
+            </div>
+            <p class="form-helper-text">${isChild ? 'Child accounts need a parent or guardian to approve sign-up. No email confirmation code is required after approval.' : 'Adult accounts can be created directly and do not require parent or guardian consent or email confirmation.'}</p>
+          </div>
+          ` : ''}
 
           ${signUp ? `
           <div class="form-group">
@@ -4945,14 +5330,14 @@ import {
           <div class="form-group">
             <label for="authEmail" class="form-label">Email address</label>
             <div class="input-with-icon">
-              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="${isChild ? 'learner@example.com' : isEducator ? 'teacher@example.com' : isParent ? 'parent@example.com' : 'you@example.com'}" value="${isChild && signUp && verifiedGuardianSignup ? esc(verifiedGuardianSignup.email) : isEducator && signUp && verifiedEducatorSignup ? esc(verifiedEducatorSignup.email) : ''}" ${isChild && signUp && verifiedGuardianSignup || isEducator && signUp && verifiedEducatorSignup ? 'readonly' : ''} required />
+              <input id="authEmail" type="email" name="email" class="form-input" autocomplete="email" placeholder="learner@example.com" value="${signUp && verifiedGuardianSignup ? esc(verifiedGuardianSignup.email) : !signUp && signupEmailForSignin ? esc(signupEmailForSignin) : ''}" ${signUp && verifiedGuardianSignup ? 'readonly' : ''} required />
             </div>
           </div>
 
-          <div class="form-group">
+          ${signUp || !isChild ? `<div class="form-group">
             <div class="form-label-row">
               <label for="authPassword" class="form-label">Password</label>
-              ${!signUp ? `<button class="forgot-link" type="button" data-action="request-password-reset">Forgot password?</button>` : ''}
+              ${!signUp && !isChild ? `<button class="forgot-link" type="button" data-action="request-password-reset">Forgot password?</button>` : ''}
             </div>
             <div class="input-with-icon">
               <input id="authPassword" type="password" name="password" class="form-input" autocomplete="${signUp ? 'new-password' : 'current-password'}" ${signUp ? 'minlength="12" maxlength="128"' : ''} placeholder="${signUp ? 'At least 12 characters' : 'Enter your password'}" required />
@@ -4961,7 +5346,9 @@ import {
               </button>
             </div>
             ${signUp ? '<p class="form-helper-text password-guidance">Use at least 12 characters, including uppercase and lowercase letters, a number and a symbol. Example: <span>River!Drum7Leaf</span>. Do not reuse this sample.</p>' : ''}
-          </div>
+          </div>` : ''}
+
+          ${!signUp && isChild ? '<p class="form-helper-text child-signin-guidance">Your parent or guardian will receive your one-time sign-in passcode at their approved email address.</p>' : ''}
 
           ${isChild && signUp ? verifiedGuardianSignup ? `
           <div class="form-group consent-form-group guardian-approved-state">
@@ -4987,26 +5374,10 @@ import {
           </div>
           ` : ''}
 
-          ${isEducator && signUp ? verifiedEducatorSignup ? `
-          <div class="form-group consent-form-group guardian-approved-state">
-            <p class="form-helper-text">${icon('check', 14)} One-time educator invitation verified. Finish creating the account using this email.</p>
-            <button class="text-link" type="button" data-action="educator-use-another-code">Use a different invitation code</button>
-          </div>
-          ` : `
-          <div class="form-group consent-form-group">
-            <label for="educatorInviteCode" class="form-label">One-time educator invitation passcode</label>
-            <div class="input-with-icon">
-              <input id="educatorInviteCode" type="text" name="educatorInviteCode" class="form-input" autocomplete="one-time-code" minlength="8" maxlength="64" placeholder="Enter invitation passcode" />
-            </div>
-            <button class="button button-outline" type="button" data-action="verify-educator-invite">Verify invitation</button>
-            <p class="form-helper-text">Educator accounts require a verified invitation before registration.</p>
-          </div>
-          ` : ''}
-
           ${signUp ? `
           <label class="consent-check modern-consent-check">
             <input type="checkbox" name="demoOnly" value="yes" required checked />
-            <span>I agree to the <a href="#/privacy" data-route="privacy">privacy notice</a> and understand learning progress may be stored in this browser. For a child account, parent approval is required before creation.</span>
+            <span>I agree to the <a href="#/privacy" data-route="privacy">privacy notice</a> and understand learning progress may be stored in this browser. ${isChild ? 'For a child account, parent approval is required before creation.' : 'Adult accounts do not require parent or guardian approval.'}</span>
           </label>
           ` : `
           <div class="form-options-row">
@@ -5018,10 +5389,15 @@ import {
           </div>
           `}
 
-          <button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || (!isChild || verifiedGuardianSignup) && (!isEducator || verifiedEducatorSignup)) ? '' : 'disabled'}>
-            <span>${signUp ? (isChild ? 'Create Child Learning Space' : 'Create Learning Space') : 'Sign In to Learning Space'}</span>
-            ${icon('arrow', 16)}
+          <p id="authInlineError" class="auth-inline-error" role="alert" aria-live="polite" hidden></p>
+          ${!signUp && isChild ? `
+          <button class="button button-primary modern-auth-submit" type="button" data-action="request-child-signin-code" ${authConfigured ? '' : 'disabled'}>
+            <span>Send a passcode to my parent</span>${icon('arrow', 16)}
           </button>
+          ` : `<button class="button button-primary modern-auth-submit" type="submit" ${authConfigured && (!signUp || !isChild || verifiedGuardianSignup) ? '' : 'disabled'}>
+            <span>${signUp ? isChild ? 'Create Child Learning Space' : 'Create Adult Learning Space' : 'Sign In to Learning Space'}</span>
+            ${icon('arrow', 16)}
+          </button>`}
         </form>
         `}
 
@@ -5030,7 +5406,7 @@ import {
           <span class="safe-note-icon">${icon('lock', 16)}</span>
           <div>
             <strong>${authConfigured ? 'Your account is protected by Supabase Auth' : 'Account service is not configured'}</strong>
-            <span>${authConfigured ? pendingOtpEmail ? 'A short-lived verification code is sent to this email. Never share it with anyone.' : 'Your password is sent to Supabase over HTTPS. Never reuse a password from another account.' : 'Add the Supabase URL and public anon key to the deployment environment to enable sign up and sign in. You can still explore as a guest.'}</span>
+            <span>${authConfigured ? pendingOtpEmail ? pendingSignin?.purpose === 'child-signin' ? 'Your parent or guardian receives a one-time passcode for child sign-in.' : 'Password recovery codes are one-time and expire shortly.' : isChild && !signUp ? 'Child sign-in uses a one-time passcode delivered to the approved parent or guardian.' : 'Adults use their email and password. Sign-in does not require an email confirmation code.' : 'Add the Supabase URL and public anon key to the deployment environment to enable sign up and sign in. You can still explore as a guest.'}</span>
           </div>
         </div>
 
@@ -5045,11 +5421,11 @@ import {
         </div>
 
       </main>
-      <section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="5">
+      <section class="auth-layer-guide" aria-labelledby="auth-layer-title" data-access-check-count="${authLayers.length}">
         <div class="auth-layer-guide-heading">
-          <span class="section-kicker">Your five-step learning journey</span>
+          <span class="section-kicker">Your ${authLayers.length}-step learning journey</span>
           <h2 id="auth-layer-title">A safer, clearer way to get started.</h2>
-          <p>Know what to expect at every stage, from choosing a profile to continuing as a guest.</p>
+          <p>Know what to expect from account verification to continuing as a guest.</p>
         </div>
         <div class="auth-layer-guide-grid">
           ${authLayers.map((layer, index) => `
@@ -5205,6 +5581,9 @@ import {
        ========================================================================== */
     const TRAINER_CURRICULUM = {"yoruba":{"beginner":[{"id":1,"title":"Lesson 1: Ẹ kú àárọ̀ o, ẹ ṣeé púpọ...","category":"Greetings & Tones","phrase":"Ẹ kú àárọ̀ o, ẹ ṣeé púpọ̀","phonetic":"[ẹ kú àárọ̀ o, ẹ ṣeé púpọ̀]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"kú","tone":"high","pitch":"Mí","freq":330},{"text":"àár","tone":"mid","pitch":"Re","freq":293},{"text":"o","tone":"low","pitch":"Dó","freq":261},{"text":"eé","tone":"high","pitch":"Mí","freq":330},{"text":"púp","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #1 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":2,"title":"Lesson 2: Ẹ kú ìrọ̀lẹ́ o, àlàáfíà ...","category":"Greetings & Tones","phrase":"Ẹ kú ìrọ̀lẹ́ o, àlàáfíà ni?","phonetic":"[ẹ kú ìrọ̀lẹ́ o, àlàáfíà ni?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"kú","tone":"high","pitch":"Mí","freq":330},{"text":"ìrl","tone":"mid","pitch":"Re","freq":293},{"text":"o","tone":"low","pitch":"Dó","freq":261},{"text":"àlàáfíà","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #2 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":3,"title":"Lesson 3: Orúkọ mi ni Tèmítọ́pẹ́, ...","category":"Greetings & Tones","phrase":"Orúkọ mi ni Tèmítọ́pẹ́, inú mi dùn","phonetic":"[orúkọ mi ni tèmítọ́pẹ́, inú mi dùn]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Orúk","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293},{"text":"ni","tone":"low","pitch":"Dó","freq":261},{"text":"Tèmítp","tone":"high","pitch":"Mí","freq":330},{"text":"inú","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #3 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":4,"title":"Lesson 4: Oókan, Èjì, Ẹ́ta, Ẹ́rin,...","category":"Greetings & Tones","phrase":"Oókan, Èjì, Ẹ́ta, Ẹ́rin, Àrún","phonetic":"[oókan, èjì, ẹ́ta, ẹ́rin, àrún]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Oókan","tone":"high","pitch":"Mí","freq":330},{"text":"Èjì","tone":"mid","pitch":"Re","freq":293},{"text":"ta","tone":"low","pitch":"Dó","freq":261},{"text":"rin","tone":"high","pitch":"Mí","freq":330},{"text":"Àrún","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #4 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":5,"title":"Lesson 5: Ẹ̀fà, Èje, Ẹ́jọ, Ẹ́sàn, ...","category":"Greetings & Tones","phrase":"Ẹ̀fà, Èje, Ẹ́jọ, Ẹ́sàn, Mẹ́wàá","phonetic":"[ẹ̀fà, èje, ẹ́jọ, ẹ́sàn, mẹ́wàá]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"fà","tone":"high","pitch":"Mí","freq":330},{"text":"Èje","tone":"mid","pitch":"Re","freq":293},{"text":"j","tone":"low","pitch":"Dó","freq":261},{"text":"sàn","tone":"high","pitch":"Mí","freq":330},{"text":"Mwàá","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #5 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":6,"title":"Lesson 6: Bàbá mi, Ìyá mi, àti Àbú...","category":"Numbers & Kinship","phrase":"Bàbá mi, Ìyá mi, àti Àbúrò mi","phonetic":"[bàbá mi, ìyá mi, àti àbúrò mi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Bàbá","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293},{"text":"Ìyá","tone":"low","pitch":"Dó","freq":261},{"text":"mi","tone":"high","pitch":"Mí","freq":330},{"text":"àti","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #6 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":7,"title":"Lesson 7: Ẹ jọ̀ọ́, ẹ fún mi ní omi...","category":"Numbers & Kinship","phrase":"Ẹ jọ̀ọ́, ẹ fún mi ní omi tútù","phonetic":"[ẹ jọ̀ọ́, ẹ fún mi ní omi tútù]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"j","tone":"high","pitch":"Mí","freq":330},{"text":"fún","tone":"mid","pitch":"Re","freq":293},{"text":"mi","tone":"low","pitch":"Dó","freq":261},{"text":"ní","tone":"high","pitch":"Mí","freq":330},{"text":"omi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #7 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":8,"title":"Lesson 8: Pupa bí iná, Dúdú bí èéd...","category":"Numbers & Kinship","phrase":"Pupa bí iná, Dúdú bí èédú, Funfun","phonetic":"[pupa bí iná, dúdú bí èédú, funfun]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Pupa","tone":"high","pitch":"Mí","freq":330},{"text":"bí","tone":"mid","pitch":"Re","freq":293},{"text":"iná","tone":"low","pitch":"Dó","freq":261},{"text":"Dúdú","tone":"high","pitch":"Mí","freq":330},{"text":"bí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #8 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":9,"title":"Lesson 9: Ilé wa lẹ́wà, ìwé kíkà d...","category":"Numbers & Kinship","phrase":"Ilé wa lẹ́wà, ìwé kíkà dùn mọ́ mi","phonetic":"[ilé wa lẹ́wà, ìwé kíkà dùn mọ́ mi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ilé","tone":"high","pitch":"Mí","freq":330},{"text":"wa","tone":"mid","pitch":"Re","freq":293},{"text":"lwà","tone":"low","pitch":"Dó","freq":261},{"text":"ìwé","tone":"high","pitch":"Mí","freq":330},{"text":"kíkà","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #9 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":10,"title":"Lesson 10: Inú mi dùn púpọ̀ lónìí...","category":"Numbers & Kinship","phrase":"Inú mi dùn púpọ̀ lónìí","phonetic":"[inú mi dùn púpọ̀ lónìí]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Inú","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293},{"text":"dùn","tone":"low","pitch":"Dó","freq":261},{"text":"púp","tone":"high","pitch":"Mí","freq":330},{"text":"lónìí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #10 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":11,"title":"Lesson 11: Bẹ́ẹ̀ni mà, Rárá sir, ẹ ...","category":"Daily Life & Nature","phrase":"Bẹ́ẹ̀ni mà, Rárá sir, ẹ ṣeé púpọ̀","phonetic":"[bẹ́ẹ̀ni mà, rárá sir, ẹ ṣeé púpọ̀]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Bni","tone":"high","pitch":"Mí","freq":330},{"text":"mà","tone":"mid","pitch":"Re","freq":293},{"text":"Rárá","tone":"low","pitch":"Dó","freq":261},{"text":"sir","tone":"high","pitch":"Mí","freq":330},{"text":"eé","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #11 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":12,"title":"Lesson 12: Èló ni ẹja tútù yìí, ẹ̀g...","category":"Daily Life & Nature","phrase":"Èló ni ẹja tútù yìí, ẹ̀gbọ́n mi?","phonetic":"[èló ni ẹja tútù yìí, ẹ̀gbọ́n mi?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Èló","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"ja","tone":"low","pitch":"Dó","freq":261},{"text":"tútù","tone":"high","pitch":"Mí","freq":330},{"text":"yìí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #12 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":13,"title":"Lesson 13: Ajá ń gbó, adìyẹ ń kọ, e...","category":"Daily Life & Nature","phrase":"Ajá ń gbó, adìyẹ ń kọ, ewúrẹ́ ń jẹkoríko","phonetic":"[ajá ń gbó, adìyẹ ń kọ, ewúrẹ́ ń jẹkoríko]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ajá","tone":"high","pitch":"Mí","freq":330},{"text":"ń","tone":"mid","pitch":"Re","freq":293},{"text":"gbó","tone":"low","pitch":"Dó","freq":261},{"text":"adìy","tone":"high","pitch":"Mí","freq":330},{"text":"ń","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #13 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":14,"title":"Lesson 14: Ọjọ́ Ajé, Ọjọ́ Ìṣẹ́gun, ...","category":"Daily Life & Nature","phrase":"Ọjọ́ Ajé, Ọjọ́ Ìṣẹ́gun, Ọjọ́ Ọ̀sẹ̀","phonetic":"[ọjọ́ ajé, ọjọ́ ìṣẹ́gun, ọjọ́ ọ̀sẹ̀]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"j","tone":"high","pitch":"Mí","freq":330},{"text":"Ajé","tone":"mid","pitch":"Re","freq":293},{"text":"j","tone":"low","pitch":"Dó","freq":261},{"text":"Ìgun","tone":"high","pitch":"Mí","freq":330},{"text":"j","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #14 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":15,"title":"Lesson 15: Orí, Ojú, Imú, Ẹnu, Ọwọ́...","category":"Daily Life & Nature","phrase":"Orí, Ojú, Imú, Ẹnu, Ọwọ́ àti Ẹsẹ̀","phonetic":"[orí, ojú, imú, ẹnu, ọwọ́ àti ẹsẹ̀]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Orí","tone":"high","pitch":"Mí","freq":330},{"text":"Ojú","tone":"mid","pitch":"Re","freq":293},{"text":"Imú","tone":"low","pitch":"Dó","freq":261},{"text":"nu","tone":"high","pitch":"Mí","freq":330},{"text":"w","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #15 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":16,"title":"Lesson 16: Níbo ni ilé-ìwé wa wà?...","category":"Daily Life & Nature","phrase":"Níbo ni ilé-ìwé wa wà?","phonetic":"[níbo ni ilé-ìwé wa wà?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Níbo","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"iléìwé","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"wà","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #16 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":17,"title":"Lesson 17: Ẹ wá jẹun pẹ̀lú wa, oúnj...","category":"Daily Life & Nature","phrase":"Ẹ wá jẹun pẹ̀lú wa, oúnjẹ ti dé","phonetic":"[ẹ wá jẹun pẹ̀lú wa, oúnjẹ ti dé]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"wá","tone":"high","pitch":"Mí","freq":330},{"text":"jun","tone":"mid","pitch":"Re","freq":293},{"text":"plú","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"oúnj","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #17 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":18,"title":"Lesson 18: Oòrùn ń ran lọ́wọ́, òjò ...","category":"Daily Life & Nature","phrase":"Oòrùn ń ran lọ́wọ́, òjò ń rọ̀ sorí ilẹ̀","phonetic":"[oòrùn ń ran lọ́wọ́, òjò ń rọ̀ sorí ilẹ̀]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Oòrùn","tone":"high","pitch":"Mí","freq":330},{"text":"ń","tone":"mid","pitch":"Re","freq":293},{"text":"ran","tone":"low","pitch":"Dó","freq":261},{"text":"lw","tone":"high","pitch":"Mí","freq":330},{"text":"òjò","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #18 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":19,"title":"Lesson 19: Ó dàárọ̀ o, kí Ọlọ́run ṣ...","category":"Daily Life & Nature","phrase":"Ó dàárọ̀ o, kí Ọlọ́run ṣọ́ wa","phonetic":"[ó dàárọ̀ o, kí ọlọ́run ṣọ́ wa]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ó","tone":"high","pitch":"Mí","freq":330},{"text":"dàár","tone":"mid","pitch":"Re","freq":293},{"text":"o","tone":"low","pitch":"Dó","freq":261},{"text":"kí","tone":"high","pitch":"Mí","freq":330},{"text":"lrun","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #19 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":20,"title":"Lesson 20: Ọmọlúwàbí ni mí, èdè mi ...","category":"Daily Life & Nature","phrase":"Ọmọlúwàbí ni mí, èdè mi lọlá mi!","phonetic":"[ọmọlúwàbí ni mí, èdè mi lọlá mi!]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"mlúwàbí","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"mí","tone":"low","pitch":"Dó","freq":261},{"text":"èdè","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #20 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1}],"intermediate":[{"id":21,"title":"Lesson 21: Àlọ́ o! Àlọ̀! Àlọ́ mi dá...","category":"Conversations & Culture","phrase":"Àlọ́ o! Àlọ̀! Àlọ́ mi dá fìrìgbàgbò...","phonetic":"[àlọ́ o! àlọ̀! àlọ́ mi dá fìrìgbàgbò...]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Àl","tone":"high","pitch":"Mí","freq":330},{"text":"o","tone":"mid","pitch":"Re","freq":293},{"text":"Àl","tone":"low","pitch":"Dó","freq":261},{"text":"Àl","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #21 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":22,"title":"Lesson 22: Bá mi lọ, ba lórí igi, b...","category":"Conversations & Culture","phrase":"Bá mi lọ, ba lórí igi, bà sorí ilẹ̀","phonetic":"[bá mi lọ, ba lórí igi, bà sorí ilẹ̀]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Bá","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293},{"text":"l","tone":"low","pitch":"Dó","freq":261},{"text":"ba","tone":"high","pitch":"Mí","freq":330},{"text":"lórí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #22 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":23,"title":"Lesson 23: Aṣọ-òkè lẹ́wà, agbádá bà...","category":"Conversations & Culture","phrase":"Aṣọ-òkè lẹ́wà, agbádá bàbá gùn dáadáa","phonetic":"[aṣọ-òkè lẹ́wà, agbádá bàbá gùn dáadáa]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Aòkè","tone":"high","pitch":"Mí","freq":330},{"text":"lwà","tone":"mid","pitch":"Re","freq":293},{"text":"agbádá","tone":"low","pitch":"Dó","freq":261},{"text":"bàbá","tone":"high","pitch":"Mí","freq":330},{"text":"gùn","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #23 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":24,"title":"Lesson 24: Mo fẹ́ràn eré ayò àti or...","category":"Conversations & Culture","phrase":"Mo fẹ́ràn eré ayò àti orin kíkọ","phonetic":"[mo fẹ́ràn eré ayò àti orin kíkọ]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Mo","tone":"high","pitch":"Mí","freq":330},{"text":"fràn","tone":"mid","pitch":"Re","freq":293},{"text":"eré","tone":"low","pitch":"Dó","freq":261},{"text":"ayò","tone":"high","pitch":"Mí","freq":330},{"text":"àti","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #24 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":25,"title":"Lesson 25: Ká-biyè-ésí o, Ká-biyè-é...","category":"Conversations & Culture","phrase":"Ká-biyè-ésí o, Ká-biyè-ésí o!","phonetic":"[ká-biyè-ésí o, ká-biyè-ésí o!]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kábiyèésí","tone":"high","pitch":"Mí","freq":330},{"text":"o","tone":"mid","pitch":"Re","freq":293},{"text":"Kábiyèésí","tone":"low","pitch":"Dó","freq":261},{"text":"o","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #25 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":26,"title":"Lesson 26: Ẹ fún mi ní amàlà, gbẹ̀g...","category":"Conversations & Culture","phrase":"Ẹ fún mi ní amàlà, gbẹ̀gìrì àti ewédú","phonetic":"[ẹ fún mi ní amàlà, gbẹ̀gìrì àti ewédú]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"fún","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293},{"text":"ní","tone":"low","pitch":"Dó","freq":261},{"text":"amàlà","tone":"high","pitch":"Mí","freq":330},{"text":"gbgìrì","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #26 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":27,"title":"Lesson 27: Aago mélòó ló lù lọ́wọ́ ...","category":"Conversations & Culture","phrase":"Aago mélòó ló lù lọ́wọ́ yìí?","phonetic":"[aago mélòó ló lù lọ́wọ́ yìí?]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Aago","tone":"high","pitch":"Mí","freq":330},{"text":"mélòó","tone":"mid","pitch":"Re","freq":293},{"text":"ló","tone":"low","pitch":"Dó","freq":261},{"text":"lù","tone":"high","pitch":"Mí","freq":330},{"text":"lw","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #27 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":28,"title":"Lesson 28: Màmá Àgbà ń kọ́ mi ní or...","category":"Conversations & Culture","phrase":"Màmá Àgbà ń kọ́ mi ní orin ìbílẹ̀","phonetic":"[màmá àgbà ń kọ́ mi ní orin ìbílẹ̀]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Màmá","tone":"high","pitch":"Mí","freq":330},{"text":"Àgbà","tone":"mid","pitch":"Re","freq":293},{"text":"ń","tone":"low","pitch":"Dó","freq":261},{"text":"k","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #28 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":29,"title":"Lesson 29: Èkó gbajúmọ̀, Ìbàdàn ní ...","category":"Conversations & Culture","phrase":"Èkó gbajúmọ̀, Ìbàdàn ní orí-òkè méje","phonetic":"[èkó gbajúmọ̀, ìbàdàn ní orí-òkè méje]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Èkó","tone":"high","pitch":"Mí","freq":330},{"text":"gbajúm","tone":"mid","pitch":"Re","freq":293},{"text":"Ìbàdàn","tone":"low","pitch":"Dó","freq":261},{"text":"ní","tone":"high","pitch":"Mí","freq":330},{"text":"oríòkè","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #29 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":30,"title":"Lesson 30: Èdè Yorùbá àti ìmọ̀-ẹ̀rọ...","category":"Conversations & Culture","phrase":"Èdè Yorùbá àti ìmọ̀-ẹ̀rọ kọ̀mpútà papọ̀","phonetic":"[èdè yorùbá àti ìmọ̀-ẹ̀rọ kọ̀mpútà papọ̀]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Èdè","tone":"high","pitch":"Mí","freq":330},{"text":"Yorùbá","tone":"mid","pitch":"Re","freq":293},{"text":"àti","tone":"low","pitch":"Dó","freq":261},{"text":"ìmr","tone":"high","pitch":"Mí","freq":330},{"text":"kmpútà","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #30 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":31,"title":"Lesson 31: Ayẹyẹ Ọdún Iṣu Tuntun ti...","category":"Rhythm & Community","phrase":"Ayẹyẹ Ọdún Iṣu Tuntun ti dé pẹ̀lú ayọ̀","phonetic":"[ayẹyẹ ọdún iṣu tuntun ti dé pẹ̀lú ayọ̀]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ayy","tone":"high","pitch":"Mí","freq":330},{"text":"dún","tone":"mid","pitch":"Re","freq":293},{"text":"Iu","tone":"low","pitch":"Dó","freq":261},{"text":"Tuntun","tone":"high","pitch":"Mí","freq":330},{"text":"ti","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #31 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":32,"title":"Lesson 32: Ẹ jọ̀ọ́, ẹ dín owó rẹ̀ k...","category":"Rhythm & Community","phrase":"Ẹ jọ̀ọ́, ẹ dín owó rẹ̀ kù fún mi díẹ̀","phonetic":"[ẹ jọ̀ọ́, ẹ dín owó rẹ̀ kù fún mi díẹ̀]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"j","tone":"high","pitch":"Mí","freq":330},{"text":"dín","tone":"mid","pitch":"Re","freq":293},{"text":"owó","tone":"low","pitch":"Dó","freq":261},{"text":"r","tone":"high","pitch":"Mí","freq":330},{"text":"kù","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #32 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":33,"title":"Lesson 33: Lojú tèmi, èdè wa ni orí...","category":"Rhythm & Community","phrase":"Lojú tèmi, èdè wa ni orísun ọgbọ́n wa","phonetic":"[lojú tèmi, èdè wa ni orísun ọgbọ́n wa]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Lojú","tone":"high","pitch":"Mí","freq":330},{"text":"tèmi","tone":"mid","pitch":"Re","freq":293},{"text":"èdè","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #33 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":34,"title":"Lesson 34: Oyin dùn, ata ta, ewúrẹ́...","category":"Rhythm & Community","phrase":"Oyin dùn, ata ta, ewúrẹ́ dùn mọ́ ẹnu","phonetic":"[oyin dùn, ata ta, ewúrẹ́ dùn mọ́ ẹnu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Oyin","tone":"high","pitch":"Mí","freq":330},{"text":"dùn","tone":"mid","pitch":"Re","freq":293},{"text":"ata","tone":"low","pitch":"Dó","freq":261},{"text":"ta","tone":"high","pitch":"Mí","freq":330},{"text":"ewúr","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #34 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":35,"title":"Lesson 35: Ẹ má bìnú o, àlàáfíà ni ...","category":"Rhythm & Community","phrase":"Ẹ má bìnú o, àlàáfíà ni a ó máa rí","phonetic":"[ẹ má bìnú o, àlàáfíà ni a ó máa rí]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"má","tone":"high","pitch":"Mí","freq":330},{"text":"bìnú","tone":"mid","pitch":"Re","freq":293},{"text":"o","tone":"low","pitch":"Dó","freq":261},{"text":"àlàáfíà","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #35 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":36,"title":"Lesson 36: Gba ọwọ́ ọ̀tún, yà sí ọw...","category":"Rhythm & Community","phrase":"Gba ọwọ́ ọ̀tún, yà sí ọwọ́ òsì lẹ́bàá ọjà","phonetic":"[gba ọwọ́ ọ̀tún, yà sí ọwọ́ òsì lẹ́bàá ọjà]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Gba","tone":"high","pitch":"Mí","freq":330},{"text":"w","tone":"mid","pitch":"Re","freq":293},{"text":"tún","tone":"low","pitch":"Dó","freq":261},{"text":"yà","tone":"high","pitch":"Mí","freq":330},{"text":"sí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #36 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":37,"title":"Lesson 37: Kìnnìún ní ọba ẹranko, e...","category":"Rhythm & Community","phrase":"Kìnnìún ní ọba ẹranko, erin ní baba igbó","phonetic":"[kìnnìún ní ọba ẹranko, erin ní baba igbó]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kìnnìún","tone":"high","pitch":"Mí","freq":330},{"text":"ní","tone":"mid","pitch":"Re","freq":293},{"text":"ba","tone":"low","pitch":"Dó","freq":261},{"text":"ranko","tone":"high","pitch":"Mí","freq":330},{"text":"erin","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #37 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":38,"title":"Lesson 38: Ẹ dárí jì mí, mi ò ní ṣe...","category":"Rhythm & Community","phrase":"Ẹ dárí jì mí, mi ò ní ṣe bẹ́ẹ̀ mọ́","phonetic":"[ẹ dárí jì mí, mi ò ní ṣe bẹ́ẹ̀ mọ́]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"dárí","tone":"high","pitch":"Mí","freq":330},{"text":"jì","tone":"mid","pitch":"Re","freq":293},{"text":"mí","tone":"low","pitch":"Dó","freq":261},{"text":"mi","tone":"high","pitch":"Mí","freq":330},{"text":"ò","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #38 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":39,"title":"Lesson 39: Bùsọ́kùn ọmọ mi, orun re...","category":"Rhythm & Community","phrase":"Bùsọ́kùn ọmọ mi, orun rere lo máa sùn","phonetic":"[bùsọ́kùn ọmọ mi, orun rere lo máa sùn]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Bùskùn","tone":"high","pitch":"Mí","freq":330},{"text":"m","tone":"mid","pitch":"Re","freq":293},{"text":"mi","tone":"low","pitch":"Dó","freq":261},{"text":"orun","tone":"high","pitch":"Mí","freq":330},{"text":"rere","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #39 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":40,"title":"Lesson 40: Èdè mi kò ní parun lẹ́nu...","category":"Rhythm & Community","phrase":"Èdè mi kò ní parun lẹ́nu mi láé!","phonetic":"[èdè mi kò ní parun lẹ́nu mi láé!]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Èdè","tone":"high","pitch":"Mí","freq":330},{"text":"mi","tone":"mid","pitch":"Re","freq":293},{"text":"kò","tone":"low","pitch":"Dó","freq":261},{"text":"ní","tone":"high","pitch":"Mí","freq":330},{"text":"parun","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #40 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2}],"advanced":[{"id":41,"title":"Lesson 41: Sùúrù lérè, àgbà tó ní s...","category":"Classical Proverbs","phrase":"Sùúrù lérè, àgbà tó ní sùúrù ohun gbogbo ló ní","phonetic":"[sùúrù lérè, àgbà tó ní sùúrù ohun gbogbo ló ní]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Sùúrù","tone":"high","pitch":"Mí","freq":330},{"text":"lérè","tone":"mid","pitch":"Re","freq":293},{"text":"àgbà","tone":"low","pitch":"Dó","freq":261},{"text":"tó","tone":"high","pitch":"Mí","freq":330},{"text":"ní","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #41 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":42,"title":"Lesson 42: Àgbájọ ọwọ́ la fi ń sọ̀y...","category":"Classical Proverbs","phrase":"Àgbájọ ọwọ́ la fi ń sọ̀yà, ọwọ́ kan kò lè gbé ẹrù","phonetic":"[àgbájọ ọwọ́ la fi ń sọ̀yà, ọwọ́ kan kò lè gbé ẹrù]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Àgbáj","tone":"high","pitch":"Mí","freq":330},{"text":"w","tone":"mid","pitch":"Re","freq":293},{"text":"la","tone":"low","pitch":"Dó","freq":261},{"text":"fi","tone":"high","pitch":"Mí","freq":330},{"text":"ń","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #42 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":43,"title":"Lesson 43: Ọ̀pọ̀lọ́pọ̀ ọ̀pọ̀lọ́ ló ...","category":"Classical Proverbs","phrase":"Ọ̀pọ̀lọ́pọ̀ ọ̀pọ̀lọ́ ló ń fò nínú pọ̀lọ́pọ̀lọ̀ lẹ́bàá odò","phonetic":"[ọ̀pọ̀lọ́pọ̀ ọ̀pọ̀lọ́ ló ń fò nínú pọ̀lọ́pọ̀lọ̀ lẹ́bàá odò]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"plp","tone":"high","pitch":"Mí","freq":330},{"text":"pl","tone":"mid","pitch":"Re","freq":293},{"text":"ló","tone":"low","pitch":"Dó","freq":261},{"text":"ń","tone":"high","pitch":"Mí","freq":330},{"text":"fò","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #43 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":44,"title":"Lesson 44: Kànnàkánnà kàn lórí igi ...","category":"Classical Proverbs","phrase":"Kànnàkánnà kàn lórí igi kànnàkánnà tó ga fíofío","phonetic":"[kànnàkánnà kàn lórí igi kànnàkánnà tó ga fíofío]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kànnàkánnà","tone":"high","pitch":"Mí","freq":330},{"text":"kàn","tone":"mid","pitch":"Re","freq":293},{"text":"lórí","tone":"low","pitch":"Dó","freq":261},{"text":"igi","tone":"high","pitch":"Mí","freq":330},{"text":"kànnàkánnà","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #44 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":45,"title":"Lesson 45: Ìbàdàn kò nílé tútù, gbo...","category":"Classical Proverbs","phrase":"Ìbàdàn kò nílé tútù, gbogbo ilé ní ń kọ́ ọ̀sẹ̀ àti ayọ̀","phonetic":"[ìbàdàn kò nílé tútù, gbogbo ilé ní ń kọ́ ọ̀sẹ̀ àti ayọ̀]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ìbàdàn","tone":"high","pitch":"Mí","freq":330},{"text":"kò","tone":"mid","pitch":"Re","freq":293},{"text":"nílé","tone":"low","pitch":"Dó","freq":261},{"text":"tútù","tone":"high","pitch":"Mí","freq":330},{"text":"gbogbo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #45 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":46,"title":"Lesson 46: Kábiyeèsí Aláàfin! Kádé ...","category":"Classical Proverbs","phrase":"Kábiyeèsí Aláàfin! Kádé pẹ́ lórí, kí bàtà pẹ́ lẹ́sẹ̀!","phonetic":"[kábiyeèsí aláàfin! kádé pẹ́ lórí, kí bàtà pẹ́ lẹ́sẹ̀!]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kábiyeèsí","tone":"high","pitch":"Mí","freq":330},{"text":"Aláàfin","tone":"mid","pitch":"Re","freq":293},{"text":"Kádé","tone":"low","pitch":"Dó","freq":261},{"text":"p","tone":"high","pitch":"Mí","freq":330},{"text":"lórí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #46 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":47,"title":"Lesson 47: Ìwà rere lẹ̀ṣọ́ ènìyàn, ...","category":"Classical Proverbs","phrase":"Ìwà rere lẹ̀ṣọ́ ènìyàn, owó kò lè ra orúkọ rere","phonetic":"[ìwà rere lẹ̀ṣọ́ ènìyàn, owó kò lè ra orúkọ rere]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ìwà","tone":"high","pitch":"Mí","freq":330},{"text":"rere","tone":"mid","pitch":"Re","freq":293},{"text":"l","tone":"low","pitch":"Dó","freq":261},{"text":"ènìyàn","tone":"high","pitch":"Mí","freq":330},{"text":"owó","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #47 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":48,"title":"Lesson 48: Àlọ́ lórí Ìjàpá àti Ẹlẹ́...","category":"Classical Proverbs","phrase":"Àlọ́ lórí Ìjàpá àti Ẹlẹ́dẹ̀ nínú igbó àìmọ̀","phonetic":"[àlọ́ lórí ìjàpá àti ẹlẹ́dẹ̀ nínú igbó àìmọ̀]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Àl","tone":"high","pitch":"Mí","freq":330},{"text":"lórí","tone":"mid","pitch":"Re","freq":293},{"text":"Ìjàpá","tone":"low","pitch":"Dó","freq":261},{"text":"àti","tone":"high","pitch":"Mí","freq":330},{"text":"ld","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #48 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":49,"title":"Lesson 49: Odò tí ó bá gbàgbé orísu...","category":"Classical Proverbs","phrase":"Odò tí ó bá gbàgbé orísun rẹ̀, gbígbẹ ni yóò gbẹ","phonetic":"[odò tí ó bá gbàgbé orísun rẹ̀, gbígbẹ ni yóò gbẹ]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Odò","tone":"high","pitch":"Mí","freq":330},{"text":"tí","tone":"mid","pitch":"Re","freq":293},{"text":"ó","tone":"low","pitch":"Dó","freq":261},{"text":"bá","tone":"high","pitch":"Mí","freq":330},{"text":"gbàgbé","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #49 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":50,"title":"Lesson 50: Ẹbí wa wá láti ìrandíran...","category":"Classical Proverbs","phrase":"Ẹbí wa wá láti ìrandíran akọni àti ọ̀mọ̀wé","phonetic":"[ẹbí wa wá láti ìrandíran akọni àti ọ̀mọ̀wé]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"bí","tone":"high","pitch":"Mí","freq":330},{"text":"wa","tone":"mid","pitch":"Re","freq":293},{"text":"wá","tone":"low","pitch":"Dó","freq":261},{"text":"láti","tone":"high","pitch":"Mí","freq":330},{"text":"ìrandíran","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #50 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":51,"title":"Lesson 51: Ewé àti gbòǹgbò orílẹ̀ w...","category":"Philosophy & Blessings","phrase":"Ewé àti gbòǹgbò orílẹ̀ wa ní agbára ìwòsàn","phonetic":"[ewé àti gbòǹgbò orílẹ̀ wa ní agbára ìwòsàn]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ewé","tone":"high","pitch":"Mí","freq":330},{"text":"àti","tone":"mid","pitch":"Re","freq":293},{"text":"gbòǹgbò","tone":"low","pitch":"Dó","freq":261},{"text":"oríl","tone":"high","pitch":"Mí","freq":330},{"text":"wa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #51 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":52,"title":"Lesson 52: Àgbà tí kò bínú lọmọ rẹ̀...","category":"Philosophy & Blessings","phrase":"Àgbà tí kò bínú lọmọ rẹ̀ ń pọ̀ lórí ilẹ̀","phonetic":"[àgbà tí kò bínú lọmọ rẹ̀ ń pọ̀ lórí ilẹ̀]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Àgbà","tone":"high","pitch":"Mí","freq":330},{"text":"tí","tone":"mid","pitch":"Re","freq":293},{"text":"kò","tone":"low","pitch":"Dó","freq":261},{"text":"bínú","tone":"high","pitch":"Mí","freq":330},{"text":"lm","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #52 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":53,"title":"Lesson 53: Gbọ́ ohùn àwọn baba ńlá ...","category":"Philosophy & Blessings","phrase":"Gbọ́ ohùn àwọn baba ńlá wa nínú afẹ́fẹ́ àbáláyé","phonetic":"[gbọ́ ohùn àwọn baba ńlá wa nínú afẹ́fẹ́ àbáláyé]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Gb","tone":"high","pitch":"Mí","freq":330},{"text":"ohùn","tone":"mid","pitch":"Re","freq":293},{"text":"àwn","tone":"low","pitch":"Dó","freq":261},{"text":"baba","tone":"high","pitch":"Mí","freq":330},{"text":"ńlá","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #53 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":54,"title":"Lesson 54: Kí ló ń rìn nínú igbó tí...","category":"Philosophy & Blessings","phrase":"Kí ló ń rìn nínú igbó tí kò fẹsẹ̀ tẹ koríko?","phonetic":"[kí ló ń rìn nínú igbó tí kò fẹsẹ̀ tẹ koríko?]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kí","tone":"high","pitch":"Mí","freq":330},{"text":"ló","tone":"mid","pitch":"Re","freq":293},{"text":"ń","tone":"low","pitch":"Dó","freq":261},{"text":"rìn","tone":"high","pitch":"Mí","freq":330},{"text":"nínú","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #54 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":55,"title":"Lesson 55: Ìmọ̀ ẹ̀rọ ayélujára àti ...","category":"Philosophy & Blessings","phrase":"Ìmọ̀ ẹ̀rọ ayélujára àti ọgbọ́n orí ẹ̀rọ","phonetic":"[ìmọ̀ ẹ̀rọ ayélujára àti ọgbọ́n orí ẹ̀rọ]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ìm","tone":"high","pitch":"Mí","freq":330},{"text":"r","tone":"mid","pitch":"Re","freq":293},{"text":"ayélujára","tone":"low","pitch":"Dó","freq":261},{"text":"àti","tone":"high","pitch":"Mí","freq":330},{"text":"gbn","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #55 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":56,"title":"Lesson 56: Ẹ jẹ́ kí á fi ọ̀rọ̀ dídù...","category":"Philosophy & Blessings","phrase":"Ẹ jẹ́ kí á fi ọ̀rọ̀ dídùn wó odi àìgbọ́ra-ẹni-yé","phonetic":"[ẹ jẹ́ kí á fi ọ̀rọ̀ dídùn wó odi àìgbọ́ra-ẹni-yé]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"j","tone":"high","pitch":"Mí","freq":330},{"text":"kí","tone":"mid","pitch":"Re","freq":293},{"text":"á","tone":"low","pitch":"Dó","freq":261},{"text":"fi","tone":"high","pitch":"Mí","freq":330},{"text":"r","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #56 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":57,"title":"Lesson 57: Àkókò kò dúró de ẹnìkan,...","category":"Philosophy & Blessings","phrase":"Àkókò kò dúró de ẹnìkan, ẹ jẹ́ kí á mú ẹ̀kọ́ lókùnkúndùn","phonetic":"[àkókò kò dúró de ẹnìkan, ẹ jẹ́ kí á mú ẹ̀kọ́ lókùnkúndùn]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Àkókò","tone":"high","pitch":"Mí","freq":330},{"text":"kò","tone":"mid","pitch":"Re","freq":293},{"text":"dúró","tone":"low","pitch":"Dó","freq":261},{"text":"de","tone":"high","pitch":"Mí","freq":330},{"text":"nìkan","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #57 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":58,"title":"Lesson 58: Ọ̀dọ́ lọ̀la orílẹ̀-èdè w...","category":"Philosophy & Blessings","phrase":"Ọ̀dọ́ lọ̀la orílẹ̀-èdè wa, àwa la ó gbé àsìá ga","phonetic":"[ọ̀dọ́ lọ̀la orílẹ̀-èdè wa, àwa la ó gbé àsìá ga]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"d","tone":"high","pitch":"Mí","freq":330},{"text":"lla","tone":"mid","pitch":"Re","freq":293},{"text":"orílèdè","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"àwa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #58 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":59,"title":"Lesson 59: Dó Re Mí Dó Mí Re Dó - O...","category":"Philosophy & Blessings","phrase":"Dó Re Mí Dó Mí Re Dó - Ohùn Yorùbá dára púpọ̀","phonetic":"[dó re mí dó mí re dó - ohùn yorùbá dára púpọ̀]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Dó","tone":"high","pitch":"Mí","freq":330},{"text":"Re","tone":"mid","pitch":"Re","freq":293},{"text":"Mí","tone":"low","pitch":"Dó","freq":261},{"text":"Dó","tone":"high","pitch":"Mí","freq":330},{"text":"Mí","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #59 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":60,"title":"Lesson 60: Àṣẹ! Kí gbogbo yín ṣe re...","category":"Philosophy & Blessings","phrase":"Àṣẹ! Kí gbogbo yín ṣe rere, kí ìmọ́lẹ̀ ẹ̀kọ́ yín tàn káàkiri ayé!","phonetic":"[àṣẹ! kí gbogbo yín ṣe rere, kí ìmọ́lẹ̀ ẹ̀kọ́ yín tàn káàkiri ayé!]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"À","tone":"high","pitch":"Mí","freq":330},{"text":"Kí","tone":"mid","pitch":"Re","freq":293},{"text":"gbogbo","tone":"low","pitch":"Dó","freq":261},{"text":"yín","tone":"high","pitch":"Mí","freq":330},{"text":"e","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #60 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3}]},"igbo":{"beginner":[{"id":1,"title":"Lesson 1: Ndị kọrọ, daalu nke ukwu...","category":"Greetings & Tones","phrase":"Ndị kọrọ, daalu nke ukwu","phonetic":"[ndị kọrọ, daalu nke ukwu]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nd","tone":"high","pitch":"Mí","freq":330},{"text":"kr","tone":"mid","pitch":"Re","freq":293},{"text":"daalu","tone":"low","pitch":"Dó","freq":261},{"text":"nke","tone":"high","pitch":"Mí","freq":330},{"text":"ukwu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #1 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":2,"title":"Lesson 2: Kedu ka i mere taa?...","category":"Greetings & Tones","phrase":"Kedu ka i mere taa?","phonetic":"[kedu ka i mere taa?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Kedu","tone":"high","pitch":"Mí","freq":330},{"text":"ka","tone":"mid","pitch":"Re","freq":293},{"text":"i","tone":"low","pitch":"Dó","freq":261},{"text":"mere","tone":"high","pitch":"Mí","freq":330},{"text":"taa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #2 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":3,"title":"Lesson 3: Afam bu Chidiebere, obi ...","category":"Greetings & Tones","phrase":"Afam bu Chidiebere, obi na-atọ m ụtọ","phonetic":"[afam bu chidiebere, obi na-atọ m ụtọ]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Afam","tone":"high","pitch":"Mí","freq":330},{"text":"bu","tone":"mid","pitch":"Re","freq":293},{"text":"Chidiebere","tone":"low","pitch":"Dó","freq":261},{"text":"obi","tone":"high","pitch":"Mí","freq":330},{"text":"naat","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #3 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":4,"title":"Lesson 4: Otu, Abụọ, Atọ, Anọ, Ise...","category":"Greetings & Tones","phrase":"Otu, Abụọ, Atọ, Anọ, Ise","phonetic":"[otu, abụọ, atọ, anọ, ise]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Otu","tone":"high","pitch":"Mí","freq":330},{"text":"Ab","tone":"mid","pitch":"Re","freq":293},{"text":"At","tone":"low","pitch":"Dó","freq":261},{"text":"An","tone":"high","pitch":"Mí","freq":330},{"text":"Ise","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #4 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":5,"title":"Lesson 5: Isii, Asaa, Asatọ, Itool...","category":"Greetings & Tones","phrase":"Isii, Asaa, Asatọ, Itoolu, Iri","phonetic":"[isii, asaa, asatọ, itoolu, iri]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Isii","tone":"high","pitch":"Mí","freq":330},{"text":"Asaa","tone":"mid","pitch":"Re","freq":293},{"text":"Asat","tone":"low","pitch":"Dó","freq":261},{"text":"Itoolu","tone":"high","pitch":"Mí","freq":330},{"text":"Iri","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #5 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":6,"title":"Lesson 6: Nna m, Nne m, na Nwanne ...","category":"Numbers & Kinship","phrase":"Nna m, Nne m, na Nwanne m","phonetic":"[nna m, nne m, na nwanne m]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nna","tone":"high","pitch":"Mí","freq":330},{"text":"m","tone":"mid","pitch":"Re","freq":293},{"text":"Nne","tone":"low","pitch":"Dó","freq":261},{"text":"m","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #6 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":7,"title":"Lesson 7: Biko, nyem mmiri oyi...","category":"Numbers & Kinship","phrase":"Biko, nyem mmiri oyi","phonetic":"[biko, nyem mmiri oyi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Biko","tone":"high","pitch":"Mí","freq":330},{"text":"nyem","tone":"mid","pitch":"Re","freq":293},{"text":"mmiri","tone":"low","pitch":"Dó","freq":261},{"text":"oyi","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #7 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":8,"title":"Lesson 8: Uhie ka ọkụ, Ojii, Ọcha...","category":"Numbers & Kinship","phrase":"Uhie ka ọkụ, Ojii, Ọcha","phonetic":"[uhie ka ọkụ, ojii, ọcha]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Uhie","tone":"high","pitch":"Mí","freq":330},{"text":"ka","tone":"mid","pitch":"Re","freq":293},{"text":"k","tone":"low","pitch":"Dó","freq":261},{"text":"Ojii","tone":"high","pitch":"Mí","freq":330},{"text":"cha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #8 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":9,"title":"Lesson 9: Ụlọ anyị mara mma nke uk...","category":"Numbers & Kinship","phrase":"Ụlọ anyị mara mma nke ukwu","phonetic":"[ụlọ anyị mara mma nke ukwu]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"l","tone":"high","pitch":"Mí","freq":330},{"text":"any","tone":"mid","pitch":"Re","freq":293},{"text":"mara","tone":"low","pitch":"Dó","freq":261},{"text":"mma","tone":"high","pitch":"Mí","freq":330},{"text":"nke","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #9 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":10,"title":"Lesson 10: A nọ m na udo taa...","category":"Numbers & Kinship","phrase":"A nọ m na udo taa","phonetic":"[a nọ m na udo taa]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"A","tone":"high","pitch":"Mí","freq":330},{"text":"n","tone":"mid","pitch":"Re","freq":293},{"text":"m","tone":"low","pitch":"Dó","freq":261},{"text":"na","tone":"high","pitch":"Mí","freq":330},{"text":"udo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #10 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":11,"title":"Lesson 11: Ee nne m, Mba nna m, daa...","category":"Daily Life & Nature","phrase":"Ee nne m, Mba nna m, daalu","phonetic":"[ee nne m, mba nna m, daalu]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ee","tone":"high","pitch":"Mí","freq":330},{"text":"nne","tone":"mid","pitch":"Re","freq":293},{"text":"m","tone":"low","pitch":"Dó","freq":261},{"text":"Mba","tone":"high","pitch":"Mí","freq":330},{"text":"nna","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #11 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":12,"title":"Lesson 12: Ego ole ka azụ a dị?...","category":"Daily Life & Nature","phrase":"Ego ole ka azụ a dị?","phonetic":"[ego ole ka azụ a dị?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ego","tone":"high","pitch":"Mí","freq":330},{"text":"ole","tone":"mid","pitch":"Re","freq":293},{"text":"ka","tone":"low","pitch":"Dó","freq":261},{"text":"az","tone":"high","pitch":"Mí","freq":330},{"text":"a","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #12 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":13,"title":"Lesson 13: Nkịta na-agbọ ụja, Ọkụkọ...","category":"Daily Life & Nature","phrase":"Nkịta na-agbọ ụja, Ọkụkọ na-akwa","phonetic":"[nkịta na-agbọ ụja, ọkụkọ na-akwa]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nkta","tone":"high","pitch":"Mí","freq":330},{"text":"naagb","tone":"mid","pitch":"Re","freq":293},{"text":"ja","tone":"low","pitch":"Dó","freq":261},{"text":"kk","tone":"high","pitch":"Mí","freq":330},{"text":"naakwa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #13 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":14,"title":"Lesson 14: Mọnde, Tuzdee, Sọnde...","category":"Daily Life & Nature","phrase":"Mọnde, Tuzdee, Sọnde","phonetic":"[mọnde, tuzdee, sọnde]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Mnde","tone":"high","pitch":"Mí","freq":330},{"text":"Tuzdee","tone":"mid","pitch":"Re","freq":293},{"text":"Snde","tone":"low","pitch":"Dó","freq":261}],"translation":"Interactive voice training phrase #14 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":15,"title":"Lesson 15: Isi, Anya, Imi, Ọnụ, Aka...","category":"Daily Life & Nature","phrase":"Isi, Anya, Imi, Ọnụ, Aka na Ụkwụ","phonetic":"[isi, anya, imi, ọnụ, aka na ụkwụ]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Isi","tone":"high","pitch":"Mí","freq":330},{"text":"Anya","tone":"mid","pitch":"Re","freq":293},{"text":"Imi","tone":"low","pitch":"Dó","freq":261},{"text":"n","tone":"high","pitch":"Mí","freq":330},{"text":"Aka","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #15 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":16,"title":"Lesson 16: Ebee ka ụlọ akwụkwọ anyị...","category":"Daily Life & Nature","phrase":"Ebee ka ụlọ akwụkwọ anyị dị?","phonetic":"[ebee ka ụlọ akwụkwọ anyị dị?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ebee","tone":"high","pitch":"Mí","freq":330},{"text":"ka","tone":"mid","pitch":"Re","freq":293},{"text":"l","tone":"low","pitch":"Dó","freq":261},{"text":"akwkw","tone":"high","pitch":"Mí","freq":330},{"text":"any","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #16 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":17,"title":"Lesson 17: Bịa rie nri, nri adịla n...","category":"Daily Life & Nature","phrase":"Bịa rie nri, nri adịla njikere","phonetic":"[bịa rie nri, nri adịla njikere]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ba","tone":"high","pitch":"Mí","freq":330},{"text":"rie","tone":"mid","pitch":"Re","freq":293},{"text":"nri","tone":"low","pitch":"Dó","freq":261},{"text":"nri","tone":"high","pitch":"Mí","freq":330},{"text":"adla","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #17 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":18,"title":"Lesson 18: Anwụ na-acha, mmiri na-e...","category":"Daily Life & Nature","phrase":"Anwụ na-acha, mmiri na-ezo","phonetic":"[anwụ na-acha, mmiri na-ezo]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Anw","tone":"high","pitch":"Mí","freq":330},{"text":"naacha","tone":"mid","pitch":"Re","freq":293},{"text":"mmiri","tone":"low","pitch":"Dó","freq":261},{"text":"naezo","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #18 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":19,"title":"Lesson 19: Ka chi foo, Chukwu chekw...","category":"Daily Life & Nature","phrase":"Ka chi foo, Chukwu chekwaba anyị","phonetic":"[ka chi foo, chukwu chekwaba anyị]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ka","tone":"high","pitch":"Mí","freq":330},{"text":"chi","tone":"mid","pitch":"Re","freq":293},{"text":"foo","tone":"low","pitch":"Dó","freq":261},{"text":"Chukwu","tone":"high","pitch":"Mí","freq":330},{"text":"chekwaba","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #19 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":20,"title":"Lesson 20: Nwa amadi ka m bụ, asụsụ...","category":"Daily Life & Nature","phrase":"Nwa amadi ka m bụ, asụsụ m bụ ugwu m!","phonetic":"[nwa amadi ka m bụ, asụsụ m bụ ugwu m!]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nwa","tone":"high","pitch":"Mí","freq":330},{"text":"amadi","tone":"mid","pitch":"Re","freq":293},{"text":"ka","tone":"low","pitch":"Dó","freq":261},{"text":"m","tone":"high","pitch":"Mí","freq":330},{"text":"b","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #20 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1}],"intermediate":[{"id":21,"title":"Lesson 21: Akụkọ m ga-amalite ugbu ...","category":"Conversations & Culture","phrase":"Akụkọ m ga-amalite ugbu a...","phonetic":"[akụkọ m ga-amalite ugbu a...]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Akk","tone":"high","pitch":"Mí","freq":330},{"text":"m","tone":"mid","pitch":"Re","freq":293},{"text":"gaamalite","tone":"low","pitch":"Dó","freq":261},{"text":"ugbu","tone":"high","pitch":"Mí","freq":330},{"text":"a","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #21 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":22,"title":"Lesson 22: Ịgba egwu na ịgụ egwu na...","category":"Conversations & Culture","phrase":"Ịgba egwu na ịgụ egwu na-amasị m","phonetic":"[ịgba egwu na ịgụ egwu na-amasị m]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"gba","tone":"high","pitch":"Mí","freq":330},{"text":"egwu","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"g","tone":"high","pitch":"Mí","freq":330},{"text":"egwu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #22 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":23,"title":"Lesson 23: Ekike omenala Igbo mara ...","category":"Conversations & Culture","phrase":"Ekike omenala Igbo mara mma nke ukwu","phonetic":"[ekike omenala igbo mara mma nke ukwu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ekike","tone":"high","pitch":"Mí","freq":330},{"text":"omenala","tone":"mid","pitch":"Re","freq":293},{"text":"Igbo","tone":"low","pitch":"Dó","freq":261},{"text":"mara","tone":"high","pitch":"Mí","freq":330},{"text":"mma","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #23 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":24,"title":"Lesson 24: Ka anyị gbaa nchọkọta eg...","category":"Conversations & Culture","phrase":"Ka anyị gbaa nchọkọta egwuregwu","phonetic":"[ka anyị gbaa nchọkọta egwuregwu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ka","tone":"high","pitch":"Mí","freq":330},{"text":"any","tone":"mid","pitch":"Re","freq":293},{"text":"gbaa","tone":"low","pitch":"Dó","freq":261},{"text":"nchkta","tone":"high","pitch":"Mí","freq":330},{"text":"egwuregwu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #24 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":25,"title":"Lesson 25: Ikoro na Ekwe na-ada nụl...","category":"Conversations & Culture","phrase":"Ikoro na Ekwe na-ada nụlọ ezumezu","phonetic":"[ikoro na ekwe na-ada nụlọ ezumezu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ikoro","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"Ekwe","tone":"low","pitch":"Dó","freq":261},{"text":"naada","tone":"high","pitch":"Mí","freq":330},{"text":"nl","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #25 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":26,"title":"Lesson 26: Nye m ofe onugbu na akpụ...","category":"Conversations & Culture","phrase":"Nye m ofe onugbu na akpụ","phonetic":"[nye m ofe onugbu na akpụ]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nye","tone":"high","pitch":"Mí","freq":330},{"text":"m","tone":"mid","pitch":"Re","freq":293},{"text":"ofe","tone":"low","pitch":"Dó","freq":261},{"text":"onugbu","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #26 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":27,"title":"Lesson 27: Kedu oge o ji ugbu a?...","category":"Conversations & Culture","phrase":"Kedu oge o ji ugbu a?","phonetic":"[kedu oge o ji ugbu a?]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kedu","tone":"high","pitch":"Mí","freq":330},{"text":"oge","tone":"mid","pitch":"Re","freq":293},{"text":"o","tone":"low","pitch":"Dó","freq":261},{"text":"ji","tone":"high","pitch":"Mí","freq":330},{"text":"ugbu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #27 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":28,"title":"Lesson 28: Nne ochie na-akụziri m a...","category":"Conversations & Culture","phrase":"Nne ochie na-akụziri m akụkọ mgbe ochie","phonetic":"[nne ochie na-akụziri m akụkọ mgbe ochie]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nne","tone":"high","pitch":"Mí","freq":330},{"text":"ochie","tone":"mid","pitch":"Re","freq":293},{"text":"naakziri","tone":"low","pitch":"Dó","freq":261},{"text":"m","tone":"high","pitch":"Mí","freq":330},{"text":"akk","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #28 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":29,"title":"Lesson 29: Enugu na Owerri bu obodo...","category":"Conversations & Culture","phrase":"Enugu na Owerri bu obodo mara mma","phonetic":"[enugu na owerri bu obodo mara mma]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Enugu","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"Owerri","tone":"low","pitch":"Dó","freq":261},{"text":"bu","tone":"high","pitch":"Mí","freq":330},{"text":"obodo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #29 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":30,"title":"Lesson 30: Asụsụ Igbo na sayensị kọ...","category":"Conversations & Culture","phrase":"Asụsụ Igbo na sayensị kọmputa","phonetic":"[asụsụ igbo na sayensị kọmputa]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ass","tone":"high","pitch":"Mí","freq":330},{"text":"Igbo","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"sayens","tone":"high","pitch":"Mí","freq":330},{"text":"kmputa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #30 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":31,"title":"Lesson 31: Emume Iri Ji Ọhụrụ abịal...","category":"Rhythm & Community","phrase":"Emume Iri Ji Ọhụrụ abịala","phonetic":"[emume iri ji ọhụrụ abịala]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Emume","tone":"high","pitch":"Mí","freq":330},{"text":"Iri","tone":"mid","pitch":"Re","freq":293},{"text":"Ji","tone":"low","pitch":"Dó","freq":261},{"text":"hr","tone":"high","pitch":"Mí","freq":330},{"text":"abala","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #31 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":32,"title":"Lesson 32: Biko belata ọnụ ahịa ya ...","category":"Rhythm & Community","phrase":"Biko belata ọnụ ahịa ya ntakịrị","phonetic":"[biko belata ọnụ ahịa ya ntakịrị]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Biko","tone":"high","pitch":"Mí","freq":330},{"text":"belata","tone":"mid","pitch":"Re","freq":293},{"text":"n","tone":"low","pitch":"Dó","freq":261},{"text":"aha","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #32 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":33,"title":"Lesson 33: Nechiche m, asụsụ anyị b...","category":"Rhythm & Community","phrase":"Nechiche m, asụsụ anyị bụ akụ anyị","phonetic":"[nechiche m, asụsụ anyị bụ akụ anyị]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nechiche","tone":"high","pitch":"Mí","freq":330},{"text":"m","tone":"mid","pitch":"Re","freq":293},{"text":"ass","tone":"low","pitch":"Dó","freq":261},{"text":"any","tone":"high","pitch":"Mí","freq":330},{"text":"b","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #33 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":34,"title":"Lesson 34: Mmanụ aṅụ na-atọ ụtọ, os...","category":"Rhythm & Community","phrase":"Mmanụ aṅụ na-atọ ụtọ, ose na-ekpo ọkụ","phonetic":"[mmanụ aṅụ na-atọ ụtọ, ose na-ekpo ọkụ]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Mman","tone":"high","pitch":"Mí","freq":330},{"text":"a","tone":"mid","pitch":"Re","freq":293},{"text":"naat","tone":"low","pitch":"Dó","freq":261},{"text":"t","tone":"high","pitch":"Mí","freq":330},{"text":"ose","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #34 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":35,"title":"Lesson 35: Echegbula onwe gị, udo g...","category":"Rhythm & Community","phrase":"Echegbula onwe gị, udo ga-adị","phonetic":"[echegbula onwe gị, udo ga-adị]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Echegbula","tone":"high","pitch":"Mí","freq":330},{"text":"onwe","tone":"mid","pitch":"Re","freq":293},{"text":"g","tone":"low","pitch":"Dó","freq":261},{"text":"udo","tone":"high","pitch":"Mí","freq":330},{"text":"gaad","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #35 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":36,"title":"Lesson 36: Gbaa aka nri, gafere ahị...","category":"Rhythm & Community","phrase":"Gbaa aka nri, gafere ahịa","phonetic":"[gbaa aka nri, gafere ahịa]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Gbaa","tone":"high","pitch":"Mí","freq":330},{"text":"aka","tone":"mid","pitch":"Re","freq":293},{"text":"nri","tone":"low","pitch":"Dó","freq":261},{"text":"gafere","tone":"high","pitch":"Mí","freq":330},{"text":"aha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #36 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":37,"title":"Lesson 37: Ọdụm bụ eze anụ ọhịa...","category":"Rhythm & Community","phrase":"Ọdụm bụ eze anụ ọhịa","phonetic":"[ọdụm bụ eze anụ ọhịa]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"dm","tone":"high","pitch":"Mí","freq":330},{"text":"b","tone":"mid","pitch":"Re","freq":293},{"text":"eze","tone":"low","pitch":"Dó","freq":261},{"text":"an","tone":"high","pitch":"Mí","freq":330},{"text":"ha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #37 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":38,"title":"Lesson 38: Gbaghara m, agaghị m eme...","category":"Rhythm & Community","phrase":"Gbaghara m, agaghị m eme ya ọzọ","phonetic":"[gbaghara m, agaghị m eme ya ọzọ]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Gbaghara","tone":"high","pitch":"Mí","freq":330},{"text":"m","tone":"mid","pitch":"Re","freq":293},{"text":"agagh","tone":"low","pitch":"Dó","freq":261},{"text":"m","tone":"high","pitch":"Mí","freq":330},{"text":"eme","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #38 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":39,"title":"Lesson 39: Hie ụra nke ọma nwa m ma...","category":"Rhythm & Community","phrase":"Hie ụra nke ọma nwa m mara mma","phonetic":"[hie ụra nke ọma nwa m mara mma]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Hie","tone":"high","pitch":"Mí","freq":330},{"text":"ra","tone":"mid","pitch":"Re","freq":293},{"text":"nke","tone":"low","pitch":"Dó","freq":261},{"text":"ma","tone":"high","pitch":"Mí","freq":330},{"text":"nwa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #39 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":40,"title":"Lesson 40: Asụsụ Igbo agaghị anwụ n...","category":"Rhythm & Community","phrase":"Asụsụ Igbo agaghị anwụ nọnụ m!","phonetic":"[asụsụ igbo agaghị anwụ nọnụ m!]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ass","tone":"high","pitch":"Mí","freq":330},{"text":"Igbo","tone":"mid","pitch":"Re","freq":293},{"text":"agagh","tone":"low","pitch":"Dó","freq":261},{"text":"anw","tone":"high","pitch":"Mí","freq":330},{"text":"nn","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #40 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2}],"advanced":[{"id":41,"title":"Lesson 41: Onye nwere ndidi na-eri ...","category":"Classical Proverbs","phrase":"Onye nwere ndidi na-eri azụ kacha ibu","phonetic":"[onye nwere ndidi na-eri azụ kacha ibu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Onye","tone":"high","pitch":"Mí","freq":330},{"text":"nwere","tone":"mid","pitch":"Re","freq":293},{"text":"ndidi","tone":"low","pitch":"Dó","freq":261},{"text":"naeri","tone":"high","pitch":"Mí","freq":330},{"text":"az","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #41 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":42,"title":"Lesson 42: Aka nri kwọọ aka ekpe, a...","category":"Classical Proverbs","phrase":"Aka nri kwọọ aka ekpe, aka ekpe akwọọ aka nri","phonetic":"[aka nri kwọọ aka ekpe, aka ekpe akwọọ aka nri]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Aka","tone":"high","pitch":"Mí","freq":330},{"text":"nri","tone":"mid","pitch":"Re","freq":293},{"text":"kw","tone":"low","pitch":"Dó","freq":261},{"text":"aka","tone":"high","pitch":"Mí","freq":330},{"text":"ekpe","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #42 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":43,"title":"Lesson 43: Ọkpọrọkpọ akpịrị na-agụ ...","category":"Classical Proverbs","phrase":"Ọkpọrọkpọ akpịrị na-agụ egwu nakụkụ mmiri","phonetic":"[ọkpọrọkpọ akpịrị na-agụ egwu nakụkụ mmiri]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"kprkp","tone":"high","pitch":"Mí","freq":330},{"text":"akpr","tone":"mid","pitch":"Re","freq":293},{"text":"naag","tone":"low","pitch":"Dó","freq":261},{"text":"egwu","tone":"high","pitch":"Mí","freq":330},{"text":"nakk","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #43 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":44,"title":"Lesson 44: Nnụnụ na-efe efe anaghị ...","category":"Classical Proverbs","phrase":"Nnụnụ na-efe efe anaghị echefu akwụ ya","phonetic":"[nnụnụ na-efe efe anaghị echefu akwụ ya]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Nnn","tone":"high","pitch":"Mí","freq":330},{"text":"naefe","tone":"mid","pitch":"Re","freq":293},{"text":"efe","tone":"low","pitch":"Dó","freq":261},{"text":"anagh","tone":"high","pitch":"Mí","freq":330},{"text":"echefu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #44 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":45,"title":"Lesson 45: Egwu Ogene na-akpali mmụ...","category":"Classical Proverbs","phrase":"Egwu Ogene na-akpali mmụọ dike","phonetic":"[egwu ogene na-akpali mmụọ dike]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Egwu","tone":"high","pitch":"Mí","freq":330},{"text":"Ogene","tone":"mid","pitch":"Re","freq":293},{"text":"naakpali","tone":"low","pitch":"Dó","freq":261},{"text":"mm","tone":"high","pitch":"Mí","freq":330},{"text":"dike","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #45 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":46,"title":"Lesson 46: Eze gbalaga! Ndụ gị ga-a...","category":"Classical Proverbs","phrase":"Eze gbalaga! Ndụ gị ga-adị ogologo!","phonetic":"[eze gbalaga! ndụ gị ga-adị ogologo!]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Eze","tone":"high","pitch":"Mí","freq":330},{"text":"gbalaga","tone":"mid","pitch":"Re","freq":293},{"text":"Nd","tone":"low","pitch":"Dó","freq":261},{"text":"g","tone":"high","pitch":"Mí","freq":330},{"text":"gaad","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #46 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":47,"title":"Lesson 47: Ezi agwa bụ ezi aha, ego...","category":"Classical Proverbs","phrase":"Ezi agwa bụ ezi aha, ego apụghị ịzụ ya","phonetic":"[ezi agwa bụ ezi aha, ego apụghị ịzụ ya]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ezi","tone":"high","pitch":"Mí","freq":330},{"text":"agwa","tone":"mid","pitch":"Re","freq":293},{"text":"b","tone":"low","pitch":"Dó","freq":261},{"text":"ezi","tone":"high","pitch":"Mí","freq":330},{"text":"aha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #47 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":48,"title":"Lesson 48: Akụkọ banyere Mbe na Ezi...","category":"Classical Proverbs","phrase":"Akụkọ banyere Mbe na Ezi nọhịa","phonetic":"[akụkọ banyere mbe na ezi nọhịa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Akk","tone":"high","pitch":"Mí","freq":330},{"text":"banyere","tone":"mid","pitch":"Re","freq":293},{"text":"Mbe","tone":"low","pitch":"Dó","freq":261},{"text":"na","tone":"high","pitch":"Mí","freq":330},{"text":"Ezi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #48 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":49,"title":"Lesson 49: Mmiri mara onye bu ụzọ m...","category":"Classical Proverbs","phrase":"Mmiri mara onye bu ụzọ mara onye na-eso ya","phonetic":"[mmiri mara onye bu ụzọ mara onye na-eso ya]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Mmiri","tone":"high","pitch":"Mí","freq":330},{"text":"mara","tone":"mid","pitch":"Re","freq":293},{"text":"onye","tone":"low","pitch":"Dó","freq":261},{"text":"bu","tone":"high","pitch":"Mí","freq":330},{"text":"z","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #49 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":50,"title":"Lesson 50: Anyị si nagbụrụ ndị dike...","category":"Classical Proverbs","phrase":"Anyị si nagbụrụ ndị dike na ndị amamihe","phonetic":"[anyị si nagbụrụ ndị dike na ndị amamihe]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Any","tone":"high","pitch":"Mí","freq":330},{"text":"si","tone":"mid","pitch":"Re","freq":293},{"text":"nagbr","tone":"low","pitch":"Dó","freq":261},{"text":"nd","tone":"high","pitch":"Mí","freq":330},{"text":"dike","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #50 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":51,"title":"Lesson 51: Akwụkwọ nri na mkpọrọgwụ...","category":"Philosophy & Blessings","phrase":"Akwụkwọ nri na mkpọrọgwụ nwere ike ọgwụgwọ","phonetic":"[akwụkwọ nri na mkpọrọgwụ nwere ike ọgwụgwọ]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Akwkw","tone":"high","pitch":"Mí","freq":330},{"text":"nri","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"mkprgw","tone":"high","pitch":"Mí","freq":330},{"text":"nwere","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #51 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":52,"title":"Lesson 52: Onye ndú na-ege ntị na-a...","category":"Philosophy & Blessings","phrase":"Onye ndú na-ege ntị na-achị nudo","phonetic":"[onye ndú na-ege ntị na-achị nudo]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Onye","tone":"high","pitch":"Mí","freq":330},{"text":"ndú","tone":"mid","pitch":"Re","freq":293},{"text":"naege","tone":"low","pitch":"Dó","freq":261},{"text":"nt","tone":"high","pitch":"Mí","freq":330},{"text":"naach","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #52 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":53,"title":"Lesson 53: Nụrụ olu ndị nna ochie n...","category":"Philosophy & Blessings","phrase":"Nụrụ olu ndị nna ochie nikuku","phonetic":"[nụrụ olu ndị nna ochie nikuku]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Nr","tone":"high","pitch":"Mí","freq":330},{"text":"olu","tone":"mid","pitch":"Re","freq":293},{"text":"nd","tone":"low","pitch":"Dó","freq":261},{"text":"nna","tone":"high","pitch":"Mí","freq":330},{"text":"ochie","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #53 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":54,"title":"Lesson 54: Gịnị na-aga ije na-enweg...","category":"Philosophy & Blessings","phrase":"Gịnị na-aga ije na-enweghị ụkwụ? (Ikuku)","phonetic":"[gịnị na-aga ije na-enweghị ụkwụ? (ikuku)]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Gn","tone":"high","pitch":"Mí","freq":330},{"text":"naaga","tone":"mid","pitch":"Re","freq":293},{"text":"ije","tone":"low","pitch":"Dó","freq":261},{"text":"naenwegh","tone":"high","pitch":"Mí","freq":330},{"text":"kw","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #54 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":55,"title":"Lesson 55: Nkà na ụzụ na amamihe ọh...","category":"Philosophy & Blessings","phrase":"Nkà na ụzụ na amamihe ọhụrụ","phonetic":"[nkà na ụzụ na amamihe ọhụrụ]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Nkà","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"z","tone":"low","pitch":"Dó","freq":261},{"text":"na","tone":"high","pitch":"Mí","freq":330},{"text":"amamihe","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #55 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":56,"title":"Lesson 56: Ka anyị jiri okwu ọma wu...","category":"Philosophy & Blessings","phrase":"Ka anyị jiri okwu ọma wulite udo","phonetic":"[ka anyị jiri okwu ọma wulite udo]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ka","tone":"high","pitch":"Mí","freq":330},{"text":"any","tone":"mid","pitch":"Re","freq":293},{"text":"jiri","tone":"low","pitch":"Dó","freq":261},{"text":"okwu","tone":"high","pitch":"Mí","freq":330},{"text":"ma","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #56 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":57,"title":"Lesson 57: Oge anaghị eche onye ọ b...","category":"Philosophy & Blessings","phrase":"Oge anaghị eche onye ọ bụla","phonetic":"[oge anaghị eche onye ọ bụla]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Oge","tone":"high","pitch":"Mí","freq":330},{"text":"anagh","tone":"mid","pitch":"Re","freq":293},{"text":"eche","tone":"low","pitch":"Dó","freq":261},{"text":"onye","tone":"high","pitch":"Mí","freq":330},{"text":"bla","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #57 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":58,"title":"Lesson 58: Ndị ntorobịa bụ olileany...","category":"Philosophy & Blessings","phrase":"Ndị ntorobịa bụ olileanya anyị","phonetic":"[ndị ntorobịa bụ olileanya anyị]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Nd","tone":"high","pitch":"Mí","freq":330},{"text":"ntoroba","tone":"mid","pitch":"Re","freq":293},{"text":"b","tone":"low","pitch":"Dó","freq":261},{"text":"olileanya","tone":"high","pitch":"Mí","freq":330},{"text":"any","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #58 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":59,"title":"Lesson 59: Dó Re Mí - Uda olu Igbo ...","category":"Philosophy & Blessings","phrase":"Dó Re Mí - Uda olu Igbo mara mma","phonetic":"[dó re mí - uda olu igbo mara mma]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Dó","tone":"high","pitch":"Mí","freq":330},{"text":"Re","tone":"mid","pitch":"Re","freq":293},{"text":"Mí","tone":"low","pitch":"Dó","freq":261},{"text":"Uda","tone":"high","pitch":"Mí","freq":330},{"text":"olu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #59 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":60,"title":"Lesson 60: Ka ngozi na amamihe dịrị...","category":"Philosophy & Blessings","phrase":"Ka ngozi na amamihe dịrị unu niile!","phonetic":"[ka ngozi na amamihe dịrị unu niile!]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ka","tone":"high","pitch":"Mí","freq":330},{"text":"ngozi","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"amamihe","tone":"high","pitch":"Mí","freq":330},{"text":"dr","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #60 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3}]},"hausa":{"beginner":[{"id":1,"title":"Lesson 1: Ina kwana, na gode sosai...","category":"Greetings & Tones","phrase":"Ina kwana, na gode sosai","phonetic":"[ina kwana, na gode sosai]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ina","tone":"high","pitch":"Mí","freq":330},{"text":"kwana","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"gode","tone":"high","pitch":"Mí","freq":330},{"text":"sosai","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #1 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":2,"title":"Lesson 2: Yaya kake da iyalinka?...","category":"Greetings & Tones","phrase":"Yaya kake da iyalinka?","phonetic":"[yaya kake da iyalinka?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Yaya","tone":"high","pitch":"Mí","freq":330},{"text":"kake","tone":"mid","pitch":"Re","freq":293},{"text":"da","tone":"low","pitch":"Dó","freq":261},{"text":"iyalinka","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #2 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":3,"title":"Lesson 3: Sunana Amina, ina jin da...","category":"Greetings & Tones","phrase":"Sunana Amina, ina jin dadi","phonetic":"[sunana amina, ina jin dadi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Sunana","tone":"high","pitch":"Mí","freq":330},{"text":"Amina","tone":"mid","pitch":"Re","freq":293},{"text":"ina","tone":"low","pitch":"Dó","freq":261},{"text":"jin","tone":"high","pitch":"Mí","freq":330},{"text":"dadi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #3 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":4,"title":"Lesson 4: Daya, Biyu, Uku, Hudu, B...","category":"Greetings & Tones","phrase":"Daya, Biyu, Uku, Hudu, Biyar","phonetic":"[daya, biyu, uku, hudu, biyar]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Daya","tone":"high","pitch":"Mí","freq":330},{"text":"Biyu","tone":"mid","pitch":"Re","freq":293},{"text":"Uku","tone":"low","pitch":"Dó","freq":261},{"text":"Hudu","tone":"high","pitch":"Mí","freq":330},{"text":"Biyar","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #4 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":5,"title":"Lesson 5: Shida, Bakwai, Takwas, T...","category":"Greetings & Tones","phrase":"Shida, Bakwai, Takwas, Tara, Goma","phonetic":"[shida, bakwai, takwas, tara, goma]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Shida","tone":"high","pitch":"Mí","freq":330},{"text":"Bakwai","tone":"mid","pitch":"Re","freq":293},{"text":"Takwas","tone":"low","pitch":"Dó","freq":261},{"text":"Tara","tone":"high","pitch":"Mí","freq":330},{"text":"Goma","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #5 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":6,"title":"Lesson 6: Babana, Mamana, da Kanen...","category":"Numbers & Kinship","phrase":"Babana, Mamana, da Kanena","phonetic":"[babana, mamana, da kanena]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Babana","tone":"high","pitch":"Mí","freq":330},{"text":"Mamana","tone":"mid","pitch":"Re","freq":293},{"text":"da","tone":"low","pitch":"Dó","freq":261},{"text":"Kanena","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #6 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":7,"title":"Lesson 7: Don Allah, ba ni ruwan s...","category":"Numbers & Kinship","phrase":"Don Allah, ba ni ruwan sha","phonetic":"[don allah, ba ni ruwan sha]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Don","tone":"high","pitch":"Mí","freq":330},{"text":"Allah","tone":"mid","pitch":"Re","freq":293},{"text":"ba","tone":"low","pitch":"Dó","freq":261},{"text":"ni","tone":"high","pitch":"Mí","freq":330},{"text":"ruwan","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #7 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":8,"title":"Lesson 8: Ja kamar wuta, Baki, Far...","category":"Numbers & Kinship","phrase":"Ja kamar wuta, Baki, Fari","phonetic":"[ja kamar wuta, baki, fari]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ja","tone":"high","pitch":"Mí","freq":330},{"text":"kamar","tone":"mid","pitch":"Re","freq":293},{"text":"wuta","tone":"low","pitch":"Dó","freq":261},{"text":"Baki","tone":"high","pitch":"Mí","freq":330},{"text":"Fari","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #8 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":9,"title":"Lesson 9: Gidanmu yana da kyau sos...","category":"Numbers & Kinship","phrase":"Gidanmu yana da kyau sosai","phonetic":"[gidanmu yana da kyau sosai]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Gidanmu","tone":"high","pitch":"Mí","freq":330},{"text":"yana","tone":"mid","pitch":"Re","freq":293},{"text":"da","tone":"low","pitch":"Dó","freq":261},{"text":"kyau","tone":"high","pitch":"Mí","freq":330},{"text":"sosai","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #9 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":10,"title":"Lesson 10: Ina cikin farin ciki yau...","category":"Numbers & Kinship","phrase":"Ina cikin farin ciki yau","phonetic":"[ina cikin farin ciki yau]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ina","tone":"high","pitch":"Mí","freq":330},{"text":"cikin","tone":"mid","pitch":"Re","freq":293},{"text":"farin","tone":"low","pitch":"Dó","freq":261},{"text":"ciki","tone":"high","pitch":"Mí","freq":330},{"text":"yau","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #10 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":11,"title":"Lesson 11: I mana, Aa, na gode...","category":"Daily Life & Nature","phrase":"I mana, Aa, na gode","phonetic":"[i mana, aa, na gode]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"I","tone":"high","pitch":"Mí","freq":330},{"text":"mana","tone":"mid","pitch":"Re","freq":293},{"text":"Aa","tone":"low","pitch":"Dó","freq":261},{"text":"na","tone":"high","pitch":"Mí","freq":330},{"text":"gode","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #11 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":12,"title":"Lesson 12: Nawa ne wannan kifin?...","category":"Daily Life & Nature","phrase":"Nawa ne wannan kifin?","phonetic":"[nawa ne wannan kifin?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nawa","tone":"high","pitch":"Mí","freq":330},{"text":"ne","tone":"mid","pitch":"Re","freq":293},{"text":"wannan","tone":"low","pitch":"Dó","freq":261},{"text":"kifin","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #12 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":13,"title":"Lesson 13: Kare yana haushi, Kaza t...","category":"Daily Life & Nature","phrase":"Kare yana haushi, Kaza tana kuka","phonetic":"[kare yana haushi, kaza tana kuka]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Kare","tone":"high","pitch":"Mí","freq":330},{"text":"yana","tone":"mid","pitch":"Re","freq":293},{"text":"haushi","tone":"low","pitch":"Dó","freq":261},{"text":"Kaza","tone":"high","pitch":"Mí","freq":330},{"text":"tana","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #13 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":14,"title":"Lesson 14: Litinin, Talata, Lahadi...","category":"Daily Life & Nature","phrase":"Litinin, Talata, Lahadi","phonetic":"[litinin, talata, lahadi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Litinin","tone":"high","pitch":"Mí","freq":330},{"text":"Talata","tone":"mid","pitch":"Re","freq":293},{"text":"Lahadi","tone":"low","pitch":"Dó","freq":261}],"translation":"Interactive voice training phrase #14 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":15,"title":"Lesson 15: Kai, Ido, Hanci, Baki, H...","category":"Daily Life & Nature","phrase":"Kai, Ido, Hanci, Baki, Hannu da Kafa","phonetic":"[kai, ido, hanci, baki, hannu da kafa]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Kai","tone":"high","pitch":"Mí","freq":330},{"text":"Ido","tone":"mid","pitch":"Re","freq":293},{"text":"Hanci","tone":"low","pitch":"Dó","freq":261},{"text":"Baki","tone":"high","pitch":"Mí","freq":330},{"text":"Hannu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #15 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":16,"title":"Lesson 16: Ina makarantarmu take?...","category":"Daily Life & Nature","phrase":"Ina makarantarmu take?","phonetic":"[ina makarantarmu take?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ina","tone":"high","pitch":"Mí","freq":330},{"text":"makarantarmu","tone":"mid","pitch":"Re","freq":293},{"text":"take","tone":"low","pitch":"Dó","freq":261}],"translation":"Interactive voice training phrase #16 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":17,"title":"Lesson 17: Zo mu ci abinci tare...","category":"Daily Life & Nature","phrase":"Zo mu ci abinci tare","phonetic":"[zo mu ci abinci tare]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Zo","tone":"high","pitch":"Mí","freq":330},{"text":"mu","tone":"mid","pitch":"Re","freq":293},{"text":"ci","tone":"low","pitch":"Dó","freq":261},{"text":"abinci","tone":"high","pitch":"Mí","freq":330},{"text":"tare","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #17 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":18,"title":"Lesson 18: Rana tana haske, ruwa ya...","category":"Daily Life & Nature","phrase":"Rana tana haske, ruwa yana sauka","phonetic":"[rana tana haske, ruwa yana sauka]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Rana","tone":"high","pitch":"Mí","freq":330},{"text":"tana","tone":"mid","pitch":"Re","freq":293},{"text":"haske","tone":"low","pitch":"Dó","freq":261},{"text":"ruwa","tone":"high","pitch":"Mí","freq":330},{"text":"yana","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #18 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":19,"title":"Lesson 19: Sai da safe, Allah Ya ka...","category":"Daily Life & Nature","phrase":"Sai da safe, Allah Ya kare mu","phonetic":"[sai da safe, allah ya kare mu]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Sai","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293},{"text":"safe","tone":"low","pitch":"Dó","freq":261},{"text":"Allah","tone":"high","pitch":"Mí","freq":330},{"text":"Ya","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #19 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":20,"title":"Lesson 20: Ni dan asali ne, yarena ...","category":"Daily Life & Nature","phrase":"Ni dan asali ne, yarena abin alfaharina ne!","phonetic":"[ni dan asali ne, yarena abin alfaharina ne!]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ni","tone":"high","pitch":"Mí","freq":330},{"text":"dan","tone":"mid","pitch":"Re","freq":293},{"text":"asali","tone":"low","pitch":"Dó","freq":261},{"text":"ne","tone":"high","pitch":"Mí","freq":330},{"text":"yarena","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #20 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1}],"intermediate":[{"id":21,"title":"Lesson 21: Ga wani labari mai dadi....","category":"Conversations & Culture","phrase":"Ga wani labari mai dadi...","phonetic":"[ga wani labari mai dadi...]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ga","tone":"high","pitch":"Mí","freq":330},{"text":"wani","tone":"mid","pitch":"Re","freq":293},{"text":"labari","tone":"low","pitch":"Dó","freq":261},{"text":"mai","tone":"high","pitch":"Mí","freq":330},{"text":"dadi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #21 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":22,"title":"Lesson 22: Ina son wasan gargajiya ...","category":"Conversations & Culture","phrase":"Ina son wasan gargajiya da waka","phonetic":"[ina son wasan gargajiya da waka]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ina","tone":"high","pitch":"Mí","freq":330},{"text":"son","tone":"mid","pitch":"Re","freq":293},{"text":"wasan","tone":"low","pitch":"Dó","freq":261},{"text":"gargajiya","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #22 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":23,"title":"Lesson 23: Kayan alada na Hausa sun...","category":"Conversations & Culture","phrase":"Kayan alada na Hausa suna da kyau","phonetic":"[kayan alada na hausa suna da kyau]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kayan","tone":"high","pitch":"Mí","freq":330},{"text":"alada","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"Hausa","tone":"high","pitch":"Mí","freq":330},{"text":"suna","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #23 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":24,"title":"Lesson 24: Mu yi wasan dara tare...","category":"Conversations & Culture","phrase":"Mu yi wasan dara tare","phonetic":"[mu yi wasan dara tare]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Mu","tone":"high","pitch":"Mí","freq":330},{"text":"yi","tone":"mid","pitch":"Re","freq":293},{"text":"wasan","tone":"low","pitch":"Dó","freq":261},{"text":"dara","tone":"high","pitch":"Mí","freq":330},{"text":"tare","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #24 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":25,"title":"Lesson 25: Gangar gargajiya tana bu...","category":"Conversations & Culture","phrase":"Gangar gargajiya tana bugawa a fada","phonetic":"[gangar gargajiya tana bugawa a fada]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Gangar","tone":"high","pitch":"Mí","freq":330},{"text":"gargajiya","tone":"mid","pitch":"Re","freq":293},{"text":"tana","tone":"low","pitch":"Dó","freq":261},{"text":"bugawa","tone":"high","pitch":"Mí","freq":330},{"text":"a","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #25 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":26,"title":"Lesson 26: Ba ni tuwon shinkafa da ...","category":"Conversations & Culture","phrase":"Ba ni tuwon shinkafa da miyar kuka","phonetic":"[ba ni tuwon shinkafa da miyar kuka]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ba","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"tuwon","tone":"low","pitch":"Dó","freq":261},{"text":"shinkafa","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #26 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":27,"title":"Lesson 27: Karfe nawa ne yanzu?...","category":"Conversations & Culture","phrase":"Karfe nawa ne yanzu?","phonetic":"[karfe nawa ne yanzu?]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Karfe","tone":"high","pitch":"Mí","freq":330},{"text":"nawa","tone":"mid","pitch":"Re","freq":293},{"text":"ne","tone":"low","pitch":"Dó","freq":261},{"text":"yanzu","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #27 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":28,"title":"Lesson 28: Kakar tana koya mini tar...","category":"Conversations & Culture","phrase":"Kakar tana koya mini tarihin da","phonetic":"[kakar tana koya mini tarihin da]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kakar","tone":"high","pitch":"Mí","freq":330},{"text":"tana","tone":"mid","pitch":"Re","freq":293},{"text":"koya","tone":"low","pitch":"Dó","freq":261},{"text":"mini","tone":"high","pitch":"Mí","freq":330},{"text":"tarihin","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #28 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":29,"title":"Lesson 29: Kano da Zariya birane ne...","category":"Conversations & Culture","phrase":"Kano da Zariya birane ne masu tarihi","phonetic":"[kano da zariya birane ne masu tarihi]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kano","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293},{"text":"Zariya","tone":"low","pitch":"Dó","freq":261},{"text":"birane","tone":"high","pitch":"Mí","freq":330},{"text":"ne","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #29 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":30,"title":"Lesson 30: Yaren Hausa da ilimin kw...","category":"Conversations & Culture","phrase":"Yaren Hausa da ilimin kwamfuta","phonetic":"[yaren hausa da ilimin kwamfuta]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Yaren","tone":"high","pitch":"Mí","freq":330},{"text":"Hausa","tone":"mid","pitch":"Re","freq":293},{"text":"da","tone":"low","pitch":"Dó","freq":261},{"text":"ilimin","tone":"high","pitch":"Mí","freq":330},{"text":"kwamfuta","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #30 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":31,"title":"Lesson 31: Bikin Sabon Hatsi ya zo ...","category":"Rhythm & Community","phrase":"Bikin Sabon Hatsi ya zo da farin ciki","phonetic":"[bikin sabon hatsi ya zo da farin ciki]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Bikin","tone":"high","pitch":"Mí","freq":330},{"text":"Sabon","tone":"mid","pitch":"Re","freq":293},{"text":"Hatsi","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"zo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #31 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":32,"title":"Lesson 32: Don Allah a rage min kud...","category":"Rhythm & Community","phrase":"Don Allah a rage min kudi kadan","phonetic":"[don allah a rage min kudi kadan]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Don","tone":"high","pitch":"Mí","freq":330},{"text":"Allah","tone":"mid","pitch":"Re","freq":293},{"text":"a","tone":"low","pitch":"Dó","freq":261},{"text":"rage","tone":"high","pitch":"Mí","freq":330},{"text":"min","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #32 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":33,"title":"Lesson 33: A ganina, yarenmu shi ne...","category":"Rhythm & Community","phrase":"A ganina, yarenmu shi ne asalin hikimarmu","phonetic":"[a ganina, yarenmu shi ne asalin hikimarmu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"A","tone":"high","pitch":"Mí","freq":330},{"text":"ganina","tone":"mid","pitch":"Re","freq":293},{"text":"yarenmu","tone":"low","pitch":"Dó","freq":261},{"text":"shi","tone":"high","pitch":"Mí","freq":330},{"text":"ne","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #33 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":34,"title":"Lesson 34: Zuma tana da dadi, barko...","category":"Rhythm & Community","phrase":"Zuma tana da dadi, barkono yana da yaji","phonetic":"[zuma tana da dadi, barkono yana da yaji]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Zuma","tone":"high","pitch":"Mí","freq":330},{"text":"tana","tone":"mid","pitch":"Re","freq":293},{"text":"da","tone":"low","pitch":"Dó","freq":261},{"text":"dadi","tone":"high","pitch":"Mí","freq":330},{"text":"barkono","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #34 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":35,"title":"Lesson 35: Kada ka damu, lafiya za ...","category":"Rhythm & Community","phrase":"Kada ka damu, lafiya za a samu","phonetic":"[kada ka damu, lafiya za a samu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kada","tone":"high","pitch":"Mí","freq":330},{"text":"ka","tone":"mid","pitch":"Re","freq":293},{"text":"damu","tone":"low","pitch":"Dó","freq":261},{"text":"lafiya","tone":"high","pitch":"Mí","freq":330},{"text":"za","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #35 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":36,"title":"Lesson 36: Bi hannun dama, wuce kas...","category":"Rhythm & Community","phrase":"Bi hannun dama, wuce kasuwa","phonetic":"[bi hannun dama, wuce kasuwa]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Bi","tone":"high","pitch":"Mí","freq":330},{"text":"hannun","tone":"mid","pitch":"Re","freq":293},{"text":"dama","tone":"low","pitch":"Dó","freq":261},{"text":"wuce","tone":"high","pitch":"Mí","freq":330},{"text":"kasuwa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #36 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":37,"title":"Lesson 37: Zaki shi ne sarkin daji...","category":"Rhythm & Community","phrase":"Zaki shi ne sarkin daji","phonetic":"[zaki shi ne sarkin daji]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Zaki","tone":"high","pitch":"Mí","freq":330},{"text":"shi","tone":"mid","pitch":"Re","freq":293},{"text":"ne","tone":"low","pitch":"Dó","freq":261},{"text":"sarkin","tone":"high","pitch":"Mí","freq":330},{"text":"daji","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #37 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":38,"title":"Lesson 38: Ka yi hakuri, ba zan sak...","category":"Rhythm & Community","phrase":"Ka yi hakuri, ba zan sake ba","phonetic":"[ka yi hakuri, ba zan sake ba]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ka","tone":"high","pitch":"Mí","freq":330},{"text":"yi","tone":"mid","pitch":"Re","freq":293},{"text":"hakuri","tone":"low","pitch":"Dó","freq":261},{"text":"ba","tone":"high","pitch":"Mí","freq":330},{"text":"zan","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #38 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":39,"title":"Lesson 39: Yi barci mai dadi ya dan...","category":"Rhythm & Community","phrase":"Yi barci mai dadi ya dana","phonetic":"[yi barci mai dadi ya dana]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Yi","tone":"high","pitch":"Mí","freq":330},{"text":"barci","tone":"mid","pitch":"Re","freq":293},{"text":"mai","tone":"low","pitch":"Dó","freq":261},{"text":"dadi","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #39 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":40,"title":"Lesson 40: Yaren Hausa zai dore har...","category":"Rhythm & Community","phrase":"Yaren Hausa zai dore har abada!","phonetic":"[yaren hausa zai dore har abada!]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Yaren","tone":"high","pitch":"Mí","freq":330},{"text":"Hausa","tone":"mid","pitch":"Re","freq":293},{"text":"zai","tone":"low","pitch":"Dó","freq":261},{"text":"dore","tone":"high","pitch":"Mí","freq":330},{"text":"har","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #40 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2}],"advanced":[{"id":41,"title":"Lesson 41: Mai hakuri yana dafa dut...","category":"Classical Proverbs","phrase":"Mai hakuri yana dafa dutse har ya sha romonsa","phonetic":"[mai hakuri yana dafa dutse har ya sha romonsa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Mai","tone":"high","pitch":"Mí","freq":330},{"text":"hakuri","tone":"mid","pitch":"Re","freq":293},{"text":"yana","tone":"low","pitch":"Dó","freq":261},{"text":"dafa","tone":"high","pitch":"Mí","freq":330},{"text":"dutse","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #41 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":42,"title":"Lesson 42: Hannu daya ba ya daukar ...","category":"Classical Proverbs","phrase":"Hannu daya ba ya daukar jinka","phonetic":"[hannu daya ba ya daukar jinka]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Hannu","tone":"high","pitch":"Mí","freq":330},{"text":"daya","tone":"mid","pitch":"Re","freq":293},{"text":"ba","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"daukar","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #42 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":43,"title":"Lesson 43: Kada a manta da asalin g...","category":"Classical Proverbs","phrase":"Kada a manta da asalin gida","phonetic":"[kada a manta da asalin gida]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kada","tone":"high","pitch":"Mí","freq":330},{"text":"a","tone":"mid","pitch":"Re","freq":293},{"text":"manta","tone":"low","pitch":"Dó","freq":261},{"text":"da","tone":"high","pitch":"Mí","freq":330},{"text":"asalin","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #43 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":44,"title":"Lesson 44: Gaisuwar ban girma ga Sa...","category":"Classical Proverbs","phrase":"Gaisuwar ban girma ga Sarki mai adalci","phonetic":"[gaisuwar ban girma ga sarki mai adalci]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Gaisuwar","tone":"high","pitch":"Mí","freq":330},{"text":"ban","tone":"mid","pitch":"Re","freq":293},{"text":"girma","tone":"low","pitch":"Dó","freq":261},{"text":"ga","tone":"high","pitch":"Mí","freq":330},{"text":"Sarki","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #44 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":45,"title":"Lesson 45: Kyakkyawan hali shi ne a...","category":"Classical Proverbs","phrase":"Kyakkyawan hali shi ne ado na gari","phonetic":"[kyakkyawan hali shi ne ado na gari]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kyakkyawan","tone":"high","pitch":"Mí","freq":330},{"text":"hali","tone":"mid","pitch":"Re","freq":293},{"text":"shi","tone":"low","pitch":"Dó","freq":261},{"text":"ne","tone":"high","pitch":"Mí","freq":330},{"text":"ado","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #45 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":46,"title":"Lesson 46: Labarin Gizo da Koki a d...","category":"Classical Proverbs","phrase":"Labarin Gizo da Koki a daji","phonetic":"[labarin gizo da koki a daji]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Labarin","tone":"high","pitch":"Mí","freq":330},{"text":"Gizo","tone":"mid","pitch":"Re","freq":293},{"text":"da","tone":"low","pitch":"Dó","freq":261},{"text":"Koki","tone":"high","pitch":"Mí","freq":330},{"text":"a","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #46 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":47,"title":"Lesson 47: Kogin da ya manta tushen...","category":"Classical Proverbs","phrase":"Kogin da ya manta tushensa zai bushe","phonetic":"[kogin da ya manta tushensa zai bushe]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kogin","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293},{"text":"ya","tone":"low","pitch":"Dó","freq":261},{"text":"manta","tone":"high","pitch":"Mí","freq":330},{"text":"tushensa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #47 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":48,"title":"Lesson 48: Muna daga zuriar mutanen...","category":"Classical Proverbs","phrase":"Muna daga zuriar mutanen kwarai","phonetic":"[muna daga zuriar mutanen kwarai]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Muna","tone":"high","pitch":"Mí","freq":330},{"text":"daga","tone":"mid","pitch":"Re","freq":293},{"text":"zuriar","tone":"low","pitch":"Dó","freq":261},{"text":"mutanen","tone":"high","pitch":"Mí","freq":330},{"text":"kwarai","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #48 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":49,"title":"Lesson 49: Magungunan gargajiya na ...","category":"Classical Proverbs","phrase":"Magungunan gargajiya na ganyaye","phonetic":"[magungunan gargajiya na ganyaye]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Magungunan","tone":"high","pitch":"Mí","freq":330},{"text":"gargajiya","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"ganyaye","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #49 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":50,"title":"Lesson 50: Shugaba mai hakuri shi k...","category":"Classical Proverbs","phrase":"Shugaba mai hakuri shi ke tara jamaa","phonetic":"[shugaba mai hakuri shi ke tara jamaa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Shugaba","tone":"high","pitch":"Mí","freq":330},{"text":"mai","tone":"mid","pitch":"Re","freq":293},{"text":"hakuri","tone":"low","pitch":"Dó","freq":261},{"text":"shi","tone":"high","pitch":"Mí","freq":330},{"text":"ke","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #50 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":51,"title":"Lesson 51: Saurari muryar kakanni a...","category":"Philosophy & Blessings","phrase":"Saurari muryar kakanni a cikin iska","phonetic":"[saurari muryar kakanni a cikin iska]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Saurari","tone":"high","pitch":"Mí","freq":330},{"text":"muryar","tone":"mid","pitch":"Re","freq":293},{"text":"kakanni","tone":"low","pitch":"Dó","freq":261},{"text":"a","tone":"high","pitch":"Mí","freq":330},{"text":"cikin","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #51 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":52,"title":"Lesson 52: Wane abu ne yake tafiya ...","category":"Philosophy & Blessings","phrase":"Wane abu ne yake tafiya ba kafa? (Iska)","phonetic":"[wane abu ne yake tafiya ba kafa? (iska)]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Wane","tone":"high","pitch":"Mí","freq":330},{"text":"abu","tone":"mid","pitch":"Re","freq":293},{"text":"ne","tone":"low","pitch":"Dó","freq":261},{"text":"yake","tone":"high","pitch":"Mí","freq":330},{"text":"tafiya","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #52 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":53,"title":"Lesson 53: Fasahar zamani a harshen...","category":"Philosophy & Blessings","phrase":"Fasahar zamani a harshen Hausa","phonetic":"[fasahar zamani a harshen hausa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Fasahar","tone":"high","pitch":"Mí","freq":330},{"text":"zamani","tone":"mid","pitch":"Re","freq":293},{"text":"a","tone":"low","pitch":"Dó","freq":261},{"text":"harshen","tone":"high","pitch":"Mí","freq":330},{"text":"Hausa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #53 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":54,"title":"Lesson 54: Bari mu sasanta da kalam...","category":"Philosophy & Blessings","phrase":"Bari mu sasanta da kalaman alheri","phonetic":"[bari mu sasanta da kalaman alheri]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Bari","tone":"high","pitch":"Mí","freq":330},{"text":"mu","tone":"mid","pitch":"Re","freq":293},{"text":"sasanta","tone":"low","pitch":"Dó","freq":261},{"text":"da","tone":"high","pitch":"Mí","freq":330},{"text":"kalaman","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #54 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":55,"title":"Lesson 55: Lokaci ba ya jiran kowa...","category":"Philosophy & Blessings","phrase":"Lokaci ba ya jiran kowa","phonetic":"[lokaci ba ya jiran kowa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Lokaci","tone":"high","pitch":"Mí","freq":330},{"text":"ba","tone":"mid","pitch":"Re","freq":293},{"text":"ya","tone":"low","pitch":"Dó","freq":261},{"text":"jiran","tone":"high","pitch":"Mí","freq":330},{"text":"kowa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #55 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":56,"title":"Lesson 56: Matasa ne ginshikin gobe...","category":"Philosophy & Blessings","phrase":"Matasa ne ginshikin gobenmu","phonetic":"[matasa ne ginshikin gobenmu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Matasa","tone":"high","pitch":"Mí","freq":330},{"text":"ne","tone":"mid","pitch":"Re","freq":293},{"text":"ginshikin","tone":"low","pitch":"Dó","freq":261},{"text":"gobenmu","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #56 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":57,"title":"Lesson 57: Uda da sauti na musamman...","category":"Philosophy & Blessings","phrase":"Uda da sauti na musamman a Hausa","phonetic":"[uda da sauti na musamman a hausa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Uda","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293},{"text":"sauti","tone":"low","pitch":"Dó","freq":261},{"text":"na","tone":"high","pitch":"Mí","freq":330},{"text":"musamman","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #57 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":58,"title":"Lesson 58: Addua da albarka ga duk ...","category":"Philosophy & Blessings","phrase":"Addua da albarka ga duk mai neman sani","phonetic":"[addua da albarka ga duk mai neman sani]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Addua","tone":"high","pitch":"Mí","freq":330},{"text":"da","tone":"mid","pitch":"Re","freq":293},{"text":"albarka","tone":"low","pitch":"Dó","freq":261},{"text":"ga","tone":"high","pitch":"Mí","freq":330},{"text":"duk","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #58 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":59,"title":"Lesson 59: Ilmi garkuwar rayuwa ce...","category":"Philosophy & Blessings","phrase":"Ilmi garkuwar rayuwa ce","phonetic":"[ilmi garkuwar rayuwa ce]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ilmi","tone":"high","pitch":"Mí","freq":330},{"text":"garkuwar","tone":"mid","pitch":"Re","freq":293},{"text":"rayuwa","tone":"low","pitch":"Dó","freq":261},{"text":"ce","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #59 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":60,"title":"Lesson 60: Amin! Allah Ya kara mana...","category":"Philosophy & Blessings","phrase":"Amin! Allah Ya kara mana basira da daukaka!","phonetic":"[amin! allah ya kara mana basira da daukaka!]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Amin","tone":"high","pitch":"Mí","freq":330},{"text":"Allah","tone":"mid","pitch":"Re","freq":293},{"text":"Ya","tone":"low","pitch":"Dó","freq":261},{"text":"kara","tone":"high","pitch":"Mí","freq":330},{"text":"mana","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #60 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3}]},"swahili":{"beginner":[{"id":1,"title":"Lesson 1: Habari za asubuhi, asant...","category":"Greetings & Tones","phrase":"Habari za asubuhi, asante sana","phonetic":"[habari za asubuhi, asante sana]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Habari","tone":"high","pitch":"Mí","freq":330},{"text":"za","tone":"mid","pitch":"Re","freq":293},{"text":"asubuhi","tone":"low","pitch":"Dó","freq":261},{"text":"asante","tone":"high","pitch":"Mí","freq":330},{"text":"sana","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #1 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":2,"title":"Lesson 2: Hujambo rafiki yangu mpe...","category":"Greetings & Tones","phrase":"Hujambo rafiki yangu mpendwa?","phonetic":"[hujambo rafiki yangu mpendwa?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Hujambo","tone":"high","pitch":"Mí","freq":330},{"text":"rafiki","tone":"mid","pitch":"Re","freq":293},{"text":"yangu","tone":"low","pitch":"Dó","freq":261},{"text":"mpendwa","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #2 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":3,"title":"Lesson 3: Jina langu ni Baraka, ni...","category":"Greetings & Tones","phrase":"Jina langu ni Baraka, nina furaha tele","phonetic":"[jina langu ni baraka, nina furaha tele]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Jina","tone":"high","pitch":"Mí","freq":330},{"text":"langu","tone":"mid","pitch":"Re","freq":293},{"text":"ni","tone":"low","pitch":"Dó","freq":261},{"text":"Baraka","tone":"high","pitch":"Mí","freq":330},{"text":"nina","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #3 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":4,"title":"Lesson 4: Moja, Mbili, Tatu, Nne, ...","category":"Greetings & Tones","phrase":"Moja, Mbili, Tatu, Nne, Tano","phonetic":"[moja, mbili, tatu, nne, tano]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Moja","tone":"high","pitch":"Mí","freq":330},{"text":"Mbili","tone":"mid","pitch":"Re","freq":293},{"text":"Tatu","tone":"low","pitch":"Dó","freq":261},{"text":"Nne","tone":"high","pitch":"Mí","freq":330},{"text":"Tano","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #4 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":5,"title":"Lesson 5: Sita, Saba, Nane, Tisa, ...","category":"Greetings & Tones","phrase":"Sita, Saba, Nane, Tisa, Kumi","phonetic":"[sita, saba, nane, tisa, kumi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Sita","tone":"high","pitch":"Mí","freq":330},{"text":"Saba","tone":"mid","pitch":"Re","freq":293},{"text":"Nane","tone":"low","pitch":"Dó","freq":261},{"text":"Tisa","tone":"high","pitch":"Mí","freq":330},{"text":"Kumi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #5 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":6,"title":"Lesson 6: Baba yangu, Mama yangu, ...","category":"Numbers & Kinship","phrase":"Baba yangu, Mama yangu, na Ndugu yangu","phonetic":"[baba yangu, mama yangu, na ndugu yangu]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Baba","tone":"high","pitch":"Mí","freq":330},{"text":"yangu","tone":"mid","pitch":"Re","freq":293},{"text":"Mama","tone":"low","pitch":"Dó","freq":261},{"text":"yangu","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #6 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":7,"title":"Lesson 7: Tafadhali, nipe maji bar...","category":"Numbers & Kinship","phrase":"Tafadhali, nipe maji baridi ya kunywa","phonetic":"[tafadhali, nipe maji baridi ya kunywa]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Tafadhali","tone":"high","pitch":"Mí","freq":330},{"text":"nipe","tone":"mid","pitch":"Re","freq":293},{"text":"maji","tone":"low","pitch":"Dó","freq":261},{"text":"baridi","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #7 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":8,"title":"Lesson 8: Nyekundu kama moto, Nyeu...","category":"Numbers & Kinship","phrase":"Nyekundu kama moto, Nyeusi, Nyeupe","phonetic":"[nyekundu kama moto, nyeusi, nyeupe]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nyekundu","tone":"high","pitch":"Mí","freq":330},{"text":"kama","tone":"mid","pitch":"Re","freq":293},{"text":"moto","tone":"low","pitch":"Dó","freq":261},{"text":"Nyeusi","tone":"high","pitch":"Mí","freq":330},{"text":"Nyeupe","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #8 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":9,"title":"Lesson 9: Nyumba yetu ni nzuri na ...","category":"Numbers & Kinship","phrase":"Nyumba yetu ni nzuri na safi sana","phonetic":"[nyumba yetu ni nzuri na safi sana]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nyumba","tone":"high","pitch":"Mí","freq":330},{"text":"yetu","tone":"mid","pitch":"Re","freq":293},{"text":"ni","tone":"low","pitch":"Dó","freq":261},{"text":"nzuri","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #9 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":10,"title":"Lesson 10: Nina amani moyoni mwangu...","category":"Numbers & Kinship","phrase":"Nina amani moyoni mwangu leo","phonetic":"[nina amani moyoni mwangu leo]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Nina","tone":"high","pitch":"Mí","freq":330},{"text":"amani","tone":"mid","pitch":"Re","freq":293},{"text":"moyoni","tone":"low","pitch":"Dó","freq":261},{"text":"mwangu","tone":"high","pitch":"Mí","freq":330},{"text":"leo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #10 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":11,"title":"Lesson 11: Ndiyo bibi, Hapana bwana...","category":"Daily Life & Nature","phrase":"Ndiyo bibi, Hapana bwana, asante","phonetic":"[ndiyo bibi, hapana bwana, asante]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Ndiyo","tone":"high","pitch":"Mí","freq":330},{"text":"bibi","tone":"mid","pitch":"Re","freq":293},{"text":"Hapana","tone":"low","pitch":"Dó","freq":261},{"text":"bwana","tone":"high","pitch":"Mí","freq":330},{"text":"asante","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #11 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":12,"title":"Lesson 12: Hii samaki safi ni bei g...","category":"Daily Life & Nature","phrase":"Hii samaki safi ni bei gani?","phonetic":"[hii samaki safi ni bei gani?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Hii","tone":"high","pitch":"Mí","freq":330},{"text":"samaki","tone":"mid","pitch":"Re","freq":293},{"text":"safi","tone":"low","pitch":"Dó","freq":261},{"text":"ni","tone":"high","pitch":"Mí","freq":330},{"text":"bei","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #12 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":13,"title":"Lesson 13: Mbwa anabweka, Kuku anaw...","category":"Daily Life & Nature","phrase":"Mbwa anabweka, Kuku anawika asubuhi","phonetic":"[mbwa anabweka, kuku anawika asubuhi]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Mbwa","tone":"high","pitch":"Mí","freq":330},{"text":"anabweka","tone":"mid","pitch":"Re","freq":293},{"text":"Kuku","tone":"low","pitch":"Dó","freq":261},{"text":"anawika","tone":"high","pitch":"Mí","freq":330},{"text":"asubuhi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #13 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":14,"title":"Lesson 14: Jumatatu, Jumanne, Jumap...","category":"Daily Life & Nature","phrase":"Jumatatu, Jumanne, Jumapili","phonetic":"[jumatatu, jumanne, jumapili]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Jumatatu","tone":"high","pitch":"Mí","freq":330},{"text":"Jumanne","tone":"mid","pitch":"Re","freq":293},{"text":"Jumapili","tone":"low","pitch":"Dó","freq":261}],"translation":"Interactive voice training phrase #14 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":15,"title":"Lesson 15: Kichwa, Macho, Pua, Mdom...","category":"Daily Life & Nature","phrase":"Kichwa, Macho, Pua, Mdomo, Mikono na Miguu","phonetic":"[kichwa, macho, pua, mdomo, mikono na miguu]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Kichwa","tone":"high","pitch":"Mí","freq":330},{"text":"Macho","tone":"mid","pitch":"Re","freq":293},{"text":"Pua","tone":"low","pitch":"Dó","freq":261},{"text":"Mdomo","tone":"high","pitch":"Mí","freq":330},{"text":"Mikono","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #15 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":16,"title":"Lesson 16: Shule yetu nzuri iko wap...","category":"Daily Life & Nature","phrase":"Shule yetu nzuri iko wapi?","phonetic":"[shule yetu nzuri iko wapi?]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Shule","tone":"high","pitch":"Mí","freq":330},{"text":"yetu","tone":"mid","pitch":"Re","freq":293},{"text":"nzuri","tone":"low","pitch":"Dó","freq":261},{"text":"iko","tone":"high","pitch":"Mí","freq":330},{"text":"wapi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #16 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":17,"title":"Lesson 17: Karibu tule chakula kita...","category":"Daily Life & Nature","phrase":"Karibu tule chakula kitamu pamoja","phonetic":"[karibu tule chakula kitamu pamoja]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Karibu","tone":"high","pitch":"Mí","freq":330},{"text":"tule","tone":"mid","pitch":"Re","freq":293},{"text":"chakula","tone":"low","pitch":"Dó","freq":261},{"text":"kitamu","tone":"high","pitch":"Mí","freq":330},{"text":"pamoja","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #17 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":18,"title":"Lesson 18: Jua linangaa, mvua inany...","category":"Daily Life & Nature","phrase":"Jua linangaa, mvua inanyesha ardhini","phonetic":"[jua linangaa, mvua inanyesha ardhini]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Jua","tone":"high","pitch":"Mí","freq":330},{"text":"linangaa","tone":"mid","pitch":"Re","freq":293},{"text":"mvua","tone":"low","pitch":"Dó","freq":261},{"text":"inanyesha","tone":"high","pitch":"Mí","freq":330},{"text":"ardhini","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #18 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":19,"title":"Lesson 19: Lala salama, Mungu atuli...","category":"Daily Life & Nature","phrase":"Lala salama, Mungu atulinde sote","phonetic":"[lala salama, mungu atulinde sote]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Lala","tone":"high","pitch":"Mí","freq":330},{"text":"salama","tone":"mid","pitch":"Re","freq":293},{"text":"Mungu","tone":"low","pitch":"Dó","freq":261},{"text":"atulinde","tone":"high","pitch":"Mí","freq":330},{"text":"sote","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #19 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1},{"id":20,"title":"Lesson 20: Mimi ni mtoto shujaa, lu...","category":"Daily Life & Nature","phrase":"Mimi ni mtoto shujaa, lugha yangu ni fahari yangu!","phonetic":"[mimi ni mtoto shujaa, lugha yangu ni fahari yangu!]","tonePattern":"Dó-Re-Mí Fundamental Tone Progression","syllables":[{"text":"Mimi","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"mtoto","tone":"low","pitch":"Dó","freq":261},{"text":"shujaa","tone":"high","pitch":"Mí","freq":330},{"text":"lugha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #20 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":1}],"intermediate":[{"id":21,"title":"Lesson 21: Paukwa! Pakawa! Hadithi ...","category":"Conversations & Culture","phrase":"Paukwa! Pakawa! Hadithi njoo...","phonetic":"[paukwa! pakawa! hadithi njoo...]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Paukwa","tone":"high","pitch":"Mí","freq":330},{"text":"Pakawa","tone":"mid","pitch":"Re","freq":293},{"text":"Hadithi","tone":"low","pitch":"Dó","freq":261},{"text":"njoo","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #21 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":22,"title":"Lesson 22: Ninapenda michezo ya kit...","category":"Conversations & Culture","phrase":"Ninapenda michezo ya kitamaduni na nyimbo","phonetic":"[ninapenda michezo ya kitamaduni na nyimbo]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ninapenda","tone":"high","pitch":"Mí","freq":330},{"text":"michezo","tone":"mid","pitch":"Re","freq":293},{"text":"ya","tone":"low","pitch":"Dó","freq":261},{"text":"kitamaduni","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #22 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":23,"title":"Lesson 23: Mavazi ya asili ya Kiafr...","category":"Conversations & Culture","phrase":"Mavazi ya asili ya Kiafrika yanapendeza","phonetic":"[mavazi ya asili ya kiafrika yanapendeza]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Mavazi","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293},{"text":"asili","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"Kiafrika","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #23 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":24,"title":"Lesson 24: Tushiriki mchezo wa bao...","category":"Conversations & Culture","phrase":"Tushiriki mchezo wa bao","phonetic":"[tushiriki mchezo wa bao]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Tushiriki","tone":"high","pitch":"Mí","freq":330},{"text":"mchezo","tone":"mid","pitch":"Re","freq":293},{"text":"wa","tone":"low","pitch":"Dó","freq":261},{"text":"bao","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #24 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":25,"title":"Lesson 25: Ngoma za kitamaduni zina...","category":"Conversations & Culture","phrase":"Ngoma za kitamaduni zinasikika kijijini","phonetic":"[ngoma za kitamaduni zinasikika kijijini]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ngoma","tone":"high","pitch":"Mí","freq":330},{"text":"za","tone":"mid","pitch":"Re","freq":293},{"text":"kitamaduni","tone":"low","pitch":"Dó","freq":261},{"text":"zinasikika","tone":"high","pitch":"Mí","freq":330},{"text":"kijijini","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #25 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":26,"title":"Lesson 26: Nipe ugali na sukuma wik...","category":"Conversations & Culture","phrase":"Nipe ugali na sukuma wiki na samaki","phonetic":"[nipe ugali na sukuma wiki na samaki]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nipe","tone":"high","pitch":"Mí","freq":330},{"text":"ugali","tone":"mid","pitch":"Re","freq":293},{"text":"na","tone":"low","pitch":"Dó","freq":261},{"text":"sukuma","tone":"high","pitch":"Mí","freq":330},{"text":"wiki","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #26 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":27,"title":"Lesson 27: Ni saa ngapi sasa hivi?...","category":"Conversations & Culture","phrase":"Ni saa ngapi sasa hivi?","phonetic":"[ni saa ngapi sasa hivi?]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Ni","tone":"high","pitch":"Mí","freq":330},{"text":"saa","tone":"mid","pitch":"Re","freq":293},{"text":"ngapi","tone":"low","pitch":"Dó","freq":261},{"text":"sasa","tone":"high","pitch":"Mí","freq":330},{"text":"hivi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #27 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":28,"title":"Lesson 28: Nyanya ananifundisha mas...","category":"Conversations & Culture","phrase":"Nyanya ananifundisha mashairi ya kale","phonetic":"[nyanya ananifundisha mashairi ya kale]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nyanya","tone":"high","pitch":"Mí","freq":330},{"text":"ananifundisha","tone":"mid","pitch":"Re","freq":293},{"text":"mashairi","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"kale","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #28 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":29,"title":"Lesson 29: Nairobi na Mombasa ni mi...","category":"Conversations & Culture","phrase":"Nairobi na Mombasa ni miji mizuri","phonetic":"[nairobi na mombasa ni miji mizuri]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nairobi","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"Mombasa","tone":"low","pitch":"Dó","freq":261},{"text":"ni","tone":"high","pitch":"Mí","freq":330},{"text":"miji","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #29 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":30,"title":"Lesson 30: Kiswahili na teknolojia ...","category":"Conversations & Culture","phrase":"Kiswahili na teknolojia ya kompyuta","phonetic":"[kiswahili na teknolojia ya kompyuta]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kiswahili","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"teknolojia","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"kompyuta","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #30 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":31,"title":"Lesson 31: Sikukuu ya mavuno imewas...","category":"Rhythm & Community","phrase":"Sikukuu ya mavuno imewasili kwa furaha","phonetic":"[sikukuu ya mavuno imewasili kwa furaha]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Sikukuu","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293},{"text":"mavuno","tone":"low","pitch":"Dó","freq":261},{"text":"imewasili","tone":"high","pitch":"Mí","freq":330},{"text":"kwa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #31 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":32,"title":"Lesson 32: Tafadhali nipunguzie bei...","category":"Rhythm & Community","phrase":"Tafadhali nipunguzie bei kidogo","phonetic":"[tafadhali nipunguzie bei kidogo]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Tafadhali","tone":"high","pitch":"Mí","freq":330},{"text":"nipunguzie","tone":"mid","pitch":"Re","freq":293},{"text":"bei","tone":"low","pitch":"Dó","freq":261},{"text":"kidogo","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #32 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":33,"title":"Lesson 33: Kwa maoni yangu, lugha y...","category":"Rhythm & Community","phrase":"Kwa maoni yangu, lugha yetu ni utajiri wetu","phonetic":"[kwa maoni yangu, lugha yetu ni utajiri wetu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kwa","tone":"high","pitch":"Mí","freq":330},{"text":"maoni","tone":"mid","pitch":"Re","freq":293},{"text":"yangu","tone":"low","pitch":"Dó","freq":261},{"text":"lugha","tone":"high","pitch":"Mí","freq":330},{"text":"yetu","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #33 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":34,"title":"Lesson 34: Asali ni tamu, pilipili ...","category":"Rhythm & Community","phrase":"Asali ni tamu, pilipili inawasha","phonetic":"[asali ni tamu, pilipili inawasha]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Asali","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"tamu","tone":"low","pitch":"Dó","freq":261},{"text":"pilipili","tone":"high","pitch":"Mí","freq":330},{"text":"inawasha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #34 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":35,"title":"Lesson 35: Usijali, amani itatawala...","category":"Rhythm & Community","phrase":"Usijali, amani itatawala","phonetic":"[usijali, amani itatawala]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Usijali","tone":"high","pitch":"Mí","freq":330},{"text":"amani","tone":"mid","pitch":"Re","freq":293},{"text":"itatawala","tone":"low","pitch":"Dó","freq":261}],"translation":"Interactive voice training phrase #35 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":36,"title":"Lesson 36: Shika mkono wa kulia, pi...","category":"Rhythm & Community","phrase":"Shika mkono wa kulia, pita sokoni","phonetic":"[shika mkono wa kulia, pita sokoni]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Shika","tone":"high","pitch":"Mí","freq":330},{"text":"mkono","tone":"mid","pitch":"Re","freq":293},{"text":"wa","tone":"low","pitch":"Dó","freq":261},{"text":"kulia","tone":"high","pitch":"Mí","freq":330},{"text":"pita","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #36 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":37,"title":"Lesson 37: Simba ndiye mfalme wa wa...","category":"Rhythm & Community","phrase":"Simba ndiye mfalme wa wanyama wote","phonetic":"[simba ndiye mfalme wa wanyama wote]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Simba","tone":"high","pitch":"Mí","freq":330},{"text":"ndiye","tone":"mid","pitch":"Re","freq":293},{"text":"mfalme","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"wanyama","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #37 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":38,"title":"Lesson 38: Nisamehe, sitafanya tena...","category":"Rhythm & Community","phrase":"Nisamehe, sitafanya tena","phonetic":"[nisamehe, sitafanya tena]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Nisamehe","tone":"high","pitch":"Mí","freq":330},{"text":"sitafanya","tone":"mid","pitch":"Re","freq":293},{"text":"tena","tone":"low","pitch":"Dó","freq":261}],"translation":"Interactive voice training phrase #38 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":39,"title":"Lesson 39: Lala usingizi mnono mwan...","category":"Rhythm & Community","phrase":"Lala usingizi mnono mwanangu","phonetic":"[lala usingizi mnono mwanangu]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Lala","tone":"high","pitch":"Mí","freq":330},{"text":"usingizi","tone":"mid","pitch":"Re","freq":293},{"text":"mnono","tone":"low","pitch":"Dó","freq":261},{"text":"mwanangu","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #39 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2},{"id":40,"title":"Lesson 40: Kiswahili kitadumu midom...","category":"Rhythm & Community","phrase":"Kiswahili kitadumu midomoni mwetu daima!","phonetic":"[kiswahili kitadumu midomoni mwetu daima!]","tonePattern":"Intermediate Dynamic Pitch Harmony","syllables":[{"text":"Kiswahili","tone":"high","pitch":"Mí","freq":330},{"text":"kitadumu","tone":"mid","pitch":"Re","freq":293},{"text":"midomoni","tone":"low","pitch":"Dó","freq":261},{"text":"mwetu","tone":"high","pitch":"Mí","freq":330},{"text":"daima","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #40 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":2}],"advanced":[{"id":41,"title":"Lesson 41: Mvumilivu hula mbivu sik...","category":"Classical Proverbs","phrase":"Mvumilivu hula mbivu siku zote","phonetic":"[mvumilivu hula mbivu siku zote]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Mvumilivu","tone":"high","pitch":"Mí","freq":330},{"text":"hula","tone":"mid","pitch":"Re","freq":293},{"text":"mbivu","tone":"low","pitch":"Dó","freq":261},{"text":"siku","tone":"high","pitch":"Mí","freq":330},{"text":"zote","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #41 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":42,"title":"Lesson 42: Umoja ni nguvu, utengano...","category":"Classical Proverbs","phrase":"Umoja ni nguvu, utengano ni udhaifu","phonetic":"[umoja ni nguvu, utengano ni udhaifu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Umoja","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"nguvu","tone":"low","pitch":"Dó","freq":261},{"text":"utengano","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #42 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":43,"title":"Lesson 43: Chururu si ndo ndo ndo...","category":"Classical Proverbs","phrase":"Chururu si ndo ndo ndo","phonetic":"[chururu si ndo ndo ndo]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Chururu","tone":"high","pitch":"Mí","freq":330},{"text":"si","tone":"mid","pitch":"Re","freq":293},{"text":"ndo","tone":"low","pitch":"Dó","freq":261},{"text":"ndo","tone":"high","pitch":"Mí","freq":330},{"text":"ndo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #43 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":44,"title":"Lesson 44: Heshima kuu kwa kiongozi...","category":"Classical Proverbs","phrase":"Heshima kuu kwa kiongozi mwenye hekima","phonetic":"[heshima kuu kwa kiongozi mwenye hekima]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Heshima","tone":"high","pitch":"Mí","freq":330},{"text":"kuu","tone":"mid","pitch":"Re","freq":293},{"text":"kwa","tone":"low","pitch":"Dó","freq":261},{"text":"kiongozi","tone":"high","pitch":"Mí","freq":330},{"text":"mwenye","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #44 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":45,"title":"Lesson 45: Utu na ukarimu ndio uzur...","category":"Classical Proverbs","phrase":"Utu na ukarimu ndio uzuri wa mwanadamu","phonetic":"[utu na ukarimu ndio uzuri wa mwanadamu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Utu","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"ukarimu","tone":"low","pitch":"Dó","freq":261},{"text":"ndio","tone":"high","pitch":"Mí","freq":330},{"text":"uzuri","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #45 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":46,"title":"Lesson 46: Hadithi ya Sungura mjanj...","category":"Classical Proverbs","phrase":"Hadithi ya Sungura mjanja msituni","phonetic":"[hadithi ya sungura mjanja msituni]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Hadithi","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293},{"text":"Sungura","tone":"low","pitch":"Dó","freq":261},{"text":"mjanja","tone":"high","pitch":"Mí","freq":330},{"text":"msituni","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #46 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":47,"title":"Lesson 47: Mto unaosahau chanzo cha...","category":"Classical Proverbs","phrase":"Mto unaosahau chanzo chake hukauka kabisa","phonetic":"[mto unaosahau chanzo chake hukauka kabisa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Mto","tone":"high","pitch":"Mí","freq":330},{"text":"unaosahau","tone":"mid","pitch":"Re","freq":293},{"text":"chanzo","tone":"low","pitch":"Dó","freq":261},{"text":"chake","tone":"high","pitch":"Mí","freq":330},{"text":"hukauka","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #47 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":48,"title":"Lesson 48: Tunatokana na kizazi cha...","category":"Classical Proverbs","phrase":"Tunatokana na kizazi cha mashujaa","phonetic":"[tunatokana na kizazi cha mashujaa]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Tunatokana","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"kizazi","tone":"low","pitch":"Dó","freq":261},{"text":"cha","tone":"high","pitch":"Mí","freq":330},{"text":"mashujaa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #48 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":49,"title":"Lesson 49: Dawa asilia za mimea na ...","category":"Classical Proverbs","phrase":"Dawa asilia za mimea na mizizi","phonetic":"[dawa asilia za mimea na mizizi]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Dawa","tone":"high","pitch":"Mí","freq":330},{"text":"asilia","tone":"mid","pitch":"Re","freq":293},{"text":"za","tone":"low","pitch":"Dó","freq":261},{"text":"mimea","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #49 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":50,"title":"Lesson 50: Kiongozi mtulivu hukusan...","category":"Classical Proverbs","phrase":"Kiongozi mtulivu hukusanya jamii","phonetic":"[kiongozi mtulivu hukusanya jamii]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kiongozi","tone":"high","pitch":"Mí","freq":330},{"text":"mtulivu","tone":"mid","pitch":"Re","freq":293},{"text":"hukusanya","tone":"low","pitch":"Dó","freq":261},{"text":"jamii","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #50 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":51,"title":"Lesson 51: Sikiliza sauti ya wazee ...","category":"Philosophy & Blessings","phrase":"Sikiliza sauti ya wazee kwenye upepo","phonetic":"[sikiliza sauti ya wazee kwenye upepo]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Sikiliza","tone":"high","pitch":"Mí","freq":330},{"text":"sauti","tone":"mid","pitch":"Re","freq":293},{"text":"ya","tone":"low","pitch":"Dó","freq":261},{"text":"wazee","tone":"high","pitch":"Mí","freq":330},{"text":"kwenye","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #51 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":52,"title":"Lesson 52: Kitendawili: Huenda bila...","category":"Philosophy & Blessings","phrase":"Kitendawili: Huenda bila miguu? (Upepo)","phonetic":"[kitendawili: huenda bila miguu? (upepo)]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Kitendawili","tone":"high","pitch":"Mí","freq":330},{"text":"Huenda","tone":"mid","pitch":"Re","freq":293},{"text":"bila","tone":"low","pitch":"Dó","freq":261},{"text":"miguu","tone":"high","pitch":"Mí","freq":330},{"text":"Upepo","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #52 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":53,"title":"Lesson 53: Sayansi na teknolojia ya...","category":"Philosophy & Blessings","phrase":"Sayansi na teknolojia ya kisasa katika Kiswahili","phonetic":"[sayansi na teknolojia ya kisasa katika kiswahili]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Sayansi","tone":"high","pitch":"Mí","freq":330},{"text":"na","tone":"mid","pitch":"Re","freq":293},{"text":"teknolojia","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"kisasa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #53 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":54,"title":"Lesson 54: Tujenge amani kwa mazung...","category":"Philosophy & Blessings","phrase":"Tujenge amani kwa mazungumzo ya busara","phonetic":"[tujenge amani kwa mazungumzo ya busara]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Tujenge","tone":"high","pitch":"Mí","freq":330},{"text":"amani","tone":"mid","pitch":"Re","freq":293},{"text":"kwa","tone":"low","pitch":"Dó","freq":261},{"text":"mazungumzo","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #54 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":55,"title":"Lesson 55: Wakati hausubiri mtu yey...","category":"Philosophy & Blessings","phrase":"Wakati hausubiri mtu yeyote","phonetic":"[wakati hausubiri mtu yeyote]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Wakati","tone":"high","pitch":"Mí","freq":330},{"text":"hausubiri","tone":"mid","pitch":"Re","freq":293},{"text":"mtu","tone":"low","pitch":"Dó","freq":261},{"text":"yeyote","tone":"high","pitch":"Mí","freq":330}],"translation":"Interactive voice training phrase #55 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":56,"title":"Lesson 56: Vijana ndio nguzo ya kes...","category":"Philosophy & Blessings","phrase":"Vijana ndio nguzo ya kesho yetu","phonetic":"[vijana ndio nguzo ya kesho yetu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Vijana","tone":"high","pitch":"Mí","freq":330},{"text":"ndio","tone":"mid","pitch":"Re","freq":293},{"text":"nguzo","tone":"low","pitch":"Dó","freq":261},{"text":"ya","tone":"high","pitch":"Mí","freq":330},{"text":"kesho","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #56 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":57,"title":"Lesson 57: Lugha ya Kiswahili ina m...","category":"Philosophy & Blessings","phrase":"Lugha ya Kiswahili ina mahadhi matamu","phonetic":"[lugha ya kiswahili ina mahadhi matamu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Lugha","tone":"high","pitch":"Mí","freq":330},{"text":"ya","tone":"mid","pitch":"Re","freq":293},{"text":"Kiswahili","tone":"low","pitch":"Dó","freq":261},{"text":"ina","tone":"high","pitch":"Mí","freq":330},{"text":"mahadhi","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #57 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":58,"title":"Lesson 58: Ushairi wa kale wa mashu...","category":"Philosophy & Blessings","phrase":"Ushairi wa kale wa mashujaa wa pwani","phonetic":"[ushairi wa kale wa mashujaa wa pwani]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Ushairi","tone":"high","pitch":"Mí","freq":330},{"text":"wa","tone":"mid","pitch":"Re","freq":293},{"text":"kale","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"mashujaa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #58 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":59,"title":"Lesson 59: Elimu ni mwanga wa maish...","category":"Philosophy & Blessings","phrase":"Elimu ni mwanga wa maisha yetu","phonetic":"[elimu ni mwanga wa maisha yetu]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Elimu","tone":"high","pitch":"Mí","freq":330},{"text":"ni","tone":"mid","pitch":"Re","freq":293},{"text":"mwanga","tone":"low","pitch":"Dó","freq":261},{"text":"wa","tone":"high","pitch":"Mí","freq":330},{"text":"maisha","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #59 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3},{"id":60,"title":"Lesson 60: Amina! Mungu atubariki s...","category":"Philosophy & Blessings","phrase":"Amina! Mungu atubariki sote kwa hekima na upendo!","phonetic":"[amina! mungu atubariki sote kwa hekima na upendo!]","tonePattern":"Advanced Classical African Polyphony","syllables":[{"text":"Amina","tone":"high","pitch":"Mí","freq":330},{"text":"Mungu","tone":"mid","pitch":"Re","freq":293},{"text":"atubariki","tone":"low","pitch":"Dó","freq":261},{"text":"sote","tone":"high","pitch":"Mí","freq":330},{"text":"kwa","tone":"mid","pitch":"Re","freq":293}],"translation":"Interactive voice training phrase #60 for native speech fluency.","culturalTip":"Pronouncing this phrase with correct native pitch inflection connects kids directly with living African cultural heritage.","difficulty":3}]}};
 
+    TRAINER_CURRICULUM.yoruba.beginner.find((lesson) => lesson.id === 3).translation =
+      'My name is Temitope, and I am happy.';
+
     // Add zulu and twi aliases
     TRAINER_CURRICULUM.zulu = TRAINER_CURRICULUM.swahili;
     TRAINER_CURRICULUM.twi = TRAINER_CURRICULUM.yoruba;
@@ -5336,7 +5715,7 @@ import {
       if (voicePracticeRecorder?.state === 'recording') return;
       const language = trainerLanguageCode();
       if (!['yo', 'ha', 'ig', 'pcm', 'en'].includes(language)) {
-        showToast('Plotweaver speech recognition currently supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English. Choose one of those languages to record.', 'error');
+        showToast('Idilewa speech recognition currently supports Yorùbá, Igbo, Hausa, Nigerian Pidgin, and English. Choose one of those languages to record.', 'error');
         return;
       }
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
@@ -5378,7 +5757,7 @@ import {
           showToast('No audio was recorded. Please try again.', 'error');
           return;
         }
-        showToast('Sending your recording to Plotweaver for transcription.');
+        showToast('Sending your recording to Idilewa for transcription.');
         try {
           const result = await transcribeWithPlotweaver(recording, language);
           voiceTranscriptionResult = { lessonId, language, text: result.text };
@@ -5651,7 +6030,7 @@ import {
               <div class="studio-buttons-row">
                 <button type="button" class="btn-studio btn-play-native" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">
                   ${icon("volume", 20)}
-                  <span>Listen to Plotweaver voice</span>
+                  <span>Listen to Idilewa voice</span>
                 </button>
 
                 ${!state.trainer.isRecording ? `
@@ -5670,12 +6049,12 @@ import {
               <div class="studio-visualizer-box">
                 <canvas id="waveformCanvas" width="560" height="70"></canvas>
                 <div class="visualizer-hint">
-                  ${state.trainer.isRecording ? "🔴 Recording your practice… Speak clearly, then stop to request a transcript." : "▶️ Listen to Plotweaver audio or record your voice for speech-to-text feedback."}
+                  ${state.trainer.isRecording ? "🔴 Recording your practice… Speak clearly, then stop to request a transcript." : "▶️ Listen to Idilewa audio or record your voice for speech-to-text feedback."}
                 </div>
               </div>
             </div>
 
-            ${voiceTranscriptionResult?.lessonId === activeLesson.id && voiceTranscriptionResult.language === trainerLanguageCode() ? `<div class="studio-analysis-result"><h3>Plotweaver transcription</h3><p lang="${trainerLanguageCode()}">${esc(voiceTranscriptionResult.text)}</p><small>This is speech-to-text feedback, not a verified pronunciation, pitch, or fluency score. Transcripts stay on this page only.</small></div>` : ""}
+            ${voiceTranscriptionResult?.lessonId === activeLesson.id && voiceTranscriptionResult.language === trainerLanguageCode() ? `<div class="studio-analysis-result"><h3>Idilewa transcription</h3><p lang="${trainerLanguageCode()}">${esc(voiceTranscriptionResult.text)}</p><small>This is speech-to-text feedback, not a verified pronunciation, pitch, or fluency score. Transcripts stay on this page only.</small></div>` : ""}
 
             <div class="studio-nav-footer">
               <button type="button" class="btn-nav-lesson" data-action="trainer-prev-lesson" ${activeLesson.id <= (activeLevel === "beginner" ? 1 : activeLevel === "intermediate" ? 21 : 41) ? "disabled" : ""}>
@@ -5752,6 +6131,133 @@ import {
     }
 
 
+  function formatDashboardDate(value) {
+    const date = new Date(value || '');
+    return Number.isNaN(date.getTime()) ? 'Date unavailable' : date.toLocaleDateString();
+  }
+
+  function renderMetricCard(label, value, description, tone = '') {
+    return `<article class="dashboard-metric-card ${tone}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(description)}</small></article>`;
+  }
+
+  function consentStatusLabel(status) {
+    if (status === 'pending') return 'Awaiting your decision by email';
+    if (status === 'approved') return 'Approved';
+    if (status === 'declined') return 'Declined';
+    if (status === 'withdrawn') return 'Consent withdrawn';
+    if (status === 'expired') return 'Request expired';
+    return 'Status unavailable';
+  }
+
+  function renderParentDashboardData(data) {
+    const children = Array.isArray(data.children) ? data.children : [];
+    const totalLessons = children.reduce((total, child) => total + child.completedLessons, 0);
+    const totalCoding = children.reduce((total, child) => total + child.codingSessions, 0);
+    const voiceScores = children.map((child) => child.averageVoiceScore).filter(Number.isFinite);
+    const averageVoice = voiceScores.length
+      ? `${Math.round(voiceScores.reduce((sum, score) => sum + score, 0) / voiceScores.length)}%`
+      : '—';
+    const stats = document.getElementById('parent-dashboard-stats');
+    const content = document.getElementById('parent-dashboard-content');
+    const requests = document.getElementById('parent-dashboard-connections');
+    if (stats) {
+      stats.innerHTML = [
+        renderMetricCard('Linked learners', children.length, 'Guardian-approved accounts'),
+        renderMetricCard('Lessons completed', totalLessons, 'Across linked children', 'is-mint'),
+        renderMetricCard('Coding sessions', totalCoding, 'Saved practice attempts', 'is-blue'),
+        renderMetricCard('Voice practice', averageVoice, 'Average score when available', 'is-peach'),
+      ].join('');
+    }
+    if (content) {
+      content.innerHTML = children.length ? `<div class="family-learner-grid">${children.map((child) => `
+        <article class="family-learner-card">
+          <div class="family-learner-card-head"><span class="family-learner-avatar">${icon('user', 20)}</span><div><span class="section-kicker">Approved learner</span><h3>${esc(child.name)}</h3></div></div>
+          <div class="family-learner-metrics"><span><strong>${child.completedLessons}</strong><small>lessons</small></span><span><strong>${child.codingSessions}</strong><small>coding sessions</small></span><span><strong>${child.voicePractices}</strong><small>voice practices</small></span></div>
+          <div class="family-learner-note"><span>${child.points} points</span><span>${child.streak} day streak</span>${child.averageVoiceScore === null ? '' : `<span>${child.averageVoiceScore}% voice average</span>`}</div>
+          <div class="family-activity-list"><strong>Recent learning</strong>${child.recentActivity.length ? child.recentActivity.map((item) => `<div><span>${esc(item.lessonType)} · ${esc(item.lessonId)}</span><small>${formatDashboardDate(item.completedAt)}</small></div>`).join('') : '<p>No saved lesson activity yet.</p>'}</div>
+        </article>`).join('')}</div>` : `<div class="dashboard-empty-state"><span>${icon('heart', 22)}</span><h3>Your family space is ready</h3><p>When a child completes guardian-approved sign-up using your verified email, their learning progress will appear here.</p></div>`;
+    }
+    if (requests) {
+      const connectionRequests = Array.isArray(data.connectionRequests) ? data.connectionRequests : [];
+      requests.innerHTML = connectionRequests.length ? `<div class="consent-request-list">${connectionRequests.map((request) => `
+        <article class="consent-request-row"><span class="consent-request-icon">${icon('school', 18)}</span><div><strong>${esc(request.educator)} · ${esc(request.learner)}</strong><small>Requested ${formatDashboardDate(request.requestedAt)}</small></div><span class="consent-status status-${esc(request.status)}">${esc(consentStatusLabel(request.status))}</span>${request.status === 'approved' ? `<button class="text-link consent-withdraw-button" type="button" data-action="withdraw-educator-consent" data-id="${esc(request.id)}">Withdraw consent</button>` : ''}</article>`).join('')}</div>` : '<p class="dashboard-empty-inline">No educator connection requests yet.</p>';
+    }
+  }
+
+  function renderEducatorDashboardData(data) {
+    const learners = Array.isArray(data.learners) ? data.learners : [];
+    const requests = Array.isArray(data.requests) ? data.requests : [];
+    const stats = document.getElementById('educator-dashboard-stats');
+    const content = document.getElementById('educator-dashboard-content');
+    if (stats) {
+      const totalLessons = learners.reduce((sum, learner) => sum + learner.completedLessons, 0);
+      stats.innerHTML = [
+        renderMetricCard('Approved learners', learners.length, 'Parent-consented connections'),
+        renderMetricCard('Lessons completed', totalLessons, 'Across approved learners', 'is-mint'),
+        renderMetricCard('Awaiting consent', requests.filter((request) => request.status === 'pending').length, 'No learner data shared yet', 'is-peach'),
+        renderMetricCard('Active teaching streaks', learners.filter((learner) => learner.streak > 0).length, 'Learners practicing recently', 'is-blue'),
+      ].join('');
+    }
+    if (content) {
+      content.innerHTML = requests.length ? `<div class="educator-learner-grid">${requests.map((request) => {
+        const approved = request.status === 'approved';
+        return `<article class="educator-learner-card"><div class="family-learner-card-head"><span class="family-learner-avatar">${icon(approved ? 'user' : 'lock', 20)}</span><div><span class="section-kicker">${esc(consentStatusLabel(request.status))}</span><h3>${esc(request.learner)}</h3></div></div><p>${approved ? `${request.completedLessons || 0} lessons · ${request.codingSessions || 0} coding sessions · ${request.voicePractices || 0} voice practices${request.averageVoiceScore === null ? '' : ` · ${request.averageVoiceScore}% voice average`}` : 'No learner progress is available through this connection.'}</p><small>Requested ${formatDashboardDate(request.requestedAt)}</small></article>`;
+      }).join('')}</div>` : `<div class="dashboard-empty-state"><span>${icon('school', 22)}</span><h3>No learner connections yet</h3><p>Submit a consent request above. The family will receive an Idilewa email and decide whether to share that learner’s progress.</p></div>`;
+    }
+  }
+
+  let adultDashboardLoadSequence = 0;
+  async function loadAdultDashboard() {
+    const sequence = ++adultDashboardLoadSequence;
+    const stats = document.getElementById('adult-dashboard-stats');
+    const activity = document.getElementById('adult-dashboard-activity');
+    try {
+      const user = getCurrentUser();
+      if (!user?.id) throw new Error('Sign in again to view your saved learning progress.');
+      const summary = await getAdultLearningSummary(user.id);
+      if (sequence !== adultDashboardLoadSequence || parseLocation().page !== 'adult') return;
+      if (stats) {
+        stats.innerHTML = [
+          renderMetricCard('Lessons completed', summary.completedLessons, 'Saved to your account', 'is-mint'),
+          renderMetricCard('Coding sessions', summary.codingSessions, 'Saved code exercises', 'is-blue'),
+          renderMetricCard('Voice practices', summary.voicePractices, 'Saved pronunciation practice', 'is-peach'),
+        ].join('');
+      }
+      if (activity) {
+        activity.innerHTML = summary.recentActivity.length
+          ? `<div class="family-activity-list"><strong>Recent learning</strong>${summary.recentActivity.map((item) => `<div><span>${esc(item.lessonId)}</span><small>${formatDashboardDate(item.completedAt)}</small></div>`).join('')}</div>`
+          : '<p class="dashboard-empty-inline">Your saved lesson activity will appear here as you learn.</p>';
+      }
+    } catch (error) {
+      if (sequence !== adultDashboardLoadSequence || parseLocation().page !== 'adult') return;
+      const message = error instanceof Error ? error.message : 'Your learning summary could not be loaded.';
+      if (stats) stats.innerHTML = `<div class="dashboard-error" role="alert">${esc(message)}</div>`;
+      if (activity) activity.innerHTML = '';
+    }
+  }
+
+  let dashboardLoadSequence = 0;
+  async function loadRoleDashboard(page) {
+    const sequence = ++dashboardLoadSequence;
+    const endpoint = page === 'parent_dashboard' ? '/api/dashboard/parent' : '/api/dashboard/educator';
+    try {
+      const data = await getRoleDashboard(endpoint);
+      if (sequence !== dashboardLoadSequence || parseLocation().page !== page) return;
+      if (page === 'parent_dashboard') renderParentDashboardData(data);
+      else renderEducatorDashboardData(data);
+    } catch (error) {
+      if (sequence !== dashboardLoadSequence || parseLocation().page !== page) return;
+      const message = error instanceof Error ? error.message : 'The dashboard could not be loaded.';
+      const targetIds = page === 'parent_dashboard'
+        ? ['parent-dashboard-stats', 'parent-dashboard-content', 'parent-dashboard-connections']
+        : ['educator-dashboard-stats', 'educator-dashboard-content'];
+      for (const id of targetIds) {
+        const target = document.getElementById(id);
+        if (target) target.innerHTML = `<div class="dashboard-error" role="alert">${esc(message)}</div>`;
+      }
+    }
+  }
+
   function renderPage(page, params) {
     switch (page) {
       case 'voice-translation':
@@ -5760,6 +6266,10 @@ import {
       case 'voice-cloning': return renderVoiceToolPage(page, params);
       case 'voice_lessons':
       case 'trainer': return renderTrainer(params);
+      case 'voice-language':
+      case 'voice-grade':
+      case 'voice-audio':
+      case 'voice-practice': return renderVoiceFeaturePage(page, params);
       case 'index': return renderHome();
       case 'languages':
       case 'learn':
@@ -5768,7 +6278,7 @@ import {
       case 'lesson': return renderLesson(params);
       case 'coding': return renderCoding();
       case 'ere': return renderStories();
-      case 'ere_game': return renderStoryGame();
+      case 'ere_game': return renderStoryGame(params);
       case 'oral': return renderOral();
       case 'oral_genre': return renderOralGenre();
       case 'oriki': return renderOriki();
@@ -5940,7 +6450,7 @@ import {
       else rewritten = rewritten.replace('<img', `<img alt="${esc(alt)}"`);
       return rewritten;
     });
-    if (slot === 0 && !['coding', 'trainer', 'course', 'lesson'].includes(page)) {
+    if (slot === 0 && !['coding', 'trainer', 'course', 'lesson'].includes(page) && !page.startsWith('voice-')) {
       const filename = ROUTE_IMAGE_OVERRIDES[`${page}-1`] || `page-${page}-1.jpg`;
       const alt = routeImageAlt(page, 1);
       const visual = IMAGE_READY.has(filename)
@@ -6299,146 +6809,6 @@ import {
         </div>\n    </section>`;
   }
 
-  let heroCanvasAnimId = null;
-
-  function initHeroCinematicVideoEngine() {
-    if (heroCanvasAnimId) {
-      cancelAnimationFrame(heroCanvasAnimId);
-      heroCanvasAnimId = null;
-    }
-    const canvas = document.getElementById('heroCinematicCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    function resize() {
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resize();
-
-    // Volumetric golden light dust motes
-    const motes = Array.from({ length: 38 }, () => ({
-      x: Math.random() * (canvas.getBoundingClientRect().width || 800),
-      y: Math.random() * (canvas.getBoundingClientRect().height || 400),
-      r: 0.9 + Math.random() * 2.4,
-      vx: (Math.random() - 0.5) * 0.3 + 0.12,
-      vy: (Math.random() - 0.5) * 0.4 - 0.18,
-      baseAlpha: 0.25 + Math.random() * 0.55,
-      phase: Math.random() * Math.PI * 2,
-      hue: 42 + (Math.random() - 0.5) * 14
-    }));
-
-    const startTime = performance.now();
-
-    function renderFrame(now) {
-      const w = canvas.getBoundingClientRect().width || 800;
-      const h = canvas.getBoundingClientRect().height || 400;
-      if (!w || !h) return;
-
-      const elapsed = (now - startTime) * 0.001;
-      ctx.clearRect(0, 0, w, h);
-
-      // 1. Digital Tablet Screen Ambient Radiance (soft blue-green glow bounce)
-      const tabletPulse = 0.5 + 0.5 * Math.sin(elapsed * 1.6);
-      const tx = w * 0.54;
-      const ty = h * 0.74;
-      const tGrad = ctx.createRadialGradient(tx, ty, 8, tx, ty - h * 0.12, w * 0.26);
-      tGrad.addColorStop(0, `rgba(34, 211, 238, ${0.11 + 0.05 * tabletPulse})`);
-      tGrad.addColorStop(0.45, `rgba(16, 185, 129, ${0.07 + 0.03 * tabletPulse})`);
-      tGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
-      ctx.fillStyle = tGrad;
-      ctx.beginPath();
-      ctx.ellipse(tx, ty - h * 0.06, w * 0.24, h * 0.18, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. Volumetric Dust Particles in Golden Light Shaft
-      motes.forEach((m) => {
-        m.x += m.vx + Math.sin(elapsed + m.phase) * 0.18;
-        m.y += m.vy + Math.cos(elapsed * 0.8 + m.phase) * 0.12;
-
-        if (m.x < 0) m.x = w;
-        if (m.x > w) m.x = 0;
-        if (m.y < 0) m.y = h;
-        if (m.y > h) m.y = 0;
-
-        const inLightShaft = Math.max(0, (m.x / w) * 0.65 + ((h - m.y) / h) * 0.35);
-        const alpha = m.baseAlpha * (0.6 + 0.4 * Math.sin(elapsed * 2 + m.phase)) * (0.7 + 0.6 * inLightShaft);
-
-        const radGrad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.r * 2.0);
-        radGrad.addColorStop(0, `hsla(${m.hue}, 90%, 80%, ${alpha})`);
-        radGrad.addColorStop(0.5, `hsla(${m.hue}, 85%, 65%, ${alpha * 0.45})`);
-        radGrad.addColorStop(1, `hsla(${m.hue}, 80%, 50%, 0)`);
-
-        ctx.fillStyle = radGrad;
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, m.r * 2.0, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      heroCanvasAnimId = requestAnimationFrame(renderFrame);
-    }
-
-    heroCanvasAnimId = requestAnimationFrame(renderFrame);
-  }
-
-  function initHeroParallax() {
-    const stage = document.getElementById('heroVisualStage');
-    const wrap = document.getElementById('heroPhotoWrap');
-    if (!stage || !wrap || typeof stage.addEventListener !== 'function') return;
-
-    let targetRotX = 0;
-    let targetRotY = 0;
-    let currRotX = 0;
-    let currRotY = 0;
-    let animId = null;
-
-    function updateTilt() {
-      currRotX += (targetRotX - currRotX) * 0.12;
-      currRotY += (targetRotY - currRotY) * 0.12;
-      wrap.style.setProperty('--rot-x', `${currRotX.toFixed(2)}deg`);
-      wrap.style.setProperty('--rot-y', `${currRotY.toFixed(2)}deg`);
-
-      if (Math.abs(targetRotX - currRotX) > 0.01 || Math.abs(targetRotY - currRotY) > 0.01) {
-        animId = requestAnimationFrame(updateTilt);
-      } else {
-        animId = null;
-      }
-    }
-
-    function onMouseMove(e) {
-      const rect = stage.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const normX = (x / rect.width) - 0.5;
-      const normY = (y / rect.height) - 0.5;
-
-      targetRotX = -normY * 10;
-      targetRotY = normX * 12;
-
-      if (!animId) {
-        animId = requestAnimationFrame(updateTilt);
-      }
-    }
-
-    function onMouseLeave() {
-      targetRotX = 0;
-      targetRotY = 0;
-      if (!animId) {
-        animId = requestAnimationFrame(updateTilt);
-      }
-    }
-
-    stage.addEventListener('mousemove', onMouseMove, { passive: true });
-    stage.addEventListener('mouseleave', onMouseLeave, { passive: true });
-  }
-
-  
   function init3DScrollObserver() {
     if (typeof IntersectionObserver === 'undefined') return;
 
@@ -6552,41 +6922,71 @@ import {
     }
   }
 
+  function clearPendingAuthFlow() {
+    pendingSignupEmail = '';
+    pendingSignin = null;
+    passwordResetVerified = false;
+    let storageError = null;
+    for (const key of [
+      'idilewa-pending-signup-email',
+      'idilewa-pending-signin-otp',
+      'idilewa-password-reset-verified',
+      'idilewa-guardian-signup',
+    ]) {
+      try {
+        sessionStorage.removeItem(key);
+      } catch (error) {
+        storageError ||= error;
+      }
+    }
+    return storageError;
+  }
+
   function render() {
     if (activeCodeRobotScene) {
       activeCodeRobotScene.destroy();
       activeCodeRobotScene = null;
     }
-    const { page, params } = parseLocation();
+    const location = parseLocation();
+    if (location.removedRoute) {
+      navigate('index', {}, true);
+      return;
+    }
+    const { page, params } = location;
     if (params.lang && LANGUAGES.some((l) => l.id === params.lang)) state.currentLang = params.lang;
     if (params.level && ['beginner', 'intermediate', 'advanced', 'growing', 'fluent'].includes(params.level)) state.level = normalizeCourseLevel(params.level);
     renderHeader(page);
     renderMobileNav(page);
-    const title = page === 'index' ? 'Preserving African culture. Promoting technology.' : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
+    const gradeTitle = page === 'voice-audio' ? getVoiceGradePath(params.grade)?.name : '';
+    const title = page === 'index'
+      ? 'Preserving African culture. Promoting technology.'
+      : gradeTitle
+        ? `${gradeTitle} voice lessons`
+        : (PAGE_META[page]?.eyebrow || LABELS[page] || 'Explore Idilewa');
     document.title = `${title} · Idilewa`;
     const pageMarkup = assignUniqueRouteImages(page, renderPage(page, params))
       .replace(/(?:African )?Voice (?:African Language )?Trainer/gi, 'Voice Lessons')
       .replace(/Voice Studio/gi, 'Voice Lessons');
     if (page === 'coding') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
       initializeIdeRuntimes();
       initializeTranslationLanguages('ide-output-language');
     } else if (page === 'login') {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
       const intro = document.querySelector('.auth-intro-screen');
       if (intro) window.setTimeout(() => intro.remove(), 1450);
     } else {
       document.body.dataset.page = page;
-      document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter()}`;
+      document.getElementById('main').innerHTML = `${pageMarkup}${renderPageInformationLayers(page)}${renderFooter(page)}`;
     }
     ensureSingleSharedFooter();
-      if (page === 'owe' && ['meaning', 'story', 'reflection'].includes(params.section)) {
-        window.requestAnimationFrame(() => {
-          document.getElementById(`owe-${params.section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      }
+    if (page === 'owe' && ['meaning', 'story', 'reflection'].includes(params.section)) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(`owe-${params.section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
     if (page === 'coding') initializeIdeOutputResize();
     startHomePreviewMotion();
     if (page === 'coding') {
@@ -6610,6 +7010,18 @@ import {
       initializePlotweaverVoiceTools();
       initializeTranslationLanguages('voice-translation-source-language');
       initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
+    } else if (page.startsWith('voice-')) {
+      if (page === 'voice-cloning' || page === 'voice-text-to-speech') initializePlotweaverVoiceTools();
+      if (page === 'voice-speech-to-text' || page === 'voice-translation') {
+        initializeTranslationLanguages('voice-translation-source-language');
+      }
+      if (page === 'voice-translation') {
+        initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
+      }
+      if (page === 'voice-practice') {
+        const audioCanvas = document.getElementById('waveformCanvas');
+        if (audioCanvas) init3DAudioVisualizer(audioCanvas);
+      }
     } else if (page === 'ere' || page === 'oral') {
       const storyCanvas = document.getElementById('story3DCanvasWrap');
       if (storyCanvas) init3DStoryCanvas(storyCanvas);
@@ -6666,7 +7078,6 @@ import {
     if (!childEmailInput?.reportValidity() || !parentEmailInput?.reportValidity() || !aliasInput?.reportValidity()) return;
     button.disabled = true;
     verifiedGuardianSignup = null;
-    sessionStorage.removeItem('idilewa-guardian-signup');
     const previousText = button.textContent;
     button.textContent = 'Sending approval request…';
     try {
@@ -6717,7 +7128,13 @@ import {
         throw new Error(result?.error || 'The parent-approved code could not be verified.');
       }
       verifiedGuardianSignup = { approvalId: result.approvalId, email };
-      sessionStorage.setItem('idilewa-guardian-signup', JSON.stringify(verifiedGuardianSignup));
+      try {
+        sessionStorage.setItem('idilewa-guardian-signup', JSON.stringify(verifiedGuardianSignup));
+      } catch (storageError) {
+        render();
+        showToast('Parent approval is verified for this tab, but could not be saved. Finish child account creation before closing or refreshing this page.', 'error');
+        return;
+      }
       render();
       showToast('Parent approval verified. Finish creating the child account now.', 'success');
     } catch (error) {
@@ -6730,36 +7147,22 @@ import {
     }
   }
 
-  async function verifyEducatorInvite(button) {
+  async function requestPasswordResetCode(button) {
     const emailInput = document.getElementById('authEmail');
-    const codeInput = document.getElementById('educatorInviteCode');
     if (!emailInput?.reportValidity()) return;
     const email = emailInput.value.trim().toLowerCase();
-    const code = codeInput?.value.trim() || '';
-    if (code.length < 8 || code.length > 64) {
-      showToast('Enter the educator invitation code you received.', 'error');
-      codeInput?.focus();
-      return;
-    }
     button.disabled = true;
     const previousText = button.textContent;
-    button.textContent = 'Checking invitation…';
+    button.textContent = 'Sending recovery code…';
     try {
-      const response = await fetch('/api/educator/verify-invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.inviteId || !/^[0-9a-f-]{36}$/i.test(result.inviteId)) {
-        throw new Error(result?.error || 'That invitation is invalid, expired, or already used.');
-      }
-      verifiedEducatorSignup = { inviteId: result.inviteId, email };
-      sessionStorage.setItem('idilewa-educator-signup', JSON.stringify(verifiedEducatorSignup));
+      await requestSigninOtp(email, 'password-reset');
+      pendingSignin = { email, purpose: 'password-reset' };
+      passwordResetVerified = false;
+      state.loginMode = 'signin';
       render();
-      showToast('Educator invitation verified. Finish account creation now.', 'success');
+      showToast('If the account can receive email codes, a verification code is on its way.', 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'The educator invitation could not be verified.', 'error');
+      showToast(error instanceof Error ? error.message : 'A password recovery code could not be sent.', 'error');
     } finally {
       if (button.isConnected) {
         button.disabled = false;
@@ -6768,30 +7171,20 @@ import {
     }
   }
 
-  async function requestPasswordResetCode(button) {
+  async function requestChildSigninCode(button) {
     const emailInput = document.getElementById('authEmail');
     if (!emailInput?.reportValidity()) return;
     const email = emailInput.value.trim().toLowerCase();
-    const role = state.authRole;
-    if (!['child', 'educator', 'adult', 'parent'].includes(role)) {
-      showToast('Select a valid account type before recovering your password.', 'error');
-      return;
-    }
-
     button.disabled = true;
     const previousText = button.textContent;
-    button.textContent = 'Sending recovery code…';
+    button.textContent = 'Sending passcode…';
     try {
-      await requestSigninOtp(email);
-      pendingSignin = { email, role, purpose: 'password-reset' };
-      passwordResetVerified = false;
-      state.loginMode = 'signin';
-      sessionStorage.setItem('idilewa-pending-signin-otp', JSON.stringify(pendingSignin));
-      sessionStorage.removeItem('idilewa-password-reset-verified');
+      await requestSigninOtp(email, 'child-signin');
+      pendingSignin = { email, role: 'child', purpose: 'child-signin' };
       render();
-      showToast('If the account can receive email codes, a verification code is on its way.', 'success');
+      showToast('If this is an approved child account, a one-time passcode has been sent to the parent or guardian email.', 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'A password recovery code could not be sent.', 'error');
+      showToast(error instanceof Error ? error.message : 'The parent passcode could not be sent. Please try again.', 'error');
     } finally {
       if (button.isConnected) {
         button.disabled = false;
@@ -6858,7 +7251,7 @@ import {
     button.setAttribute('aria-pressed', 'true');
     void playPlotweaverSpeech(phrase, button.dataset.language || 'yo')
       .catch((error) => {
-        showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this sample.', 'error');
+        showToast(error instanceof Error ? error.message : 'Idilewa could not generate this sample.', 'error');
       })
       .finally(() => {
         if (button.isConnected) {
@@ -7132,7 +7525,7 @@ import {
         const output = document.getElementById('ide-output-translation');
         if (output?.dataset.translation) {
           void playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo')
-            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this audio.', 'error'));
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this audio.', 'error'));
         }
         else showToast('Translate the console output first.', 'error');
         break;
@@ -7264,7 +7657,7 @@ import {
       }
       case 'speak-voice-lesson': {
         void playPlotweaverSpeech(el.dataset.phrase || '', 'yo')
-          .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this sound.', 'error'));
+          .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this sound.', 'error'));
         break;
       }
       case 'plotweaver-speak-text': {
@@ -7275,11 +7668,11 @@ import {
           if (status) status.textContent = 'Enter text before generating audio.';
           break;
         }
-        if (status) status.textContent = 'Generating audio with Plotweaver…';
+        if (status) status.textContent = 'Generating audio with Idilewa…';
         void playPlotweaverSpeech(text, language).then(() => {
           if (status) status.textContent = 'Audio is playing. The generated audio is not saved.';
         }).catch((error) => {
-          if (status) status.textContent = error instanceof Error ? error.message : 'Plotweaver could not generate this audio.';
+          if (status) status.textContent = error instanceof Error ? error.message : 'Idilewa could not generate this audio.';
         });
         break;
       }
@@ -7485,60 +7878,6 @@ import {
         saveState(); showToast(getCurrentUser() ? 'Lesson complete. Syncing progress to your account.' : 'Lesson complete. Progress is saved on this device.'); navigate('course', { lang: lang || state.currentLang, level: el.dataset.level || state.level }); break;
       }
       case 'play-audio': playSample(el); break;
-      case 'hero-play-greeting': {
-        const phrase = el.dataset.phrase || 'Ẹ káàárọ̀';
-        const lang = el.dataset.lang || 'yoruba';
-        const translation = el.dataset.translation || 'Good morning';
-        
-        el.classList.add('is-speaking-active');
-        playNativeTrainerVoice(phrase, lang);
-        playToneSound(440, 0.15, 'sine');
-        setTimeout(() => playToneSound(554.37, 0.15, 'sine'), 100);
-        setTimeout(() => playToneSound(659.25, 0.22, 'sine'), 200);
-
-        const langName = getLanguage(lang)?.name || lang;
-        showToast(`🔊 “${phrase}” — ${translation} in ${langName}!`, 'success');
-
-        setTimeout(() => {
-          el.classList.remove('is-speaking-active');
-        }, 2600);
-        break;
-      }
-      case 'hero-listen-speak': {
-        el.classList.add('is-active-pulse');
-        showToast('🔊 African Voice Studio: Listening & speaking across 4 African languages!', 'success');
-        
-        const greetings = [
-          { lang: 'yoruba', phrase: 'Ẹ káàárọ̀', trans: 'Good morning in Yorùbá', sel: '.float-card-yoruba' },
-          { lang: 'hausa', phrase: 'Sannu', trans: 'Good morning in Hausa', sel: '.float-card-hausa' },
-          { lang: 'igbo', phrase: 'Ndewo', trans: 'Good morning in Igbo', sel: '.float-card-igbo' },
-          { lang: 'swahili', phrase: 'Habari', trans: 'Good morning in Swahili', sel: '.float-card-swahili' }
-        ];
-
-        greetings.forEach((g, idx) => {
-          setTimeout(() => {
-            const card = document.querySelector(g.sel);
-            if (card) card.classList.add('is-speaking-active');
-            playNativeTrainerVoice(g.phrase, g.lang);
-            playToneSound(523.25 + idx * 80, 0.2, 'triangle');
-            showToast(`“${g.phrase}” — ${g.trans}`);
-            setTimeout(() => {
-              if (card) card.classList.remove('is-speaking-active');
-            }, 1400);
-          }, idx * 1600);
-        });
-
-        setTimeout(() => {
-          el.classList.remove('is-active-pulse');
-        }, greetings.length * 1600 + 400);
-        break;
-      }
-      case 'hero-motto-click': {
-        playToneSound(587.33, 0.2, 'sine');
-        setTimeout(() => playToneSound(880, 0.25, 'sine'), 120);
-        showToast('💡 “A little every day makes a language feel closer.” Consistency is the key to fluency!', 'success');
-        break;
-      }
       case 'pair-language': break;
       case 'save-item': {
         const item = el.dataset.item;
@@ -7557,34 +7896,23 @@ import {
         else window.location.hash = nextHash;
         break;
       }
-      case 'request-guardian-approval': void submitGuardianRequest(el); break;
-      case 'verify-guardian-code': void verifyGuardianCode(el); break;
-      case 'verify-educator-invite': void verifyEducatorInvite(el); break;
-      case 'request-password-reset': void requestPasswordResetCode(el); break;
-      case 'auth-layer-educator':
-        state.loginMode = 'signup';
-        state.authRole = 'educator';
-        saveState();
-        navigate('login', { mode: 'signup' });
-        break;
-      case 'educator-use-another-code':
-        verifiedEducatorSignup = null;
-        sessionStorage.removeItem('idilewa-educator-signup');
+      case 'auth-role-select': {
+        state.authRole = el.dataset.role === 'adult' ? 'adult' : 'child';
+        if (state.authRole !== 'child') {
+          verifiedGuardianSignup = null;
+        }
         render();
         break;
-      case 'resend-signup-otp':
-        if (!pendingSignupEmail) break;
-        el.disabled = true;
-        void resendSignupOtp(pendingSignupEmail)
-          .then(() => showToast('A new verification code has been sent.', 'success'))
-          .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
-          .finally(() => { if (el.isConnected) el.disabled = false; });
-        break;
+      }
+      case 'request-guardian-approval': void submitGuardianRequest(el); break;
+      case 'verify-guardian-code': void verifyGuardianCode(el); break;
+      case 'request-password-reset': void requestPasswordResetCode(el); break;
+      case 'request-child-signin-code': void requestChildSigninCode(el); break;
       case 'resend-signin-otp':
         if (!pendingSignin?.email) break;
         el.disabled = true;
-        void requestSigninOtp(pendingSignin.email)
-          .then(() => showToast(pendingSignin?.purpose === 'password-reset' ? 'A new recovery code has been sent.' : 'A new sign-in code has been sent.', 'success'))
+        void requestSigninOtp(pendingSignin.email, pendingSignin.purpose)
+          .then(() => showToast(pendingSignin?.purpose === 'child-signin' ? 'A new passcode has been sent to your parent or guardian.' : 'A new recovery code has been sent.', 'success'))
           .catch((error) => showToast(error instanceof Error ? error.message : 'A new code could not be sent.', 'error'))
           .finally(() => { if (el.isConnected) el.disabled = false; });
         break;
@@ -7593,30 +7921,12 @@ import {
         pendingSignupEmail = '';
         pendingSignin = null;
         passwordResetVerified = false;
-        sessionStorage.removeItem('idilewa-pending-signup-email');
-        sessionStorage.removeItem('idilewa-pending-signin-otp');
-        sessionStorage.removeItem('idilewa-password-reset-verified');
         render();
         break;
       case 'guardian-use-another-email':
         verifiedGuardianSignup = null;
-        sessionStorage.removeItem('idilewa-guardian-signup');
         render();
         break;
-      case 'auth-role-select': {
-        state.authRole = el.dataset.role || 'child';
-        if (state.authRole !== 'child') {
-          verifiedGuardianSignup = null;
-          sessionStorage.removeItem('idilewa-guardian-signup');
-        }
-        if (state.authRole !== 'educator') {
-          verifiedEducatorSignup = null;
-          sessionStorage.removeItem('idilewa-educator-signup');
-        }
-        saveState();
-        render();
-        break;
-      }
       case 'toggle-password-visibility': {
         const passInput = document.getElementById('authPassword');
         if (passInput) {
@@ -7636,11 +7946,26 @@ import {
         document.getElementById('modal-root').innerHTML = '';
         navigate('profile');
         break;
+      case 'account-sign-out':
       case 'profile-sign-out':
-        void signOutAccount().then(() => {
-          render();
-          showToast('You have signed out.', 'success');
-        }).catch((error) => showToast(error instanceof Error ? error.message : 'Could not sign out.', 'error'));
+        const authStorageError = clearPendingAuthFlow();
+        void signOutAccount().then((result) => {
+          state.loginMode = 'signin';
+          state.authRole = 'adult';
+          navigate('login', { mode: 'signin' }, true);
+          const notice = result.activityEmailError
+            ? `You have signed out. ${result.activityEmailError}`
+            : authStorageError
+              ? 'You signed out, but pending sign-in state could not be fully cleared. Close this tab and sign in again.'
+              : 'You have signed out.';
+          showToast(notice, authStorageError || result.activityEmailError ? 'error' : 'success');
+        }).catch((error) => {
+          state.loginMode = 'signin';
+          state.authRole = 'adult';
+          navigate('login', { mode: 'signin' }, true);
+          const message = error instanceof Error ? error.message : 'Signed out on this device, but Supabase could not confirm the session revocation.';
+          showToast(authStorageError ? `${message} Pending sign-in state could not be fully cleared.` : message, 'error');
+        });
         break;
       case 'close-search': document.getElementById('modal-root').innerHTML = ''; break;
       case 'trainer-set-lang': {
@@ -7763,8 +8088,8 @@ import {
         const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
         if (activeLesson) {
           void playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables)
-            .then(() => showToast('Playing Plotweaver-generated audio.'))
-            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate lesson audio.', 'error'));
+            .then(() => showToast('Playing Idilewa-generated audio.'))
+            .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate lesson audio.', 'error'));
         }
         break;
       }
@@ -7841,6 +8166,21 @@ import {
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
       }
+      case 'voice-select-language': {
+        const language = el.dataset.language;
+        if (!TRAINER_CURRICULUM[language]) break;
+        state.trainer.lang = language;
+        state.trainer.score = null;
+        state.trainer.analysis = null;
+        saveState();
+        render();
+        break;
+      }
+      case 'voice-lessons-jump': {
+        const targetId = ['voice-clone-tools', 'trainerStudio'].includes(el.dataset.target) ? el.dataset.target : 'trainerStudio';
+        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
       case 'coding-filter-band': {
         state.coding.filter = el.dataset.band || el.dataset['band'] || 'all';
         saveState();
@@ -7908,7 +8248,16 @@ import {
       if (modalRoot) modalRoot.innerHTML = '';
       const route = routeEl.dataset.route;
       const params = {};
-      ['lang', 'level', 'module', 'lesson', 'mode', 'section'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
+      ['lang', 'level', 'module', 'lesson', 'grade', 'mode', 'section', 'story'].forEach((key) => { if (routeEl.dataset[key]) params[key] = routeEl.dataset[key]; });
+      if (route.startsWith('voice-')) {
+        if (['yoruba', 'igbo', 'hausa', 'swahili', 'zulu', 'twi'].includes(params.lang)) state.trainer.lang = params.lang;
+        if (['beginner', 'intermediate', 'advanced'].includes(params.level)) {
+          state.trainer.level = params.level;
+          state.trainer.activeLessonId = params.level === 'intermediate' ? 21 : params.level === 'advanced' ? 41 : 1;
+        }
+        if (params.lesson && /^\d+$/.test(params.lesson)) state.trainer.activeLessonId = Number(params.lesson);
+        saveState();
+      }
       navigate(route, params);
       return;
     }
@@ -7993,6 +8342,18 @@ import {
     if (el.matches('#consentTutor')) {
       const tutorBox = document.querySelector('input[name="tutorConsent"]');
       if (tutorBox && !el.value) tutorBox.checked = false;
+    }
+    if (el.matches('[data-action="voice-feature-language"]')) {
+      const { grade } = parseLocation().params;
+      const gradePath = getVoiceGradePath(grade);
+      navigate('voice-audio', {
+        lang: el.value,
+        level: gradePath?.level || state.trainer.level,
+        ...(gradePath ? { grade: gradePath.id } : {})
+      });
+    }
+    if (el.matches('[data-action="voice-feature-level"]')) {
+      navigate('voice-audio', { lang: state.trainer.lang, level: el.value });
     }
   });
 
@@ -8091,7 +8452,7 @@ import {
         const created = await createPlotweaverVoice(cloneRequest);
         const voiceId = created.voice_id || created.id;
         if (typeof voiceId !== 'string' || !voiceId) {
-          throw new Error('Plotweaver created a voice but returned no voice ID.');
+          throw new Error('Idilewa created a voice but returned no voice ID.');
         }
         state.trainer.clonedVoices = [
           { voice_id: voiceId, name: String(data.get('name') || 'My cloned voice').slice(0, 80), type: 'cloned' },
@@ -8131,61 +8492,53 @@ import {
         await updateAccountPassword(password);
         pendingSignin = null;
         passwordResetVerified = false;
-        sessionStorage.removeItem('idilewa-pending-signin-otp');
-        sessionStorage.removeItem('idilewa-password-reset-verified');
         await syncAccountLessonProgress();
-        navigate('index');
-        showToast('Your password has been updated and you are signed in.', 'success');
+        navigate(roleHomeRoute(getCurrentUser()?.role || state.authRole));
+        try {
+          await sendAuthActivityEmail('sign-in');
+          showToast('Your password has been updated and you are signed in.', 'success');
+        } catch (activityError) {
+          showToast(`Your password was updated and you are signed in, but ${activityError instanceof Error ? activityError.message : 'the sign-in notification email could not be sent.'}`, 'error');
+        }
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Your password could not be updated. Please try again.', 'error');
       }
       return;
-    } else if (type === 'signup-otp') {
-      const token = String(data.get('token') || '').trim();
-      try {
-        await verifySignupOtp({ email: pendingSignupEmail, token });
-        if (state.authRole === 'child') {
-          state.consent.childVerified = true;
-          saveState();
-        }
-        await syncAccountLessonProgress();
-        pendingSignupEmail = '';
-        sessionStorage.removeItem('idilewa-pending-signup-email');
-        verifiedGuardianSignup = null;
-        verifiedEducatorSignup = null;
-        sessionStorage.removeItem('idilewa-guardian-signup');
-        sessionStorage.removeItem('idilewa-educator-signup');
-        navigate('index');
-        showToast('Your email is verified and your Idilewa account is ready.', 'success');
-        const profile = getProfileDetails();
-        if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : 'Email verification failed. Check the code and try again.', 'error');
-      }
-      return;
     } else if (type === 'signin-otp') {
       const token = String(data.get('token') || '').trim();
-      const expectedRole = form.dataset.otpRole;
       try {
-        const purpose = pendingSignin?.purpose || 'signin';
-        await verifySigninOtp({ email: pendingSignin?.email || '', token, expectedRole });
-        state.authRole = expectedRole;
-        if (expectedRole === 'child') {
+        const purpose = pendingSignin?.purpose || 'child-signin';
+        await verifySigninOtp({
+          email: pendingSignin?.email || '',
+          token,
+          expectedRole: purpose === 'child-signin' ? 'child' : pendingSignin?.role,
+          purpose,
+        });
+        const signedInRole = getCurrentUser()?.role || 'child';
+        state.authRole = signedInRole;
+        if (signedInRole === 'child') {
           state.consent.childVerified = true;
           saveState();
         }
         if (purpose === 'password-reset') {
           passwordResetVerified = true;
-          sessionStorage.setItem('idilewa-password-reset-verified', 'true');
           render();
           showToast('Email verified. Choose a new password to finish recovery.', 'success');
           return;
         }
         pendingSignin = null;
-        sessionStorage.removeItem('idilewa-pending-signin-otp');
         await syncAccountLessonProgress();
-        navigate('index');
-        showToast('Your email is verified and you are signed in.', 'success');
+        navigate(roleHomeRoute(signedInRole));
+        let activityEmailError = '';
+        try {
+          await sendAuthActivityEmail('sign-in');
+        } catch (activityError) {
+          activityEmailError = activityError instanceof Error ? activityError.message : 'The sign-in notification email could not be sent.';
+        }
+        showToast(
+          activityEmailError ? `You are signed in, but ${activityEmailError}` : 'Your parent-issued passcode was verified and you are signed in.',
+          activityEmailError ? 'error' : 'success'
+        );
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Email sign-in failed. Check the code and try again.', 'error');
       }
@@ -8291,21 +8644,36 @@ import {
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Could not save your profile.', 'error');
       }
+    } else if (type === 'educator-connection-request') {
+      const childEmail = String(data.get('childEmail') || '').trim();
+      const submitButton = form.querySelector('button[type="submit"]');
+      const feedback = document.querySelector('[data-connection-feedback]');
+      if (submitButton) submitButton.disabled = true;
+      if (feedback) feedback.textContent = 'Sending the parent consent request…';
+      try {
+        const result = await submitEducatorConnectionRequest(childEmail);
+        form.reset();
+        if (feedback) feedback.textContent = result.message;
+        showToast(result.message, 'success');
+        await loadRoleDashboard('educator_dashboard');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'The consent request could not be sent.';
+        if (feedback) feedback.textContent = message;
+        showToast(message, 'error');
+      } finally {
+        if (submitButton?.isConnected) submitButton.disabled = false;
+      }
     } else if (type === 'login') {
-      const accountType = String(data.get('accountType') || state.authRole || 'child');
+      const accountType = data.get('accountType') === 'adult' ? 'adult' : 'child';
+      state.authRole = accountType;
       const email = String(data.get('email') || '').trim();
-      if (state.loginMode === 'signup' && accountType === 'child') {
-        showToast('New child registration is temporarily paused until guardian email delivery is configured.', 'error');
+      if (state.loginMode !== 'signup' && accountType === 'child') {
+        showToast('Child sign-in uses a one-time passcode sent to the approved parent or guardian. Select “Send a passcode to my parent.”', 'error');
         return;
       }
       if (state.loginMode === 'signup' && accountType === 'child'
         && (!verifiedGuardianSignup || verifiedGuardianSignup.email !== email.trim().toLowerCase())) {
         showToast('A verified guardian email code for this exact learner email is required before child sign-up.', 'error');
-        return;
-      }
-      if (state.loginMode === 'signup' && accountType === 'educator'
-        && (!verifiedEducatorSignup || verifiedEducatorSignup.email !== email.trim().toLowerCase())) {
-        showToast('Verify a one-time educator invitation code before creating a teacher account.', 'error');
         return;
       }
       if (!isSupabaseConfigured || !supabase) {
@@ -8323,59 +8691,81 @@ import {
             return;
           }
           const name = String(data.get('name') || '').trim();
-          const { session, welcomeEmailError: deliveryError } = await signUpAccount({
+          const {
+            session,
+            welcomeEmailError: deliveryError,
+          } = await signUpAccount({
             email,
             password,
             name,
             role: accountType,
             guardianAccessRequestId: accountType === 'child' ? verifiedGuardianSignup?.approvalId : undefined,
-            educatorInviteId: accountType === 'educator' ? verifiedEducatorSignup?.inviteId : undefined,
           });
           welcomeEmailError = deliveryError;
           if (!session) {
-            pendingSignupEmail = email.toLowerCase();
-            sessionStorage.setItem('idilewa-pending-signup-email', pendingSignupEmail);
-            render();
-            showToast(
-              welcomeEmailError
-                ? `Account created. Enter the verification code sent to your email. ${welcomeEmailError}`
-                : 'Account created. Enter the verification code sent to your email.',
-              welcomeEmailError ? 'error' : 'success'
-            );
-            return;
+            throw new Error('The account service did not open a session. Email confirmation is still enabled in Supabase; account creation cannot continue until the hosted setting is corrected.');
           }
+          await signOutAccount({ notify: false });
+          signupEmailForSignin = email.toLowerCase();
+          verifiedGuardianSignup = null;
+          try { sessionStorage.removeItem('idilewa-guardian-signup'); } catch (_) {}
+          state.loginMode = 'signin';
+          navigate('login', { mode: 'signin' }, true);
+          showToast(
+            welcomeEmailError
+              ? `Account created. ${welcomeEmailError}`
+              : 'Account created. Sign in with your email and password.',
+            welcomeEmailError ? 'error' : 'success'
+          );
+          return;
         } else {
-          await signInAccount({ email, password, expectedRole: accountType });
+          await signInAccount({ email, password, expectedRole: 'adult' });
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Account authentication failed. Try again.';
-        showToast(
-          state.loginMode !== 'signup' && /invalid login credentials/i.test(message)
-            ? 'That email and password were not accepted. Check them, or use the email code or Forgot password option.'
-            : message,
-          'error'
-        );
+        const userMessage =
+          state.loginMode !== 'signup' && /invalid login credentials|wrong password|incorrect password/i.test(message)
+            ? 'We couldn’t sign you in with those details. Check that you selected Adult / Family and use Forgot password if needed. New here? Choose Create Account.'
+            : message;
+        const inlineError = document.getElementById('authInlineError');
+        if (inlineError) {
+          inlineError.textContent = userMessage;
+          inlineError.hidden = false;
+        } else {
+          showToast(userMessage, 'error');
+        }
         return;
       }
 
-      if (accountType === 'child') {
+      const signedInRole = getCurrentUser()?.role || accountType;
+      let activityEmailError = '';
+      if (state.loginMode !== 'signup') {
+        try {
+          await sendAuthActivityEmail('sign-in');
+        } catch (activityError) {
+          activityEmailError = activityError instanceof Error ? activityError.message : 'The sign-in notification email could not be sent.';
+        }
+      }
+      if (signedInRole === 'child') {
         state.consent.childVerified = true;
         saveState();
       }
       await syncAccountLessonProgress();
       showToast(
-        welcomeEmailError
+        activityEmailError
+          ? `You are signed in, but ${activityEmailError}`
+          : welcomeEmailError
           ? `Your Idilewa account is ready. ${welcomeEmailError}`
           : state.loginMode === 'signup' ? 'Your Idilewa account is ready.' : 'Signed in successfully.',
-        welcomeEmailError ? 'error' : 'success'
+        activityEmailError || welcomeEmailError ? 'error' : 'success'
       );
       verifiedGuardianSignup = null;
-      verifiedEducatorSignup = null;
-      sessionStorage.removeItem('idilewa-guardian-signup');
-      sessionStorage.removeItem('idilewa-educator-signup');
-      navigate('index');
-      const profile = getProfileDetails();
-      if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+      try { sessionStorage.removeItem('idilewa-guardian-signup'); } catch (_) {}
+      navigate(roleHomeRoute(signedInRole));
+      if (['adult', 'child'].includes(signedInRole)) {
+        const profile = getProfileDetails();
+        if (!profile.bio || !profile.goal) window.setTimeout(openProfileCompletionPrompt, 120);
+      }
     } else if (type === 'interest') {
       showToast('Thanks for your interest. This prototype does not send or store contact details.');
       form.reset();

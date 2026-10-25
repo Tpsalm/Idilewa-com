@@ -185,6 +185,8 @@ test('translation validation and provider errors are surfaced without upstream d
       }), response);
       assert.equal(response.statusCode, 429);
       assert.match(response.body.error, /rate or usage limit/i);
+      assert.match(response.body.error, /Idilewa/i);
+      assert.doesNotMatch(response.body.error, /Plotweaver/i);
       assert.doesNotMatch(JSON.stringify(response.body), /private provider error/);
     },
   });

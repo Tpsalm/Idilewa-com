@@ -119,7 +119,7 @@ function validateJsonRequest(path, value) {
     return null;
   }
 
-  return { status: 400, message: 'Unsupported Plotweaver request.' };
+  return { status: 400, message: 'Unsupported Idilewa voice service request.' };
 }
 
 async function parseMultipart(body, contentType, path) {
@@ -184,14 +184,14 @@ async function parseMultipart(body, contentType, path) {
 }
 
 function errorForUpstreamStatus(status) {
-  if (status === 401) return 'Plotweaver rejected the configured API key. Check the server environment variable.';
-  if (status === 402) return 'Plotweaver billing or account setup is required.';
-  if (status === 403) return 'This Plotweaver service is not enabled for the configured account.';
-  if (status === 404) return 'The requested Plotweaver voice or resource was not found.';
+  if (status === 401) return 'Idilewa voice service rejected the configured account credentials.';
+  if (status === 402) return 'Idilewa voice service billing or account setup is required.';
+  if (status === 403) return 'This Idilewa voice service is not enabled for the configured account.';
+  if (status === 404) return 'The requested Idilewa voice or resource was not found.';
   if (status === 413) return 'The audio upload is too large for this deployment.';
-  if (status === 429) return 'Plotweaver reached a rate or usage limit. Try again later.';
-  if (status >= 500) return 'Plotweaver is temporarily unavailable. Try again later.';
-  return 'Plotweaver could not complete this request. Check the selected language and input.';
+  if (status === 429) return 'Idilewa reached a rate or usage limit. Try again later.';
+  if (status >= 500) return 'Idilewa is temporarily unavailable. Try again later.';
+  return 'Idilewa could not complete this request. Check the selected language and input.';
 }
 
 async function proxyRequest({ path, method, apiKey, body, contentType, searchParams, res }) {
@@ -199,7 +199,7 @@ async function proxyRequest({ path, method, apiKey, body, contentType, searchPar
   if (path === 'languages') {
     const service = searchParams.get('service');
     if (service && !['tts', 'tts_clone', 'asr', 'translation'].includes(service)) {
-      return sendJson(res, 400, { error: 'Choose a supported Plotweaver service.' });
+      return sendJson(res, 400, { error: 'Choose a supported Idilewa voice service.' });
     }
     if (service) upstreamUrl.searchParams.set('service', service);
   }
@@ -223,7 +223,7 @@ async function proxyRequest({ path, method, apiKey, body, contentType, searchPar
     console.error('[plotweaver] Upstream request failed.', {
       errorType: error instanceof Error ? error.name : 'UnknownError',
     });
-    return sendJson(res, 502, { error: 'Plotweaver is unavailable. Try again later.' });
+    return sendJson(res, 502, { error: 'Idilewa voice service is unavailable. Try again later.' });
   }
 
   if (!upstream.ok) {
@@ -254,14 +254,14 @@ async function proxyRequest({ path, method, apiKey, body, contentType, searchPar
   try {
     responseBody = await upstream.json();
   } catch {
-    return sendJson(res, 502, { error: 'Plotweaver returned an invalid response.' });
+    return sendJson(res, 502, { error: 'Idilewa voice service returned an invalid response.' });
   }
   return sendJson(res, upstream.status, responseBody);
 }
 
 export default async function handler(req, res) {
   if (!applyCors(req, res)) {
-    return sendJson(res, 403, { error: 'This origin is not allowed to use the Plotweaver API.' });
+    return sendJson(res, 403, { error: 'This origin is not allowed to use the Idilewa voice service.' });
   }
   if (req.method === 'OPTIONS') return res.status(204).end();
 
@@ -272,7 +272,7 @@ export default async function handler(req, res) {
     || path === 'speech/clone'
     || path === 'transcriptions'
     || path === 'translations';
-  if (!supportedRoute) return sendJson(res, 404, { error: 'Plotweaver resource not found.' });
+  if (!supportedRoute) return sendJson(res, 404, { error: 'Idilewa voice service resource not found.' });
 
   const allowedMethods = path === 'languages'
     ? ['GET']
@@ -287,7 +287,7 @@ export default async function handler(req, res) {
   const requiresKey = path !== 'languages';
   const apiKey = getApiKey();
   if (requiresKey && !apiKey) {
-    return sendJson(res, 503, { error: 'Plotweaver is not configured on this deployment.' });
+    return sendJson(res, 503, { error: 'Idilewa voice service is not configured on this deployment.' });
   }
 
   let body;

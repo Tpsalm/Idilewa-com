@@ -1,8 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
 
-const clientEnv = import.meta.env || {};
-const supabaseUrl = clientEnv.VITE_SUPABASE_URL || clientEnv.SUPABASE_PUBLIC_URL || '';
-const supabaseAnonKey = clientEnv.VITE_SUPABASE_ANON_KEY || clientEnv.SUPABASE_ANON_KEY || '';
+function readEnvValue(...names) {
+  const clientEnv = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
+  for (const name of names) {
+    const value = clientEnv[name];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+function normalizeSupabaseUrl(value) {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (!candidate) return '';
+  try {
+    const url = new URL(candidate);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+  } catch {
+    return '';
+  }
+}
+
+const supabaseUrl = normalizeSupabaseUrl(readEnvValue('VITE_SUPABASE_URL', 'SUPABASE_URL', 'SUPABASE_PUBLIC_URL', 'NEXT_PUBLIC_SUPABASE_URL'));
+const supabaseAnonKey = readEnvValue('VITE_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 export const supabase = isSupabaseConfigured
@@ -118,16 +140,45 @@ function mapAuthUser(authUser, metadata = authUser.user_metadata || {}) {
 async function loadAccountProfile(client, authUser) {
   const { data: profile, error } = await client
     .from('profiles')
-    .select('name, role, avatar_url, points, streak')
+    .select('name, role, avatar_url, points, streak, parent_consent_request_id')
     .eq('id', authUser.id)
     .maybeSingle();
   if (error) throw new Error('Your account profile could not be loaded.', { cause: error });
   if (!profile) throw new Error('Your account profile is missing. Contact support before continuing.');
+  if (profile.role === 'child') {
+    const { data: guardianApproved, error: guardianError } = await client.rpc('child_guardian_is_approved');
+    if (guardianError) {
+      throw new Error('Child guardian approval could not be confirmed. Please try again later.', { cause: guardianError });
+    }
+    if (guardianApproved !== true || !profile.parent_consent_request_id) {
+      throw new Error('A parent or guardian must approve this child account before sign-in.');
+    }
+  }
   return mapAuthUser(authUser, {
     ...authUser.user_metadata,
     ...profile,
     avatar_url: profile.avatar_url || authUser.user_metadata?.avatar_url,
   });
+}
+
+async function requestAuthEmailCode(email, purpose) {
+  if (!['child-signin', 'password-reset'].includes(purpose)) {
+    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  }
+  const response = await fetch('/api/auth/welcome?action=email-code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ email: email.toLowerCase().trim(), purpose }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The email-code service returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The code email could not be sent. Please try again.');
+  }
 }
 
 export async function signUp({ email, password, name, role = 'child', guardianAccessRequestId, educatorInviteId }) {
@@ -163,6 +214,10 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   if (!data?.user) throw new Error('The authentication service did not return an account.');
   if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
     throw new Error('Could not create an account with this email. If you already registered, sign in or use Forgot password.');
+  }
+
+  if (!data.session) {
+    throw new Error('The account was created, but Supabase did not start a session. Email confirmation must be disabled in the hosted Supabase auth settings before sign-up can complete.');
   }
 
   let welcomeEmailError = '';
@@ -202,35 +257,22 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   return { user: userRecord, session: data.session, error: null, welcomeEmailError };
 }
 
-export async function verifySignupOtp({ email, token }) {
-  const client = requireSupabase();
-  const normalizedEmail = email.toLowerCase().trim();
-  if (!/^\d{6,8}$/.test(token)) throw new Error('Enter the verification code from your email.');
-  const { data, error } = await client.auth.verifyOtp({
-    email: normalizedEmail,
-    token,
-    type: 'signup',
-  });
-  if (error) throw new Error(error.message, { cause: error });
-  if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
-  const userRecord = await loadAccountProfile(client, data.user);
-  setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
-  return userRecord;
+export async function requestSigninOtp(email, purpose = 'child-signin') {
+  if (!['child-signin', 'password-reset'].includes(purpose)) {
+    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  }
+  await requestAuthEmailCode(email, purpose === 'password-reset' ? 'recovery' : purpose);
 }
 
-export async function requestSigninOtp(email) {
+export async function verifySigninOtp({ email, token, expectedRole, purpose = 'child-signin' }) {
   const client = requireSupabase();
-  const normalizedEmail = email.toLowerCase().trim();
-  const { error } = await client.auth.signInWithOtp({
-    email: normalizedEmail,
-    options: { shouldCreateUser: false },
-  });
-  if (error) throw new Error(error.message, { cause: error });
-}
-
-export async function verifySigninOtp({ email, token, expectedRole }) {
-  const client = requireSupabase();
-  if (!['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
+  if (!['child-signin', 'password-reset'].includes(purpose)) {
+    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  }
+  if (purpose === 'child-signin' && expectedRole !== 'child') {
+    throw new Error('Child sign-in codes can only be used for a child account.');
+  }
+  if (expectedRole && !['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
     throw new Error('Select a valid account type before using email-code sign-in.');
   }
   const normalizedEmail = email.toLowerCase().trim();
@@ -238,7 +280,7 @@ export async function verifySigninOtp({ email, token, expectedRole }) {
   const { data, error } = await client.auth.verifyOtp({
     email: normalizedEmail,
     token,
-    type: 'email',
+    type: purpose === 'password-reset' ? 'recovery' : 'magiclink',
   });
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
@@ -246,7 +288,11 @@ export async function verifySigninOtp({ email, token, expectedRole }) {
   let userRecord;
   try {
     userRecord = await loadAccountProfile(client, data.user);
-    if (userRecord.role !== expectedRole) {
+    if (expectedRole && userRecord.role !== expectedRole) {
+      if (expectedRole === 'adult' && ['parent', 'educator'].includes(userRecord.role)) {
+        setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
+        return { user: userRecord, session: data.session, error: null };
+      }
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {
@@ -269,15 +315,6 @@ export async function updateAccountPassword(password) {
   if (!data?.user) throw new Error('The authentication service did not confirm your new password.');
 }
 
-export async function resendSignupOtp(email) {
-  const client = requireSupabase();
-  const { error } = await client.auth.resend({
-    type: 'signup',
-    email: email.toLowerCase().trim(),
-  });
-  if (error) throw new Error(error.message, { cause: error });
-}
-
 export async function signIn({ email, password, expectedRole }) {
   const client = requireSupabase();
   const normalizedEmail = email.toLowerCase().trim();
@@ -291,7 +328,8 @@ export async function signIn({ email, password, expectedRole }) {
   let userRecord;
   try {
     userRecord = await loadAccountProfile(client, data.user);
-    if (expectedRole && userRecord.role !== expectedRole) {
+    if (expectedRole && userRecord.role !== expectedRole
+      && !(expectedRole === 'adult' && ['parent', 'educator'].includes(userRecord.role))) {
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {
@@ -307,21 +345,150 @@ export async function signIn({ email, password, expectedRole }) {
   return { user: userRecord, session: data.session, error: null };
 }
 
-export async function signOut() {
+export async function signOut({ notify = true } = {}) {
+  let authError = null;
+  let activityEmailError = null;
   if (supabase) {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw new Error(error.message, { cause: error });
+    if (notify) {
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (sessionData.session?.access_token) {
+          const response = await fetch('/api/auth/welcome?action=activity', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${sessionData.session.access_token}`,
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ event: 'sign-out' }),
+          });
+          if (!response.ok) {
+            const result = await response.json().catch(() => null);
+            throw new Error(result?.error || 'The sign-out notification could not be sent.');
+          }
+        }
+      } catch (error) {
+        activityEmailError = error;
+      }
+    }
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      authError = error;
+    } catch (error) {
+      authError = error;
+    }
   }
   try {
     localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
   } catch (error) {
     throw new Error('Signed out, but the local account cache could not be cleared.', { cause: error });
   }
-  return true;
+  if (authError) {
+    throw new Error('Signed out on this device, but Supabase could not confirm the session revocation.', { cause: authError });
+  }
+  return {
+    signedOut: true,
+    activityEmailError: activityEmailError instanceof Error
+      ? activityEmailError.message
+      : activityEmailError ? 'The Idilewa sign-out email could not be sent.' : '',
+  };
+}
+
+export async function sendAuthActivityEmail(event) {
+  if (!['sign-in'].includes(event)) {
+    throw new Error('The authentication activity is not supported.');
+  }
+  const accessToken = await getSessionAccessToken();
+  const response = await fetch('/api/auth/welcome?action=activity', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ event }),
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The Idilewa sign-in email could not be sent.');
+  }
 }
 
 export function getCurrentUser() {
   return getLocalItem(LOCAL_STORAGE_KEY_USER, null);
+}
+
+export async function getSessionAccessToken() {
+  const client = requireSupabase();
+  const { data, error } = await client.auth.getSession();
+  if (error) throw new Error('Your sign-in session could not be checked.', { cause: error });
+  if (!data.session?.access_token) throw new Error('Sign in again to open this dashboard.');
+  return data.session.access_token;
+}
+
+export async function getRoleDashboard(endpoint) {
+  const token = await getSessionAccessToken();
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The dashboard returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The dashboard could not be loaded.');
+  }
+  return result;
+}
+
+export async function submitEducatorConnectionRequest(childEmail) {
+  const token = await getSessionAccessToken();
+  const response = await fetch('/api/educator/connection-request', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ childEmail }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The consent request returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'The consent request could not be sent.');
+  }
+  return result;
+}
+
+export async function withdrawEducatorConnection(connectionRequestId) {
+  const token = await getSessionAccessToken();
+  const response = await fetch('/api/dashboard/parent', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ connectionRequestId }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The consent update returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'Consent could not be withdrawn.');
+  }
+  return result;
 }
 
 export async function updateUserProfile(profile) {
@@ -473,4 +640,48 @@ export async function getUserVoiceRecords(userId) {
   }
   const all = getLocalItem(LOCAL_STORAGE_KEY_VOICE, []);
   return userId ? all.filter((entry) => entry.userId === userId || entry.userId === 'anonymous') : all;
+}
+
+export async function getAdultLearningSummary(userId) {
+  if (!isAuthenticatedUserId(userId)) {
+    throw new Error('Sign in to load your learning summary.');
+  }
+  const client = requireSupabase();
+  const [
+    { count: lessonCount, error: lessonError },
+    { count: codingCount, error: codingError },
+    { count: voiceCount, error: voiceError },
+    { data: recentActivity, error: activityError },
+  ] = await Promise.all([
+    client.from('progress')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('lesson_type', 'lesson'),
+    client.from('code_submissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+    client.from('voice_submissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+    client.from('progress')
+      .select('lesson_type,lesson_id,completed_at')
+      .eq('user_id', userId)
+      .eq('lesson_type', 'lesson')
+      .order('completed_at', { ascending: false })
+      .limit(5),
+  ]);
+  if (lessonError || codingError || voiceError || activityError) {
+    throw new Error('Your learning summary could not be loaded.', {
+      cause: lessonError || codingError || voiceError || activityError,
+    });
+  }
+  if (![lessonCount, codingCount, voiceCount].every(Number.isInteger)) {
+    throw new Error('Your learning summary returned incomplete totals.');
+  }
+  return {
+    completedLessons: lessonCount,
+    codingSessions: codingCount,
+    voicePractices: voiceCount,
+    recentActivity: recentActivity || [],
+  };
 }
