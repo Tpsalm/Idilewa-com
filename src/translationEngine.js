@@ -14,6 +14,7 @@ export const DICTIONARY = {
   'hello': { yo: 'Báwo ni?', ig: 'Kedu?', ha: 'Sannu', sw: 'Habari', pcm: 'How you dey?', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
   'hi': { yo: 'Báwo ni', ig: 'Ndewo', ha: 'Sannu', sw: 'Hujambo', pcm: 'How far?', phoneticYo: 'BAH-woh nee', toneYo: 'Mí-Re' },
   'good morning': { yo: 'Ẹ káàárọ̀', ig: 'Ụtụtụ ọma', ha: 'Ina kwana', sw: 'Habari za asubuhi', pcm: 'Good morning o', phoneticYo: 'Eh KAH-ah-raw', toneYo: 'Mid-High-Low' },
+  'good morning, how are you': { yo: 'Ẹ káàárọ̀, báwo ni?', phoneticYo: 'Eh KAH-ah-raw, BAH-woh nee', toneYo: 'Mid-High-Low · Mid-High' },
   'good afternoon': { yo: 'Ẹ káàsán', ig: 'Ehihie ọma', ha: 'Ina wuni', phoneticYo: 'Eh KAH-ah-sahn', toneYo: 'Mid-High-High' },
   'good evening': { yo: 'Ẹ kúulẹ́', ig: 'Mgbede ọma', ha: 'Barka da yamma', phoneticYo: 'Eh KOO-leh', toneYo: 'Mid-High-High' },
   'good night': { yo: 'O dárọ̀', ig: 'Ka chi foo', ha: 'Mu kwana lafiya', phoneticYo: 'Oh DAH-raw', toneYo: 'Mid-High-Low' },

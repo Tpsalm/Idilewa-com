@@ -10,6 +10,12 @@ test('translateText returns phrasebook greetings for all supported languages', (
   assert.equal(translateText('hello', 'sw').translated, 'Habari');
 });
 
+test('translateText returns the translation studio sample phrase exactly', () => {
+  const result = translateText('Good morning, how are you?', 'yo');
+  assert.equal(result.translated, 'Ẹ káàárọ̀, báwo ni?');
+  assert.equal(result.exact, true);
+});
+
 test('translateText returns curated religious terms with Yoruba orthography and plain-letter forms', () => {
   assert.equal(translateText('God', 'yo').translated, 'Ọlọ́run');
   assert.equal(translateText('God', 'yo').transliteration, 'Olorun');

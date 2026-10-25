@@ -80,6 +80,7 @@ import {
   const ROUTES = [
     'trainer',
     'voice_lessons',
+    'voice-translation', 'voice-text-to-speech', 'voice-speech-to-text',
     'curriculum',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
     'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
@@ -148,6 +149,8 @@ import {
     eyeOff: '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/>',
     edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>',
     refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.7 9a7 7 0 0 1 12-2L20 12M4 12l2.3 5a7 7 0 0 0 12-2"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+    pause: '<path d="M8 5v14M16 5v14"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>'
   };
 
@@ -390,6 +393,9 @@ import {
   LABELS.payment = 'Payment';
   LABELS.trainer = 'Voice Lessons';
   LABELS.voice_lessons = 'Voice Lessons';
+  LABELS['voice-translation'] = 'Translation';
+  LABELS['voice-text-to-speech'] = 'Text to Speech';
+  LABELS['voice-speech-to-text'] = 'Speech to Text';
 
   const defaults = {
     currentLang: 'yoruba',
@@ -401,6 +407,8 @@ import {
     quizResults: {},
     rewarded: {},
     saved: [],
+    savedTranslations: [],
+    translationLessons: [],
     savedProverbs: [],
     reflections: [],
     reflectionFeeling: '',
@@ -504,6 +512,33 @@ import {
         quizResults: { ...(stored.quizResults || {}) },
         rewarded: { ...(stored.rewarded || {}) },
         saved: Array.isArray(stored.saved) ? stored.saved : [],
+        savedTranslations: Array.isArray(stored.savedTranslations)
+          ? stored.savedTranslations.filter((item) => item && typeof item.id === 'string'
+            && typeof item.source === 'string' && typeof item.translated === 'string'
+            && typeof item.sourceLanguage === 'string' && typeof item.targetLanguage === 'string')
+            .slice(0, 50)
+            .map((item) => ({
+              id: item.id.slice(0, 80),
+              source: item.source.slice(0, 500),
+              translated: item.translated.slice(0, 2_000),
+              sourceLanguage: item.sourceLanguage.slice(0, 20),
+              targetLanguage: item.targetLanguage.slice(0, 20),
+            }))
+          : [],
+        translationLessons: Array.isArray(stored.translationLessons)
+          ? stored.translationLessons.filter((item) => item && typeof item.id === 'string'
+            && typeof item.source === 'string' && typeof item.translated === 'string'
+            && typeof item.sourceLanguage === 'string' && typeof item.targetLanguage === 'string')
+            .slice(0, 50)
+            .map((item) => ({
+              id: item.id.slice(0, 80),
+              source: item.source.slice(0, 500),
+              translated: item.translated.slice(0, 2_000),
+              sourceLanguage: item.sourceLanguage.slice(0, 20),
+              targetLanguage: item.targetLanguage.slice(0, 20),
+              languageName: typeof item.languageName === 'string' ? item.languageName.slice(0, 40) : '',
+            }))
+          : [],
         savedProverbs: Array.isArray(stored.savedProverbs) ? stored.savedProverbs : [],
         reflections: Array.isArray(stored.reflections) ? stored.reflections : [],
         teacherRequests: Array.isArray(stored.teacherRequests) ? stored.teacherRequests : [],
@@ -1593,14 +1628,26 @@ import {
         if (status) status.textContent = 'No audio was recorded. Try again or type your phrase.';
         if (button.isConnected) {
           button.disabled = false;
-          button.innerHTML = `${icon('mic', 15)} Dictate`;
+          button.innerHTML = button.classList.contains('translation-practice-button')
+            ? `${icon('mic', 17)}<span><strong>Record &amp; Practice</strong><small>Speak and compare</small></span>`
+            : icon('mic', 18);
         }
         return;
       }
       try {
         const result = await transcribeWithPlotweaver(recording, language);
         const input = document.getElementById('voice-translation-input');
-        if (input) input.value = result.text;
+        if (input) {
+          input.value = result.text.slice(0, input.maxLength > 0 ? input.maxLength : 1_000);
+          const count = document.getElementById('voice-translation-character-count');
+          if (count) count.textContent = String(input.value.length);
+        }
+        const output = document.getElementById('voice-translation-result');
+        if (output) {
+          output.textContent = '';
+          delete output.dataset.translation;
+          delete output.dataset.source;
+        }
         if (status) status.textContent = `Transcribed as ${result.language || language}. Select Translate to continue.`;
       } catch (error) {
         if (status) status.textContent = error instanceof Error
@@ -1609,7 +1656,9 @@ import {
       } finally {
         if (button.isConnected) {
           button.disabled = false;
-          button.innerHTML = `${icon('mic', 15)} Dictate`;
+          button.innerHTML = button.classList.contains('translation-practice-button')
+            ? `${icon('mic', 17)}<span><strong>Record &amp; Practice</strong><small>Speak and compare</small></span>`
+            : icon('mic', 18);
         }
       }
     }, { once: true });
@@ -3312,6 +3361,11 @@ import {
           ? previousLanguage
           : languages.some(({ code }) => code === 'yo') ? 'yo' : languages[0]?.code || '';
         if (status) status.textContent = 'Plotweaver translation is ready. Exact phrasebook matches are used first.';
+        if (selectorId === 'voice-translation-language') {
+          document.querySelectorAll('[data-action="choose-translation-language"]').forEach((button) => {
+            button.disabled = !languages.some(({ code }) => code === button.dataset.language);
+          });
+        }
       })
       .catch((error) => {
         if (status) {
@@ -3360,6 +3414,12 @@ import {
       output.textContent = result.translated;
       output.dataset.translation = result.translated;
       output.dataset.language = target;
+      output.dataset.source = source.trim();
+      const translationTitle = document.getElementById('translation-result-title');
+      if (translationTitle) translationTitle.textContent = `${translationLanguageName(target)} Translation`;
+      document.querySelectorAll('[data-action="choose-translation-language"]').forEach((languageButton) => {
+        languageButton.setAttribute('aria-pressed', String(languageButton.dataset.language === target));
+      });
       if (transliteration && result.transliteration) {
         transliteration.textContent = `Plain-letter spelling: ${result.transliteration}`;
       }
@@ -3950,7 +4010,7 @@ import {
 
         '<div class="c4k-hero-content-wrapper">' +
           '<div class="c4k-badge-pill">' +
-            icon('sparkles', 16) + ' <span>IDÍLẸ́WÀ CODE FOR KIDS · K-8 INDIGENOUS STEAM CURRICULUM</span>' +
+            icon('sparkles', 16) + ' <span>IDILEWA CODE FOR KIDS · K-8 INDIGENOUS STEAM CURRICULUM</span>' +
           '</div>' +
           '<h1 class="c4k-3d-main-heading">Curriculum</h1>' +
           '<p class="c4k-3d-sub-lead">' +
@@ -4143,6 +4203,105 @@ import {
     '</div>';
   }
 
+
+  function renderVoiceTranslationTool({ showDictation = true } = {}) {
+    const selectedTranslation = [...state.savedTranslations, ...state.translationLessons]
+      .find((item) => item.id === state.activeTranslationId);
+    const sourceText = selectedTranslation?.source || 'Good morning, how are you?';
+    const targetLanguage = selectedTranslation?.targetLanguage || 'yo';
+    const targetName = translationLanguageName(targetLanguage);
+    const translatedText = selectedTranslation?.translated || 'Ẹ káàárọ̀, báwo ni?';
+    return `<div class="translation-studio">
+      <header class="translation-studio-hero">
+        <div class="translation-studio-hero-copy">
+          <span class="translation-studio-mark">${icon('volume', 19)}</span>
+          <div><h1>AI Translate &amp; Listen Studio</h1><p>Type, translate, record and build your vocabulary in Yorùbá, Igbo, Hausa and more.</p></div>
+        </div>
+        <img src="./assets/code-kids.jpg" alt="Two children learning together on a laptop" />
+      </header>
+      <div class="translation-studio-compose">
+        <section class="translation-compose-panel" aria-labelledby="translation-write-title">
+          <h2 id="translation-write-title"><span>1</span> Write or paste your text</h2>
+          <label class="sr-only" for="voice-translation-source-language">Source language</label>
+          <select id="voice-translation-source-language" class="translation-language-select"><option value="en">English</option></select>
+          <label class="sr-only" for="voice-translation-input">Text to translate</label>
+          <textarea id="voice-translation-input" rows="3" maxlength="500" placeholder="Write or paste your text here…">${esc(sourceText)}</textarea>
+          <div class="translation-input-footer"><small><span id="voice-translation-character-count">${sourceText.length}</span>/500</small><button type="button" class="translation-clear-button" data-action="clear-voice-translation">Clear</button><button type="button" class="translation-mic-button" aria-label="Record and practice" data-action="start-voice-transcription">${icon('mic', 18)}</button></div>
+          ${showDictation ? '<small id="voice-transcription-status" class="translation-inline-status" aria-live="polite">Record &amp; Practice with your microphone.</small>' : ''}
+        </section>
+        <span class="translation-swap" aria-hidden="true">${icon('refresh', 18)}</span>
+        <section class="translation-target-panel" aria-labelledby="translation-target-title">
+          <h2 id="translation-target-title"><span>2</span> Choose translation language</h2>
+          <div class="translation-language-options" role="group" aria-label="Translation language">
+            <button type="button" data-action="choose-translation-language" data-language="yo" aria-pressed="${targetLanguage === 'yo'}">Yorùbá</button>
+            <button type="button" data-action="choose-translation-language" data-language="ig" aria-pressed="${targetLanguage === 'ig'}">Igbo</button>
+            <button type="button" data-action="choose-translation-language" data-language="ha" aria-pressed="${targetLanguage === 'ha'}">Hausa</button>
+            <button type="button" data-action="choose-translation-language" data-language="sw" aria-pressed="${targetLanguage === 'sw'}">Swahili</button>
+          </div>
+          <label class="sr-only" for="voice-translation-language">Translation language</label>
+          <select id="voice-translation-language" class="sr-only" aria-label="Translation language"><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="sw">Swahili</option></select>
+          <button class="translation-submit-button" type="button" data-action="translate-voice-text">${icon('globe', 16)} Translate</button>
+        </section>
+      </div>
+      <section class="translation-result-panel" aria-labelledby="translation-result-title">
+        <div class="translation-result-heading"><h2 id="translation-result-title">${esc(targetName)} Translation</h2><button type="button" data-action="copy-voice-translation" aria-label="Copy translation">${icon('copy', 17)}</button></div>
+        <p id="voice-translation-result" class="translation-result-text" data-translation="${esc(translatedText)}" data-language="${esc(targetLanguage)}" data-source="${esc(sourceText)}" aria-live="polite">${esc(translatedText)}</p>
+        <div class="translation-playback-controls">
+          <button class="translation-listen-button" type="button" data-action="speak-voice-translation">${icon('play', 15)} Listen</button>
+          <button type="button" data-action="pause-voice-translation">${icon('pause', 14)} Pause</button>
+          <button type="button" data-action="replay-voice-translation">${icon('refresh', 14)} Replay</button>
+          <button type="button" data-action="translation-speech-speed" data-speed="0.75">${icon('volume', 14)} Slow (0.75x)</button>
+          <label class="translation-speed-select">${icon('volume', 15)}<select aria-label="Speech speed"><option value="1">1.0x</option><option value="0.75">0.75x</option></select></label>
+        </div>
+        <small id="voice-translation-transliteration" class="translation-inline-status" aria-live="polite"></small>
+        <small id="voice-translation-provider-status" class="translation-inline-status" aria-live="polite">Loading supported languages…</small>
+      </section>
+      <div class="translation-studio-actions">
+        <button class="translation-practice-button" type="button" data-action="start-voice-transcription">${icon('mic', 17)}<span><strong>Record &amp; Practice</strong><small>Speak and compare</small></span></button>
+        <button type="button" data-action="save-translation-to-library">${icon('star', 18)}<span><strong>Save to Library</strong><small>Keep for later</small></span></button>
+        <button type="button" data-action="add-translation-to-lesson">${icon('book', 18)}<span><strong>Add to Lesson</strong><small>Practice with exercises</small></span></button>
+      </div>
+    </div>`;
+  }
+
+  function translationLanguageName(code) {
+    return ({ en: 'English', yo: 'Yorùbá', ig: 'Igbo', ha: 'Hausa', sw: 'Swahili' })[code] || 'Yorùbá';
+  }
+
+  function renderSavedTranslationLessons() {
+    if (!state.translationLessons.length) return '';
+    return `<section class="translation-saved-lessons" aria-labelledby="translation-saved-lessons-title"><span class="section-kicker">Your practice list</span><h2 id="translation-saved-lessons-title">Translations added to lessons</h2><div>${state.translationLessons.map((item) => `<article><div><strong>${esc(item.translated)}</strong><small>${esc(item.source)} · ${esc(translationLanguageName(item.targetLanguage))}</small></div><button type="button" data-action="open-saved-translation" data-id="${esc(item.id)}">Open translation</button></article>`).join('')}</div></section>`;
+  }
+
+  function renderVoiceToolPage(page) {
+    const details = {
+      'voice-translation': ['Translation', 'Translate between languages and listen to the spoken result.'],
+      'voice-text-to-speech': ['Text to Speech', 'Hear a phrase spoken aloud in a supported language.'],
+      'voice-speech-to-text': ['Speech to Text', 'Record a phrase and review the words recognized from your speech.'],
+    }[page];
+    if (!details) return renderGeneric(page);
+    const [title, description] = details;
+    let tool;
+    if (page === 'voice-translation') {
+      tool = renderVoiceTranslationTool();
+    } else if (page === 'voice-text-to-speech') {
+      tool = renderSpeechGenerator();
+    } else {
+      tool = `<section class="voice-translation-panel voice-speech-to-text-tool" aria-labelledby="voice-speech-to-text-title">
+        <h1 id="voice-speech-to-text-title">Speech to Text</h1>
+        <label class="voice-translation-input-label" for="voice-translation-input">Your recording transcription</label>
+        <textarea id="voice-translation-input" rows="5" maxlength="1000" placeholder="Your recognized words will appear here"></textarea>
+        <label class="voice-translation-input-label" for="voice-translation-source-language">Spoken language</label>
+        <select id="voice-translation-source-language"><option value="en">English</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option></select>
+        <button class="button button-primary" type="button" data-action="start-voice-transcription">${icon('mic', 15)} Record / stop</button>
+        <small id="voice-transcription-status" class="curriculum-tool-status" aria-live="polite">Microphone permission is requested only when you begin recording.</small>
+      </section>`;
+    }
+    return `<div class="container route-page voice-tool-page ${page === 'voice-translation' ? 'translation-page' : ''}">
+      <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('voice_lessons', 'Voice Lessons')}<span>/</span><strong>${esc(title)}</strong></div>
+      ${page === 'voice-translation' ? tool : `<section class="voice-tool-page-heading"><h1>${esc(title)}</h1><p>${esc(description)}</p></section>${tool}`}
+    </div>`;
+  }
   function renderStories() {
     const stories = [
       { title: 'The story that travelled', desc: 'A family story told, remembered and shared again.', image: 'story-grandmother.jpg', tag: 'Oral tradition', lang: 'Yorùbá · English', tone: 'peach' },
@@ -4359,6 +4518,7 @@ import {
         <div class="library-filters" role="group" aria-label="Filter library by type">${kinds.map((kind) => { const value = kind.toLowerCase(); const active = selectedFilter === value; return `<button type="button" class="library-filter ${active ? 'is-active' : ''}" data-action="library-filter" data-filter="${value}" aria-pressed="${active}">${kind}</button>`; }).join('')}</div>
         <div class="library-card-grid" aria-live="polite">${LIBRARY_ITEMS.map((item) => { const visible = (selectedFilter === 'all' || item.kind.toLowerCase() === selectedFilter) && `${item.title} ${item.kind} ${item.text}`.toLowerCase().includes(query.toLowerCase()); return `<a class="library-card" href="#/${item.route}" data-route="${item.route}" data-library-item data-library-kind="${item.kind.toLowerCase()}" ${visible ? '' : 'hidden'}><div class="library-card-image"><img src="${imageUrl(item.image)}" alt="${esc(item.alt)}" loading="lazy" /><span>${esc(item.kind)}</span></div><div class="library-card-copy"><h3>${esc(item.title)}</h3><p>${esc(item.text)}</p><span class="library-card-link">Explore ${icon('arrow', 14)}</span></div></a>`; }).join('')}<p class="library-empty" data-library-empty ${cards.length ? 'hidden' : ''}>No matching shelf items. Try another word or choose “All”.</p></div>
       </section>
+      ${state.savedTranslations.length ? `<section class="translation-library-saved" aria-labelledby="translation-library-saved-title"><span class="section-kicker">Saved on this device</span><h2 id="translation-library-saved-title">Your saved translations</h2><div>${state.savedTranslations.map((item) => `<article><div><small>${esc(translationLanguageName(item.sourceLanguage))} → ${esc(translationLanguageName(item.targetLanguage))}</small><strong>${esc(item.translated)}</strong><p>${esc(item.source)}</p></div><button type="button" data-action="open-saved-translation" data-id="${esc(item.id)}">Open translation</button></article>`).join('')}</div></section>` : ''}
       <section class="library-next-step"><div><span class="section-kicker">Ready to try something?</span><h2>Learning can start with play.</h2><p>Match a few words in Yorùbá, Igbo, Hausa or Kiswahili—then explore the phrases in the curriculum.</p></div>${routeLink('game', `Open the tile game ${icon('arrow', 15)}`, 'button button-primary')}</section>
     </div>`;
   }
@@ -4674,7 +4834,7 @@ import {
       <!-- Left-side sign-in and account creation form -->
       <main class="auth-panel modern-auth-panel">
         <div class="auth-brand" aria-label="Idilewa">
-          ${brandLogo('idílẹ́wà — Language · culture · future')}
+          ${brandLogo('Idilewa — Language · culture · future')}
         </div>
 
         <div class="auth-header-block">
@@ -5053,6 +5213,7 @@ import {
     let voiceTranscriptionResult = null;
     let activePlotweaverAudio = null;
     let activePlotweaverObjectUrl = '';
+    let translationSpeechSpeed = 1;
 
     function getAudioContext() {
       if (!audioCtx) {
@@ -5140,6 +5301,21 @@ import {
         }
         throw error;
       }
+    }
+
+    async function playVoiceTranslation({ replay = false } = {}) {
+      const output = document.getElementById('voice-translation-result');
+      const status = document.getElementById('voice-translation-provider-status');
+      if (!output?.dataset.translation) throw new Error('Translate a phrase before listening.');
+      if (replay && activePlotweaverAudio) {
+        activePlotweaverAudio.currentTime = 0;
+        activePlotweaverAudio.playbackRate = translationSpeechSpeed;
+        await activePlotweaverAudio.play();
+      } else {
+        await playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo');
+        if (activePlotweaverAudio) activePlotweaverAudio.playbackRate = translationSpeechSpeed;
+      }
+      if (status) status.textContent = 'Playing your translation.';
     }
 
     async function playNativeTrainerVoice(phrase, lang = "yoruba", speed = 1.0, syllables = []) {
@@ -5314,6 +5490,12 @@ import {
           </div>
         </section>
 
+        <section class="voice-tools-shortcuts" aria-label="Voice tools">
+          <article class="voice-tool-shortcut voice-tool-shortcut-translation"><span class="voice-tool-shortcut-icon">${icon("globe", 19)}</span><div><h2>Translation</h2><p>Translate a phrase and listen to the result.</p></div>${routeLink("voice-translation", `Open Translation ${icon("arrow", 14)}`, "button button-primary")}</article>
+          <article class="voice-tool-shortcut voice-tool-shortcut-speech"><span class="voice-tool-shortcut-icon">${icon("volume", 19)}</span><div><h2>Text to Speech</h2><p>Hear a phrase spoken in your chosen language.</p></div>${routeLink("voice-text-to-speech", `Open Text to Speech ${icon("arrow", 14)}`, "button button-outline")}</article>
+          <article class="voice-tool-shortcut voice-tool-shortcut-transcribe"><span class="voice-tool-shortcut-icon">${icon("mic", 19)}</span><div><h2>Speech to Text</h2><p>Record speech and review the recognized words.</p></div>${routeLink("voice-speech-to-text", `Open Speech to Text ${icon("arrow", 14)}`, "button button-outline")}</article>
+        </section>
+        ${renderSavedTranslationLessons()}
         <section class="voice-benefits" aria-label="Voice lesson benefits">
           ${[
             { icon: 'volume', title: 'Pronunciation Practice', description: 'Hear each phrase and practise your pronunciation.', tone: 'green' },
@@ -5562,6 +5744,9 @@ import {
 
   function renderPage(page, params) {
     switch (page) {
+      case 'voice-translation':
+      case 'voice-text-to-speech':
+      case 'voice-speech-to-text': return renderVoiceToolPage(page);
       case 'voice_lessons':
       case 'trainer': return renderTrainer(params);
       case 'index': return renderHome();
@@ -6401,6 +6586,11 @@ import {
     } else if (page === 'coding') {
       const codeRobotGlyphs = document.getElementById('codeRobotGlyphCanvas');
       if (codeRobotGlyphs) activeCodeRobotScene = init3DCodeRobotGlyphs(codeRobotGlyphs);
+    } else if (page === 'voice-translation') {
+      initializeTranslationLanguages('voice-translation-source-language');
+      initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
+    } else if (page === 'voice-text-to-speech') {
+      initializePlotweaverVoiceTools();
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const voiceStudio = document.getElementById('trainerStudio');
       voiceStudio?.addEventListener('toggle', () => {
@@ -6961,13 +7151,125 @@ import {
         void translateVoiceText();
         break;
       }
-      case 'speak-voice-translation': {
+      case 'clear-voice-translation': {
+        const input = document.getElementById('voice-translation-input');
         const output = document.getElementById('voice-translation-result');
-        if (output?.dataset.translation) {
-          void playPlotweaverSpeech(output.dataset.translation, output.dataset.language || 'yo')
-            .catch((error) => showToast(error instanceof Error ? error.message : 'Plotweaver could not generate this audio.', 'error'));
+        if (input) input.value = '';
+        if (output) {
+          output.textContent = '';
+          delete output.dataset.translation;
+          delete output.dataset.source;
         }
-        else showToast('Translate a phrase first.', 'error');
+        const count = document.getElementById('voice-translation-character-count');
+        if (count) count.textContent = '0';
+        const transliteration = document.getElementById('voice-translation-transliteration');
+        if (transliteration) transliteration.textContent = '';
+        break;
+      }
+      case 'choose-translation-language': {
+        const language = el.dataset.language || '';
+        const selector = document.getElementById('voice-translation-language');
+        if (!selector || !Array.from(selector.options).some((option) => option.value === language)) break;
+        selector.value = language;
+        document.querySelectorAll('[data-action="choose-translation-language"]').forEach((button) => {
+          button.setAttribute('aria-pressed', String(button.dataset.language === language));
+        });
+        const title = document.getElementById('translation-result-title');
+        if (title) title.textContent = `${translationLanguageName(language)} Translation`;
+        const output = document.getElementById('voice-translation-result');
+        if (output?.dataset.translation && output.dataset.language !== language) {
+          output.textContent = '';
+          delete output.dataset.translation;
+          delete output.dataset.source;
+        }
+        const status = document.getElementById('voice-translation-provider-status');
+        if (status) status.textContent = 'Choose Translate to create a new translation.';
+        break;
+      }
+      case 'copy-voice-translation': {
+        const text = document.getElementById('voice-translation-result')?.dataset.translation;
+        if (!text) {
+          showToast('Translate a phrase before copying it.', 'error');
+          break;
+        }
+        if (!navigator.clipboard?.writeText) {
+          showToast('Clipboard access is not available in this browser.', 'error');
+          break;
+        }
+        void navigator.clipboard.writeText(text)
+          .then(() => showToast('Translation copied.', 'success'))
+          .catch((error) => showToast(error instanceof Error ? error.message : 'The translation could not be copied.', 'error'));
+        break;
+      }
+      case 'speak-voice-translation': {
+        void playVoiceTranslation().catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this audio.', 'error'));
+        break;
+      }
+      case 'pause-voice-translation': {
+        if (!activePlotweaverAudio) {
+          showToast('Listen to a translation before pausing it.', 'error');
+          break;
+        }
+        activePlotweaverAudio.pause();
+        const status = document.getElementById('voice-translation-provider-status');
+        if (status) status.textContent = 'Playback paused.';
+        break;
+      }
+      case 'replay-voice-translation': {
+        void playVoiceTranslation({ replay: true }).catch((error) => showToast(error instanceof Error ? error.message : 'The translation could not be replayed.', 'error'));
+        break;
+      }
+      case 'translation-speech-speed': {
+        const requestedSpeed = Number(el.dataset.speed || el.value);
+        if (![0.75, 1].includes(requestedSpeed)) break;
+        translationSpeechSpeed = requestedSpeed;
+        if (activePlotweaverAudio) activePlotweaverAudio.playbackRate = requestedSpeed;
+        const selector = document.querySelector('.translation-speed-select select');
+        if (selector) selector.value = String(requestedSpeed);
+        const status = document.getElementById('voice-translation-provider-status');
+        if (status) status.textContent = `Speech speed set to ${requestedSpeed.toFixed(2)}x.`;
+        break;
+      }
+      case 'save-translation-to-library':
+      case 'add-translation-to-lesson': {
+        const input = document.getElementById('voice-translation-input');
+        const output = document.getElementById('voice-translation-result');
+        const sourceLanguage = document.getElementById('voice-translation-source-language')?.value || 'en';
+        const targetLanguage = document.getElementById('voice-translation-language')?.value || 'yo';
+        const source = input?.value.trim() || '';
+        const translated = output?.dataset.translation || '';
+        if (!source || !translated) {
+          showToast('Translate a phrase before saving it.', 'error');
+          break;
+        }
+        const entry = {
+          id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          source: source.slice(0, 500),
+          translated: translated.slice(0, 2_000),
+          sourceLanguage,
+          targetLanguage,
+          languageName: translationLanguageName(targetLanguage),
+        };
+        if (action === 'save-translation-to-library') {
+          state.savedTranslations = [entry, ...state.savedTranslations].slice(0, 50);
+          saveState();
+          showToast('Translation saved to your Library on this device.', 'success');
+        } else {
+          state.translationLessons = [entry, ...state.translationLessons].slice(0, 50);
+          saveState();
+          showToast('Translation added to your Voice Lessons practice list.', 'success');
+        }
+        break;
+      }
+      case 'open-saved-translation': {
+        const id = el.dataset.id || '';
+        const saved = [...state.savedTranslations, ...state.translationLessons].find((item) => item.id === id);
+        if (!saved) {
+          showToast('That saved translation could not be found.', 'error');
+          break;
+        }
+        state.activeTranslationId = id;
+        navigate('voice-translation');
         break;
       }
       case 'speak-voice-lesson': {
@@ -7632,6 +7934,33 @@ import {
 
   document.addEventListener('change', (event) => {
     const el = event.target;
+    if (el.matches('.translation-speed-select select')) {
+      handleAction('translation-speech-speed', el);
+      return;
+    }
+    if (el.matches('#voice-translation-language')) {
+      document.querySelectorAll('[data-action="choose-translation-language"]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.language === el.value));
+      });
+      const title = document.getElementById('translation-result-title');
+      if (title) title.textContent = `${translationLanguageName(el.value)} Translation`;
+      const output = document.getElementById('voice-translation-result');
+      if (output?.dataset.translation && output.dataset.language !== el.value) {
+        output.textContent = '';
+        delete output.dataset.translation;
+        delete output.dataset.source;
+      }
+      return;
+    }
+    if (el.matches('#voice-translation-source-language')) {
+      const output = document.getElementById('voice-translation-result');
+      if (output?.dataset.translation) {
+        output.textContent = '';
+        delete output.dataset.translation;
+        delete output.dataset.source;
+      }
+      return;
+    }
     if (el.matches('#plotweaver-voice-select')) {
       state.trainer.voiceId = el.value || '';
       saveState();
@@ -7679,6 +8008,18 @@ import {
 
   document.addEventListener('input', (event) => {
     const target = event.target;
+    if (target.id === 'voice-translation-input') {
+      const count = document.getElementById('voice-translation-character-count');
+      if (count) count.textContent = String(target.value.length);
+      const output = document.getElementById('voice-translation-result');
+      if (output?.dataset.translation && output.dataset.source !== target.value.trim()) {
+        output.textContent = '';
+        delete output.dataset.translation;
+        delete output.dataset.source;
+        const transliteration = document.getElementById('voice-translation-transliteration');
+        if (transliteration) transliteration.textContent = '';
+      }
+    }
     if (target.matches('[data-library-search]')) {
       state.librarySearch = target.value;
       const query = target.value.trim().toLowerCase();
