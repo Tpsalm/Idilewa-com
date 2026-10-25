@@ -32,11 +32,14 @@ export const supabase = isSupabaseConfigured
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      detectSessionInUrl: false,
+      flowType: 'pkce',
     },
   })
   : null;
 
 const LOCAL_STORAGE_KEY_USER = 'idilewa_auth_user';
+export const AUTH_RECOVERY_PENDING_KEY = 'idilewa-auth-recovery-pending';
 const LOCAL_STORAGE_KEY_PROGRESS = 'idilewa_db_progress';
 const LOCAL_STORAGE_KEY_CODE = 'idilewa_db_code';
 const LOCAL_STORAGE_KEY_VOICE = 'idilewa_db_voice';
@@ -81,6 +84,43 @@ export function isSignupPasswordValid(password) {
     && /[A-Z]/.test(password)
     && /\d/.test(password)
     && /[^A-Za-z0-9\s]/.test(password);
+}
+
+export function normalizeAuthError(error, operation = 'sign-in') {
+  const message = typeof error?.message === 'string' ? error.message.toLowerCase() : '';
+  const status = Number(error?.status || error?.statusCode || 0);
+  if (/invalid login credentials|invalid credentials|wrong password|incorrect password/.test(message)) {
+    return 'We couldn’t sign you in with those details. Check your email and password, or use Forgot password.';
+  }
+  if (/email not confirmed|email_not_confirmed/.test(message)) {
+    return 'Confirm your email using the link we sent before signing in.';
+  }
+  if (/already registered|user already exists|email_exists/.test(message)) {
+    return 'An account may already use this email. Sign in or use Forgot password.';
+  }
+  if (status === 429 || /rate limit|too many requests/.test(message)) {
+    return 'Too many attempts. Wait a few minutes and try again.';
+  }
+  if (/fetch failed|network|failed to fetch|timeout/.test(message)) {
+    return 'We could not reach the account service. Check your connection and try again.';
+  }
+  if (/weak password|password should be|password is too/.test(message)) {
+    return 'Choose a stronger password that meets the requirements shown below.';
+  }
+  if (message) return error.message;
+  return operation === 'sign-up'
+    ? 'Your account could not be created. Please try again.'
+    : 'We could not complete that account request. Please try again.';
+}
+
+export function getAuthCallbackUrl(next = 'index', origin = window.location.origin) {
+  const allowedRoute = typeof next === 'string' && /^[a-z][a-z0-9_-]*$/i.test(next)
+    && next !== 'auth-callback'
+    ? next
+    : 'index';
+  const callback = new URL('/auth-callback.html', origin);
+  callback.searchParams.set('next', allowedRoute);
+  return callback.toString();
 }
 
 function mapProgress(row) {
@@ -162,8 +202,8 @@ async function loadAccountProfile(client, authUser) {
 }
 
 async function requestAuthEmailCode(email, purpose) {
-  if (!['child-signin', 'password-reset'].includes(purpose)) {
-    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  if (purpose !== 'child-signin') {
+    throw new Error('Email codes are only available for parent-issued child sign-in.');
   }
   const response = await fetch('/api/auth/welcome?action=email-code', {
     method: 'POST',
@@ -186,6 +226,12 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   if (!['child', 'adult', 'parent', 'educator'].includes(role)) {
     throw new Error('Choose a supported account type before creating an account.');
   }
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('Enter a valid email address.');
+  }
+  const userName = (typeof name === 'string' ? name.trim().slice(0, 80) : '');
+  if (!userName) throw new Error('Enter a name or learner alias.');
   if (!isSignupPasswordValid(password)) {
     throw new Error('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.');
   }
@@ -195,13 +241,11 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
   if (role === 'educator' && !/^[0-9a-f-]{36}$/i.test(educatorInviteId || '')) {
     throw new Error('A verified one-time educator invitation code is required before creating a teacher account.');
   }
-  const normalizedEmail = email.toLowerCase().trim();
-  const userName = (typeof name === 'string' ? name.trim().slice(0, 80) : '')
-    || normalizedEmail.split('@')[0];
   const { data, error } = await client.auth.signUp({
     email: normalizedEmail,
     password,
     options: {
+      emailRedirectTo: getAuthCallbackUrl(),
       data: {
         name: userName,
         role,
@@ -210,66 +254,188 @@ export async function signUp({ email, password, name, role = 'child', guardianAc
       },
     },
   });
-  if (error) throw new Error(error.message, { cause: error });
+  if (error) throw new Error(normalizeAuthError(error, 'sign-up'), { cause: error });
   if (!data?.user) throw new Error('The authentication service did not return an account.');
   if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
     throw new Error('Could not create an account with this email. If you already registered, sign in or use Forgot password.');
   }
 
   if (!data.session) {
-    throw new Error('The account was created, but Supabase did not start a session. Email confirmation must be disabled in the hosted Supabase auth settings before sign-up can complete.');
-  }
-
-  let welcomeEmailError = '';
-  try {
-    const response = await fetch('/api/auth/welcome', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ userId: data.user.id }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      welcomeEmailError = typeof result?.error === 'string'
-        ? result.error
-        : 'Your account is ready, but the welcome email could not be sent.';
-    }
-  } catch (error) {
-    welcomeEmailError = error instanceof Error
-      ? `Your account is ready, but the welcome email could not be sent: ${error.message}`
-      : 'Your account is ready, but the welcome email could not be sent.';
+    return {
+      user: mapAuthUser(data.user, { ...data.user.user_metadata, name: userName, role }),
+      session: null,
+      emailConfirmationRequired: true,
+    };
   }
 
   let userRecord;
   try {
-    userRecord = data.session
-      ? await loadAccountProfile(client, data.user)
-      : mapAuthUser(data.user, { ...data.user.user_metadata, name: userName, role });
+    userRecord = await loadAccountProfile(client, data.user);
   } catch (profileError) {
-    if (data.session) {
-      const { error: signOutError } = await client.auth.signOut();
-      if (signOutError) {
-        throw new Error('The account profile could not be loaded and its session could not be cleared.', { cause: signOutError });
-      }
+    const { error: signOutError } = await client.auth.signOut({ scope: 'local' });
+    if (signOutError) {
+      throw new Error('The account profile could not be loaded and its session could not be cleared.', { cause: signOutError });
     }
     throw profileError;
   }
-  if (data.session) setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
-  return { user: userRecord, session: data.session, error: null, welcomeEmailError };
+  setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
+  return {
+    user: userRecord,
+    session: data.session,
+    emailConfirmationRequired: false,
+  };
+}
+
+export async function sendWelcomeEmail(userId) {
+  if (typeof userId !== 'string' || !/^[0-9a-f-]{36}$/i.test(userId)) {
+    throw new Error('A valid account is required to send the welcome email.');
+  }
+  const response = await fetch('/api/auth/welcome', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The welcome email service returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'Your account was created, but the welcome email could not be sent.');
+  }
+}
+
+export async function resendSignupConfirmation(email) {
+  const client = requireSupabase();
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('Enter a valid email address.');
+  }
+  const { error } = await client.auth.resend({
+    type: 'signup',
+    email: normalizedEmail,
+    options: { emailRedirectTo: getAuthCallbackUrl() },
+  });
+  if (error) throw new Error(normalizeAuthError(error, 'sign-up'), { cause: error });
+}
+
+export async function requestPasswordReset(email) {
+  const client = requireSupabase();
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('Enter a valid email address.');
+  }
+  const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
+    redirectTo: getAuthCallbackUrl('login'),
+  });
+  if (error) throw new Error(normalizeAuthError(error, 'password-reset'), { cause: error });
+}
+
+export async function completeAuthCallback(callbackUrl = window.location.href) {
+  const client = requireSupabase();
+  const url = new URL(callbackUrl);
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+  const query = url.searchParams;
+  const providerError = query.get('error_description') || hash.get('error_description') || query.get('error') || hash.get('error');
+  if (providerError) throw new Error(normalizeAuthError({ message: providerError }, 'callback'));
+
+  const callbackType = query.get('type') || hash.get('type') || '';
+  if (query.get('code')) {
+    const { error } = await client.auth.exchangeCodeForSession(query.get('code'));
+    if (error) throw new Error(normalizeAuthError(error, 'callback'), { cause: error });
+  } else if (query.get('token_hash') || hash.get('token_hash')) {
+    const allowedTypes = new Set(['signup', 'email', 'magiclink', 'recovery', 'invite', 'email_change']);
+    if (!allowedTypes.has(callbackType)) throw new Error('This verification link is not valid. Request a new link and try again.');
+    const { error } = await client.auth.verifyOtp({
+      token_hash: query.get('token_hash') || hash.get('token_hash'),
+      type: callbackType,
+    });
+    if (error) throw new Error(normalizeAuthError(error, 'callback'), { cause: error });
+  } else if (hash.get('access_token') && hash.get('refresh_token')) {
+    const { error } = await client.auth.setSession({
+      access_token: hash.get('access_token'),
+      refresh_token: hash.get('refresh_token'),
+    });
+    if (error) throw new Error(normalizeAuthError(error, 'callback'), { cause: error });
+  }
+
+  const { data: sessionData, error: sessionError } = await client.auth.getSession();
+  if (sessionError) throw new Error('Your verification session could not be restored. Request a new link and try again.', { cause: sessionError });
+  if (!sessionData.session?.user) {
+    throw new Error('This verification link is invalid or has expired. Sign in or request a new link.');
+  }
+
+  let user;
+  try {
+    user = await loadAccountProfile(client, sessionData.session.user);
+  } catch (profileError) {
+    localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+    throw new Error('Your account is verified, but its profile could not be loaded. Contact Idilewa support.', { cause: profileError });
+  }
+  setLocalItem(LOCAL_STORAGE_KEY_USER, user);
+  return {
+    user,
+    recovery: callbackType === 'recovery' || query.get('next') === 'login',
+    next: query.get('next') || 'index',
+  };
+}
+
+export async function restoreAuthSession() {
+  const client = requireSupabase();
+  const { data, error } = await client.auth.getSession();
+  if (error) throw new Error('Your saved sign-in session could not be restored.', { cause: error });
+  if (!data.session?.user) {
+    localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+    return null;
+  }
+  try {
+    const user = await loadAccountProfile(client, data.session.user);
+    setLocalItem(LOCAL_STORAGE_KEY_USER, user);
+    return user;
+  } catch (profileError) {
+    localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+    throw new Error('Your sign-in is active, but the account profile could not be restored.', { cause: profileError });
+  }
+}
+
+export function subscribeToAuthChanges(listener) {
+  const client = requireSupabase();
+  if (typeof listener !== 'function') throw new Error('An authentication state listener is required.');
+  const { data, error } = client.auth.onAuthStateChange((event, session) => {
+    queueMicrotask(async () => {
+      if (!session?.user) {
+        localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+        listener(null, event);
+        return;
+      }
+      try {
+        const user = await loadAccountProfile(client, session.user);
+        setLocalItem(LOCAL_STORAGE_KEY_USER, user);
+        listener(user, event);
+      } catch (profileError) {
+        localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+        listener(null, event, profileError);
+      }
+    });
+  });
+  if (error) throw new Error('Authentication state monitoring could not be started.', { cause: error });
+  return () => data.subscription.unsubscribe();
 }
 
 export async function requestSigninOtp(email, purpose = 'child-signin') {
-  if (!['child-signin', 'password-reset'].includes(purpose)) {
-    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  if (purpose !== 'child-signin') {
+    throw new Error('Email codes are only available for parent-issued child sign-in.');
   }
-  await requestAuthEmailCode(email, purpose === 'password-reset' ? 'recovery' : purpose);
+  await requestAuthEmailCode(email, purpose);
 }
 
 export async function verifySigninOtp({ email, token, expectedRole, purpose = 'child-signin' }) {
   const client = requireSupabase();
-  if (!['child-signin', 'password-reset'].includes(purpose)) {
-    throw new Error('Email codes are only available for child sign-in and password recovery.');
+  if (purpose !== 'child-signin') {
+    throw new Error('Email codes are only available for parent-issued child sign-in.');
   }
-  if (purpose === 'child-signin' && expectedRole !== 'child') {
+  if (expectedRole !== 'child') {
     throw new Error('Child sign-in codes can only be used for a child account.');
   }
   if (expectedRole && !['child', 'educator', 'adult', 'parent'].includes(expectedRole)) {
@@ -280,7 +446,7 @@ export async function verifySigninOtp({ email, token, expectedRole, purpose = 'c
   const { data, error } = await client.auth.verifyOtp({
     email: normalizedEmail,
     token,
-    type: purpose === 'password-reset' ? 'recovery' : 'magiclink',
+    type: 'magiclink',
   });
   if (error) throw new Error(error.message, { cause: error });
   if (!data?.user || !data.session) throw new Error('Email verification did not return a signed-in account.');
@@ -296,7 +462,7 @@ export async function verifySigninOtp({ email, token, expectedRole, purpose = 'c
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {
-    const { error: signOutError } = await client.auth.signOut();
+    const { error: signOutError } = await client.auth.signOut({ scope: 'local' });
     if (signOutError) throw new Error('Could not clear the session after the account check failed.', { cause: signOutError });
     throw profileError;
   }
@@ -317,12 +483,18 @@ export async function updateAccountPassword(password) {
 
 export async function signIn({ email, password, expectedRole }) {
   const client = requireSupabase();
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('Enter the email address used for your account.');
+  }
+  if (typeof password !== 'string' || !password) {
+    throw new Error('Enter your password.');
+  }
   const { data, error } = await client.auth.signInWithPassword({
     email: normalizedEmail,
     password,
   });
-  if (error) throw new Error(error.message, { cause: error });
+  if (error) throw new Error(normalizeAuthError(error), { cause: error });
   if (!data?.user || !data.session) throw new Error('The authentication service did not return a signed-in session.');
 
   let userRecord;

@@ -6,11 +6,6 @@ const EMAIL_COPY = {
     title: 'A child sign-in passcode',
     instruction: 'Share this one-time passcode with your child so they can sign in to Idilewa. It is valid only for this sign-in and expires soon.',
   },
-  recovery: {
-    subject: 'Reset your Idilewa password',
-    title: 'Reset your password',
-    instruction: 'Enter this one-time code on the Idilewa password recovery page to choose a new password.',
-  },
 };
 
 export function createAuthCodeEmail({ code, purpose, logoUrl = 'https://idilewa.com/assets/idilewa-email-logo.png' }) {

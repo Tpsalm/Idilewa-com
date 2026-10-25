@@ -1,10 +1,19 @@
 project_id = "idilewa-com"
 
+[auth]
+site_url = "http://127.0.0.1:4173"
+additional_redirect_urls = [
+  "http://localhost:5173/auth-callback.html",
+  "http://127.0.0.1:4173/auth-callback.html",
+  "https://idilewa.com/auth-callback.html",
+  "https://www.idilewa.com/auth-callback.html",
+]
+
 [auth.email]
 enable_confirmations = false
 
 [auth.email.template.confirmation]
-subject = "Welcome to Idilewa"
+subject = "Confirm your Idilewa email"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.magic_link]
