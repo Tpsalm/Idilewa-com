@@ -64,12 +64,21 @@ test('choosing a voice lesson language opens lessons directly with back and less
     appSource.indexOf("} else if (page === 'voice-grade')")
   );
   assert.match(languagePicker, /data-route="voice-audio" data-lang="\$\{id\}"/);
-  assert.match(languagePicker, /Open \$\{name\} lessons/);
+  assert.doesNotMatch(languagePicker, /Open \$\{name\} lessons/);
   assert.doesNotMatch(languagePicker, /Continue with/);
   assert.match(appSource, /function renderVoicePracticeLessonNavigation/);
   assert.match(appSource, /Previous lesson/);
   assert.match(appSource, /Next lesson/);
   assert.match(appSource, /data-route="voice-audio" data-lang="\$\{language\}"/);
+});
+
+test('Yoruba lesson 3 displays its English meaning instead of repeating its Yoruba pronunciation', () => {
+  assert.match(
+    appSource,
+    /TRAINER_CURRICULUM\.yoruba\.beginner\.find\(\(lesson\) => lesson\.id === 3\)\.translation\s*=\s*'My name is Temitope, and I am happy\.'/
+  );
+  assert.match(appSource, /voice-practice-translation/);
+  assert.match(appSource, /English translation/);
 });
 
 test('grade paths increase in difficulty and provide distinct developmental goals', () => {
