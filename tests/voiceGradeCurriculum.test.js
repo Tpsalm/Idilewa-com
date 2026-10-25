@@ -41,7 +41,7 @@ test('all four supported languages provide distinct lesson content for every gra
   }
 });
 
-test('translation, text-to-speech, and speech-to-text each receive 50 lessons per language', () => {
+test('voice feature pages each receive 50 guided lessons per language', () => {
   const curriculumMatch = appSource.match(/const TRAINER_CURRICULUM = (\{[\s\S]*?\});/);
   assert.ok(curriculumMatch, 'Voice lesson curriculum data should be present');
   const curricula = JSON.parse(curriculumMatch[1]);
@@ -53,6 +53,7 @@ test('translation, text-to-speech, and speech-to-text each receive 50 lessons pe
   }
 
   assert.match(appSource, /renderVoiceFeatureLessonNavigation/);
+  assert.match(appSource, /'voice-text-to-speech', 'voice-speech-to-text', 'voice-translation', 'voice-cloning'/);
   assert.match(appSource, /data-action="start-voice-transcription"/);
   assert.match(appSource, /data-action="plotweaver-speak-text"/);
 });
