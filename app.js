@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import brandLogoUrl from './assets/idilewa-brand.svg';
 import {
-  init3DHeroCanvas,
   init3DCodeRobotGlyphs,
   init3DAuthCanvas,
   init3DStoryCanvas,
@@ -16,6 +15,12 @@ import {
   translateText,
   playTonePitch
 } from './src/translationEngine.js';
+import {
+  getAdjacentVoicePracticeLesson,
+  getVoicePracticeLesson,
+  VOICE_PRACTICE_COURSES,
+  VOICE_PRACTICE_TOOL_ORDER,
+} from './src/voicePracticeLessons.js';
 import {
   createPlotweaverVoice,
   getPlotweaverLanguages,
@@ -80,7 +85,7 @@ import {
   const ROUTES = [
     'trainer',
     'voice_lessons',
-    'voice-translation', 'voice-text-to-speech', 'voice-speech-to-text',
+    'voice-translation', 'voice-text-to-speech', 'voice-speech-to-text', 'voice-cloning',
     'curriculum',
     'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
     'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
@@ -396,6 +401,7 @@ import {
   LABELS['voice-translation'] = 'Translation';
   LABELS['voice-text-to-speech'] = 'Text to Speech';
   LABELS['voice-speech-to-text'] = 'Speech to Text';
+  LABELS['voice-cloning'] = 'Voice Cloning';
 
   const defaults = {
     currentLang: 'yoruba',
@@ -799,13 +805,13 @@ import {
       { title: 'Code in your language', desc: 'Interactive bilingual coding studio for kids.', icon: 'code', route: 'coding', tone: 'yellow', tag: 'Interactive IDE', image: 'code-kids.jpg' },
       { title: 'Voice Lessons', desc: 'Start with Yorùbá sounds, then practice pitch and pronunciation across African languages.', icon: 'mic', route: 'voice_lessons', tone: 'mint', tag: 'Interactive Audio Lessons', image: 'listening-reader.jpg' },
       { title: 'Read & listen', desc: 'Hear words, voices and ideas.', icon: 'headphones', route: 'voices', tone: 'mint', tag: 'Audio & text', image: 'listening-reader.jpg' },
-      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'stories-culture.jpg', imageAlt: 'Rich African cultural heritage items: books, woven basket, carved bowl on kente cloth, and drum' },
+      { title: 'Stories & culture', desc: 'Discover stories, people and traditions.', icon: 'book', route: 'ere', tone: 'pink', tag: 'Explore', image: 'story-grandmother.jpg' },
       { title: 'Connect with Students', desc: 'A respectful space for educators to meet learners.', icon: 'people', route: 'connect_students', tone: 'peach', tag: 'For educators', image: 'african-kids-friends.jpg' },
       { title: 'Connect with Teachers', desc: 'Browse educator profiles, learning hours and experience.', icon: 'school', route: 'connect_teachers', tone: 'lilac', tag: 'For learners', image: 'yoruba-educator-man.jpg' }
     ];
     const books = [
       { title: 'A Morning Greeting', label: 'Yorùbá · Beginner', bg: 'cover-green', shape: 'È', route: 'course' },
-      { title: 'The Talking Drum', label: 'Story · Read & listen', bg: 'cover-blue', shape: '♫', route: 'ere' },
+      { title: 'Stories We Share', label: 'Story · Read & listen', bg: 'cover-blue', shape: '♫', route: 'ere' },
       { title: 'Little Code Garden', label: 'English + Yorùbá', bg: 'cover-yellow', shape: '</>', route: 'coding' },
       { title: 'Wisdom We Carry', label: 'Culture · Short read', bg: 'cover-pink', shape: '“', route: 'oral' }
     ];
@@ -824,86 +830,42 @@ import {
             </div>
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
-          <!-- Hero Visual: 3D Talking Drum (Default Active Centerpiece) & Living Family View Switcher -->
-          <div class="hero-visual modern-hero-visual" id="heroVisualStage">
-            <div class="hero-ambient-glow" aria-hidden="true"></div>
-            
-            <div class="hero-visual-stage-inner">
-              <div class="hero-visual-switcher" role="tablist" aria-label="Hero visual display mode">
-                <button type="button" class="hero-switch-btn is-active" id="btnShow3D" data-action="hero-show-3d" role="tab" aria-selected="true">
-                  <span>🥁 3D Talking Drum &amp; Glyphs</span>
-                </button>
-                <button type="button" class="hero-switch-btn" id="btnShowPhoto" data-action="hero-show-photo" role="tab" aria-selected="false">
-                  <span>📸 Living Family View</span>
-                </button>
-              </div>
-
-              <!-- 3D Interactive Talking Drum Stage (Visible By Default on Page Load) -->
-              <div class="hero-3d-stage-container" id="hero3DStageWrap" style="display: block; width: 100%; position: relative;">
-                <div id="hero3DCanvasWrap" class="hero-3d-canvas-wrap" data-3d-scene="hero" title="Drag to rotate 3D African Gángan Drum and living glyphs" aria-label="Interactive 3D African Talking Drum and orbiting Yoruba glyphs"></div>
-                <div class="hero-3d-floating-badge">
-                  <span class="hero-3d-pulse-dot"></span>
-                  <span>🪐 3D Gángan Drum &amp; Glyphs · Drag &amp; Rotate · Three.js</span>
+          <div class="hero-visual home-hero-art">
+            <img src="./assets/yoruba-kids-culture.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" />
+            <section class="home-voice-promo" aria-labelledby="home-voice-promo-title">
+              <div class="home-voice-promo-copy">
+                <span class="home-voice-promo-kicker">${icon('headphones', 14)} Voice lessons · sound &amp; tonal practice</span>
+                <h2 id="home-voice-promo-title">Speak African languages with <em>native tonal fluency.</em></h2>
+                <p>Our interactive Voice Lessons help you listen and practise speaking across Yorùbá, Igbo, Hausa, Kiswahili, isiZulu and Twi.</p>
+                <div class="home-voice-promo-highlights">
+                  <span><span>${icon('volume', 14)}</span><strong>60 Audio Lessons</strong><small>3 progressive tiers</small></span>
+                  <span><span>${icon('music', 14)}</span><strong>Dó-Re-Mí Melodies</strong><small>Interactive pitch keys</small></span>
+                  <span><span>${icon('mic', 14)}</span><strong>Live Mic Practice</strong><small>Record and transcribe</small></span>
+                </div>
+                <div class="home-voice-promo-actions">
+                  ${routeLink('voice_lessons', `Explore Voice Lessons ${icon('arrow', 15)}`, 'button home-voice-promo-button')}
+                  ${routeLink('voices', 'Explore Voice Library', 'button home-voice-promo-secondary')}
                 </div>
               </div>
-
-              <!-- 2D Photographic & Greeting Hotspots View (Hidden By Default) -->
-              <div class="hero-photo-wrap family-view-reference" role="region" aria-label="Interactive Idilewa African language &amp; cultural learning preview" id="heroPhotoWrap" style="display: none;">
-                <div class="hero-photo-frame">
-                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo cinematic-living-image" />
-                  <canvas id="heroCinematicCanvas" class="cinematic-video-canvas" aria-hidden="true"></canvas>
-                  <div class="cinematic-tablet-screen-glow" aria-hidden="true"></div>
-                  <div class="cinematic-golden-hour-rays" aria-hidden="true"></div>
-                  <div class="cinematic-jewelry-glints" aria-hidden="true">
-                    <span class="jewelry-glint j1" style="left: 54.2%; top: 48.5%;"></span>
-                    <span class="jewelry-glint j2" style="left: 56.5%; top: 44.2%;"></span>
-                    <span class="jewelry-glint j3" style="left: 52.8%; top: 22.8%;"></span>
-                    <span class="jewelry-glint j4" style="left: 33.6%; top: 62.4%;"></span>
-                  </div>
-                  <div class="cinematic-lens-flare" aria-hidden="true"></div>
-                  <div class="hero-vignette-overlay" aria-hidden="true"></div>
-                  <div class="cinematic-live-badge" aria-label="4K Ultra-HD Living Studio">
-                    <span class="cinematic-pulse-dot"></span>
-                    <span>Living Studio</span>
+              <div class="home-voice-demo" aria-label="Try the Yorùbá tone soundboard">
+                <span class="home-voice-demo-label"><i></i> Live interactive audio studio</span>
+                <div class="home-voice-demo-phrase">
+                  <small>YORÙBÁ TONES</small>
+                  <button type="button" lang="yo" data-action="speak-voice-lesson" data-phrase="Ẹ káàárọ̀">Ẹ káàárọ̀</button>
+                  <div class="home-voice-tone-keys">
+                    <button type="button" data-action="trainer-play-syllable" data-freq="261.63" data-tone="do" data-syllable="kú">kú (Mí)</button>
+                    <button type="button" data-action="trainer-play-syllable" data-freq="293.66" data-tone="re" data-syllable="àár">àár (Ré)</button>
+                    <button type="button" data-action="trainer-play-syllable" data-freq="329.63" data-tone="mi" data-syllable="ọ̀">ọ̀ (Dó)</button>
                   </div>
                 </div>
-                <div class="hero-interactive-hotspots-container" aria-label="Interactive Audio Learning Hotspots">
-                  <button type="button" class="hero-interactive-hotspot hotspot-yoruba" data-action="hero-play-greeting" data-lang="yoruba" data-phrase="Ẹ káàárọ̀" data-translation="Good morning" title="Click to hear Yorùbá: Ẹ káàárọ̀ (Good morning)" aria-label="Yorùbá greeting: Ẹ káàárọ̀, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <button type="button" class="hero-interactive-hotspot hotspot-hausa" data-action="hero-play-greeting" data-lang="hausa" data-phrase="Sannu" data-translation="Good morning" title="Click to hear Hausa: Sannu (Good morning)" aria-label="Hausa greeting: Sannu, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <button type="button" class="hero-interactive-hotspot hotspot-igbo" data-action="hero-play-greeting" data-lang="igbo" data-phrase="Ndewo" data-translation="Good morning" title="Click to hear Igbo: Ndewo (Good morning)" aria-label="Igbo greeting: Ndewo, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <button type="button" class="hero-interactive-hotspot hotspot-swahili" data-action="hero-play-greeting" data-lang="swahili" data-phrase="Habari" data-translation="Good morning" title="Click to hear Swahili: Habari (Good morning)" aria-label="Swahili greeting: Habari, Good morning">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-ripple-ring" aria-hidden="true"></span>
-                  </button>
-                  <a href="#/languages" data-route="languages" class="hero-interactive-hotspot hotspot-sun" title="Learn African Languages with Joy" aria-label="Learn African Languages with Joy">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-sun-glow" aria-hidden="true"></span>
-                  </a>
-                  <a href="#/ere" data-route="ere" class="hero-interactive-hotspot hotspot-stories" title="Explore African Stories &amp; Folktales" aria-label="Explore African Stories &amp; Folktales">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                    <span class="hotspot-shimmer-bar" aria-hidden="true"></span>
-                  </a>
-                  <button type="button" class="hero-interactive-hotspot hotspot-motto" data-action="hero-motto-click" title="Click to see Idilewa daily learning motto" aria-label="Idilewa learning motto">
-                    <span class="hotspot-highlight-glow" aria-hidden="true"></span>
-                  </button>
-                </div>
+                <div class="home-voice-demo-score"><strong>Listen &amp; practise</strong><span>Native audio · guided lessons</span></div>
               </div>
-            </div>
+            </section>
           </div>
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
       </section>
 
-      ${renderHomeBenefits()}
       ${renderHomeAppPreview()}
 
       <!-- 5 Pathways Learning Cards (Five Pillars of Idilewa) -->
@@ -1035,6 +997,12 @@ import {
             ].map(([num, title, desc, ico, route]) => `<a href="#/${route}" data-route="${route}" class="journey-step"><span class="journey-number">${num}</span><span class="journey-icon">${icon(ico, 20)}</span><strong>${title}</strong><small>${desc}</small><span class="journey-link">${icon('arrow', 15)}</span></a>`).join('')}
           </div>\n    </section>
 
+      <section class="container section language-section home-ribbon-section">
+        <div class="section-heading"><div><span class="section-kicker">Start with a language</span><h2>Which one feels like home?</h2><p>Four learning paths are ready to explore, with more voices on the way.</p></div>${routeLink('languages', 'All languages ' + icon('arrow', 15), 'text-link')}</div>
+        <div class="language-grid home-language-grid">${LANGUAGES.map((l) => `<button type="button" class="language-card lang-${l.tint}" data-action="${state.available[l.id] ? 'select-language' : 'notify-language'}" data-lang="${l.id}"><span class="language-glyph">${l.glyph}</span><span class="language-info"><strong>${l.name}</strong><small>${l.region}</small></span><span class="language-go">${icon('arrow', 16)}</span></button>`).join('')}</div>
+        <div class="coming-soon-line"><span class="coming-soon-dot"></span>Coming soon: ${SOON_LANGUAGES.map((l) => l.name).join(' · ')} ${routeLink('languages', 'Get curious ' + icon('arrow', 13), 'text-link text-link-small')}</div>
+      </section>
+
       <section class="container section home-trainer-feature-section home-ribbon-section">
         <div class="home-trainer-card">
           <div class="home-trainer-copy">
@@ -1110,10 +1078,9 @@ import {
       </section>
 
       <section class="container section audience-section home-ribbon-section">
-        <div class="section-heading"><div><span class="section-kicker">One home, many journeys</span><h2>Made for the way you learn.</h2><p>Welcoming for children, useful for adults and stronger when families learn together.</p></div></div>
+        <div class="section-heading"><div><span class="section-kicker">One home, many journeys</span><h2>Made for the way you learn.</h2><p>Welcoming for young learners, with families and communities learning together.</p></div></div>
         <div class="audience-grid">
           <a class="audience-card audience-kids" href="#/kids" data-route="kids"><span class="audience-icon">${icon('sparkles', 21)}</span><span class="audience-kicker">For young learners</span><strong>Curiosity comes first.</strong><small>Playful lessons, stories and gentle challenges.</small>${icon('arrow', 16)}</a>
-          <a class="audience-card audience-individual" href="#/individuals" data-route="individuals"><span class="audience-icon">${icon('compass', 21)}</span><span class="audience-kicker">For independent learners</span><strong>Your roots. Your pace.</strong><small>A clear, welcoming path for curious minds.</small>${icon('arrow', 16)}</a>
           <a class="audience-card audience-school" href="#/schools" data-route="schools"><span class="audience-icon">${icon('school', 21)}</span><span class="audience-kicker">For schools</span><strong>Bring culture into class.</strong><small>Clear learning paths for educators.</small>${icon('arrow', 16)}</a>
         </div>
       </section>
@@ -3250,11 +3217,11 @@ import {
     </section>`;
   }
 
-  function renderSpeechGenerator() {
+  function renderSpeechGenerator({ initialText = '' } = {}) {
     return `<section class="voice-translation-panel" aria-labelledby="speech-generator-title">
       <div><span class="section-kicker">African-language text to speech</span><h2 id="speech-generator-title">Hear your own phrase</h2><p>Generate audio for any language currently enabled for speech on your Plotweaver account.</p></div>
       <label class="voice-translation-input-label" for="plotweaver-speech-text">Text to speak (up to 1,000 characters)</label>
-      <textarea id="plotweaver-speech-text" rows="3" maxlength="1000" placeholder="Enter text in the language you select"></textarea>
+      <textarea id="plotweaver-speech-text" rows="3" maxlength="1000" placeholder="Enter text in the language you select">${esc(initialText)}</textarea>
       <div class="voice-translation-controls">
         <label for="plotweaver-speech-language">Speech language</label>
         <select id="plotweaver-speech-language"><option value="yo">Yorùbá</option></select>
@@ -4204,13 +4171,13 @@ import {
   }
 
 
-  function renderVoiceTranslationTool({ showDictation = true } = {}) {
+  function renderVoiceTranslationTool({ showDictation = true, initialText } = {}) {
     const selectedTranslation = [...state.savedTranslations, ...state.translationLessons]
       .find((item) => item.id === state.activeTranslationId);
-    const sourceText = selectedTranslation?.source || 'Good morning, how are you?';
-    const targetLanguage = selectedTranslation?.targetLanguage || 'yo';
+    const sourceText = initialText ?? (selectedTranslation?.source || 'Good morning, how are you?');
+    const targetLanguage = initialText !== undefined ? 'yo' : selectedTranslation?.targetLanguage || 'yo';
     const targetName = translationLanguageName(targetLanguage);
-    const translatedText = selectedTranslation?.translated || 'Ẹ káàárọ̀, báwo ni?';
+    const translatedText = initialText !== undefined ? '' : selectedTranslation?.translated || 'Ẹ káàárọ̀, báwo ni?';
     return `<div class="translation-studio">
       <header class="translation-studio-hero">
         <div class="translation-studio-hero-copy">
@@ -4245,7 +4212,7 @@ import {
       </div>
       <section class="translation-result-panel" aria-labelledby="translation-result-title">
         <div class="translation-result-heading"><h2 id="translation-result-title">${esc(targetName)} Translation</h2><button type="button" data-action="copy-voice-translation" aria-label="Copy translation">${icon('copy', 17)}</button></div>
-        <p id="voice-translation-result" class="translation-result-text" data-translation="${esc(translatedText)}" data-language="${esc(targetLanguage)}" data-source="${esc(sourceText)}" aria-live="polite">${esc(translatedText)}</p>
+        <p id="voice-translation-result" class="translation-result-text" data-translation="${esc(translatedText)}" data-language="${esc(targetLanguage)}" data-source="${esc(sourceText)}" aria-live="polite">${esc(translatedText || 'Your translation will appear here.')}</p>
         <div class="translation-playback-controls">
           <button class="translation-listen-button" type="button" data-action="speak-voice-translation">${icon('play', 15)} Listen</button>
           <button type="button" data-action="pause-voice-translation">${icon('pause', 14)} Pause</button>
@@ -4273,34 +4240,76 @@ import {
     return `<section class="translation-saved-lessons" aria-labelledby="translation-saved-lessons-title"><span class="section-kicker">Your practice list</span><h2 id="translation-saved-lessons-title">Translations added to lessons</h2><div>${state.translationLessons.map((item) => `<article><div><strong>${esc(item.translated)}</strong><small>${esc(item.source)} · ${esc(translationLanguageName(item.targetLanguage))}</small></div><button type="button" data-action="open-saved-translation" data-id="${esc(item.id)}">Open translation</button></article>`).join('')}</div></section>`;
   }
 
-  function renderVoiceToolPage(page) {
+  function renderVoicePracticeLessonHeader(lesson) {
+    return `<section class="voice-practice-lesson" aria-labelledby="voice-practice-lesson-title">
+      <div><span class="section-kicker">Practice lesson ${lesson.id} of 50</span><h2 id="voice-practice-lesson-title">${esc(lesson.title)}</h2><p>${esc(lesson.objective)}</p></div>
+      <div class="voice-practice-progress" role="progressbar" aria-label="Course progress" aria-valuemin="1" aria-valuemax="50" aria-valuenow="${lesson.id}"><span style="width:${lesson.id * 2}%"></span></div>
+    </section>`;
+  }
+
+  function renderVoicePracticeNavigation(page, lesson) {
+    const tools = [
+      { route: 'voice-translation', label: 'Translation' },
+      { route: 'voice-text-to-speech', label: 'Text to Speech' },
+      { route: 'voice-speech-to-text', label: 'Speech to Text' },
+      { route: 'voice-cloning', label: 'Voice Cloning' },
+    ];
+    const previous = getAdjacentVoicePracticeLesson(page, lesson.id, -1);
+    const next = getAdjacentVoicePracticeLesson(page, lesson.id, 1);
+    const routeButton = (route, label, className, lessonId = 1, disabled = false) => `<button type="button" class="${className}" data-action="navigate-voice-practice" data-target-route="${route}" data-lesson="${lessonId}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+    return `<nav class="voice-practice-navigation" aria-label="Voice practice course navigation">
+      <div class="voice-practice-tool-tabs" role="group" aria-label="Choose a voice tool">${tools.map((tool) => `<button type="button" class="voice-practice-tab ${page === tool.route ? 'is-active' : ''}" aria-pressed="${page === tool.route}" data-action="navigate-voice-practice" data-target-route="${tool.route}" data-lesson="${tool.route === 'voice-cloning' ? '' : '1'}">${tool.label}</button>`).join('')}</div>
+      <div class="voice-practice-step-navigation">
+        ${previous ? routeButton(previous.tool, `${icon('arrow', 15)} Previous lesson`, 'button button-outline', previous.lesson.id) : routeButton('voice_lessons', `${icon('arrow', 15)} Voice Lessons`, 'button button-outline', '', true)}
+        <span>Lesson ${lesson.id} of 50</span>
+        ${next ? routeButton(next.tool, `Next lesson ${icon('arrow', 15)}`, 'button button-primary', next.lesson.id) : routeButton('voice_lessons', `Finish course ${icon('check', 15)}`, 'button button-primary')}
+      </div>
+    </nav>`;
+  }
+
+  function renderVoiceToolPage(page, params = {}) {
     const details = {
       'voice-translation': ['Translation', 'Translate between languages and listen to the spoken result.'],
       'voice-text-to-speech': ['Text to Speech', 'Hear a phrase spoken aloud in a supported language.'],
       'voice-speech-to-text': ['Speech to Text', 'Record a phrase and review the words recognized from your speech.'],
+      'voice-cloning': ['Voice Cloning', 'Create a voice clone only with the speaker’s informed permission.'],
     }[page];
     if (!details) return renderGeneric(page);
     const [title, description] = details;
+    const savedTranslation = page === 'voice-translation' && params.saved === '1';
+    const lesson = VOICE_PRACTICE_COURSES[page] && !savedTranslation ? getVoicePracticeLesson(page, params.lesson) : null;
     let tool;
     if (page === 'voice-translation') {
-      tool = renderVoiceTranslationTool();
+      tool = lesson ? renderVoiceTranslationTool({ initialText: lesson.sourceText }) : renderVoiceTranslationTool();
     } else if (page === 'voice-text-to-speech') {
-      tool = renderSpeechGenerator();
-    } else {
+      tool = renderSpeechGenerator({ initialText: lesson.practiceText });
+    } else if (page === 'voice-speech-to-text') {
       tool = `<section class="voice-translation-panel voice-speech-to-text-tool" aria-labelledby="voice-speech-to-text-title">
         <h1 id="voice-speech-to-text-title">Speech to Text</h1>
+        <div class="voice-practice-prompt"><span class="section-kicker">Read this phrase aloud</span><strong lang="yo">${esc(lesson.practiceText)}</strong><p>${esc(lesson.objective)}</p><button type="button" class="button button-outline" data-action="speak-voice-lesson" data-phrase="${esc(lesson.practiceText)}">${icon('volume', 15)} Listen to the example</button></div>
         <label class="voice-translation-input-label" for="voice-translation-input">Your recording transcription</label>
         <textarea id="voice-translation-input" rows="5" maxlength="1000" placeholder="Your recognized words will appear here"></textarea>
         <label class="voice-translation-input-label" for="voice-translation-source-language">Spoken language</label>
-        <select id="voice-translation-source-language"><option value="en">English</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option></select>
+        <select id="voice-translation-source-language"><option value="en">English</option><option value="yo" selected>Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option></select>
         <button class="button button-primary" type="button" data-action="start-voice-transcription">${icon('mic', 15)} Record / stop</button>
         <small id="voice-transcription-status" class="curriculum-tool-status" aria-live="polite">Microphone permission is requested only when you begin recording.</small>
       </section>`;
+    } else {
+      tool = renderVoiceCloneTools();
     }
     return `<div class="container route-page voice-tool-page ${page === 'voice-translation' ? 'translation-page' : ''}">
       <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('voice_lessons', 'Voice Lessons')}<span>/</span><strong>${esc(title)}</strong></div>
+      ${lesson ? renderVoicePracticeLessonHeader(lesson) : ''}
       ${page === 'voice-translation' ? tool : `<section class="voice-tool-page-heading"><h1>${esc(title)}</h1><p>${esc(description)}</p></section>${tool}`}
+      ${lesson ? renderVoicePracticeNavigation(page, lesson) : `<nav class="voice-practice-navigation" aria-label="Voice tool navigation"><div class="voice-practice-tool-tabs" role="group" aria-label="Choose a voice tool">${['voice-translation', 'voice-text-to-speech', 'voice-speech-to-text', 'voice-cloning'].map((route) => `<button type="button" class="voice-practice-tab ${page === route ? 'is-active' : ''}" aria-pressed="${page === route}" data-action="navigate-voice-practice" data-target-route="${route}" data-lesson="${route === 'voice-cloning' ? '' : '1'}">${esc(LABELS[route])}</button>`).join('')}</div><div class="voice-practice-step-navigation">${routeButtonForVoiceTools(page)}</div></nav>`}
     </div>`;
+  }
+
+  function routeButtonForVoiceTools(page) {
+    if (page === 'voice-cloning') {
+      return `<button type="button" class="button button-outline" data-action="navigate-voice-practice" data-target-route="voice-speech-to-text" data-lesson="50">${icon('arrow', 15)} Back to Speech to Text</button><button type="button" class="button button-primary" data-action="navigate-voice-practice" data-target-route="voice_lessons">${icon('home', 15)} Voice Lessons</button>`;
+    }
+    return '';
   }
   function renderStories() {
     const stories = [
@@ -5494,6 +5503,7 @@ import {
           <article class="voice-tool-shortcut voice-tool-shortcut-translation"><span class="voice-tool-shortcut-icon">${icon("globe", 19)}</span><div><h2>Translation</h2><p>Translate a phrase and listen to the result.</p></div>${routeLink("voice-translation", `Open Translation ${icon("arrow", 14)}`, "button button-primary")}</article>
           <article class="voice-tool-shortcut voice-tool-shortcut-speech"><span class="voice-tool-shortcut-icon">${icon("volume", 19)}</span><div><h2>Text to Speech</h2><p>Hear a phrase spoken in your chosen language.</p></div>${routeLink("voice-text-to-speech", `Open Text to Speech ${icon("arrow", 14)}`, "button button-outline")}</article>
           <article class="voice-tool-shortcut voice-tool-shortcut-transcribe"><span class="voice-tool-shortcut-icon">${icon("mic", 19)}</span><div><h2>Speech to Text</h2><p>Record speech and review the recognized words.</p></div>${routeLink("voice-speech-to-text", `Open Speech to Text ${icon("arrow", 14)}`, "button button-outline")}</article>
+          <article class="voice-tool-shortcut voice-tool-shortcut-cloning"><span class="voice-tool-shortcut-icon">${icon("user", 19)}</span><div><h2>Voice Cloning</h2><p>Create a clone only with informed speaker consent.</p></div>${routeLink("voice-cloning", `Open Voice Cloning ${icon("arrow", 14)}`, "button button-outline")}</article>
         </section>
         ${renderSavedTranslationLessons()}
         <section class="voice-benefits" aria-label="Voice lesson benefits">
@@ -5746,7 +5756,8 @@ import {
     switch (page) {
       case 'voice-translation':
       case 'voice-text-to-speech':
-      case 'voice-speech-to-text': return renderVoiceToolPage(page);
+      case 'voice-speech-to-text':
+      case 'voice-cloning': return renderVoiceToolPage(page, params);
       case 'voice_lessons':
       case 'trainer': return renderTrainer(params);
       case 'index': return renderHome();
@@ -6578,18 +6589,15 @@ import {
       }
     if (page === 'coding') initializeIdeOutputResize();
     startHomePreviewMotion();
-    if (page === 'index') {
-      initHeroParallax();
-      initHeroCinematicVideoEngine();
-      const heroCanvas = document.getElementById('hero3DCanvasWrap');
-      if (heroCanvas) init3DHeroCanvas(heroCanvas);
-    } else if (page === 'coding') {
+    if (page === 'coding') {
       const codeRobotGlyphs = document.getElementById('codeRobotGlyphCanvas');
       if (codeRobotGlyphs) activeCodeRobotScene = init3DCodeRobotGlyphs(codeRobotGlyphs);
     } else if (page === 'voice-translation') {
       initializeTranslationLanguages('voice-translation-source-language');
       initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
     } else if (page === 'voice-text-to-speech') {
+      initializePlotweaverVoiceTools();
+    } else if (page === 'voice-cloning') {
       initializePlotweaverVoiceTools();
     } else if (page === 'trainer' || page === 'voice_lessons') {
       const voiceStudio = document.getElementById('trainerStudio');
@@ -6863,28 +6871,10 @@ import {
   function handleAction(action, el) {
     const lang = el.dataset.lang;
     switch (action) {
-      case 'hero-show-photo': {
-        const photoWrap = document.getElementById('heroPhotoWrap');
-        const stage3d = document.getElementById('hero3DStageWrap');
-        const btnPhoto = document.getElementById('btnShowPhoto');
-        const btn3d = document.getElementById('btnShow3D');
-        if (photoWrap) photoWrap.style.display = 'block';
-        if (stage3d) stage3d.style.display = 'none';
-        if (btnPhoto) { btnPhoto.classList.add('is-active'); btnPhoto.setAttribute('aria-selected', 'true'); }
-        if (btn3d) { btn3d.classList.remove('is-active'); btn3d.setAttribute('aria-selected', 'false'); }
-        break;
-      }
-      case 'hero-show-3d': {
-        const photoWrap = document.getElementById('heroPhotoWrap');
-        const stage3d = document.getElementById('hero3DStageWrap');
-        const btnPhoto = document.getElementById('btnShowPhoto');
-        const btn3d = document.getElementById('btnShow3D');
-        if (photoWrap) photoWrap.style.display = 'none';
-        if (stage3d) stage3d.style.display = 'block';
-        if (btn3d) { btn3d.classList.add('is-active'); btn3d.setAttribute('aria-selected', 'true'); }
-        if (btnPhoto) { btnPhoto.classList.remove('is-active'); btnPhoto.setAttribute('aria-selected', 'false'); }
-        const canvasWrap = document.getElementById('hero3DCanvasWrap');
-        if (canvasWrap) init3DHeroCanvas(canvasWrap);
+      case 'navigate-voice-practice': {
+        const targetRoute = el.dataset.targetRoute || '';
+        const lesson = el.dataset.lesson;
+        navigate(targetRoute, lesson ? { lesson } : {});
         break;
       }
       case 'toggle-menu': toggleMobileMenu(); break;
@@ -7269,7 +7259,7 @@ import {
           break;
         }
         state.activeTranslationId = id;
-        navigate('voice-translation');
+        navigate('voice-translation', { saved: '1' });
         break;
       }
       case 'speak-voice-lesson': {
