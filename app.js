@@ -4288,11 +4288,11 @@ import {
   function renderVoiceFeatureLessonNavigation(page, language, lessonNumber, lessonCount) {
     const route = `#/${page}?lang=${encodeURIComponent(language)}&lesson=`;
     const previous = lessonNumber > 1
-      ? `<a class="button button-outline" href="${route}${lessonNumber - 1}">${icon('arrow', 14)} Back</a>`
-      : '<button class="button button-outline" type="button" disabled>Back</button>';
+      ? `<a class="button button-outline" href="${route}${lessonNumber - 1}">${icon('arrow', 14, 'voice-arrow-back')} Back</a>`
+      : `<button class="button button-outline" type="button" disabled>${icon('arrow', 14, 'voice-arrow-back')} Back</button>`;
     const next = lessonNumber < lessonCount
       ? `<a class="button button-primary" href="${route}${lessonNumber + 1}">Next lesson ${icon('arrow', 14)}</a>`
-      : '<button class="button button-primary" type="button" disabled>Course complete</button>';
+      : `<button class="button button-primary" type="button" disabled>Course complete ${icon('arrow', 14)}</button>`;
     const progress = Math.round((lessonNumber / lessonCount) * 100);
     return `<div class="voice-feature-lesson-progress">
       <div><span>Lesson ${String(lessonNumber).padStart(2, '0')} of ${lessonCount}</span><span>${progress}%</span></div>
@@ -4301,6 +4301,29 @@ import {
     <nav class="voice-feature-lesson-navigation" aria-label="Lesson navigation">
       ${previous}
       ${routeLink('voice_lessons', 'All voice tools', 'button button-outline')}
+      ${next}
+    </nav>`;
+  }
+
+  function renderVoicePracticeLessonNavigation(language, level, gradePath, lessons, activeLesson) {
+    const currentIndex = lessons.findIndex((lesson) => lesson.id === activeLesson.id);
+    const lessonRoute = (lesson) => {
+      const params = new URLSearchParams({ lang: language, level, lesson: String(lesson.id) });
+      if (gradePath) params.set('grade', gradePath.id);
+      return `#/voice-practice?${params}`;
+    };
+    const routeAttributes = (lesson) => `data-route="voice-practice" data-lang="${language}" data-level="${level}" data-lesson="${lesson.id}"${gradePath ? ` data-grade="${gradePath.id}"` : ''}`;
+    const previous = currentIndex > 0
+      ? `<a class="button button-outline" href="${lessonRoute(lessons[currentIndex - 1])}" ${routeAttributes(lessons[currentIndex - 1])}>${icon('arrow', 15, 'voice-arrow-back')} Previous lesson</a>`
+      : `<button class="button button-outline" type="button" disabled>${icon('arrow', 15, 'voice-arrow-back')} Previous lesson</button>`;
+    const next = currentIndex < lessons.length - 1
+      ? `<a class="button button-primary" href="${lessonRoute(lessons[currentIndex + 1])}" ${routeAttributes(lessons[currentIndex + 1])}>Next lesson ${icon('arrow', 15)}</a>`
+      : `<button class="button button-primary" type="button" disabled>Course complete ${icon('arrow', 15)}</button>`;
+    const audioParams = new URLSearchParams({ lang: language, level });
+    if (gradePath) audioParams.set('grade', gradePath.id);
+    return `<nav class="voice-practice-lesson-navigation" aria-label="Lesson navigation">
+      <a class="button button-outline" href="#/voice-audio?${audioParams}" data-route="voice-audio" data-lang="${language}" data-level="${level}"${gradePath ? ` data-grade="${gradePath.id}"` : ''}>${icon('arrow', 15, 'voice-arrow-back')} All lessons</a>
+      ${previous}
       ${next}
     </nav>`;
   }
@@ -4323,6 +4346,7 @@ import {
     const gradeLessons = gradePath && gradePath.level === lessonLevel
       ? getVoiceGradeLessonSlice(gradePath.id, lessons)
       : lessons;
+    const practiceLessons = gradePath && gradePath.level === lessonLevel ? gradeLessons : lessons;
     const featureLessonPages = ['voice-text-to-speech', 'voice-speech-to-text', 'voice-translation', 'voice-cloning'];
     const featureLessons = featureLessonPages.includes(page)
       ? getVoiceFeatureLessonSlice(Object.values(langData).flat())
@@ -4333,7 +4357,7 @@ import {
       : 1;
     const featureLesson = featureLessons[featureLessonNumber - 1] || null;
     const selectedLessonId = Number(params.lesson) || state.trainer.activeLessonId || lessons[0]?.id || 1;
-    const activeLesson = lessons.find((lesson) => lesson.id === selectedLessonId) || lessons[0];
+    const activeLesson = practiceLessons.find((lesson) => lesson.id === selectedLessonId) || practiceLessons[0];
     const titles = {
       'voice-language': ['Choose your language', 'Choose a language to personalize your listening and speaking practice.', 'Language'],
       'voice-grade': ['Choose your grade', `Select a learning level for ${langName} lessons.`, 'Subjects & grades'],
@@ -4354,8 +4378,7 @@ import {
     let content = '';
 
     if (page === 'voice-language') {
-      content = `<div class="voice-feature-choice-grid">${languages.map(([id, name]) => `<button type="button" class="voice-feature-choice ${selectedLanguage === id ? 'is-selected' : ''}" data-route="voice-language" data-lang="${id}"><span>${icon('globe', 20)}</span><strong>${name}</strong><small>Choose ${name} for your lessons</small></button>`).join('')}</div>
-        <div class="voice-feature-next">${routeLink('voice-grade', `Continue with ${langName} ${icon('arrow', 15)}`, 'button button-primary', `data-lang="${selectedLanguage}"`)}</div>`;
+      content = `<div class="voice-feature-choice-grid">${languages.map(([id, name]) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-lang="${id}" data-level="${lessonLevel}"><span>${icon('globe', 20)}</span><strong>${name}</strong><small>Open ${name} lessons</small></button>`).join('')}</div>`;
     } else if (page === 'voice-grade') {
       content = `<p class="voice-feature-current">Learning language: <strong>${langName}</strong>. Each grade opens its own lesson path with age-appropriate goals and a different lesson set.</p><div class="voice-feature-choice-grid voice-grade-choice-grid">${VOICE_GRADE_PATHS.map((grade) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-grade="${grade.id}" data-lang="${selectedLanguage}" data-level="${grade.level}"><span>${icon('layers', 20)}</span><strong>${grade.name}</strong><small>${grade.ages} · ${grade.level} pathway</small><small>${grade.focus}</small></button>`).join('')}</div>`;
     } else if (page === 'voice-audio') {
@@ -4369,7 +4392,7 @@ import {
     } else if (page === 'voice-practice' && activeLesson) {
       const isRecording = Boolean(state.trainer.isRecording);
       const transcription = voiceTranscriptionResult?.lessonId === activeLesson.id ? voiceTranscriptionResult.text : '';
-      content = `<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${gradePath ? `${gradePath.name} · ` : ''}${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}</span><h2>${esc(activeLesson.phrase)}</h2><p>${esc(activeLesson.phonetic || '')}</p><strong>${esc(activeLesson.translation || '')}</strong></div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>`;
+      content = `${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${gradePath ? `${gradePath.name} · ` : ''}${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}</span><h2>${esc(activeLesson.phrase)}</h2><p>${esc(activeLesson.phonetic || '')}</p><strong>${esc(activeLesson.translation || '')}</strong></div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}`;
     } else if (page === 'voice-text-to-speech') {
       const languageCodes = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' };
       content = `<div class="voice-feature-lesson-prompt"><span class="section-kicker">Lesson ${String(featureLessonNumber).padStart(2, '0')}</span><h2>${esc(featureLesson?.title || featureLesson?.phrase || 'Speak and listen')}</h2><p>${esc(featureLesson?.translation || '')}</p><small>Listen to the phrase, repeat it aloud, and notice its rhythm.</small></div><div class="voice-feature-tool"><label class="curriculum-tool-label" for="plotweaver-speech-text">Your phrase</label><textarea id="plotweaver-speech-text" rows="4" maxlength="1000" placeholder="Type a phrase to hear…">${esc(featureLesson?.phrase || '')}</textarea><label class="curriculum-tool-label" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="${languageCodes[selectedLanguage] || 'yo'}">${esc(langName)}</option></select><button class="button button-primary" type="button" data-action="plotweaver-speak-text">${icon('volume', 15)} Listen</button><small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small></div>`;
@@ -4389,7 +4412,7 @@ import {
       : '';
     const titleText = isFeatureLessonPage ? `${title} · Lesson ${featureLessonNumber} of ${VOICE_FEATURE_LESSON_COUNT}` : title;
     const pageClass = page === 'voice-translation' ? 'voice-feature-page translation-page' : 'voice-feature-page';
-    return `<div class="container route-page ${pageClass}"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('voice_lessons', 'Voice Lessons')}<span>/</span><strong>${esc(title)}</strong></div><section class="voice-feature-header"><div><span class="section-kicker">${esc(kicker)} · Voice Lessons</span><h1>${esc(titleText)}</h1><p>${esc(description)}</p></div>${routeLink('voice_lessons', `${icon('arrow', 14)} All Voice Lessons`, 'button button-outline')}</section>${lessonNavigation}<section class="voice-feature-content">${content}</section>${lessonNavigation}</div>`;
+    return `<div class="container route-page ${pageClass}"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span>${routeLink('voice_lessons', 'Voice Lessons')}<span>/</span><strong>${esc(title)}</strong></div><section class="voice-feature-header"><div><span class="section-kicker">${esc(kicker)} · Voice Lessons</span><h1>${esc(titleText)}</h1><p>${esc(description)}</p></div>${routeLink('voice_lessons', `${icon('arrow', 14, 'voice-arrow-back')} All Voice Lessons`, 'button button-outline')}</section>${lessonNavigation}<section class="voice-feature-content">${content}</section>${lessonNavigation}</div>`;
   }
 
   function renderVoiceLessonsDashboard() {

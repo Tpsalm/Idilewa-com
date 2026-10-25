@@ -58,6 +58,20 @@ test('voice feature pages each receive 50 guided lessons per language', () => {
   assert.match(appSource, /data-action="plotweaver-speak-text"/);
 });
 
+test('choosing a voice lesson language opens lessons directly with back and lesson navigation', () => {
+  const languagePicker = appSource.slice(
+    appSource.indexOf("if (page === 'voice-language')"),
+    appSource.indexOf("} else if (page === 'voice-grade')")
+  );
+  assert.match(languagePicker, /data-route="voice-audio" data-lang="\$\{id\}"/);
+  assert.match(languagePicker, /Open \$\{name\} lessons/);
+  assert.doesNotMatch(languagePicker, /Continue with/);
+  assert.match(appSource, /function renderVoicePracticeLessonNavigation/);
+  assert.match(appSource, /Previous lesson/);
+  assert.match(appSource, /Next lesson/);
+  assert.match(appSource, /data-route="voice-audio" data-lang="\$\{language\}"/);
+});
+
 test('grade paths increase in difficulty and provide distinct developmental goals', () => {
   assert.equal(VOICE_GRADE_PATHS.length, 9);
   assert.equal(getVoiceGradePath('kindergarten').level, 'beginner');

@@ -9949,3 +9949,40 @@ body[data-page="index"] .brand { min-width: 0; gap: 8px; }
   .landing-hero-actions { gap: 8px; }
   #main .landing-hero-actions .button { padding-inline: 5px; font-size: 14px; }
 }
+
+.voice-arrow-back { transform: rotate(180deg); }
+.voice-feature-header > div,
+.voice-feature-header > a,
+.voice-practice-lesson-navigation > * { min-width: 0; }
+.voice-practice-lesson-navigation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+.voice-practice-lesson-navigation .button {
+  min-height: 44px;
+  justify-content: center;
+  padding-inline: 10px;
+  white-space: normal;
+}
+.voice-practice-lesson-navigation .button:disabled { opacity: .55; cursor: not-allowed; }
+.voice-practice-lesson-navigation .icon { flex: 0 0 auto; }
+.voice-practice-card { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.voice-practice-card > * { min-width: 0; }
+.voice-practice-meta h2,
+.voice-practice-meta p,
+.voice-practice-meta strong { overflow-wrap: anywhere; }
+.voice-practice-waveform { max-width: 100%; }
+.voice-feature-content > .voice-practice-lesson-navigation:last-child { margin: 16px 0 0; }
+
+@media (max-width: 620px) {
+  .voice-feature-header { align-items: stretch; flex-direction: column; }
+  .voice-feature-header > a { width: 100%; justify-content: center; }
+  .voice-feature-header h1 { font-size: clamp(25px, 8vw, 34px); line-height: 1.12; overflow-wrap: anywhere; }
+  .voice-practice-lesson-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .voice-practice-lesson-navigation > :first-child { grid-column: 1 / -1; }
+  .voice-practice-lesson-navigation .button { min-height: 46px; padding-inline: 8px; font-size: 12px; }
+  .voice-practice-card { width: 100%; padding: 16px; }
+  .voice-practice-meta h2 { overflow-wrap: anywhere; }
+}
