@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import {
+  getVoiceFeatureLessonSlice,
   getVoiceGradeLessonSlice,
   getVoiceGradePath,
+  VOICE_FEATURE_LESSON_COUNT,
   VOICE_GRADE_PATHS
 } from '../src/voiceGradeCurriculum.js';
 
@@ -37,6 +39,22 @@ test('all four supported languages provide distinct lesson content for every gra
     }
     assert.equal(assignedLessonIds.size, 60, `${language} should assign all 60 lessons exactly once`);
   }
+});
+
+test('translation, text-to-speech, and speech-to-text each receive 50 lessons per language', () => {
+  const curriculumMatch = appSource.match(/const TRAINER_CURRICULUM = (\{[\s\S]*?\});/);
+  assert.ok(curriculumMatch, 'Voice lesson curriculum data should be present');
+  const curricula = JSON.parse(curriculumMatch[1]);
+
+  for (const language of ['yoruba', 'igbo', 'hausa', 'swahili']) {
+    const lessons = getVoiceFeatureLessonSlice(Object.values(curricula[language]).flat());
+    assert.equal(lessons.length, VOICE_FEATURE_LESSON_COUNT, `${language} should have 50 feature lessons`);
+    assert.equal(new Set(lessons.map((lesson) => lesson.id)).size, VOICE_FEATURE_LESSON_COUNT);
+  }
+
+  assert.match(appSource, /renderVoiceFeatureLessonNavigation/);
+  assert.match(appSource, /data-action="start-voice-transcription"/);
+  assert.match(appSource, /data-action="plotweaver-speak-text"/);
 });
 
 test('grade paths increase in difficulty and provide distinct developmental goals', () => {

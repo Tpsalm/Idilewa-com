@@ -12,6 +12,8 @@ test('homepage uses the approved bilingual font families and removes the video C
   assert.match(indexSource, /family=Inter:wght@400;500;600;700&family=Plus\+Jakarta\+Sans:wght@600;700;800/);
   assert.match(homeSource, /Preserving African Culture\.<br \/><span>Promoting Technology\.<\/span>/);
   assert.match(homeSource, /Explore Stories/);
+  assert.doesNotMatch(homeSource, /visual-journey-3d-section|Talking Drum|Living Glyphs/);
+  assert.match(appSource, /case 'index': return renderHome\(\);/);
   assert.doesNotMatch(homeSource, /Watch Video/);
   assert.match(styleSource, /landing-hero-copy h1[\s\S]*?font-size: 28px;[\s\S]*?line-height: 33px/);
   assert.match(styleSource, /landing-hero-copy > p[\s\S]*?font-size: 14px;[\s\S]*?line-height: 22px/);
