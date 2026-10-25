@@ -22,7 +22,9 @@ test('successful signup returns to sign-in rather than navigating into the app',
 });
 
 test('homepage uses only the supplied family learning photo as the hero artwork', async () => {
-  assert.match(appSource, /home-family-learning\.jpg/);
+  assert.match(appSource, /src="\/assets\/home-family-learning\.jpg"/);
+  assert.match(appSource, /src="\/assets\/\$\{language\.image\}"/);
+  assert.match(appSource, /src="\/assets\/story-grandmother\.jpg"/);
   assert.doesNotMatch(appSource, /home-hero-illustration\.svg|home-hero-art-label/);
   assert.doesNotMatch(appSource, /idilewa-family-view\.png/);
   const photo = await readFile(new URL('../public/assets/home-family-learning.jpg', import.meta.url));

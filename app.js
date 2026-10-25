@@ -1122,7 +1122,7 @@ import {
             <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
           </div>
           <figure class="landing-hero-image">
-            <img src="./assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" fetchpriority="high" />
+            <img src="/assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" fetchpriority="high" />
           </figure>
         </div>
       </section>
@@ -1136,7 +1136,7 @@ import {
           <section class="landing-languages" aria-labelledby="landing-languages-title">
             <div class="landing-section-heading"><div><span class="section-kicker">Our languages</span><h2 id="landing-languages-title">Start with your language</h2><p>Choose a language to begin your learning journey.</p></div>${routeLink('languages', `View all ${icon('arrow', 14)}`, 'text-link')}</div>
             <div class="landing-language-grid">
-              ${languages.map((language) => `<a class="landing-language-card" href="#/voice-grade?lang=${language.id}" data-route="voice-grade" data-lang="${language.id}" aria-label="Choose a grade for ${language.name}"><img src="./assets/${language.image}" alt="${language.alt}" loading="lazy" /><span class="landing-language-flag" aria-hidden="true">${language.flag}</span><span class="landing-language-name">${language.name}</span><span class="landing-language-action">Learn · Speak · Explore ${icon('arrow', 13)}</span></a>`).join('')}
+              ${languages.map((language) => `<a class="landing-language-card" href="#/voice-grade?lang=${language.id}" data-route="voice-grade" data-lang="${language.id}" aria-label="Choose a grade for ${language.name}"><img src="/assets/${language.image}" alt="${language.alt}" loading="lazy" /><span class="landing-language-flag" aria-hidden="true">${language.flag}</span><span class="landing-language-name">${language.name}</span><span class="landing-language-action">Learn · Speak · Explore ${icon('arrow', 13)}</span></a>`).join('')}
             </div>
           </section>
 
@@ -1147,7 +1147,7 @@ import {
           </section>
 
           <section class="landing-story-card">
-            <img src="./assets/story-grandmother.jpg" alt="A grandmother sharing a story with children" loading="lazy" />
+            <img src="/assets/story-grandmother.jpg" alt="A grandmother sharing a story with children" loading="lazy" />
             <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore stories ${icon('arrow', 14)}`, 'text-link')}</div>
           </section>
         </main>
