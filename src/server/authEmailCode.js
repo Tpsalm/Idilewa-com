@@ -34,18 +34,7 @@ function validateRequestBody(body) {
 }
 
 function getRecoveryRedirectUrl() {
-  const configuredOrigin = process.env.APP_BASE_URL;
-  let origin;
-  try {
-    origin = new URL(configuredOrigin);
-  } catch {
-    throw new GuardianConsentError(503, 'Password recovery is temporarily unavailable.');
-  }
-  if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/'
-    || origin.search || origin.hash) {
-    throw new GuardianConsentError(503, 'Password recovery is temporarily unavailable.');
-  }
-  const callback = new URL('/auth-callback.html', origin.origin);
+  const callback = new URL('/auth-callback.html', 'https://www.idilewa.com');
   callback.searchParams.set('next', 'login');
   return callback.toString();
 }
