@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { getApiBase, speakWithDeviceVoice } from '../src/plotweaverClient.js';
+import {
+  getApiBase,
+  speakWithDeviceVoice,
+  supportsPlotweaverTranscriptionLanguage,
+} from '../src/plotweaverClient.js';
 
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
 const stylesSource = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
@@ -73,10 +77,30 @@ test('device speech reports playback errors instead of pretending audio played',
   }
 });
 
+test('speech-to-text is limited to languages provided by the transcription service', () => {
+  for (const language of ['en', 'yo', 'ha', 'ig', 'pcm']) {
+    assert.equal(supportsPlotweaverTranscriptionLanguage(language), true);
+  }
+  assert.equal(supportsPlotweaverTranscriptionLanguage('sw'), false);
+});
+
 test('all app image sources resolve from the site root without changing the green palette', () => {
   assert.match(appSource, /const imageUrl = .*`\/assets\/\$\{filename\}`/);
   assert.ok(appSource.includes('return output.replace(/(\\bsrc=["\'])\\.\\/assets\\//gi, \'$1/assets/\');'));
   assert.match(stylesSource, /--green: #15764a;/);
   assert.match(stylesSource, /--green-dark: #0c5737;/);
+  for (const language of ['yoruba', 'igbo', 'hausa', 'swahili']) {
+    assert.ok(appSource.includes(`image: 'home-language-${language}.jpg'`));
+  }
+  assert.match(stylesSource, /\.landing-language-card img \{ width: 100%; aspect-ratio: \.56; object-fit: cover; \}/);
   assert.doesNotMatch(stylesSource, /--green: #a9543e|--clay:|--royal-indigo:|--sahara-gold:|--savannah-green:/);
+});
+
+test('language portrait assets are valid JPEG files served from the public assets folder', async () => {
+  for (const language of ['yoruba', 'igbo', 'hausa', 'swahili']) {
+    const image = await readFile(new URL(`../public/assets/home-language-${language}.jpg`, import.meta.url));
+    assert.equal(image[0], 0xff);
+    assert.equal(image[1], 0xd8);
+    assert.ok(image.length > 10_000);
+  }
 });

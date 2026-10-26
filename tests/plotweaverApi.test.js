@@ -192,19 +192,19 @@ test('translation validation and provider errors are surfaced without upstream d
   });
 });
 
-test('transcription uploads audio as multipart data and returns Plotweaver text', async () => {
+test('transcription uploads provider-supported WAV audio as multipart data and returns text', async () => {
   await withMocks({
     fetchMock: async (url, options) => {
       assert.equal(String(url), 'https://api.plotweaver.app/v1/transcriptions');
       assert.equal(options.headers['X-API-Key'], 'test-plotweaver-key');
       assert.ok(options.body instanceof FormData);
       assert.equal(options.body.get('language'), 'yo');
-      assert.equal(options.body.get('file').name, 'practice.webm');
+      assert.equal(options.body.get('file').name, 'practice.wav');
       return new Response(JSON.stringify({ text: 'Ẹ káàárọ̀', language: 'yo' }));
     },
     run: async () => {
       const form = new FormData();
-      form.append('file', new Blob(['audio bytes'], { type: 'audio/webm' }), 'practice.webm');
+      form.append('file', new Blob(['audio bytes'], { type: 'audio/wav' }), 'practice.wav');
       form.append('language', 'yo');
       const multipartRequest = new Request('https://idilewa.local/upload', {
         method: 'POST',
@@ -290,7 +290,7 @@ test('voice cloning forwards an opted-in recording and omits the consent field u
   });
 });
 
-test('voice cloning rejects browser-only recording formats before contacting Plotweaver', async () => {
+test('voice cloning rejects formats unsupported by the provider before contacting it', async () => {
   await withMocks({
     fetchMock: async () => {
       throw new Error('Unsupported clone audio must not reach the provider.');
@@ -313,7 +313,59 @@ test('voice cloning rejects browser-only recording formats before contacting Plo
         body: Buffer.from(await multipartRequest.arrayBuffer()),
       }), response);
       assert.equal(response.statusCode, 400);
+      assert.match(response.body.error, /WAV, MP3, or FLAC/i);
+    },
+  });
+});
+
+test('transcription rejects browser-only WebM recordings before contacting Plotweaver', async () => {
+  await withMocks({
+    fetchMock: async () => {
+      throw new Error('Unsupported transcription audio must not reach the provider.');
+    },
+    run: async () => {
+      const form = new FormData();
+      form.append('file', new Blob(['audio bytes'], { type: 'audio/webm' }), 'practice.webm');
+      form.append('language', 'yo');
+      const multipartRequest = new Request('https://idilewa.local/upload', {
+        method: 'POST',
+        body: form,
+      });
+      const response = createResponse();
+      await plotweaverHandler(request({
+        method: 'POST',
+        path: 'transcriptions',
+        headers: { 'content-type': multipartRequest.headers.get('content-type') },
+        body: Buffer.from(await multipartRequest.arrayBuffer()),
+      }), response);
+      assert.equal(response.statusCode, 400);
       assert.match(response.body.error, /WAV, MP3, FLAC, OGG, or M4A/i);
+    },
+  });
+});
+
+test('transcription rejects languages the provider does not support before contacting it', async () => {
+  await withMocks({
+    fetchMock: async () => {
+      throw new Error('Unsupported transcription language must not reach the provider.');
+    },
+    run: async () => {
+      const form = new FormData();
+      form.append('file', new Blob(['audio bytes'], { type: 'audio/wav' }), 'practice.wav');
+      form.append('language', 'sw');
+      const multipartRequest = new Request('https://idilewa.local/upload', {
+        method: 'POST',
+        body: form,
+      });
+      const response = createResponse();
+      await plotweaverHandler(request({
+        method: 'POST',
+        path: 'transcriptions',
+        headers: { 'content-type': multipartRequest.headers.get('content-type') },
+        body: Buffer.from(await multipartRequest.arrayBuffer()),
+      }), response);
+      assert.equal(response.statusCode, 400);
+      assert.match(response.body.error, /English, Yorùbá, Hausa, Igbo, and Nigerian Pidgin/i);
     },
   });
 });
