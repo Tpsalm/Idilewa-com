@@ -108,7 +108,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     'voice-language', 'voice-grade', 'voice-audio', 'voice-practice',
     'voice-text-to-speech', 'voice-cloning', 'voice-speech-to-text', 'voice-translation',
     'curriculum',
-    'index', 'about', 'base', 'coding', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
+    'index', 'about', 'base', 'coding', 'coding-studio', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
     'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
     'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
     'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'payment', 'pricing', 'profile', 'schools',
@@ -393,7 +393,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   const NAV_GROUPS = {
     curriculum: 'curriculum',
-    coding: 'code',
+    coding: 'code', 'coding-studio': 'code',
     trainer: 'trainer', voice_lessons: 'trainer',
     languages: 'curriculum', course: 'curriculum', lesson: 'curriculum', kids: 'curriculum', individuals: 'curriculum',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
@@ -407,6 +407,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   const LABELS = Object.fromEntries(ROUTES.map((r) => [r, r === 'index' ? 'Home' : r.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())]));
   LABELS.curriculum = 'Curriculum';
   LABELS.coding = 'Code';
+  LABELS['coding-studio'] = 'Start Coding';
   Object.assign(LABELS, {
     'voice-language': 'Choose a voice lesson language',
     'voice-grade': 'Choose a voice lesson grade',
@@ -474,6 +475,15 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       filter: 'all', category: 'all', lessonSearch: '', completedLessons: [],
       lastPracticeDate: '', completed: [], draft: '', result: '',
       questCommands: [], questTrail: [], questResult: '',
+      codeCategory: 'characters',
+      codeCharacter: 'boy',
+      codeMessage: 'Hello, friends!',
+      codeSourceLanguage: 'en',
+      codeTargetLanguage: 'yo',
+      codeBlocks: ['event', 'character', 'say', 'language', 'translate'],
+      codeUndo: [], codeRedo: [],
+      codeOutput: 'Ẹ n lẹ́ o, ẹ̀yin ọ̀rẹ́ mi!',
+      codeStatus: 'Your message is ready to run.',
       ideLang: 'yoruba', idePresetId: 'hello_world',
       ideCode: '# Kí Ilé Ayé ní Èdè Yorùbá\njẹ́ orúkọ = "Ọmọ Yorùbá"\ntẹ_jade("Ẹ n lẹ́ o, " + orúkọ + "! Ẹ káàbọ̀ sí Idíléwà.")\ntẹ_jade("A n kọ́ koodu ní èdè abínibí wa lónìí! ✨")',
       ideOutput: '> [Idilewa Engine v2.4 Online]\n> Ẹ n lẹ́ o, Ọmọ Yorùbá! Ẹ káàbọ̀ sí Idíléwà.\n> A n kọ́ koodu ní èdè abínibí wa lónìí! ✨\n✓ Àṣeyọrí: Execution completed in 0.02ms (+10 Maker XP)',
@@ -536,6 +546,16 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
           questCommands: Array.isArray(stored.coding?.questCommands) ? stored.coding.questCommands.filter((step) => ['up', 'right', 'down', 'left'].includes(step)).slice(0, 12) : [],
           questTrail: Array.isArray(stored.coding?.questTrail) ? stored.coding.questTrail.filter((cell) => typeof cell === 'string').slice(0, 20) : [],
           questResult: typeof stored.coding?.questResult === 'string' ? stored.coding.questResult : '',
+          codeCategory: ['characters', 'actions', 'looks', 'sounds', 'events', 'control'].includes(stored.coding?.codeCategory) ? stored.coding.codeCategory : defaults.coding.codeCategory,
+          codeCharacter: ['boy', 'girl', 'cat', 'dog'].includes(stored.coding?.codeCharacter) ? stored.coding.codeCharacter : defaults.coding.codeCharacter,
+          codeMessage: typeof stored.coding?.codeMessage === 'string' ? stored.coding.codeMessage.slice(0, 120) : defaults.coding.codeMessage,
+          codeSourceLanguage: ['en', 'yo', 'ig', 'ha', 'sw'].includes(stored.coding?.codeSourceLanguage) ? stored.coding.codeSourceLanguage : defaults.coding.codeSourceLanguage,
+          codeTargetLanguage: ['yo', 'ig', 'ha', 'sw', 'fr', 'es'].includes(stored.coding?.codeTargetLanguage) ? stored.coding.codeTargetLanguage : defaults.coding.codeTargetLanguage,
+          codeBlocks: Array.isArray(stored.coding?.codeBlocks) ? stored.coding.codeBlocks.filter((block) => ['event', 'character', 'say', 'language', 'translate', 'wave', 'jump', 'dance', 'sound', 'repeat'].includes(block)).slice(0, 12) : defaults.coding.codeBlocks,
+          codeUndo: Array.isArray(stored.coding?.codeUndo) ? stored.coding.codeUndo.filter(Array.isArray).slice(-20) : [],
+          codeRedo: Array.isArray(stored.coding?.codeRedo) ? stored.coding.codeRedo.filter(Array.isArray).slice(-20) : [],
+          codeOutput: typeof stored.coding?.codeOutput === 'string' ? stored.coding.codeOutput.slice(0, 500) : defaults.coding.codeOutput,
+          codeStatus: typeof stored.coding?.codeStatus === 'string' ? stored.coding.codeStatus.slice(0, 160) : defaults.coding.codeStatus,
           ideSidebar: ['explorer', 'extensions'].includes(stored.coding?.ideSidebar) ? stored.coding.ideSidebar : 'explorer',
           ideOutputHeight: Number.isInteger(stored.coding?.ideOutputHeight)
             ? Math.min(900, Math.max(170, stored.coding.ideOutputHeight))
@@ -766,7 +786,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       { route: 'coding', label: 'Code', ico: 'code' },
       { route: 'profile', label: 'Progress', ico: 'user' }
     ];
-    document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
+    document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="#/${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route || (item.route === 'coding' && page === 'coding-studio') ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
   }
 
   function renderFooter(page) {
@@ -3929,7 +3949,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     });
   }
 
-  function renderCoding() {
+  function renderLegacyCoding() {
     const flow = state.coding;
     const ideLang = flow.ideLang || 'yoruba';
     const presetsForLang = getIdePresets(ideLang);
@@ -4146,6 +4166,240 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         '</div>' +
       '</section>' +
     '</div>';
+  }
+
+
+  const CODE_LANGUAGES = [
+    { id: 'yo', name: 'Yorùbá', flag: '🇳🇬' },
+    { id: 'ig', name: 'Igbo', flag: '🇳🇬' },
+    { id: 'ha', name: 'Hausa', flag: '🇳🇬' },
+    { id: 'sw', name: 'Swahili', flag: '🇹🇿' },
+    { id: 'fr', name: 'French', flag: '🇫🇷' },
+    { id: 'es', name: 'Spanish', flag: '🇪🇸' },
+  ];
+  const CODE_SAMPLE_TRANSLATIONS = {
+    yo: 'Ẹ n lẹ́ o, ẹ̀yin ọ̀rẹ́ mi!',
+    ig: 'Ndewo, ndị enyi!',
+    ha: 'Sannu, abokai!',
+    sw: 'Habari, marafiki!',
+    fr: 'Bonjour, les amis !',
+    es: '¡Hola, amigos!',
+  };
+
+  function getCodeSampleTranslation(message, language) {
+    if (message.trim().toLowerCase().replace(/[.!?]+$/, '') === 'hello, friends') {
+      return CODE_SAMPLE_TRANSLATIONS[language] || '';
+    }
+    const translation = translateText(message, language);
+    return translation.exact ? translation.translated : '';
+  }
+
+  const CODE_BLOCK_CATEGORIES = [
+    { id: 'characters', label: 'Characters', icon: 'user', color: 'purple' },
+    { id: 'actions', label: 'Actions', icon: 'arrow', color: 'green' },
+    { id: 'looks', label: 'Looks', icon: 'sparkles', color: 'pink' },
+    { id: 'sounds', label: 'Sounds', icon: 'music', color: 'orange' },
+    { id: 'events', label: 'Events', icon: 'play', color: 'yellow' },
+    { id: 'control', label: 'Control', icon: 'filter', color: 'blue' },
+  ];
+
+  const CODE_BLOCK_OPTIONS = {
+    characters: [
+      { id: 'character', label: 'Choose a character', detail: 'Add a character to your story' },
+      { id: 'character', label: 'Choose a friend', detail: 'Invite another character' },
+    ],
+    actions: [
+      { id: 'wave', label: 'Wave hello', detail: 'Make your character wave' },
+      { id: 'jump', label: 'Jump', detail: 'Make your character jump' },
+      { id: 'dance', label: 'Dance', detail: 'Add a happy dance' },
+    ],
+    looks: [
+      { id: 'say', label: 'Say something', detail: 'Show a speech bubble' },
+      { id: 'say', label: 'Change appearance', detail: 'Give your character a new look' },
+    ],
+    sounds: [{ id: 'sound', label: 'Play a sound', detail: 'Add a sound to your story' }],
+    events: [{ id: 'event', label: 'When you click start', detail: 'Start your code with an event' }],
+    control: [
+      { id: 'repeat', label: 'Repeat an action', detail: 'Make something happen again' },
+      { id: 'translate', label: 'Translate the message', detail: 'Share your words in another language' },
+    ],
+  };
+
+  function renderCodeBlock(block, index, editable = false) {
+    const remove = editable
+      ? `<button class="code-block-remove" type="button" data-action="code-remove-block" data-index="${index}" aria-label="Remove block">×</button>`
+      : '';
+    const content = {
+      event: '<span>when</span><b class="code-flag-mark">⚑</b><span>clicked</span>',
+      character: `<span>🧒</span><span>choose character</span><select aria-label="Choose a character" data-action="code-character-select"><option value="boy" ${state.coding.codeCharacter === 'boy' ? 'selected' : ''}>Boy</option><option value="girl" ${state.coding.codeCharacter === 'girl' ? 'selected' : ''}>Girl</option><option value="cat" ${state.coding.codeCharacter === 'cat' ? 'selected' : ''}>Cat</option><option value="dog" ${state.coding.codeCharacter === 'dog' ? 'selected' : ''}>Dog</option></select>`,
+      say: `<span>say</span><input type="text" maxlength="120" value="${esc(state.coding.codeMessage)}" aria-label="Your message" data-input="code-message">`,
+      language: `<span>in</span><select aria-label="Message language" data-action="code-source-language"><option value="en" ${state.coding.codeSourceLanguage === 'en' ? 'selected' : ''}>English</option><option value="yo" ${state.coding.codeSourceLanguage === 'yo' ? 'selected' : ''}>Yorùbá</option><option value="ig" ${state.coding.codeSourceLanguage === 'ig' ? 'selected' : ''}>Igbo</option><option value="ha" ${state.coding.codeSourceLanguage === 'ha' ? 'selected' : ''}>Hausa</option><option value="sw" ${state.coding.codeSourceLanguage === 'sw' ? 'selected' : ''}>Swahili</option></select>`,
+      translate: '<span>🌐</span><span>translate</span><span>to other languages</span>',
+      wave: '<span>👋</span><span>wave hello</span>',
+      jump: '<span>⬆</span><span>jump</span>',
+      dance: '<span>✨</span><span>dance</span>',
+      sound: '<span>♫</span><span>play a sound</span>',
+      repeat: '<span>↻</span><span>repeat</span>',
+    }[block] || '<span>add an action</span>';
+    return `<div class="code-block code-block-${esc(block)}" draggable="${editable}" data-block-index="${index}">${content}${remove}</div>`;
+  }
+
+  function renderCodeLanguageTiles(selectedLanguage, action = 'code-target-language') {
+    return CODE_LANGUAGES.map((language) => `<button class="code-language-tile ${selectedLanguage === language.id ? 'is-selected' : ''}" type="button" data-action="${action}" data-language="${language.id}" aria-pressed="${selectedLanguage === language.id}"><span aria-hidden="true">${language.flag}</span><strong>${language.name}</strong></button>`).join('');
+  }
+
+  function renderCoding() {
+    const languages = CODE_LANGUAGES;
+    const preview = getCodeSampleTranslation(state.coding.codeMessage, state.coding.codeTargetLanguage) || state.coding.codeOutput;
+    return `<div class="code-design-page code-landing-page">
+      <section class="code-design-landing-hero">
+        <div class="code-landing-copy">
+          <span class="code-design-kicker">${icon('code', 16)} Code &amp; Translate</span>
+          <h1>Let’s Code<br><em>&amp; Translate!</em></h1>
+          <p>Turn your ideas into a program and see it in different languages. It’s fun, easy and super cool!</p>
+          <button class="code-primary-button" type="button" data-route="coding-studio">${icon('play', 16)} Start Coding ${icon('arrow', 16)}</button>
+        </div>
+        <div class="code-landing-art" aria-label="Young makers coding with their Idilewa robot">
+          <img class="code-landing-kids" src="./assets/code-reference-children.png" alt="Young friends building a coding project together" />
+          <img class="code-landing-robot" src="./assets/code-reference-buddy.png" alt="Idilewa coding robot" />
+          <span class="code-speech-bubble code-speech-bubble-purple">Code today...</span>
+          <span class="code-speech-bubble code-speech-bubble-green">...speak tomorrow!</span>
+          <span class="code-doodle code-doodle-one" aria-hidden="true">✦</span>
+          <span class="code-doodle code-doodle-two" aria-hidden="true">✧</span>
+        </div>
+      </section>
+      <section class="code-landing-preview" aria-label="Preview the block coding studio">
+        <div class="code-preview-palette"><h2>Build Your Code</h2><p>Drag blocks to create your own message.</p>${CODE_BLOCK_CATEGORIES.slice(0, 4).map((category) => `<span><i class="code-category-icon ${category.color}">${icon(category.icon, 16)}</i>${category.label}</span>`).join('')}</div>
+        <div class="code-preview-workspace">
+          <div class="code-preview-toolbar"><span>↶</span><span>↷</span><button type="button" data-route="coding-studio">${icon('play', 13)} Run My Code</button></div>
+          ${['event', 'character', 'say', 'language', 'translate'].map((block, index) => renderCodeBlock(block, index)).join('')}
+          <button class="code-preview-hand" type="button" data-route="coding-studio" aria-label="Start coding">☝</button>
+        </div>
+        <div class="code-preview-result"><h2>Your Message</h2><div class="code-message-preview"><span class="code-character-face">🧒🏾</span><p>Hello, friends!<small>(English)</small></p></div><label for="code-landing-language">Translate to:</label><select id="code-landing-language" data-action="code-landing-language">${languages.map((language) => `<option value="${language.id}" ${state.coding.codeTargetLanguage === language.id ? 'selected' : ''}>${language.flag} ${language.name}</option>`).join('')}</select><div class="code-translation-preview"><span class="code-character-face">${esc(state.coding.codeCharacter === 'girl' ? '👧🏾' : state.coding.codeCharacter === 'cat' ? '🐱' : state.coding.codeCharacter === 'dog' ? '🐶' : '🧒🏾')}</span><p>${esc(preview || 'Run your code to see a translation.')}<small>(${esc(languages.find((language) => language.id === state.coding.codeTargetLanguage)?.name || 'Yorùbá')})</small></p><button type="button" aria-label="Hear translation" data-action="code-speak-output">🔊</button></div></div>
+      </section>
+      <section class="code-language-band"><div class="code-language-band-copy"><span class="code-globe-mark">${icon('globe', 27)}</span><div><h2>See Your Result in<br>Different Languages</h2><p>Explore and learn how your message sounds in Nigerian and other languages.</p></div></div><div class="code-language-tiles">${renderCodeLanguageTiles(state.coding.codeTargetLanguage)}</div></section>
+      <section class="code-why-love"><h2>Why Kids Love It</h2><div>${[
+        ['💡', 'Builds Creativity', 'Turn your imagination into real code.'],
+        ['🧠', 'Improves Thinking', 'Solve problems and learn step by step.'],
+        ['🌍', 'Connects Cultures', 'Speak and understand new languages.'],
+        ['⭐', 'Makes Learning Fun', 'Games, rewards and cool characters!'],
+      ].map(([emoji, title, text]) => `<article><span>${emoji}</span><div><strong>${title}</strong><p>${text}</p></div></article>`).join('')}</div></section>
+    </div>`;
+  }
+
+  function renderCodingStudio() {
+    const flow = state.coding;
+    const category = CODE_BLOCK_CATEGORIES.find((item) => item.id === flow.codeCategory) || CODE_BLOCK_CATEGORIES[0];
+    const blocks = Array.isArray(flow.codeBlocks) ? flow.codeBlocks : defaults.coding.codeBlocks;
+    const languages = CODE_LANGUAGES;
+    const source = flow.codeMessage || 'Hello, friends!';
+    const translation = flow.codeSourceLanguage === 'en' ? getCodeSampleTranslation(source, flow.codeTargetLanguage || 'yo') : '';
+    const result = translation || flow.codeOutput;
+    const characters = { boy: '🧒🏾', girl: '👧🏾', cat: '🐱', dog: '🐶' };
+    return `<div class="code-design-page code-studio-page">
+      <section class="code-studio-hero">
+        <div class="code-studio-hero-copy"><a class="code-back-link" href="#/coding" data-route="coding">${icon('arrow', 15)} Back to Home</a><h1>Start <em>Coding</em></h1><p>Drag the blocks, build your code,<br>and bring your ideas to life!</p></div>
+        <div class="code-studio-hero-art"><img class="code-studio-kids" src="./assets/code-reference-children.png" alt="Young coders creating a project together" /><img class="code-studio-buddy" src="./assets/code-reference-buddy.png" alt="Idilewa robot cheering on young coders" /><span class="code-speech-bubble code-speech-bubble-purple">Small Steps...<br>Big Dreams!</span><span class="code-studio-spark" aria-hidden="true">✦ ✨ ✧</span></div>
+      </section>
+      <section class="code-studio-workbench" aria-label="Block coding workspace">
+        <aside class="code-studio-sidebar">
+          <nav class="code-block-categories" aria-label="Code block categories">${CODE_BLOCK_CATEGORIES.map((item) => `<button type="button" class="${item.id === category.id ? 'is-active' : ''}" data-action="code-select-category" data-category="${item.id}" aria-pressed="${item.id === category.id}"><i class="code-category-icon ${item.color}">${icon(item.icon, 17)}</i>${item.label}</button>`).join('')}</nav>
+          <h2>${esc(category.label)}</h2>
+          <div class="code-character-grid">${(category.id === 'characters' ? [
+            { value: 'boy', label: 'Boy', emoji: characters.boy },
+            { value: 'girl', label: 'Girl', emoji: characters.girl },
+            { value: 'cat', label: 'Cat', emoji: characters.cat },
+            { value: 'dog', label: 'Dog', emoji: characters.dog },
+          ] : CODE_BLOCK_OPTIONS[category.id].map((option) => ({ ...option, value: option.id, emoji: category.icon === 'user' ? characters.boy : category.id === 'actions' ? '👋' : category.id === 'sounds' ? '♫' : category.id === 'events' ? '⚑' : '✨' }))).map((item) => `<button type="button" class="code-character-card ${flow.codeCharacter === item.value ? 'is-selected' : ''}" draggable="true" data-action="${category.id === 'characters' ? 'code-set-character' : 'code-add-block'}" data-character="${item.value}" data-block="${item.value}" aria-label="${esc(item.label)}"><span>${item.emoji}</span><strong>${esc(item.label)}</strong></button>`).join('')}</div>
+        </aside>
+        <section class="code-studio-editor" aria-labelledby="code-studio-title">
+          <div class="code-studio-editor-head"><h2 id="code-studio-title">${icon('code', 18)} My Code</h2><div><button type="button" data-action="code-undo" aria-label="Undo" ${flow.codeUndo.length ? '' : 'disabled'}>↶</button><button type="button" data-action="code-redo" aria-label="Redo" ${flow.codeRedo.length ? '' : 'disabled'}>↷</button><button type="button" class="code-clear-button" data-action="code-clear">⌫ Clear</button></div></div>
+          <div class="code-drop-zone" data-code-drop-zone aria-label="Drop code blocks here">${blocks.length ? blocks.map((block, index) => renderCodeBlock(block, index, true)).join('') : '<p class="code-drop-hint">Drag a block here to begin your story!</p>'}</div>
+          <button class="code-primary-button code-run-button" type="button" data-action="code-run">${icon('play', 17)} Run My Code</button>
+          <p class="code-run-status" id="code-run-status" role="status">${esc(flow.codeStatus || 'Your message is ready to run.')}</p>
+        </section>
+        <aside class="code-studio-result" aria-labelledby="code-result-title">
+          <h2 id="code-result-title">${icon('sparkles', 20)} Your Result</h2>
+          <div class="code-result-illustration"><img src="./assets/code-reference-children.png" alt="A young learner shares a friendly greeting" /><span class="code-result-speech">${esc(source)}</span></div>
+          <label class="code-target-label" for="code-target-language">Translate To</label>
+          <select id="code-target-language" data-action="code-target-select">${languages.map((language) => `<option value="${language.id}" ${flow.codeTargetLanguage === language.id ? 'selected' : ''}>${language.flag} ${language.name}</option>`).join('')}</select>
+          <div class="code-result-translation"><span class="code-character-face">${characters[flow.codeCharacter] || characters.boy}</span><strong lang="${esc(flow.codeTargetLanguage)}">${esc(result || 'Run your code to see a translation.')}</strong><button type="button" data-action="code-speak-output" aria-label="Listen to translated message">🔊</button></div>
+          <div class="code-language-tiles code-studio-language-tiles">${renderCodeLanguageTiles(flow.codeTargetLanguage)}</div>
+        </aside>
+      </section>
+    </div>`;
+  }
+
+  function setCodeBlocks(nextBlocks) {
+    const previous = Array.isArray(state.coding.codeBlocks) ? state.coding.codeBlocks : [];
+    state.coding.codeUndo = [...state.coding.codeUndo, previous].slice(-20);
+    state.coding.codeRedo = [];
+    state.coding.codeBlocks = nextBlocks.slice(0, 12);
+    state.coding.codeStatus = 'Your blocks are ready. Press Run My Code to try them!';
+    saveState();
+    render();
+  }
+
+  async function runCodeStudio() {
+    const messageInput = document.querySelector('[data-input="code-message"]');
+    const message = (messageInput?.value || state.coding.codeMessage || '').trim();
+    const status = document.getElementById('code-run-status');
+    if (!state.coding.codeBlocks.includes('say')) {
+      if (status) {
+        status.textContent = 'Add a “say something” block to your code first.';
+        status.classList.add('is-retry');
+      }
+      return;
+    }
+    if (!message) {
+      if (status) {
+        status.textContent = 'Add a message to your “say” block first.';
+        status.classList.add('is-retry');
+      }
+      return;
+    }
+    state.coding.codeMessage = message;
+    state.coding.codeStatus = 'Running your code…';
+    if (status) {
+      status.textContent = state.coding.codeStatus;
+      status.classList.remove('is-retry', 'is-success');
+    }
+    const targetLanguage = state.coding.codeTargetLanguage || 'yo';
+    try {
+      const sample = state.coding.codeSourceLanguage === 'en'
+        ? getCodeSampleTranslation(message, targetLanguage)
+        : '';
+      const phrasebook = state.coding.codeSourceLanguage === 'en'
+        ? translateText(message, targetLanguage)
+        : { exact: false };
+      const result = sample
+        ? { translated: sample }
+        : phrasebook.exact
+          ? phrasebook
+          : await translateWithProvider(message, targetLanguage, state.coding.codeSourceLanguage || 'en');
+      if (!result.translated) throw new Error('No translation was returned for that message.');
+      state.coding.codeOutput = result.translated;
+      state.coding.codeStatus = 'Your code ran successfully! Your message is ready to share.';
+      saveState();
+      const output = document.querySelector('.code-result-translation strong');
+      const bubble = document.querySelector('.code-result-speech');
+      if (output) output.textContent = result.translated;
+      if (bubble) bubble.textContent = message;
+      if (status) {
+        status.textContent = state.coding.codeStatus;
+        status.classList.remove('is-retry');
+        status.classList.add('is-success');
+      }
+    } catch (error) {
+      const messageText = error instanceof Error ? error.message : 'Your code could not be translated. Please try again.';
+      state.coding.codeStatus = messageText;
+      saveState();
+      if (status) {
+        status.textContent = messageText;
+        status.classList.add('is-retry');
+        status.classList.remove('is-success');
+      }
+    }
   }
 
 
@@ -6402,6 +6656,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'course': return renderCourse(params);
       case 'lesson': return renderLesson(params);
       case 'coding': return renderCoding();
+      case 'coding-studio': return renderCodingStudio();
       case 'ere': return renderStories();
       case 'ere_game': return renderStoryGame(params);
       case 'oral': return renderOral();
@@ -7095,11 +7350,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const pageMarkup = assignUniqueRouteImages(page, renderPage(page, params))
       .replace(/(?:African )?Voice (?:African Language )?Trainer/gi, 'Voice Lessons')
       .replace(/Voice Studio/gi, 'Voice Lessons');
-    if (page === 'coding') {
+    if (page === 'coding' || page === 'coding-studio') {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
-      initializeIdeRuntimes();
-      initializeTranslationLanguages('ide-output-language');
     } else if (page === 'login') {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
@@ -7115,21 +7368,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         document.getElementById(`owe-${params.section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
-    if (page === 'coding') initializeIdeOutputResize();
     startHomePreviewMotion();
-    if (page === 'coding') {
-      const codeRobotGlyphs = document.getElementById('codeRobotGlyphCanvas');
-      if (codeRobotGlyphs) activeCodeRobotScene = init3DCodeRobotGlyphs(codeRobotGlyphs);
-    } else if (page === 'voice-translation') {
-      initializeTranslationLanguages('voice-translation-source-language');
-      initializeTranslationLanguages('voice-translation-language', 'voice-translation-provider-status');
-    } else if (page === 'voice-text-to-speech') {
-      initializePlotweaverVoiceTools();
-    } else if (page === 'voice-cloning') {
-      initializePlotweaverVoiceTools();
-    } else if (page === 'voice-speech-to-text') {
-      initializePlotweaverVoiceTools();
-    } else if (page === 'trainer' || page === 'voice_lessons') {
+    if (page === 'trainer' || page === 'voice_lessons') {
       const voiceStudio = document.getElementById('trainerStudio');
       voiceStudio?.addEventListener('toggle', () => {
         state.trainer.studioOpen = voiceStudio.open;
@@ -7429,6 +7669,86 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'consent-signup':
         state.authRole = 'child'; state.loginMode = 'signup'; saveState(); navigate('login'); break;
       
+      case 'code-select-category': {
+        const category = el.dataset.category;
+        if (!CODE_BLOCK_CATEGORIES.some((item) => item.id === category)) break;
+        state.coding.codeCategory = category;
+        saveState();
+        render();
+        break;
+      }
+      case 'code-set-character': {
+        const character = el.dataset.character;
+        if (!['boy', 'girl', 'cat', 'dog'].includes(character)) break;
+        state.coding.codeCharacter = character;
+        if (!state.coding.codeBlocks.includes('character')) {
+          state.coding.codeBlocks = [...state.coding.codeBlocks, 'character'].slice(0, 12);
+        }
+        saveState();
+        render();
+        break;
+      }
+      case 'code-add-block': {
+        const block = el.dataset.block;
+        if (!['event', 'character', 'say', 'language', 'translate', 'wave', 'jump', 'dance', 'sound', 'repeat'].includes(block)) break;
+        if (state.coding.codeBlocks.length >= 12) {
+          showToast('Your story has room for 12 blocks. Remove one to add another.');
+          break;
+        }
+        setCodeBlocks([...state.coding.codeBlocks, block]);
+        break;
+      }
+      case 'code-remove-block': {
+        const index = Number(el.dataset.index);
+        if (!Number.isInteger(index) || index < 0 || index >= state.coding.codeBlocks.length) break;
+        setCodeBlocks(state.coding.codeBlocks.filter((_, blockIndex) => blockIndex !== index));
+        break;
+      }
+      case 'code-clear':
+        state.coding.codeUndo = [...state.coding.codeUndo, state.coding.codeBlocks].slice(-20);
+        state.coding.codeRedo = [];
+        state.coding.codeBlocks = [];
+        state.coding.codeStatus = 'Your workspace is clear. Add a block to begin!';
+        saveState();
+        render();
+        break;
+      case 'code-undo': {
+        if (!state.coding.codeUndo.length) break;
+        state.coding.codeRedo = [...state.coding.codeRedo, state.coding.codeBlocks].slice(-20);
+        state.coding.codeBlocks = state.coding.codeUndo.at(-1);
+        state.coding.codeUndo = state.coding.codeUndo.slice(0, -1);
+        saveState();
+        render();
+        break;
+      }
+      case 'code-redo': {
+        if (!state.coding.codeRedo.length) break;
+        state.coding.codeUndo = [...state.coding.codeUndo, state.coding.codeBlocks].slice(-20);
+        state.coding.codeBlocks = state.coding.codeRedo.at(-1);
+        state.coding.codeRedo = state.coding.codeRedo.slice(0, -1);
+        saveState();
+        render();
+        break;
+      }
+      case 'code-target-language': {
+        const language = el.dataset.language;
+        if (!CODE_LANGUAGES.some((item) => item.id === language)) break;
+        state.coding.codeTargetLanguage = language;
+        saveState();
+        render();
+        break;
+      }
+      case 'code-run':
+        void runCodeStudio();
+        break;
+      case 'code-speak-output':
+        if (!state.coding.codeOutput) {
+          showToast('Run your code before listening to the translated message.');
+          break;
+        }
+        void playPlotweaverSpeech(state.coding.codeOutput, state.coding.codeTargetLanguage || 'yo')
+          .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not play the translation.', 'error'));
+        break;
       case 'ide-set-lang': {
         const lang = el.dataset.lang || 'yoruba';
         state.coding.ideLang = lang;
@@ -8440,6 +8760,27 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   document.addEventListener('change', (event) => {
     const el = event.target;
+    if (el.matches('#code-target-language, #code-landing-language')) {
+      if (!CODE_LANGUAGES.some((language) => language.id === el.value)) return;
+      state.coding.codeTargetLanguage = el.value;
+      saveState();
+      render();
+      return;
+    }
+    if (el.matches('[data-action="code-character-select"]')) {
+      if (!['boy', 'girl', 'cat', 'dog'].includes(el.value)) return;
+      state.coding.codeCharacter = el.value;
+      saveState();
+      render();
+      return;
+    }
+    if (el.matches('[data-action="code-source-language"]')) {
+      if (!['en', 'yo', 'ig', 'ha', 'sw'].includes(el.value)) return;
+      state.coding.codeSourceLanguage = el.value;
+      saveState();
+      render();
+      return;
+    }
     if (el.matches('.translation-speed-select select')) {
       handleAction('translation-speech-speed', el);
       return;
@@ -8526,6 +8867,13 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   document.addEventListener('input', (event) => {
     const target = event.target;
+    if (target.matches('[data-input="code-message"]')) {
+      state.coding.codeMessage = target.value.slice(0, 120);
+      const speechBubble = document.querySelector('.code-result-speech');
+      if (speechBubble) speechBubble.textContent = state.coding.codeMessage;
+      saveState();
+      return;
+    }
     if (target.id === 'voice-translation-input') {
       const count = document.getElementById('voice-translation-character-count');
       if (count) count.textContent = String(target.value.length);
@@ -8588,6 +8936,30 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       const filtered = filterFreeLessons();
       if (grid) grid.innerHTML = renderFreeLessonCards(filtered);
       if (countEl) countEl.textContent = `Showing ${filtered.length} of ${C4K_FREE_LESSONS.length} free STEAM lessons`;
+    }
+  });
+
+  document.addEventListener('dragstart', (event) => {
+    const block = event.target.closest('[data-action="code-add-block"], [data-action="code-set-character"]');
+    if (!block || !event.dataTransfer) return;
+    event.dataTransfer.setData('application/x-idilewa-block', JSON.stringify({ action: block.dataset.action, block: block.dataset.block, character: block.dataset.character }));
+    event.dataTransfer.effectAllowed = 'copy';
+  });
+  document.addEventListener('dragover', (event) => {
+    if (!event.target.closest('[data-code-drop-zone]')) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+  });
+  document.addEventListener('drop', (event) => {
+    const dropZone = event.target.closest('[data-code-drop-zone]');
+    if (!dropZone || !event.dataTransfer) return;
+    event.preventDefault();
+    try {
+      const dropped = JSON.parse(event.dataTransfer.getData('application/x-idilewa-block'));
+      if (dropped.action === 'code-set-character') handleAction('code-set-character', { dataset: { character: dropped.character } });
+      else if (dropped.action === 'code-add-block') handleAction('code-add-block', { dataset: { block: dropped.block } });
+    } catch {
+      showToast('That block could not be added. Please try again.', 'error');
     }
   });
 
@@ -8942,10 +9314,10 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault(); openSearch();
     }
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && parseLocation().page === 'coding') {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && ['coding', 'coding-studio'].includes(parseLocation().page)) {
       event.preventDefault();
-      const runButton = document.querySelector('[data-action="ide-run-code"]');
-      if (runButton) handleAction('ide-run-code', runButton);
+      const runButton = document.querySelector('[data-action="code-run"]');
+      if (runButton) handleAction('code-run', runButton);
     }
   });
 
