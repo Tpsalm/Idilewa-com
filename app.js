@@ -25,6 +25,7 @@ import {
   createPlotweaverVoice,
   getPlotweaverLanguages,
   getPlotweaverVoices,
+  speakWithDeviceVoice,
   synthesizePlotweaverSpeech,
   transcribeWithPlotweaver,
   translateWithPlotweaver
@@ -624,7 +625,7 @@ import {
   }
 
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-  const imageUrl = (filename) => window.__IDILEWA_ASSETS__?.[filename] || `./assets/${filename}`;
+  const imageUrl = (filename) => window.__IDILEWA_ASSETS__?.[filename] || `/assets/${filename}`;
   const icon = (name, size = 20, extraClass = '') => `<svg class="icon ${extraClass}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.sparkles}</svg>`;
   const getLanguage = (id = state.currentLang) => {
     const active = LANGUAGES.find((l) => l.id === id);
@@ -5673,37 +5674,43 @@ import {
       if (typeof text !== 'string' || !text.trim() || text.length > 1_000) {
         throw new Error('Speech text must contain 1–1,000 characters.');
       }
-      const blob = await synthesizePlotweaverSpeech({
-        text,
-        language,
-        voiceId: document.getElementById('plotweaver-voice-select')?.value
-          || state.trainer.voiceId
-          || undefined,
-      });
       if (activePlotweaverAudio) {
         activePlotweaverAudio.pause();
         activePlotweaverAudio = null;
       }
       if (activePlotweaverObjectUrl) URL.revokeObjectURL(activePlotweaverObjectUrl);
-      const objectUrl = URL.createObjectURL(blob);
-      activePlotweaverObjectUrl = objectUrl;
-      activePlotweaverAudio = new Audio(objectUrl);
-      activePlotweaverAudio.addEventListener('ended', () => {
-        if (activePlotweaverObjectUrl === objectUrl) {
-          activePlotweaverAudio = null;
-          URL.revokeObjectURL(objectUrl);
-          activePlotweaverObjectUrl = '';
-        }
-      }, { once: true });
+      activePlotweaverObjectUrl = '';
+      const voiceId = document.getElementById('plotweaver-voice-select')?.value
+        || state.trainer.voiceId
+        || undefined;
       try {
+        const blob = await synthesizePlotweaverSpeech({ text, language, voiceId });
+        const objectUrl = URL.createObjectURL(blob);
+        activePlotweaverObjectUrl = objectUrl;
+        activePlotweaverAudio = new Audio(objectUrl);
+        activePlotweaverAudio.addEventListener('ended', () => {
+          if (activePlotweaverObjectUrl === objectUrl) {
+            activePlotweaverAudio = null;
+            URL.revokeObjectURL(objectUrl);
+            activePlotweaverObjectUrl = '';
+          }
+        }, { once: true });
         await activePlotweaverAudio.play();
-      } catch (error) {
+        return 'plotweaver';
+      } catch (serviceError) {
+        activePlotweaverAudio?.pause();
         activePlotweaverAudio = null;
-        if (activePlotweaverObjectUrl === objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-          activePlotweaverObjectUrl = '';
+        if (activePlotweaverObjectUrl) URL.revokeObjectURL(activePlotweaverObjectUrl);
+        activePlotweaverObjectUrl = '';
+        if (voiceId) throw serviceError;
+        try {
+          await speakWithDeviceVoice(text, language);
+          return 'device';
+        } catch (deviceError) {
+          const serviceMessage = serviceError instanceof Error ? serviceError.message : 'Idilewa voice audio is unavailable.';
+          const deviceMessage = deviceError instanceof Error ? deviceError.message : 'Device speech is unavailable.';
+          throw new Error(`${serviceMessage} ${deviceMessage}`);
         }
-        throw error;
       }
     }
 
@@ -5724,7 +5731,7 @@ import {
 
     async function playNativeTrainerVoice(phrase, lang = "yoruba", speed = 1.0, syllables = []) {
       if (syllables?.length) playLessonTonalSequence(syllables, speed);
-      await playPlotweaverSpeech(phrase, trainerLanguageCode(lang));
+      return playPlotweaverSpeech(phrase, trainerLanguageCode(lang));
     }
 
     async function startTrainerRecording(lessonId) {
@@ -6477,7 +6484,7 @@ import {
       if (breadcrumb) output = output.replace(breadcrumb[0], `${breadcrumb[0]}${banner}`);
       else output = output.replace(/(<div class="container route-page[^"]*">)/, `$1${banner}`);
     }
-    return output;
+    return output.replace(/(\bsrc=["'])\.\/assets\//gi, '$1/assets/');
   }
 
   const PAGE_LAYER_CATEGORIES = ['Orient', 'Understand', 'Information object', 'Context / example', 'Practice / decision', 'Reflect / continue'];
@@ -7690,6 +7697,9 @@ import {
       }
       case 'speak-voice-lesson': {
         void playPlotweaverSpeech(el.dataset.phrase || '', 'yo')
+          .then((source) => {
+            if (source === 'device') showToast('Using your device voice for this lesson.');
+          })
           .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate this sound.', 'error'));
         break;
       }
@@ -7702,8 +7712,10 @@ import {
           break;
         }
         if (status) status.textContent = 'Generating audio with Idilewa…';
-        void playPlotweaverSpeech(text, language).then(() => {
-          if (status) status.textContent = 'Audio is playing. The generated audio is not saved.';
+        void playPlotweaverSpeech(text, language).then((source) => {
+          if (status) status.textContent = source === 'device'
+            ? 'Playing with your device voice. This audio is not saved.'
+            : 'Audio is playing. The generated audio is not saved.';
         }).catch((error) => {
           if (status) status.textContent = error instanceof Error ? error.message : 'Idilewa could not generate this audio.';
         });
@@ -8136,7 +8148,7 @@ import {
         const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
         if (activeLesson) {
           void playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables)
-            .then(() => showToast('Playing Idilewa-generated audio.'))
+            .then((source) => showToast(source === 'device' ? 'Using your device voice for this lesson.' : 'Playing Idilewa-generated audio.'))
             .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate lesson audio.', 'error'));
         }
         break;
