@@ -321,15 +321,44 @@ export async function resendSignupConfirmation(email) {
 }
 
 export async function requestPasswordReset(email) {
-  const client = requireSupabase();
   const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
     throw new Error('Enter a valid email address.');
   }
-  const { error } = await client.auth.resetPasswordForEmail(normalizedEmail, {
-    redirectTo: getAuthCallbackUrl('login'),
-  });
+  let response;
+  try {
+    response = await fetch('/api/auth/welcome?action=email-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ email: normalizedEmail, purpose: 'password-reset' }),
+    });
+  } catch (error) {
+    throw new Error('We could not reach the password recovery service. Check your connection and try again.', { cause: error });
+  }
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    throw new Error('The password recovery service returned an invalid response.', { cause: error });
+  }
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string'
+      ? result.error
+      : 'A password-reset link could not be sent. Please try again.');
+  }
+  if (typeof result?.message !== 'string') {
+    throw new Error('The password recovery service did not confirm the request.');
+  }
+}
+
+export async function updateAccountPassword(password) {
+  const client = requireSupabase();
+  if (!isSignupPasswordValid(password)) {
+    throw new Error('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.');
+  }
+  const { data, error } = await client.auth.updateUser({ password });
   if (error) throw new Error(normalizeAuthError(error, 'password-reset'), { cause: error });
+  if (!data?.user) throw new Error('The authentication service did not confirm your new password.');
 }
 
 export async function completeAuthCallback(callbackUrl = window.location.href) {
@@ -337,7 +366,8 @@ export async function completeAuthCallback(callbackUrl = window.location.href) {
   const url = new URL(callbackUrl);
   const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
   const query = url.searchParams;
-  const providerError = query.get('error_description') || hash.get('error_description') || query.get('error') || hash.get('error');
+  const providerError = query.get('error_description') || hash.get('error_description')
+    || query.get('error') || hash.get('error');
   if (providerError) throw new Error(normalizeAuthError({ message: providerError }, 'callback'));
 
   const callbackType = query.get('type') || hash.get('type') || '';
@@ -469,16 +499,6 @@ export async function verifySigninOtp({ email, token, expectedRole, purpose = 'c
 
   setLocalItem(LOCAL_STORAGE_KEY_USER, userRecord);
   return userRecord;
-}
-
-export async function updateAccountPassword(password) {
-  const client = requireSupabase();
-  if (!isSignupPasswordValid(password)) {
-    throw new Error('Use 12–128 characters with uppercase and lowercase letters, a number, and a symbol.');
-  }
-  const { data, error } = await client.auth.updateUser({ password });
-  if (error) throw new Error(error.message, { cause: error });
-  if (!data?.user) throw new Error('The authentication service did not confirm your new password.');
 }
 
 export async function signIn({ email, password, expectedRole }) {
