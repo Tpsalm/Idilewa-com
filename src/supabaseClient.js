@@ -118,7 +118,9 @@ export function getAuthCallbackUrl(next = 'index', origin = window.location.orig
     && next !== 'auth-callback'
     ? next
     : 'index';
-  const callback = new URL('/auth-callback.html', origin);
+  const configuredRedirect = readEnvValue('NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL', 'VITE_SUPABASE_REDIRECT_URL');
+  const callbackOrigin = configuredRedirect || origin;
+  const callback = new URL('/auth-callback.html', callbackOrigin);
   callback.searchParams.set('next', allowedRoute);
   return callback.toString();
 }
@@ -505,7 +507,7 @@ export async function signIn({ email, password, expectedRole }) {
       throw new Error(`This email belongs to a ${userRecord.role} account. Select the matching account type.`);
     }
   } catch (profileError) {
-    const { error: signOutError } = await client.auth.signOut();
+    const { error: signOutError } = await client.auth.signOut({ scope: 'local' });
     if (signOutError) {
       throw new Error('Your account check failed and the sign-in session could not be cleared.', { cause: signOutError });
     }
