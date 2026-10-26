@@ -80,6 +80,7 @@ import {
   VOICE_FEATURE_LESSON_COUNT,
   VOICE_GRADE_PATHS
 } from './src/voiceGradeCurriculum.js';
+import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
 /* Idilewa responsive learning prototype — dependency free, client-side demo. */
 (() => {
@@ -4582,9 +4583,11 @@ import {
       ? params.level
       : gradePath?.level || state.trainer.level || 'beginner';
     const lessons = langData[lessonLevel] || langData.beginner;
-    const gradeLessons = gradePath && gradePath.level === lessonLevel
-      ? getVoiceGradeLessonSlice(gradePath.id, lessons)
-      : lessons;
+    const gradeLessons = gradePath?.id === 'kindergarten'
+      ? getKindergartenLessons(selectedLanguage)
+      : gradePath && gradePath.level === lessonLevel
+        ? getVoiceGradeLessonSlice(gradePath.id, lessons)
+        : lessons;
     const practiceLessons = gradePath && gradePath.level === lessonLevel ? gradeLessons : lessons;
     const featureLessonPages = ['voice-text-to-speech', 'voice-speech-to-text', 'voice-translation', 'voice-cloning'];
     const featureLessons = featureLessonPages.includes(page)
@@ -4614,18 +4617,20 @@ import {
       ? `${gradePath.name} · ${langName}`
       : defaultTitle;
     const description = page === 'voice-audio' && gradePath
-      ? `${gradePath.ages}: ${gradePath.focus} ${gradePath.challenge}`
+      ? gradePath.id === 'kindergarten'
+        ? `${gradePath.ages}: 50 foundational lessons introduce letters, vowel and consonant sounds, first words, synonyms, and antonyms.`
+        : `${gradePath.ages}: ${gradePath.focus} ${gradePath.challenge}`
       : defaultDescription;
     let content = '';
 
     if (page === 'voice-language') {
       content = `<div class="voice-feature-choice-grid">${languages.map(([id, name]) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-lang="${id}" data-level="${lessonLevel}"><span>${icon('globe', 20)}</span><strong>${name}</strong></button>`).join('')}</div>`;
     } else if (page === 'voice-grade') {
-      content = `<p class="voice-feature-current">Learning language: <strong>${langName}</strong>. Each grade opens its own lesson path with age-appropriate goals and a different lesson set.</p><div class="voice-feature-choice-grid voice-grade-choice-grid">${VOICE_GRADE_PATHS.map((grade) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-grade="${grade.id}" data-lang="${selectedLanguage}" data-level="${grade.level}"><span>${icon('layers', 20)}</span><strong>${grade.name}</strong><small>${grade.ages} · ${grade.level} pathway</small><small>${grade.focus}</small></button>`).join('')}</div>`;
+      content = `<p class="voice-feature-current">Learning language: <strong>${langName}</strong>. Each grade opens its own lesson path with age-appropriate goals and a different lesson set.</p><div class="voice-feature-choice-grid voice-grade-choice-grid">${VOICE_GRADE_PATHS.map((grade) => `<button type="button" class="voice-feature-choice" data-route="voice-audio" data-grade="${grade.id}" data-lang="${selectedLanguage}" data-level="${grade.level}"><span>${icon('layers', 20)}</span><strong>${grade.name}</strong><small>${grade.id === 'kindergarten' ? '50 foundational lessons' : `${grade.ages} · ${grade.level} pathway`}</small><small>${grade.focus}</small></button>`).join('')}</div>`;
     } else if (page === 'voice-audio') {
       const languageFilter = `<label>Language<select data-action="voice-feature-language">${languages.map(([id, name]) => `<option value="${id}" ${selectedLanguage === id ? 'selected' : ''}>${name}</option>`).join('')}</select></label>`;
       const gradeContext = gradePath
-        ? `<div class="voice-grade-path-summary"><div><span class="section-kicker">${gradePath.name} · ${gradePath.ages}</span><p>${gradePath.focus}</p><strong>Challenge: ${gradePath.challenge}</strong></div>${routeLink('voice-grade', 'Choose another grade', 'button button-outline', `data-lang="${selectedLanguage}"`)}</div>`
+        ? `<div class="voice-grade-path-summary"><div><span class="section-kicker">${gradePath.name} · ${gradePath.ages}</span><p>${gradePath.focus}</p>${gradePath.id === 'kindergarten' ? '<strong>50 foundational lessons</strong>' : `<strong>Challenge: ${gradePath.challenge}</strong>`}</div>${routeLink('voice-grade', 'Choose another grade', 'button button-outline', `data-lang="${selectedLanguage}"`)}</div>`
         : '';
       const levelFilter = gradePath ? '' : `<label>Level<select data-action="voice-feature-level">${['beginner', 'intermediate', 'advanced'].map((level) => `<option value="${level}" ${lessonLevel === level ? 'selected' : ''}>${level.charAt(0).toUpperCase() + level.slice(1)}</option>`).join('')}</select></label>`;
       content = `${gradeContext}<div class="voice-feature-filters">${languageFilter}${levelFilter}</div>
@@ -4636,7 +4641,11 @@ import {
       const phraseMeaning = hasEnglishTranslation
         ? `<p class="voice-practice-translation"><span>English translation</span>${esc(activeLesson.translation)}</p>`
         : `<p>${esc(activeLesson.phonetic || '')}</p><strong>${esc(activeLesson.translation || '')}</strong>`;
-      content = `${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${gradePath ? `${gradePath.name} · ` : ''}${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}</span><h2>${esc(activeLesson.phrase)}</h2>${phraseMeaning}</div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}`;
+      const learningObjective = gradePath?.id === 'kindergarten'
+        ? `<p class="voice-practice-translation"><span>Learning goal</span>${esc(activeLesson.objective)}</p>`
+        : '';
+      const lessonCount = gradePath?.id === 'kindergarten' ? ` of ${practiceLessons.length}` : '';
+      content = `${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}<article class="voice-practice-card"><div class="voice-practice-meta"><span class="section-kicker">${gradePath ? `${gradePath.name} · ` : ''}${langName} · ${lessonLevel} · Lesson ${String(activeLesson.id).padStart(2, '0')}${lessonCount}</span><h2>${esc(activeLesson.phrase)}</h2>${phraseMeaning}${learningObjective}</div><div class="voice-practice-syllables">${(activeLesson.syllables || []).map((syllable) => `<button type="button" class="syllable-sound-pill tone-${esc(syllable.tone)}" data-action="trainer-play-syllable" data-freq="${syllable.freq}" data-tone="${esc(syllable.tone)}" data-syllable="${esc(syllable.text)}">${esc(syllable.text)} · ${esc(syllable.pitch)}</button>`).join('')}</div><div class="voice-practice-actions"><button type="button" class="button button-outline" data-action="trainer-play-native" data-lesson-id="${activeLesson.id}" data-language="${selectedLanguage}" data-phrase="${esc(activeLesson.phrase)}" data-grade="${gradePath?.id || ''}">${icon('volume', 15)} Listen</button>${isRecording ? `<button type="button" class="button button-primary" data-action="trainer-stop-record" data-lesson-id="${activeLesson.id}">Stop recording</button>` : `<button type="button" class="button button-primary" data-action="trainer-start-record" data-lesson-id="${activeLesson.id}">${icon('mic', 15)} Record yourself</button>`}</div><canvas id="waveformCanvas" class="voice-practice-waveform" width="640" height="90" aria-label="Recording waveform"></canvas><p class="voice-transcription-status" aria-live="polite">${isRecording ? 'Recording… speak clearly, then stop.' : transcription ? `Your transcription: ${esc(transcription)}` : 'Your recording is sent to Idilewa for transcription. It is not saved as a voice score.'}</p></article>${renderVoicePracticeLessonNavigation(selectedLanguage, lessonLevel, gradePath, practiceLessons, activeLesson)}`;
     } else if (page === 'voice-text-to-speech') {
       const languageCodes = { yoruba: 'yo', igbo: 'ig', hausa: 'ha', swahili: 'sw' };
       content = `<div class="voice-feature-lesson-prompt"><span class="section-kicker">Lesson ${String(featureLessonNumber).padStart(2, '0')}</span><h2>${esc(featureLesson?.title || featureLesson?.phrase || 'Speak and listen')}</h2><p>${esc(featureLesson?.translation || '')}</p><small>Listen to the phrase, repeat it aloud, and notice its rhythm.</small></div><div class="voice-feature-tool"><label class="curriculum-tool-label" for="plotweaver-speech-text">Your phrase</label><textarea id="plotweaver-speech-text" rows="4" maxlength="1000" placeholder="Type a phrase to hear…">${esc(featureLesson?.phrase || '')}</textarea><label class="curriculum-tool-label" for="plotweaver-speech-language">Speech language</label><select id="plotweaver-speech-language"><option value="${languageCodes[selectedLanguage] || 'yo'}">${esc(langName)}</option></select><button class="button button-primary" type="button" data-action="plotweaver-speak-text">${icon('volume', 15)} Listen</button><small id="plotweaver-speech-status" class="curriculum-tool-status" aria-live="polite">Audio is generated on request and is not saved.</small></div>`;
@@ -8238,11 +8247,14 @@ import {
       }
       case 'trainer-play-native': {
         const lessonId = parseInt(el.dataset.lessonId) || state.trainer.activeLessonId || 1;
+        const language = el.dataset.language || state.trainer.lang;
         const langData = TRAINER_CURRICULUM[state.trainer.lang] || TRAINER_CURRICULUM.yoruba;
         const currentTierLessons = langData[state.trainer.level] || langData.beginner;
         const activeLesson = currentTierLessons.find((l) => l.id === lessonId) || currentTierLessons[0];
-        if (activeLesson) {
-          void playNativeTrainerVoice(activeLesson.phrase, state.trainer.lang, state.trainer.speed || 1.0, activeLesson.syllables)
+        const phrase = el.dataset.phrase || activeLesson?.phrase;
+        const syllables = el.dataset.grade === 'kindergarten' ? [] : activeLesson?.syllables;
+        if (phrase) {
+          void playNativeTrainerVoice(phrase, language, state.trainer.speed || 1.0, syllables)
             .then((source) => showToast(source === 'device' ? 'Using your device voice for this lesson.' : 'Playing Idilewa-generated audio.'))
             .catch((error) => showToast(error instanceof Error ? error.message : 'Idilewa could not generate lesson audio.', 'error'));
         }
