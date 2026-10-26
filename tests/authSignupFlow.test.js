@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const appSource = await readFile(new URL('../app.js', import.meta.url), 'utf8');
 const supabaseClientSource = await readFile(new URL('../src/supabaseClient.js', import.meta.url), 'utf8');
+const authEmailCodeSource = await readFile(new URL('../src/server/authEmailCode.js', import.meta.url), 'utf8');
 const authCallbackSource = await readFile(new URL('../src/authCallback.js', import.meta.url), 'utf8');
 
 test('signup offers adult accounts without guardian consent and retains child approval', () => {
@@ -44,8 +45,10 @@ test('adult sign-in is password-based and child sign-in uses a parent-issued pas
   assert.match(supabaseClientSource, /expectedRole === 'adult' && \['parent', 'educator'\]\.includes\(userRecord\.role\)/);
   assert.match(supabaseClientSource, /if \(expectedRole && userRecord\.role !== expectedRole\s*&& !\(expectedRole === 'adult' && \['parent', 'educator'\]\.includes\(userRecord\.role\)\)\)/);
   assert.match(supabaseClientSource, /Email codes are only available for parent-issued child sign-in/);
-  assert.match(supabaseClientSource, /resetPasswordForEmail\(normalizedEmail/);
-  assert.doesNotMatch(supabaseClientSource, /purpose === 'password-reset' \? 'recovery'/);
+  assert.match(supabaseClientSource, /purpose: 'password-reset'/);
+  assert.doesNotMatch(supabaseClientSource, /resetPasswordForEmail\(/);
+  assert.match(authEmailCodeSource, /admin\.auth\.admin\.generateLink\(\{[\s\S]*?type: 'recovery'/);
+  assert.match(authEmailCodeSource, /createAuthRecoveryEmail/);
 });
 
 test('direct sign-in and signup routes default to the adult email-and-password flow', () => {

@@ -7,10 +7,11 @@ import {
   readJsonBody,
   sendGuardianJson,
 } from './guardianConsent.js';
-import { createAuthCodeEmail } from './authCodeEmail.js';
+import { createAuthCodeEmail, createAuthRecoveryEmail } from './authCodeEmail.js';
 
-const PURPOSES = new Set(['child-signin']);
+const PURPOSES = new Set(['child-signin', 'password-reset']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RECOVERY_ACCEPTED_MESSAGE = 'If an account uses this email, a password-reset link will be sent.';
 
 async function enforceEmailCodeLimit(admin, bucket, action, limit, windowSeconds) {
   const { data, error } = await admin.rpc('guardian_rate_limit', {
@@ -25,11 +26,95 @@ async function enforceEmailCodeLimit(admin, bucket, action, limit, windowSeconds
 
 function validateRequestBody(body) {
   const email = normalizeEmail(body.email);
-  const purpose = body.purpose;
+  const purpose = body.purpose === 'recovery' ? 'password-reset' : body.purpose;
   if (!PURPOSES.has(purpose)) {
     throw new GuardianConsentError(400, 'Choose a valid email-code request.');
   }
   return { email, purpose };
+}
+
+function getRecoveryRedirectUrl() {
+  const configuredOrigin = process.env.APP_BASE_URL;
+  let origin;
+  try {
+    origin = new URL(configuredOrigin);
+  } catch {
+    throw new GuardianConsentError(503, 'Password recovery is temporarily unavailable.');
+  }
+  if (origin.protocol !== 'https:' || origin.username || origin.password || origin.pathname !== '/'
+    || origin.search || origin.hash) {
+    throw new GuardianConsentError(503, 'Password recovery is temporarily unavailable.');
+  }
+  const callback = new URL('/auth-callback.html', origin.origin);
+  callback.searchParams.set('next', 'login');
+  return callback.toString();
+}
+
+async function sendPasswordResetEmail(admin, email) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  const fromAddress = from?.match(/<([^<>]+)>$/)?.[1] || from || '';
+  if (!apiKey || !EMAIL_PATTERN.test(fromAddress)) {
+    throw new GuardianConsentError(503, 'Password recovery is temporarily unavailable.');
+  }
+
+  let linkData;
+  let linkError;
+  try {
+    ({ data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: { redirectTo: getRecoveryRedirectUrl() },
+    }));
+  } catch (error) {
+    console.error('[auth/password-reset] Supabase link generation failed.', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
+    return;
+  }
+  if (linkError) {
+    if (linkError.status === 404 || linkError.code === 'user_not_found') return;
+    console.error('[auth/password-reset] Supabase link generation failed.', {
+      status: linkError.status,
+      code: linkError.code,
+    });
+    return;
+  }
+  const recoveryUrl = linkData?.properties?.action_link;
+  if (typeof recoveryUrl !== 'string') {
+    console.error('[auth/password-reset] Supabase returned no recovery link.');
+    return;
+  }
+
+  const emailContent = createAuthRecoveryEmail({ recoveryUrl });
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `******`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to: [email], ...emailContent }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      let providerCode = '';
+      try {
+        const result = await response.json();
+        providerCode = typeof result?.name === 'string' ? result.name : '';
+      } catch {
+        providerCode = 'invalid_provider_response';
+      }
+      console.error('[auth/password-reset] Email provider rejected the message.', {
+        status: response.status,
+        code: providerCode,
+      });
+    }
+  } catch (error) {
+    console.error('[auth/password-reset] Email provider request failed.', {
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
+  }
 }
 
 export default async function handleAuthEmailCode(req, res) {
@@ -45,6 +130,10 @@ export default async function handleAuthEmailCode(req, res) {
     const clientAddress = getClientAddress(req);
     if (clientAddress) {
       await enforceEmailCodeLimit(admin, clientAddress, 'request_ip', 20, 3_600);
+    }
+    if (purpose === 'password-reset') {
+      await sendPasswordResetEmail(admin, email);
+      return sendGuardianJson(res, 202, { message: RECOVERY_ACCEPTED_MESSAGE });
     }
 
     const { data: profile, error: profileError } = await admin
