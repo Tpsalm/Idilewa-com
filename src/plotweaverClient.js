@@ -14,6 +14,12 @@ function endpoint(path) {
   return `${getApiBase()}/api/plotweaver/${path}`;
 }
 
+const TRANSCRIPTION_LANGUAGE_CODES = new Set(['en', 'yo', 'ha', 'ig', 'pcm']);
+
+export function supportsPlotweaverTranscriptionLanguage(language) {
+  return TRANSCRIPTION_LANGUAGE_CODES.has(language);
+}
+
 async function responseError(response) {
   let result;
   try {
@@ -108,11 +114,20 @@ export async function translateWithPlotweaver({ text, sourceLanguage, targetLang
 }
 
 export async function transcribeWithPlotweaver(audio, language) {
+  if (!supportsPlotweaverTranscriptionLanguage(language)) {
+    throw new Error('Speech-to-text supports English, Yorùbá, Hausa, Igbo, and Nigerian Pidgin.');
+  }
   const formData = new FormData();
-  const extension = audio.type.includes('ogg') ? 'ogg'
-    : audio.type.includes('mp4') ? 'm4a'
-      : audio.type.includes('wav') ? 'wav'
-        : 'webm';
+  const audioType = audio.type.toLowerCase();
+  const extension = audioType.includes('wav') ? 'wav'
+    : audioType.includes('mpeg') || audioType.includes('mp3') ? 'mp3'
+      : audioType.includes('flac') ? 'flac'
+        : audioType.includes('ogg') ? 'ogg'
+          : audioType.includes('mp4') ? 'm4a'
+            : '';
+  if (!extension) {
+    throw new Error('Use a WAV, MP3, FLAC, OGG, or M4A recording for transcription.');
+  }
   formData.append('file', audio, `voice-practice.${extension}`);
   formData.append('language', language);
   const response = await fetch(endpoint('transcriptions'), {

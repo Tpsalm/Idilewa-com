@@ -1,6 +1,7 @@
 const PLOTWEAVER_BASE_URL = 'https://api.plotweaver.app/v1';
 const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 const LANGUAGE_CODE_PATTERN = /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/i;
+const TRANSCRIPTION_LANGUAGE_CODES = new Set(['en', 'yo', 'ha', 'ig', 'pcm']);
 const ALLOWED_ORIGINS = new Set([
   'https://www.idilewa.com',
   'https://idilewa.com',
@@ -148,17 +149,20 @@ async function parseMultipart(body, contentType, path) {
     return { error: { status: 400, message: 'Choose an audio file no larger than 4 MB.' } };
   }
   const allowedFile = isClone
-    ? /\.(wav|mp3|flac|ogg|m4a)$/i.test(file.name)
-    : /\.(wav|mp3|flac|ogg|m4a|webm|mp4)$/i.test(file.name);
+    ? /\.(wav|mp3|flac)$/i.test(file.name)
+    : /\.(wav|mp3|flac|ogg|m4a)$/i.test(file.name);
   if (!allowedFile) {
     return { error: { status: 400, message: isClone
-      ? 'Use a WAV, MP3, FLAC, OGG, or M4A voice sample.'
-      : 'Use a WAV, MP3, FLAC, OGG, M4A, MP4, or WebM recording.' } };
+      ? 'Use a WAV, MP3, or FLAC voice sample.'
+      : 'Use a WAV, MP3, FLAC, OGG, or M4A recording.' } };
   }
 
   const language = incoming.get('language');
   if (typeof language !== 'string' || !LANGUAGE_CODE_PATTERN.test(language)) {
     return { error: { status: 400, message: 'Choose a supported audio language.' } };
+  }
+  if (path === 'transcriptions' && !TRANSCRIPTION_LANGUAGE_CODES.has(language)) {
+    return { error: { status: 400, message: 'Speech-to-text supports English, Yorùbá, Hausa, Igbo, and Nigerian Pidgin.' } };
   }
   if (isClone) {
     const voiceName = incoming.get('name');
