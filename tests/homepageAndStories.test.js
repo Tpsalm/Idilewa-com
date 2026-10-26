@@ -15,7 +15,7 @@ test('homepage uses the approved bilingual font families and removes the video C
   assert.doesNotMatch(homeSource, /visual-journey-3d-section|Talking Drum|Living Glyphs/);
   assert.match(appSource, /case 'index': return renderHome\(\);/);
   assert.doesNotMatch(homeSource, /Watch Video/);
-  assert.match(styleSource, /landing-hero-copy h1[\s\S]*?font-size: 28px;[\s\S]*?line-height: 33px/);
+  assert.match(styleSource, /landing-hero-copy h1 \{\s*margin-top: 12px;\s*font-size: 25px;\s*line-height: 30px/);
   assert.match(styleSource, /landing-hero-copy > p[\s\S]*?font-size: 14px;[\s\S]*?line-height: 22px/);
   assert.match(styleSource, /landing-hero-actions \.button[\s\S]*?min-height: 48px;[\s\S]*?font-size: 14px/);
 });
