@@ -3,6 +3,12 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
   server: {
+    host: true,
+    allowedHosts: true,
+    hmr: false,
+  },
+  preview: {
+    host: true,
     allowedHosts: true,
   },
   resolve: {
