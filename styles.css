@@ -8230,6 +8230,36 @@ body[data-page="coding"] .coding-page.ide-fullscreen-page.ide-page-root { width:
 .translation-page { max-width: 1040px; padding-bottom: 48px; }
 .translation-page .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .translation-studio { max-width: 930px; margin: 8px auto 0; padding: 16px; border: 1px solid #cad9ca; border-radius: 20px; background: #fff; box-shadow: 0 12px 32px rgba(26, 74, 46, .08); }
+.conversation-studio { max-width:1120px; padding:0; overflow:hidden; background:#fbfbfd; border-color:#e4e6ee; }
+.conversation-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:18px 24px; border-bottom:1px solid #ececf2; background:#fff; }
+.conversation-brand { display:flex; align-items:center; gap:12px; }
+.conversation-brand-mark { display:grid; width:38px; height:38px; place-items:center; border-radius:50%; color:#fff; background:#1c2745; }
+.conversation-brand h1 { margin:2px 0 3px; color:#20263a; font-family:Georgia,serif; font-size:clamp(20px,2.4vw,29px); }
+.conversation-brand p { margin:0; color:#7b8090; font-size:11px; }
+.conversation-stats { display:flex; align-items:center; gap:8px; color:#41485b; font-size:11px; font-weight:800; }
+.conversation-stats > span { display:inline-flex; align-items:center; min-height:38px; padding:0 14px; border:1px solid #e5e6ec; border-radius:999px; background:#fff; }
+.conversation-layout { display:grid; grid-template-columns:280px minmax(0,1fr); min-height:690px; }
+.conversation-profile { padding:22px 20px; border-right:1px solid #e9e9ef; background:#fff; }
+.conversation-profile > img { width:100%; aspect-ratio:1/1.08; object-fit:cover; border-radius:24px; }
+.conversation-profile h2 { margin:5px 0; color:#20263a; font-family:Georgia,serif; font-size:27px; }
+.conversation-profile-note { margin-bottom:16px; color:#43495a; font-size:13px; line-height:1.6; }
+.conversation-rooms-label { display:block; margin-top:27px; color:#8b8f9b; font-size:10px; font-weight:800; text-transform:uppercase; }
+.conversation-room-dots { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.conversation-room-dots button { width:35px; height:35px; border:2px solid #e2e3e9; border-radius:50%; color:#27314d; background:#f4f5f8; font-weight:800; cursor:pointer; }
+.conversation-thread { min-width:0; background:#fbfbfd; }
+.conversation-thread-top { display:flex; justify-content:space-between; padding:18px 28px; border-bottom:1px solid #ececf2; color:#4c5366; font-size:12px; font-weight:800; }
+.conversation-messages { display:grid; gap:18px; padding:25px 30px 8px; }
+.conversation-user-bubble { justify-self:end; max-width:72%; padding:12px 20px; border-radius:22px 22px 5px 22px; color:#fff; background:#303b5b; font-size:14px; }
+.conversation-ai-bubble { display:flex; gap:12px; max-width:82%; padding:19px 22px; border-radius:5px 24px 24px 24px; color:#3c4251; background:#f0f0f3; font-size:15px; line-height:1.55; }
+.conversation-ai-bubble span { color:#7c8190; }
+.conversation-speak-button { display:grid; width:31px; height:31px; flex:0 0 31px; place-items:center; border:0; border-radius:50%; color:#353e59; background:#fff; cursor:pointer; }
+.conversation-speak-button:hover { color:#fff; background:#293452; }
+.conversation-studio .translation-studio-compose { margin:18px 28px 0; }
+.conversation-studio .translation-result-panel,.conversation-studio .translation-studio-actions { margin-inline:28px; }
+.conversation-suggested-prompts { display:flex; flex-wrap:wrap; gap:8px; padding:15px 28px 24px; }
+.conversation-suggested-prompts button { min-height:35px; padding:0 14px; border:1px solid #e1e2e9; border-radius:999px; color:#51586c; background:#fff; font:inherit; font-size:11px; cursor:pointer; }
+.conversation-studio .translation-mic-button { width:34px; height:34px; color:#fff; background:#303b5b; }
+@media (max-width:760px) { .conversation-header { align-items:flex-start; flex-direction:column; padding:16px; } .conversation-stats { width:100%; justify-content:flex-end; } .conversation-layout { grid-template-columns:1fr; } .conversation-profile { display:grid; grid-template-columns:82px minmax(0,1fr); gap:0 12px; padding:16px; border-right:0; border-bottom:1px solid #e9e9ef; } .conversation-profile > img { width:82px; grid-row:span 4; border-radius:18px; } .conversation-profile-note { grid-column:1/-1; margin:12px 0; } .conversation-messages { padding:18px 16px 4px; } .conversation-ai-bubble { max-width:94%; padding:15px; font-size:13px; } .conversation-user-bubble { max-width:82%; font-size:13px; } .conversation-studio .translation-studio-compose,.conversation-studio .translation-result-panel,.conversation-studio .translation-studio-actions { margin-inline:16px; } .conversation-studio .translation-studio-compose { grid-template-columns:1fr; } .conversation-studio .translation-swap { display:none; } .conversation-suggested-prompts { padding-inline:16px; } }
 .translation-studio-hero { display: grid; min-height: 118px; grid-template-columns: minmax(0, 1fr) minmax(220px, .72fr); align-items: stretch; overflow: hidden; border-radius: 14px; background: linear-gradient(100deg, #f1f8e9, #e5f5e7 62%, #d9f1e3); }
 .translation-studio-hero-copy { display: flex; align-items: center; gap: 12px; padding: 20px; }
 .translation-studio-mark { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 50%; background: #138449; color: #fff; }
@@ -11579,6 +11609,36 @@ body {
 .translation-page { max-width: 1040px; padding-bottom: 48px; }
 .translation-page .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .translation-studio { max-width: 930px; margin: 8px auto 0; padding: 16px; border: 1px solid #cad9ca; border-radius: 20px; background: #fff; box-shadow: 0 12px 32px rgba(26, 74, 46, .08); }
+.conversation-studio { max-width:1120px; padding:0; overflow:hidden; background:#fbfbfd; border-color:#e4e6ee; }
+.conversation-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:18px 24px; border-bottom:1px solid #ececf2; background:#fff; }
+.conversation-brand { display:flex; align-items:center; gap:12px; }
+.conversation-brand-mark { display:grid; width:38px; height:38px; place-items:center; border-radius:50%; color:#fff; background:#1c2745; }
+.conversation-brand h1 { margin:2px 0 3px; color:#20263a; font-family:Georgia,serif; font-size:clamp(20px,2.4vw,29px); }
+.conversation-brand p { margin:0; color:#7b8090; font-size:11px; }
+.conversation-stats { display:flex; align-items:center; gap:8px; color:#41485b; font-size:11px; font-weight:800; }
+.conversation-stats > span { display:inline-flex; align-items:center; min-height:38px; padding:0 14px; border:1px solid #e5e6ec; border-radius:999px; background:#fff; }
+.conversation-layout { display:grid; grid-template-columns:280px minmax(0,1fr); min-height:690px; }
+.conversation-profile { padding:22px 20px; border-right:1px solid #e9e9ef; background:#fff; }
+.conversation-profile > img { width:100%; aspect-ratio:1/1.08; object-fit:cover; border-radius:24px; }
+.conversation-profile h2 { margin:5px 0; color:#20263a; font-family:Georgia,serif; font-size:27px; }
+.conversation-profile-note { margin-bottom:16px; color:#43495a; font-size:13px; line-height:1.6; }
+.conversation-rooms-label { display:block; margin-top:27px; color:#8b8f9b; font-size:10px; font-weight:800; text-transform:uppercase; }
+.conversation-room-dots { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+.conversation-room-dots button { width:35px; height:35px; border:2px solid #e2e3e9; border-radius:50%; color:#27314d; background:#f4f5f8; font-weight:800; cursor:pointer; }
+.conversation-thread { min-width:0; background:#fbfbfd; }
+.conversation-thread-top { display:flex; justify-content:space-between; padding:18px 28px; border-bottom:1px solid #ececf2; color:#4c5366; font-size:12px; font-weight:800; }
+.conversation-messages { display:grid; gap:18px; padding:25px 30px 8px; }
+.conversation-user-bubble { justify-self:end; max-width:72%; padding:12px 20px; border-radius:22px 22px 5px 22px; color:#fff; background:#303b5b; font-size:14px; }
+.conversation-ai-bubble { display:flex; gap:12px; max-width:82%; padding:19px 22px; border-radius:5px 24px 24px 24px; color:#3c4251; background:#f0f0f3; font-size:15px; line-height:1.55; }
+.conversation-ai-bubble span { color:#7c8190; }
+.conversation-speak-button { display:grid; width:31px; height:31px; flex:0 0 31px; place-items:center; border:0; border-radius:50%; color:#353e59; background:#fff; cursor:pointer; }
+.conversation-speak-button:hover { color:#fff; background:#293452; }
+.conversation-studio .translation-studio-compose { margin:18px 28px 0; }
+.conversation-studio .translation-result-panel,.conversation-studio .translation-studio-actions { margin-inline:28px; }
+.conversation-suggested-prompts { display:flex; flex-wrap:wrap; gap:8px; padding:15px 28px 24px; }
+.conversation-suggested-prompts button { min-height:35px; padding:0 14px; border:1px solid #e1e2e9; border-radius:999px; color:#51586c; background:#fff; font:inherit; font-size:11px; cursor:pointer; }
+.conversation-studio .translation-mic-button { width:34px; height:34px; color:#fff; background:#303b5b; }
+@media (max-width:760px) { .conversation-header { align-items:flex-start; flex-direction:column; padding:16px; } .conversation-stats { width:100%; justify-content:flex-end; } .conversation-layout { grid-template-columns:1fr; } .conversation-profile { display:grid; grid-template-columns:82px minmax(0,1fr); gap:0 12px; padding:16px; border-right:0; border-bottom:1px solid #e9e9ef; } .conversation-profile > img { width:82px; grid-row:span 4; border-radius:18px; } .conversation-profile-note { grid-column:1/-1; margin:12px 0; } .conversation-messages { padding:18px 16px 4px; } .conversation-ai-bubble { max-width:94%; padding:15px; font-size:13px; } .conversation-user-bubble { max-width:82%; font-size:13px; } .conversation-studio .translation-studio-compose,.conversation-studio .translation-result-panel,.conversation-studio .translation-studio-actions { margin-inline:16px; } .conversation-studio .translation-studio-compose { grid-template-columns:1fr; } .conversation-studio .translation-swap { display:none; } .conversation-suggested-prompts { padding-inline:16px; } }
 .translation-studio-hero { display: grid; min-height: 118px; grid-template-columns: minmax(0, 1fr) minmax(220px, .72fr); align-items: stretch; overflow: hidden; border-radius: 14px; background: linear-gradient(100deg, #f1f8e9, #e5f5e7 62%, #d9f1e3); }
 .translation-studio-hero-copy { display: flex; align-items: center; gap: 12px; padding: 20px; }
 .translation-studio-mark { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 50%; background: #138449; color: #fff; }
