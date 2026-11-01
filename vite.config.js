@@ -5,10 +5,7 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: true,
-    hmr: {
-      protocol: 'wss',
-      clientPort: 443,
-    },
+    hmr: false,
   },
   preview: {
     host: true,
