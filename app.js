@@ -860,37 +860,15 @@ import {
             </div>
             <div class="hero-social-proof"><div class="mini-avatars"><span>A</span><span>Ẹ</span><span>Ụ</span><span>✳</span></div><span>For curious learners, families<br class="desktop-only" /> and the next generation</span></div>
           </div>
-          <div class="hero-visual home-hero-art">
-            <img src="./assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" />
-            <section class="home-voice-promo" aria-labelledby="home-voice-promo-title">
-              <div class="home-voice-promo-copy">
-                <span class="home-voice-promo-kicker">${icon('headphones', 14)} Voice lessons · sound &amp; tonal practice</span>
-                <h2 id="home-voice-promo-title">Speak African languages with <em>native tonal fluency.</em></h2>
-                <p>Our interactive Voice Lessons help you listen and practise speaking across Yorùbá, Igbo, Hausa, Kiswahili, isiZulu and Twi.</p>
-                <div class="home-voice-promo-highlights">
-                  <span><span>${icon('volume', 14)}</span><strong>60 Audio Lessons</strong><small>3 progressive tiers</small></span>
-                  <span><span>${icon('music', 14)}</span><strong>Dó-Re-Mí Melodies</strong><small>Interactive pitch keys</small></span>
-                  <span><span>${icon('mic', 14)}</span><strong>Live Mic Practice</strong><small>Record and transcribe</small></span>
-                </div>
-                <div class="home-voice-promo-actions">
-                  ${routeLink('voice_lessons', `Explore Voice Lessons ${icon('arrow', 15)}`, 'button home-voice-promo-button')}
-                  ${routeLink('voices', 'Explore Voice Library', 'button home-voice-promo-secondary')}
+          <!-- Hero Visual: Family Living View -->
+          <div class="hero-visual modern-hero-visual" id="heroVisualStage">
+            <div class="hero-visual-stage-inner">
+              <div class="hero-photo-wrap family-view-reference">
+                <div class="hero-photo-frame">
+                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" />
                 </div>
               </div>
-              <div class="home-voice-demo" aria-label="Try the Yorùbá tone soundboard">
-                <span class="home-voice-demo-label"><i></i> Live interactive audio studio</span>
-                <div class="home-voice-demo-phrase">
-                  <small>YORÙBÁ TONES</small>
-                  <button type="button" lang="yo" data-action="speak-voice-lesson" data-phrase="Ẹ káàárọ̀">Ẹ káàárọ̀</button>
-                  <div class="home-voice-tone-keys">
-                    <button type="button" data-action="trainer-play-syllable" data-freq="261.63" data-tone="do" data-syllable="kú">kú (Mí)</button>
-                    <button type="button" data-action="trainer-play-syllable" data-freq="293.66" data-tone="re" data-syllable="àár">àár (Ré)</button>
-                    <button type="button" data-action="trainer-play-syllable" data-freq="329.63" data-tone="mi" data-syllable="ọ̀">ọ̀ (Dó)</button>
-                  </div>
-                </div>
-                <div class="home-voice-demo-score"><strong>Listen &amp; practise</strong><span>Native audio · guided lessons</span></div>
-              </div>
-            </section>
+            </div>
           </div>
         </div>
         <div class="container hero-language-row"><span class="tiny-label">Four languages. One welcoming home.</span><div class="hero-lang-pills">${LANGUAGES.map((l) => `<span>${l.name}</span>`).join('')}</div>${routeLink('languages', 'See all languages ' + icon('arrow', 14), 'text-link')}</div>
@@ -1144,13 +1122,21 @@ import {
             </div>
             <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
           </div>
-          <figure class="landing-hero-image">
-            <img src="/assets/home-family-learning.jpg" alt="A family sharing African stories and learning together around an Idilewa tablet" fetchpriority="high" />
-          </figure>
+  <div class="hero-visual modern-hero-visual landing-hero-image" id="heroVisualStage">
+  <div class="hero-visual-stage-inner">
+  <div class="hero-photo-wrap family-view-reference">
+  <div class="hero-photo-frame">
+  <img src="/assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" fetchpriority="high" />
+  </div>
+  </div>
+  </div>
+  </div>
         </div>
-      </section>
+  </section>
 
-      <section class="container landing-pathways" aria-label="Explore Idilewa">
+  ${renderHomeAppPreview()}
+
+  <section class="container landing-pathways" aria-label="Explore Idilewa">
         ${pathways.map((item) => `<a class="landing-pathway" href="#/${item.route}" data-route="${item.route}"><span>${icon(item.icon, 23)}</span><strong>${item.title}</strong><small>${item.copy}</small></a>`).join('')}
       </section>
 
@@ -2364,7 +2350,7 @@ import {
       icon: 'sparkles',
       image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/6896132640e0a68a26d89a61_ozzy_introduces_patterns_lesson.png',
       desc: 'Discover how pattern recognition builds coding skills through this unplugged, interactive robotics and computer science lesson.',
-      bilingual: { yoruba: 'Ìfihàn Àpẹẹrẹ pẹ̀lú Ozzy (Patterns for young coders)', igbo: 'Usoro ihe atụ dị mfe', hausa: 'Kayan Tsari na Farko', swahili: 'Mifumo ya Awali ya Kujifunza' },
+      bilingual: { yoruba: 'Ìfihàn ��pẹẹrẹ pẹ̀lú Ozzy (Patterns for young coders)', igbo: 'Usoro ihe atụ dị mfe', hausa: 'Kayan Tsari na Farko', swahili: 'Mifumo ya Awali ya Kujifunza' },
       duration: '30 mins',
       highlights: ['AB, ABB & ABC repeating rhythms', 'Pattern prediction games', 'Body percussion coding', 'Unplugged robotics logic']
     },
