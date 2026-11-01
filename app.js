@@ -1142,7 +1142,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
             <p>Learn African languages, hear our stories, build real skills and belong to a global community.</p>
             <div class="landing-hero-actions">
               ${routeLink('voice-language', `Start Learning ${icon('arrow', 16)}`, 'button button-primary')}
-              ${routeLink('ere', `Explore Stories ${icon('arrow', 16)}`, 'button button-outline')}
+              ${routeLink('coding', `Code for Kids ${icon('code', 16)}`, 'button button-outline')}
+              ${routeLink('voice-translation', `AI Conversation ${icon('sparkles', 16)}`, 'button button-accent')}
             </div>
             <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
           </div>
@@ -5290,7 +5291,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         <div class="library-card-grid" aria-live="polite">${LIBRARY_ITEMS.map((item) => { const visible = (selectedFilter === 'all' || item.kind.toLowerCase() === selectedFilter) && `${item.title} ${item.kind} ${item.text}`.toLowerCase().includes(query.toLowerCase()); return `<a class="library-card" href="#/${item.route}" data-route="${item.route}" data-library-item data-library-kind="${item.kind.toLowerCase()}" ${visible ? '' : 'hidden'}><div class="library-card-image"><img src="${imageUrl(item.image)}" alt="${esc(item.alt)}" loading="lazy" /><span>${esc(item.kind)}</span></div><div class="library-card-copy"><h3>${esc(item.title)}</h3><p>${esc(item.text)}</p><span class="library-card-link">Explore ${icon('arrow', 14)}</span></div></a>`; }).join('')}<p class="library-empty" data-library-empty ${cards.length ? 'hidden' : ''}>No matching shelf items. Try another word or choose “All”.</p></div>
       </section>
       ${state.savedTranslations.length ? `<section class="translation-library-saved" aria-labelledby="translation-library-saved-title"><span class="section-kicker">Saved on this device</span><h2 id="translation-library-saved-title">Your saved translations</h2><div>${state.savedTranslations.map((item) => `<article><div><small>${esc(translationLanguageName(item.sourceLanguage))} → ${esc(translationLanguageName(item.targetLanguage))}</small><strong>${esc(item.translated)}</strong><p>${esc(item.source)}</p></div><button type="button" data-action="open-saved-translation" data-id="${esc(item.id)}">Open translation</button></article>`).join('')}</div></section>` : ''}
-      <section class="library-next-step"><div><span class="section-kicker">Ready to try something?</span><h2>Learning can start with play.</h2><p>Match a few words in Yorùbá, Igbo, Hausa or Kiswahili—then explore the phrases in the curriculum.</p></div>${routeLink('game', `Open the tile game ${icon('arrow', 15)}`, 'button button-primary')}</section>
+      <section class="library-next-step"><div><span class="section-kicker">Ready to try something?</span><h2>Learning can start with play.</h2><p>Match a few words in Yorùbá, Igbo, Hausa or Kiswahili���then explore the phrases in the curriculum.</p></div>${routeLink('game', `Open the tile game ${icon('arrow', 15)}`, 'button button-primary')}</section>
     </div>`;
   }
 
@@ -6966,7 +6967,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     oriki: [
       ['Define Oríkì carefully', 'Oríkì is a living Yorùbá oral tradition often described as praise poetry and remembrance.', 'Tradition · Yorùbá'],
       ['Listen to performance', 'A short introduction invites learners to hear the form rather than treat it as text alone.', 'Voice · performance'],
-      ['Notice sound objects', 'Attend to rhythm, repetition, tone and who is being addressed.', 'Rhythm · repetition · address'],
+      ['Notice sound objects', 'Attend to rhythm, repetition, tone and who is being addressed.', 'Rhythm �� repetition · address'],
       ['Explore possible meanings', 'A phrase may hold family history, place, humour or qualities a person is known for.', 'Meaning · identity · memory'],
       ['Reflect before repeating', 'Ask what you notice and what you would want to learn from a knowledgeable speaker.', 'Learner reflection'],
       ['Practice respectful sharing', 'Versions and contexts differ; ask permission and credit the person or community who shared the piece.', 'Consent · attribution']
