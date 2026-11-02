@@ -660,7 +660,10 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   let defaultAuthEntryInitialized = false;
   let authIntroPending = !window.location.hash;
   function parseLocation() {
-    const hash = window.location.hash.replace(/^#\/?/, '');
+    const routeQuery = new URLSearchParams(window.location.search);
+    const queryRoute = routeQuery.get('route');
+    routeQuery.delete('route');
+    const hash = queryRoute ? `${queryRoute}${routeQuery.toString() ? `?${routeQuery.toString()}` : ''}` : window.location.hash.replace(/^#\/?/, '');
     if (!hash) {
       const defaultPage = document.body?.dataset?.defaultRoute || 'login';
       if (OWE_ROUTE_SECTIONS[defaultPage]) {
@@ -682,7 +685,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     if (OWE_ROUTE_SECTIONS[page]) {
       params.section = params.section || OWE_ROUTE_SECTIONS[page];
       page = 'owe';
-      history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/owe?section=${encodeURIComponent(params.section)}`);
+      history.replaceState(null, '', `${window.location.pathname}?route=owe&section=${encodeURIComponent(params.section)}`);
     }
     if (page === 'login' && ['signin', 'signup', 'recovery'].includes(params.mode)) {
       state.loginMode = params.mode;
@@ -705,7 +708,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     }
     const page = ROUTES.includes(route) ? route : 'index';
     const query = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
-    const next = `#/${page}${query ? `?${query}` : ''}`;
+    const next = `${window.location.pathname}?route=${encodeURIComponent(page)}${query ? `&${query}` : ''}`;
     if (window.location.hash === next) render();
     else {
       history[replace ? 'replaceState' : 'pushState'](null, '', next);
@@ -722,9 +725,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   function routeLink(route, label, cls = '', attrs = '') {
     const section = OWE_ROUTE_SECTIONS[route];
     const destination = section ? 'owe' : route;
-    const query = section ? `?section=${section}` : '';
+    const query = section ? `&section=${encodeURIComponent(section)}` : '';
     const sectionAttr = section ? `data-section="${section}"` : '';
-    return `<a class="${cls}" href="#/${destination}${query}" data-route="${destination}" ${sectionAttr} ${attrs}>${label}</a>`;
+    return `<a class="${cls}" href="?route=${encodeURIComponent(destination)}${query}" data-route="${destination}" ${sectionAttr} ${attrs}>${label}</a>`;
   }
 
   function brandLogo(alt = '') {
@@ -3945,7 +3948,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         { label: 'bí', snippet: 'bí ipo == òótọ́ {\n    \n}' },
         { label: 'kò_bá_jẹ́', snippet: 'kò_bá_jẹ́ {\n    \n}' },
         { label: 'fún', snippet: 'fún i = 1 dé 5 {\n    \n}' },
-        { label: 'bẹ̀rẹ̀_àwòr��n', snippet: 'bẹ̀rẹ̀_àwòrán()\nyi_awo("ofeefe")' }
+        { label: 'bẹ̀rẹ̀_àwòr����n', snippet: 'bẹ̀rẹ̀_àwòrán()\nyi_awo("ofeefe")' }
       ],
       igbo: [
         { label: 'dee', snippet: 'dee("")' },
