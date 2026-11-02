@@ -707,8 +707,10 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const query = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
     const next = `#/${page}${query ? `?${query}` : ''}`;
     if (window.location.hash === next) render();
-    else if (replace) history.replaceState(null, '', next), render();
-    else window.location.hash = next;
+    else {
+      history[replace ? 'replaceState' : 'pushState'](null, '', next);
+      render();
+    }
     closeMobileMenu();
     if (typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -9391,6 +9393,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   });
 
   window.addEventListener('hashchange', render);
+  window.addEventListener('popstate', render);
   if (isSupabaseConfigured && supabase) {
     subscribeToAuthChanges((user, event, error) => {
       if (user) state.authRole = user.role === 'child' ? 'child' : 'adult';
