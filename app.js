@@ -109,12 +109,12 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     'voice-text-to-speech', 'voice-cloning', 'voice-speech-to-text', 'voice-translation',
     'curriculum',
     'index', 'about', 'base', 'coding', 'coding-studio', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
-    'ere', 'ere_game', 'game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
-    'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
-    'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'payment', 'pricing', 'profile', 'schools',
+  'ere', 'ere_game', 'guides', 'human', 'ifa', 'ifa_odu', 'individuals', 'keepers', 'library',
+  'kids', 'languages', 'lesson', 'login', 'method', 'oral', 'oral_genre', 'oriki', 'owe',
+  'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'schools',
     'voices'
   ];
-  const REMOVED_ROUTES = new Set(['adult', 'parent_dashboard', 'educator_dashboard', 'tutor']);
+  const REMOVED_ROUTES = new Set(['adult', 'parent_dashboard', 'educator_dashboard', 'tutor', 'game', 'profile', 'payment']);
   const OWE_ROUTE_SECTIONS = {
     owe_detail: 'meaning',
     owe_story: 'story',
@@ -749,12 +749,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const accountActions = currentUser
       ? `<a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${esc(currentUser.name || 'Profile')}</span></a><button class="header-signout" type="button" data-action="account-sign-out">Sign out</button>`
       : `${routeLink('login', 'Log in', 'header-signin', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary header-cta', 'data-mode="signup"')}`;
-    const mobileShortcuts = [
-      { route: 'library', label: 'Library', ico: 'book' },
-      { route: 'game', label: 'Tile game', ico: 'sparkles' },
-      { route: 'profile', label: 'Profile', ico: 'user' },
-      { route: 'payment', label: 'Payment', ico: 'shield' }
-    ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
+  const mobileShortcuts = [
+  { route: 'library', label: 'Library', ico: 'book' }
+  ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="?route=${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
     const menu = MENU_NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts + routeLink('base', `${icon('layers', 19)}<span>All pages</span>${icon('arrow', 16)}`, 'mobile-menu-link');
     document.getElementById('site-header').innerHTML = `
       ${page === 'index' ? `<div class="home-promo-strip"><span>A little every day brings you closer to your language.</span></div>` : ''}
@@ -773,7 +770,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         <div class="mobile-menu-head"><span>Explore Idilewa</span><button class="icon-button" type="button" data-action="toggle-menu" aria-label="Close navigation">${icon('close', 20)}</button></div>
         <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
         <div class="mobile-menu-bottom">${currentUser
-          ? `${routeLink('profile', `${icon('user', 15)} Open your profile ${icon('arrow', 14)}`, 'button button-primary')}<button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button>`
+          ? `<button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button>`
           : `${routeLink('login', 'Log in', 'button button-outline', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary', 'data-mode="signup"')}`}</div>
       </div>`;
   }
@@ -788,8 +785,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       { route: 'index', label: 'Home', ico: 'home' },
       { route: 'voice_lessons', label: 'Voice Lessons', ico: 'mic' },
       { route: 'voice-translation', label: 'AI Conversation', ico: 'sparkles' },
-      { route: 'coding', label: 'Code', ico: 'code' },
-      { route: 'profile', label: 'Profile', ico: 'user' }
+      { route: 'coding', label: 'Code', ico: 'code' }
     ];
     document.getElementById('mobile-nav').innerHTML = items.map((item) => `<a href="?route=${item.route}" data-route="${item.route}" class="mobile-tab ${page === item.route || (item.route === 'coding' && page === 'coding-studio') ? 'active' : ''}">${icon(item.ico, 19)}<span>${item.label}</span></a>`).join('');
   }
@@ -2194,7 +2190,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       icon: 'code',
       image: 'https://cdn.prod.website-files.com/67515ca117da61ac211545bc/682f1967c722f92a295166d9_Line_Block_Coding_Free_LEsson_Card.png',
       desc: 'Discover the difference between block-based and line-based coding through loops and fun coding games.',
-      bilingual: { yoruba: 'Kóòdù Ẹlẹ́yà vs Kóòdù Ìlà (Blocks vs Syntax)', igbo: 'Koodu ngọngọ na koodu ederede', hausa: "Nau'o'in Lambobin Kwamfuta", swahili: 'Misimbo ya Vitalu dhidi ya Mistari' },
+      bilingual: { yoruba: 'K��òdù Ẹlẹ́yà vs Kóòdù Ìlà (Blocks vs Syntax)', igbo: 'Koodu ngọngọ na koodu ederede', hausa: "Nau'o'in Lambobin Kwamfuta", swahili: 'Misimbo ya Vitalu dhidi ya Mistari' },
       duration: '50 mins',
       highlights: ['Scratch visual blocks vs Python syntax', 'Syntax errors vs logic bugs', 'Loops & conditions comparison', 'Smooth text-code transition']
     },
@@ -5330,7 +5326,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   }
 
   const TILE_WORDS = {
-    yoruba: { hello: ['Ẹ káàárọ̀', 'Good morning'], thanks: ['Ẹ ṣé', 'Thank you'], water: ['Omi', 'Water'], family: ['Ìdílé', 'Family'] },
+    yoruba: { hello: ['Ẹ káàár���̀', 'Good morning'], thanks: ['Ẹ ṣé', 'Thank you'], water: ['Omi', 'Water'], family: ['Ìdílé', 'Family'] },
     igbo: { hello: ['Ndewo', 'Hello'], thanks: ['Daal���', 'Thank you'], water: ['Mmiri', 'Water'], family: ['Ezinụlọ', 'Family'] },
     hausa: { hello: ['Sannu', 'Hello'], thanks: ['Na gode', 'Thank you'], water: ['Ruwa', 'Water'], family: ['Iyali', 'Family'] },
     swahili: { hello: ['Habari', 'Hello'], thanks: ['Asante', 'Thank you'], water: ['Maji', 'Water'], family: ['Familia', 'Family'] }
@@ -6707,15 +6703,12 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'owe_detail': return renderOweDetail();
       case 'owe_story': return renderOweStory();
       case 'owe_reflection': return renderOweReflection();
-      case 'library': return renderLibrary();
-      case 'game': return renderTileGame();
-      case 'payment': return renderPayment();
+  case 'library': return renderLibrary();
       case 'connect_teachers': return renderConnectTeachers();
       case 'connect_students': return renderConnectStudents();
       case 'voices': return renderVoices();
-      case 'pricing': return renderPricing();
-      case 'profile': return renderProfile();
-      case 'contact': return renderContact();
+  case 'pricing': return renderPricing();
+  case 'contact': return renderContact();
       case 'privacy': return renderPrivacy();
       case 'login': return renderLogin();
       case 'consent': return renderConsent();
