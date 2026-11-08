@@ -1,0 +1,17 @@
+services:
+  web:
+    image: node:22-bookworm
+    working_dir: /workspace
+    network_mode: host
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      IS_ALLOY: ${IS_ALLOY:-false}
+      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+      VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+      VITE_PLOTWEAVER_API_BASE_URL: ${VITE_PLOTWEAVER_API_BASE_URL:-}
+    command: bash -lc "npm ci && npx vite --host 0.0.0.0 --port 5173 --strictPort"
+
+volumes:
+  node_modules:
