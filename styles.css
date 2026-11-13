@@ -11981,3 +11981,87 @@ body {
   .code-result-illustration { height: 165px; }
   .code-studio-language-tiles { grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 0; }
 }
+
+/* ==========================================================================
+   Contact — in-app message composer (replaces mailto)
+   ========================================================================== */
+.contact-form { display: grid; gap: 14px; margin-top: 18px; }
+.contact-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.contact-form label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid #dbe6dd;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 500;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.contact-form textarea { min-height: 130px; resize: vertical; line-height: 1.55; }
+.contact-form input:focus-visible,
+.contact-form select:focus-visible,
+.contact-form textarea:focus-visible {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(23, 139, 57, .14);
+}
+.contact-form .button { justify-self: start; min-height: 48px; }
+.contact-form-feedback { margin: 0; min-height: 18px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.contact-form-feedback[data-tone='error'] { color: #b0342a; }
+.contact-form-feedback[data-tone='success'] { color: var(--green-dark); }
+.contact-honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.footer-message-link { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; color: var(--green-dark); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 620px) {
+  .contact-form-row { grid-template-columns: 1fr; }
+  .contact-form .button { width: 100%; justify-self: stretch; }
+  .contact-form input, .contact-form select { min-height: 48px; font-size: 16px; }
+  .contact-form textarea { font-size: 16px; }
+}
+
+/* ==========================================================================
+   Premium polish — focus, touch targets and safe areas
+   ========================================================================== */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgba(23, 139, 57, .55);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+.button { border-radius: 999px; transition: transform .18s cubic-bezier(.22,.61,.36,1), box-shadow .18s ease, background-color .18s ease, color .18s ease; }
+.button:active { transform: translateY(1px) scale(.99); }
+.button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .button-primary:hover { box-shadow: 0 12px 28px rgba(16, 122, 52, .22); }
+  .button-outline:hover, .button-soft:hover, .button-ghost:hover { box-shadow: 0 8px 22px rgba(16, 122, 52, .14); }
+}
+
+@media (max-width: 700px) {
+  body { padding-bottom: env(safe-area-inset-bottom, 0); }
+  .button, .text-link, .footer-message-link { min-height: 44px; }
+  .container { padding-left: max(16px, env(safe-area-inset-left, 0)); padding-right: max(16px, env(safe-area-inset-right, 0)); }
+}
+
+/* iOS-style frosted header on supported browsers */
+@supports (backdrop-filter: blur(12px)) {
+  @media (min-width: 900px) {
+    .site-header, .site-nav { -webkit-backdrop-filter: saturate(180%) blur(14px); backdrop-filter: saturate(180%) blur(12px); }
+  }
+}
+
+/* In-app tutor message box */
+.teacher-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.teacher-modal-actions .button { flex: 1 1 200px; justify-content: center; }
+.tutor-message-modal { max-width: 560px; }
+.tutor-message-intro { margin: 0 0 14px; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+.tutor-message-form { margin-top: 4px; }
+.tutor-message-form textarea { min-height: 120px; resize: vertical; }
+@media (max-width: 480px) {
+  .teacher-modal-actions { flex-direction: column; }
+  .teacher-modal-actions .button { flex: 1 1 auto; width: 100%; }
+}

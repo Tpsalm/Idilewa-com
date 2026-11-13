@@ -108,11 +108,12 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     'voice-language', 'voice-grade', 'voice-audio', 'voice-practice',
     'voice-text-to-speech', 'voice-cloning', 'voice-speech-to-text', 'voice-translation',
     'curriculum',
-    'index', 'about', 'coding', 'coding-studio', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
+    'ai-conversation',
+    'index', 'about', 'coding', 'coding-studio', 'games', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
   'ere', 'ifa', 'ifa_odu', 'individuals', 'library',
   'kids', 'languages', 'lesson', 'login', 'oral', 'oral_genre', 'oriki', 'owe',
   'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'profile', 'schools',
-    'voices'
+    'voices', 'base'
   ];
   const REMOVED_ROUTES = new Set(['adult', 'parent_dashboard', 'educator_dashboard', 'tutor', 'game', 'payment']);
   const OWE_ROUTE_SECTIONS = {
@@ -393,7 +394,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   const NAV_GROUPS = {
     curriculum: 'curriculum',
-    coding: 'code', 'coding-studio': 'code',
+    coding: 'code', 'coding-studio': 'code', games: 'code',
     trainer: 'trainer', voice_lessons: 'trainer',
     languages: 'curriculum', course: 'curriculum', lesson: 'curriculum', kids: 'curriculum', individuals: 'curriculum',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
@@ -408,6 +409,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   LABELS.curriculum = 'Curriculum';
   LABELS.coding = 'Code';
   LABELS['coding-studio'] = 'Start Coding';
+  LABELS.games = 'Code & Play';
+  LABELS['ai-conversation'] = 'AI Conversation';
+  LABELS.base = 'Explore all pages';
   Object.assign(LABELS, {
     'voice-language': 'Choose a voice lesson language',
     'voice-grade': 'Choose a voice lesson grade',
@@ -748,10 +752,11 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       : esc(avatarLabel);
     const accountActions = currentUser
       ? `<a class="header-profile" href="#/profile" data-route="profile" aria-label="Open profile"><span class="header-avatar">${profileAvatar}</span><span class="header-profile-label">${esc(currentUser.name || 'Profile')}</span></a><button class="header-signout" type="button" data-action="account-sign-out">Sign out</button>`
-      : `${routeLink('login', 'Log in', 'header-signin', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary header-cta', 'data-mode="signup"')}`;
+      : `<a class="header-signin" href="./signin.html">Log in</a><a class="button button-primary header-cta" href="./signin.html">Get started</a>`;
   const mobileShortcuts = [
   { route: 'library', label: 'Library', ico: 'book' }
-  ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="?route=${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('');
+  ].map((item) => `<a class="mobile-menu-link ${page === item.route ? 'active' : ''}" href="?route=${item.route}" data-route="${item.route}">${icon(item.ico, 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('')
+    + `<a class="mobile-menu-link" href="./heritage.html">${icon('quote', 19)}<span>Heritage library</span>${icon('arrow', 16)}</a>`;
     const menu = MENU_NAV.map((item) => `<a class="mobile-menu-link ${currentGroup === item.group ? 'active' : ''}" href="#/${item.route}" data-route="${item.route}">${icon(item.group === 'home' ? 'home' : item.group === 'trainer' ? 'mic' : item.group === 'learn' ? 'book' : item.group === 'read' ? 'headphones' : item.group === 'code' ? 'code' : item.group === 'stories' ? 'quote' : item.group === 'community' ? 'people' : 'sparkles', 19)}<span>${item.label}</span>${icon('arrow', 16)}</a>`).join('') + mobileShortcuts + routeLink('base', `${icon('layers', 19)}<span>All pages</span>${icon('arrow', 16)}`, 'mobile-menu-link');
     document.getElementById('site-header').innerHTML = `
       ${page === 'index' ? `<div class="home-promo-strip"><span>A little every day brings you closer to your language.</span></div>` : ''}
@@ -771,7 +776,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         <div class="mobile-menu-list">${menu}${routeLink('contact', `${icon('send', 19)}<span>Contact</span>${icon('arrow', 16)}`, 'mobile-menu-link')}${routeLink('privacy', `${icon('lock', 19)}<span>Privacy</span>${icon('arrow', 16)}`, 'mobile-menu-link')}</div>
         <div class="mobile-menu-bottom">${currentUser
           ? `<button class="button button-outline" type="button" data-action="account-sign-out">Sign out</button>`
-          : `${routeLink('login', 'Log in', 'button button-outline', 'data-mode="signin"')}${routeLink('login', 'Get started', 'button button-primary', 'data-mode="signup"')}`}</div>
+          : `<a class="button button-outline" href="./signin.html">Log in</a><a class="button button-primary" href="./signin.html">Get started</a>`}</div>
       </div>`;
   }
 
@@ -784,7 +789,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
       { route: 'voice_lessons', label: 'Voice Lessons', ico: 'mic' },
-      { route: 'voice-translation', label: 'AI Conversation', ico: 'sparkles' },
+      { route: 'ai-conversation', label: 'AI Conversation', ico: 'sparkles' },
       { route: 'coding', label: 'Code', ico: 'code' },
       { route: 'profile', label: 'Profile', ico: 'user' }
     ];
@@ -801,12 +806,12 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
           <p>Questions about language, culture or learning? We’d love to hear from you.</p>
           ${routeLink('contact', `Talk with our team ${icon('arrow', 15)}`, 'button button-primary footer-contact-button')}
           <div class="footer-email">
-            <span class="footer-kicker">Or email us at</span>
-            <a href="mailto:idilewa2026@gmail.com?subject=Idilewa%20support">idilewa2026@gmail.com</a>
+            <span class="footer-kicker">Prefer to write in-app?</span>
+            ${routeLink('contact', 'Open the message box', 'footer-message-link')}
           </div>
         </section>
         <nav class="footer-directory" aria-label="Footer navigation">
-          <section class="footer-links"><h2>Quick links</h2>${routeLink('index', 'Home')}${routeLink('curriculum', 'Curriculum')}${routeLink('library', 'Learning library')}${routeLink('trainer', 'Voice lessons')}${routeLink('ere', 'Stories')}</section>
+          <section class="footer-links"><h2>Quick links</h2>${routeLink('index', 'Home')}${routeLink('curriculum', 'Curriculum')}${routeLink('library', 'Learning library')}${routeLink('trainer', 'Voice lessons')}${routeLink('ere', 'Stories')}<a href="./heritage.html">Heritage library</a></section>
           <section class="footer-links"><h2>Information</h2>${routeLink('about', 'About Idilewa')}${routeLink('individuals', 'For families')}${routeLink('schools', 'For schools')}${routeLink('privacy', 'Privacy policy')}${routeLink('base', 'Explore all pages')}</section>
         </nav>
       </div>
@@ -891,7 +896,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
             <div class="hero-visual-stage-inner">
               <div class="hero-photo-wrap family-view-reference">
                 <div class="hero-photo-frame">
-                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" />
+                  <img src="/assets/home-family-learning.jpg" alt="A family learning African language together with Idilewa" class="hero-photo" />
                 </div>
               </div>
             </div>
@@ -1145,7 +1150,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
             <div class="landing-hero-actions">
               ${routeLink('voice-language', `Start Learning ${icon('arrow', 16)}`, 'button button-primary')}
               ${routeLink('coding', `Code for Kids ${icon('code', 16)}`, 'button button-outline')}
-              ${routeLink('voice-translation', `AI Conversation ${icon('sparkles', 16)}`, 'button button-accent')}
+              ${routeLink('games', `Code &amp; Play ${icon('play', 16)}`, 'button button-ghost')}
+              ${routeLink('ai-conversation', `AI Conversation ${icon('sparkles', 16)}`, 'button button-accent')}
             </div>
             <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
           </div>
@@ -1153,7 +1159,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   <div class="hero-visual-stage-inner">
   <div class="hero-photo-wrap family-view-reference">
   <div class="hero-photo-frame">
-  <img src="/assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" fetchpriority="high" />
+  <img src="/assets/home-family-learning.jpg" alt="A family learning African language together with Idilewa" class="hero-photo" fetchpriority="high" />
   </div>
   </div>
   </div>
@@ -1184,7 +1190,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
           <section class="landing-story-card">
             <img src="/assets/story-grandmother.jpg" alt="A grandmother sharing a story with children" loading="lazy" />
-            <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore stories ${icon('arrow', 14)}`, 'text-link')}</div>
+            <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore Stories ${icon('arrow', 14)}`, 'text-link')}</div>
           </section>
         </main>
 
@@ -4279,7 +4285,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   function ensureScratchState() { const s = state.scratch || (state.scratch = {}); s.category ||= 'motion'; s.tab ||= 'code'; s.blocks ||= []; s.running ||= false; s.sprite ||= 'Sprite1'; s.sprites ||= ['Sprite1']; return s; }
   function renderScratchEditor() { const s = ensureScratchState(); const blocks = SCRATCH_BLOCKS[s.category] || SCRATCH_BLOCKS.motion; const catColor = { motion:'#4c97ff',looks:'#9966ff',sound:'#cf63cf',events:'#ffbf00',control:'#ffab19',sensing:'#5cb1d6',operators:'#59c059',variables:'#ff8c1a',myblocks:'#ff6680' }; return `<div class="scratch-editor-page"><header class="scratch-topbar"><button class="scratch-logo" data-action="scratch-home" aria-label="Idilewa Code home">Idilewa</button><button data-action="scratch-menu">⚙ Settings⌄</button><button data-action="scratch-menu">▣ File⌄</button><button data-action="scratch-menu">✎ Edit⌄</button><span class="scratch-divider"></span><button data-action="scratch-tutorial">☀ Tutorials</button><button data-action="scratch-debug">⚙ Debug</button><span class="scratch-spacer"></span><button class="scratch-join">Join Idilewa</button><button>Sign in</button></header><main class="scratch-workbench"><nav class="scratch-tabs"><button class="${s.tab === 'code' ? 'is-active' : ''}" data-action="scratch-tab" data-tab="code">▤ Code</button><button class="${s.tab === 'costumes' ? 'is-active' : ''}" data-action="scratch-tab" data-tab="backdrops">◒ Backdrops</button><button class="${s.tab === 'sounds' ? 'is-active' : ''}" data-action="scratch-tab" data-tab="sounds">◖ Sounds</button></nav><section class="scratch-editor-body"><aside class="scratch-blocks-panel"><div class="scratch-category-list">${SCRATCH_CATEGORIES.map(([id,label,ico]) => `<button class="scratch-category ${s.category === id ? 'is-active' : ''}" style="--scratch-color:${catColor[id]}" data-action="scratch-category" data-category="${id}">${icon(ico,18)}<span>${label}</span></button>`).join('')}</div><div class="scratch-block-palette">${s.tab === 'code' ? blocks.map((block) => `<button class="scratch-block scratch-palette-block" style="--scratch-color:${catColor[s.category]}" draggable="true" data-action="scratch-add-block" data-block="${esc(block)}">${esc(block)}</button>`).join('') : `${s.tab === 'backdrops' ? `<div class="scratch-asset-editor"><aside class="scratch-asset-list"><button class="scratch-asset-card is-selected" data-action="scratch-select-backdrop"><span class="scratch-backdrop-thumb"></span><strong>backdrop1</strong><small>Stage backdrop</small></button><button class="scratch-add-sprite" data-action="scratch-add-backdrop">+ Add Backdrop</button></aside><div class="scratch-asset-canvas"><div class="scratch-paint-toolbar"><button>↶</button><button>↷</button><button>▦</button><button>Copy</button><button>Delete</button><button>Flip</button></div><div class="scratch-backdrop-canvas"><span>Paint or drag an image here</span></div><button class="scratch-primary-small" data-action="scratch-convert-backdrop">Convert to Bitmap</button></div></div>` : `<div class="scratch-empty-tab"><strong>Sound editor</strong><p>Choose a sound, play it, trim it, reverse it, or create a new recording.</p><div class="scratch-sound-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="scratch-sound-controls"><button data-action="scratch-play-sound">▶ Play</button><button data-action="scratch-add-sound">+ Add Sound</button><button data-action="scratch-record-sound">● Record</button></div></div>`}`}</div></aside><section class="scratch-workspace" aria-label="Code workspace"><div class="scratch-workspace-head"><strong>${s.tab === 'code' ? 'Code' : s.tab === 'costumes' ? 'Costumes' : 'Sounds'}</strong><button class="scratch-green-flag" data-action="scratch-run" aria-label="Run project">⚑</button><button class="scratch-stop" data-action="scratch-stop" aria-label="Stop project">■</button><button data-action="scratch-clear">Clear</button></div><div class="scratch-canvas" data-action="scratch-drop">${s.blocks.length ? s.blocks.map((block,index) => `<div class="scratch-block scratch-work-block" style="--scratch-color:${catColor[s.category]}" draggable="true"><span>${esc(block)}</span><button data-action="scratch-delete-block" data-index="${index}" aria-label="Delete block">×</button></div>`).join('') : '<p class="scratch-workspace-hint">Drag blocks from the palette here, or tap a block to add it.</p>'}</div><div class="scratch-zoom-controls"><button>⌕</button><button>⌕</button><button>=</button></div></section><aside class="scratch-stage-panel"><div class="scratch-stage-toolbar"><button>◧</button><button class="is-active">▣</button><button>⛶</button></div><div class="scratch-stage" id="scratch-stage"><div class="scratch-sprite scratch-avatar" id="scratch-sprite" aria-label="Custom cartoon sprite"><span class="avatar-hair"></span><span class="avatar-face"><i></i><i></i><b></b></span><span class="avatar-body"></span><span class="avatar-arm avatar-arm-left"></span><span class="avatar-arm avatar-arm-right"></span><span class="avatar-leg avatar-leg-left"></span><span class="avatar-leg avatar-leg-right"></span></div><span class="scratch-stage-star">★</span></div><section class="scratch-sprite-panel"><div class="scratch-sprite-fields"><strong>Sprite</strong><input value="${esc(s.sprite)}" aria-label="Sprite name" /><span>↔ x <input value="0" aria-label="Sprite x" /></span><span>↕ y <input value="0" aria-label="Sprite y" /></span></div>${s.sprites.map((spriteName) => `<div class="scratch-sprite-card ${s.sprite === spriteName ? 'is-selected' : ''}" data-action="scratch-select-sprite" data-sprite="${esc(spriteName)}"><span class="scratch-mini-avatar" aria-hidden="true"><i></i><b></b></span><small>${esc(spriteName)}</small>${s.sprites.length > 1 ? `<button data-action="scratch-delete-sprite" data-sprite="${esc(spriteName)}" aria-label="Delete ${esc(spriteName)}">⌫</button>` : ''}</div>`).join('')}<button class="scratch-add-sprite" data-action="scratch-add-sprite">+ Add Sprite</button></section></aside></section></main></div>`; }
   function renderIdilewaStudio() { const s = ensureScratchState(); const blocks = SCRATCH_BLOCKS[s.category] || SCRATCH_BLOCKS.motion; const colors = {motion:'#4c97ff',looks:'#9966ff',sound:'#d65cd6',events:'#ffbf00',control:'#ffab19',sensing:'#5cb1d6',operators:'#59c059',variables:'#ff8c1a',myblocks:'#ff6680'}; return `<div class="idilewa-studio"><header class="studio-purple-header"><strong>Idilewa</strong><button>◉⌄</button><button>▣⌄</button><button>✎⌄</button><span></span><button>☀ Tutorials</button><button>⚙ Debug</button><em>Join Idilewa</em><button>Sign in</button></header><main><section class="studio-hero"><div><small>IDILEWA · CODE &amp; PLAY</small><h1>Choose a Game or Studio!</h1><p>Pick a magical world to customize with Scratch blocks.</p><button class="studio-hero-cta" data-action="scratch-run">▶ Start Building</button></div><div class="studio-hero-art"><span>🚀</span><img src="./assets/code-reference-children.png" alt="African children coding" /></div></section><section class="studio-controls"><button class="studio-flag" data-action="scratch-run">⚑</button><button class="studio-stop" data-action="scratch-stop">■</button><button data-action="scratch-clear">Clear</button><span>Engine Idle · Ready to Create</span><b>Blocks ${s.blocks.length}</b></section><section class="studio-stage"><div class="studio-stage-bar"><span>x: 0　 y: 0　 Dir: 90°</span><b>STEM CANVAS</b></div><div class="studio-stage-canvas"><div class="studio-actor scratch-avatar" id="scratch-sprite"><span class="avatar-hair"></span><span class="avatar-face"><i></i><i></i><b></b></span><span class="avatar-body"></span><span class="avatar-arm avatar-arm-left"></span><span class="avatar-arm avatar-arm-right"></span><span class="avatar-leg avatar-leg-left"></span><span class="avatar-leg avatar-leg-right"></span></div><span class="studio-star">★</span></div></section><section class="studio-canvas"><div class="studio-canvas-title"><h2>Coding Canvas</h2><span>${s.blocks.length} Blocks Stacked</span></div><div class="studio-block-stack" data-action="scratch-drop">${s.blocks.length ? s.blocks.map((block,index) => `<div class="studio-stack-block" style="--block-color:${colors[s.category]}" draggable="true"><span>${esc(block)}</span><button data-action="scratch-delete-block" data-index="${index}">×</button></div>`).join('') : '<p>Drop or snap a Scratch block here</p>'}</div></section><section class="studio-palette"><div class="studio-palette-heading"><h2>Block Palette</h2><small>Tap or drag to add</small></div><div class="studio-palette-tabs">${SCRATCH_CATEGORIES.map(([id,label]) => `<button class="${s.category === id ? 'is-active' : ''}" style="--block-color:${colors[id]}" data-action="scratch-category" data-category="${id}">${label}</button>`).join('')}</div><div class="studio-palette-blocks">${blocks.map((block) => `<button class="studio-palette-block" style="--block-color:${colors[s.category]}" draggable="true" data-action="scratch-add-block" data-block="${esc(block)}">${esc(block)} <b>+</b></button>`).join('')}</div></section><section class="studio-actors"><h2>Stage Actors</h2><div><article><span>🧒🏾</span><strong>My Sprite</strong><small>Custom character</small></article><article><span>⭐</span><strong>Star</strong><small>Collectible</small></article><article><span>🪘</span><strong>Bàtá Drum</strong><small>Sound actor</small></article></div></section></main></div>`; }
-  function renderCodePlayRoute(page) { if (page === 'coding-studio') return renderIdilewaStudio(); return renderCodePlayChoose(); }
+  function renderCodePlayRoute() { const cp = ensureCodePlayState(); if (cp.screen === 'studio') return renderCodePlayStudio(); if (cp.screen === 'preview') return renderCodePlayPreview(); if (cp.screen === 'library') return renderCodePlayLibrary(); if (cp.screen === 'success') return renderCodePlaySuccess(); return renderCodePlayChoose(); }
 
   function renderCoding() {
     const languages = CODE_LANGUAGES;
@@ -4781,8 +4787,54 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     </nav>`;
   }
 
-  function ensureAIConversationState() { const s = state.aiConversation || (state.aiConversation = {}); s.screen ||= 'welcome'; s.language ||= 'Yorùbá'; s.topic ||= 'Everyday Conversation'; s.messages ||= []; return s; }
-  function renderAIConversation() { const s = ensureAIConversationState(); const languages = ['Yorùbá','Igbo','Hausa','Swahili','Nigerian Pidgin']; const topics = ['Everyday Conversation','Family & Friends','At School','Market & Shopping','Culture & Traditions','Storytelling']; const messages = s.messages.length ? s.messages : [{ who:'ai', native:'Báwo ni o ṣe wà?', english:'How are you?', time:'10:24' }]; return `<div class="ai-conversation-page"><header class="ai-conversation-top"><img src="./assets/idilewa-brand.svg" alt="Idílẹ́wà" /><span>AI Conversation</span><small>Speak · Learn · Translate · Practise</small></header><main class="ai-conversation-main">${s.screen === 'welcome' ? `<section class="ai-conversation-welcome"><span class="ai-conversation-icon">◌</span><h1>Welcome to<br />AI Conversation</h1><p>Speak, Learn and Practise<br />in African Languages.</p><img src="./assets/home-family-learning.jpg" alt="Children learning together" /><button data-action="ai-start">Start Conversation →</button></section>` : s.screen === 'language' ? `<section class="ai-choice-screen"><h1>Choose a Language</h1><div class="ai-choice-list">${languages.map((language,index) => `<button class="${s.language === language ? 'is-selected' : ''}" data-action="ai-language" data-language="${language}"><span>${['✣','◉','◈','◒','◍'][index]}</span><strong>${language}</strong><b>${s.language === language ? '◉' : '○'}</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-topic">Continue →</button></section>` : s.screen === 'topic' ? `<section class="ai-choice-screen"><h1>Choose a Topic</h1><div class="ai-topic-list">${topics.map((topic,index) => `<button data-action="ai-topic-select" data-topic="${topic}"><span>${['▣','♧','⌂','▱','◈','▤'][index]}</span><strong>${topic}</strong><b>›</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-chat">Start Chat →</button></section>` : `<section class="ai-chat-screen"><header><button data-action="ai-back">←</button><div><h1>AI Conversation</h1><small>${s.language} · ${s.topic}</small></div></header><div class="ai-chat-messages">${messages.map((message) => `<article class="ai-message ${message.who === 'user' ? 'is-user' : ''}"><span class="ai-message-avatar">${message.who === 'user' ? '●' : '▣'}</span><div><strong>${esc(message.native)}</strong><small>${esc(message.english)}</small></div><time>${esc(message.time || '10:25')}</time></article>`).join('')}</div><div class="ai-chat-tools"><button data-action="ai-listen">▮ Listen</button><button data-action="ai-pause">Ⅱ Pause</button><button data-action="ai-translate">文 Translate</button><button data-action="ai-replay">↻ Replay</button><button data-action="ai-slow">◌ Slow (0.75x)</button></div><div class="ai-composer"><input id="ai-message-input" placeholder="Type or speak..." aria-label="Type or speak" /><button data-action="ai-mic" aria-label="Use microphone">●</button><button data-action="ai-send" aria-label="Send message">➤</button></div></section>`}</main><nav class="ai-bottom-nav"><button>⌂<small>Home</small></button><button>▤<small>Learn</small></button><button class="is-active">▣<small>AI Chat</small></button><button>♧<small>Practice</small></button><button>▣<small>Library</small></button></nav></div>`; }
+  function ensureAIConversationState() { const s = state.aiConversation || (state.aiConversation = {}); s.screen ||= 'welcome'; s.language ||= 'Yorùbá'; s.topic ||= 'Everyday Conversation'; s.messages ||= []; if (typeof s.pending !== 'boolean') s.pending = false; if (typeof s.error !== 'string') s.error = ''; return s; }
+  function aiClockTime() { try { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } }
+  function splitAiReply(reply) {
+    const text = String(reply || '').trim();
+    const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    if (lines.length >= 2) return { native: lines[0], english: lines.slice(1).join(' ') };
+    return { native: text, english: '' };
+  }
+  function scrollAiChatToEnd() { const box = document.getElementById('ai-chat-messages'); if (box) box.scrollTop = box.scrollHeight; }
+  async function sendAiConversationMessage(rawText) {
+    const text = String(rawText || '').trim();
+    if (!text) return;
+    const s = ensureAIConversationState();
+    if (s.pending) return;
+    s.error = '';
+    s.messages = [...s.messages, { who: 'user', native: text, english: '', time: aiClockTime() }];
+    s.pending = true;
+    saveState();
+    render();
+    scrollAiChatToEnd();
+    const history = s.messages.slice(0, -1)
+      .filter((message) => (message.who === 'user' || message.who === 'ai') && message.native)
+      .map((message) => ({ role: message.who === 'ai' ? 'model' : 'user', text: message.native }));
+    try {
+      const response = await fetch('/api/ai-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ message: text, language: s.language, topic: s.topic, history }),
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) { payload = null; }
+      if (!response.ok) throw new Error(payload?.error || 'The AI partner could not reply. Please try again.');
+      const reply = typeof payload?.reply === 'string' ? payload.reply.trim() : '';
+      if (!reply) throw new Error('The AI partner returned an empty reply. Try again.');
+      const parsed = splitAiReply(reply);
+      s.messages = [...s.messages, { who: 'ai', native: parsed.native, english: parsed.english, time: aiClockTime() }];
+    } catch (error) {
+      s.error = error instanceof Error ? error.message : 'The AI partner could not reply. Please try again.';
+    } finally {
+      s.pending = false;
+      saveState();
+      render();
+      scrollAiChatToEnd();
+      const input = document.getElementById('ai-message-input');
+      if (input) input.focus();
+    }
+  }
+  function renderAIConversation() { const s = ensureAIConversationState(); const languages = ['Yorùbá','Igbo','Hausa','Swahili','Nigerian Pidgin']; const topics = ['Everyday Conversation','Family & Friends','At School','Market & Shopping','Culture & Traditions','Storytelling']; const messages = s.messages.length ? s.messages : [{ who:'ai', native:'Báwo ni o ṣe wà?', english:'How are you?', time:'10:24' }]; return `<div class="ai-conversation-page"><header class="ai-conversation-top"><img src="${brandLogoUrl}" alt="Idílẹ́wà" /><span>AI Conversation</span><small>Speak · Learn · Translate · Practise</small></header><main class="ai-conversation-main">${s.screen === 'welcome' ? `<section class="ai-conversation-welcome"><span class="ai-conversation-icon">◌</span><h1>Welcome to<br />AI Conversation</h1><p>Speak, Learn and Practise<br />in African Languages.</p><img src="./assets/home-family-learning.jpg" alt="Children learning together" /><button data-action="ai-start">Start Conversation →</button></section>` : s.screen === 'language' ? `<section class="ai-choice-screen"><h1>Choose a Language</h1><div class="ai-choice-list">${languages.map((language,index) => `<button class="${s.language === language ? 'is-selected' : ''}" data-action="ai-language" data-language="${language}"><span>${['✣','◉','◈','◒','◍'][index]}</span><strong>${language}</strong><b>${s.language === language ? '◉' : '○'}</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-topic">Continue →</button></section>` : s.screen === 'topic' ? `<section class="ai-choice-screen"><h1>Choose a Topic</h1><div class="ai-topic-list">${topics.map((topic,index) => `<button data-action="ai-topic-select" data-topic="${topic}"><span>${['▣','♧','⌂','▱','◈','▤'][index]}</span><strong>${topic}</strong><b>›</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-chat">Start Chat →</button></section>` : `<section class="ai-chat-screen"><header><button data-action="ai-back">←</button><div><h1>AI Conversation</h1><small>${s.language} · ${s.topic}</small></div></header><div class="ai-chat-messages" id="ai-chat-messages" aria-live="polite">${messages.map((message) => `<article class="ai-message ${message.who === 'user' ? 'is-user' : ''}"><span class="ai-message-avatar">${message.who === 'user' ? '●' : '▣'}</span><div><strong>${esc(message.native)}</strong><small>${esc(message.english)}</small></div><time>${esc(message.time || '')}</time></article>`).join('')}${s.pending ? '<article class="ai-message is-typing"><span class="ai-message-avatar">▣</span><div><span class="ai-typing-dots" aria-label="Idilewa AI is replying"><i></i><i></i><i></i></span></div></article>' : ''}</div>${s.error ? `<p class="ai-chat-error" role="alert">${icon('info', 15)} ${esc(s.error)}</p>` : ''}<div class="ai-chat-tools"><button data-action="ai-listen">▮ Listen</button><button data-action="ai-pause">Ⅱ Pause</button><button data-action="ai-translate">文 Translate</button><button data-action="ai-replay">↻ Replay</button><button data-action="ai-slow">◌ Slow (0.75x)</button></div><form class="ai-composer" data-form="ai-message"><input id="ai-message-input" name="message" autocomplete="off" maxlength="2000" placeholder="${s.pending ? 'Idilewa AI is replying…' : 'Type or speak…'}" aria-label="Type or speak" ${s.pending ? 'disabled' : ''} /><button type="button" data-action="ai-mic" aria-label="Use microphone">●</button><button type="submit" aria-label="Send message" ${s.pending ? 'disabled' : ''}>➤</button></form></section>`}</main><nav class="ai-bottom-nav"><button type="button" data-route="index">⌂<small>Home</small></button><button type="button" data-route="voice_lessons">▤<small>Learn</small></button><button type="button" class="is-active" data-route="ai-conversation" aria-current="page">▣<small>AI Chat</small></button><button type="button" data-route="voice-practice">♧<small>Practice</small></button><button type="button" data-route="library">▣<small>Library</small></button></nav></div>`; }
 
   function renderVoiceToolPage(page, params = {}) {
     const details = {
@@ -5163,7 +5215,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   }
 
   function aiHelperButton(topic = 'general') {
-    return `<button type="button" class="ai-helper-button" data-action="open-ai-helper" data-topic="${esc(topic)}">${icon('sparkles', 16)} <span>AI learning helper</span><small>preview</small></button>`;
+    return `<button type="button" class="ai-helper-button" data-action="open-ai-helper" data-topic="${esc(topic)}">${icon('sparkles', 16)} <span>AI learning helper</span><small>live</small></button>`;
   }
 
   function aiPromptSuggestions(topic) {
@@ -5187,17 +5239,36 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     return replies[topic] || replies.general;
   }
 
-  function answerAiPrompt(topic) {
+  async function answerAiPrompt(topic, question) {
     const answer = document.getElementById('aiAnswer');
     if (!answer) return;
-    answer.innerHTML = `<span class="section-kicker">A lesson prompt · offline preview</span><p>${esc(aiReply(topic))}</p>`;
+    const prompt = String(question || '').trim() || aiReply(topic);
+    const s = ensureAIConversationState();
+    answer.innerHTML = `<span class="section-kicker">Idilewa AI partner</span><p class="ai-helper-thinking">Thinking…</p>`;
+    try {
+      const response = await fetch('/api/ai-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ message: prompt, language: s.language, topic: 'Learning helper' }),
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) { payload = null; }
+      if (!response.ok) throw new Error(payload?.error || 'The AI partner could not reply. Please try again.');
+      const reply = typeof payload?.reply === 'string' ? payload.reply.trim() : '';
+      if (!reply) throw new Error('The AI partner returned an empty reply. Try again.');
+      if (!answer.isConnected) return;
+      answer.innerHTML = `<span class="section-kicker">Idilewa AI partner</span><p>${esc(reply).replace(/\n/g, '<br />')}</p>`;
+    } catch (error) {
+      if (!answer.isConnected) return;
+      answer.innerHTML = `<span class="section-kicker">Idilewa AI partner</span><p class="ai-helper-error">${esc(error instanceof Error ? error.message : 'The AI partner could not reply. Please try again.')}</p>`;
+    }
   }
 
   function openAiHelper(topic = 'general') {
     const root = document.getElementById('modal-root');
     const suggestions = aiPromptSuggestions(topic);
     const title = topic === 'oriki' ? 'Think alongside Oríkì.' : topic === 'owe' ? 'Think alongside this Owe.' : topic === 'story' ? 'Think alongside the story.' : 'A gentle learning prompt.';
-    root.innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card ai-helper-modal" role="dialog" aria-modal="true" aria-labelledby="aiHelperTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close helper">${icon('close', 19)}</button><div class="modal-icon">${icon('sparkles', 22)}</div><span class="section-kicker">AI learning helper · local preview</span><h2 id="aiHelperTitle">${title}</h2><p class="ai-helper-disclaimer">This prototype has no AI service connected. It offers fixed, offline reflection prompts only; it does not send or save your question. Please do not type names or personal details.</p><div class="ai-suggestions">${suggestions.map((prompt) => `<button type="button" class="ai-suggestion" data-action="ai-suggestion" data-topic="${esc(topic)}" data-prompt="${esc(prompt)}">${esc(prompt)} ${icon('arrow', 14)}</button>`).join('')}</div><form class="ai-helper-form" data-form="ai-helper" data-topic="${esc(topic)}"><label for="aiHelperQuestion">What would you like to think about?</label><textarea id="aiHelperQuestion" name="question" rows="2" maxlength="240" placeholder="Keep your question general…" required></textarea><button type="submit" class="button button-primary">Show a reflection prompt ${icon('arrow', 14)}</button></form><div class="ai-helper-answer" id="aiAnswer" aria-live="polite"><span class="section-kicker">A safe place to start</span><p>Choose a suggested question to see an offline learning prompt.</p></div></section></div>`;
+    root.innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card ai-helper-modal" role="dialog" aria-modal="true" aria-labelledby="aiHelperTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close helper">${icon('close', 19)}</button><div class="modal-icon">${icon('sparkles', 22)}</div><span class="section-kicker">AI learning helper</span><h2 id="aiHelperTitle">${title}</h2><p class="ai-helper-disclaimer">Powered by the Idilewa AI partner. Ask a short learning question and it replies in your chosen language with an English translation. Please do not type names or personal details.</p><div class="ai-suggestions">${suggestions.map((prompt) => `<button type="button" class="ai-suggestion" data-action="ai-suggestion" data-topic="${esc(topic)}" data-prompt="${esc(prompt)}">${esc(prompt)} ${icon('arrow', 14)}</button>`).join('')}</div><form class="ai-helper-form" data-form="ai-helper" data-topic="${esc(topic)}"><label for="aiHelperQuestion">What would you like to think about?</label><textarea id="aiHelperQuestion" name="question" rows="2" maxlength="240" placeholder="Ask a short learning question…" required></textarea><button type="submit" class="button button-primary">Ask the AI partner ${icon('arrow', 14)}</button></form><div class="ai-helper-answer" id="aiAnswer" aria-live="polite"><span class="section-kicker">A safe place to start</span><p>Choose a suggested question, or type your own, to hear from the Idilewa AI partner.</p></div></section></div>`;
     document.getElementById('aiHelperQuestion')?.focus();
   }
 
@@ -5305,13 +5376,14 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const groups = [
       { title: 'Learn & practice', text: 'Language learning from the first choice to the next small win.', pages: ['index', 'trainer', 'languages', 'course', 'lesson', 'library', 'game', 'kids', 'individuals', 'schools', 'profile', 'connect_teachers', 'connect_students'] },
       { title: 'Stories & living culture', text: 'Explore oral traditions, voices, guides and cultural context.', pages: ['ere', 'ere_game', 'oral', 'oral_genre', 'oriki', 'owe', 'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'voices', 'ifa', 'ifa_odu', 'guides', 'human', 'keepers'] },
-      { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'payment', 'login', 'consent', 'base'] }
+      { title: 'Technology & Idilewa', text: 'Discover bilingual coding, the learning approach and platform spaces.', pages: ['coding', 'about', 'method', 'pricing', 'payment', 'login', 'consent', 'base'] },
+      { title: 'Heritage library', text: 'Age-adapted Ìwà l\u1eb9wà journeys, cultural overviews and editorial lesson drafts.', links: [{ href: './heritage.html', label: 'Heritage & stories library', text: 'Explore six illustrated collections and 18 editorial lesson drafts.' }, { href: './signin.html', label: 'Sign in or create an account', text: 'Open the premium sign-in space for learners and families.' }] }
     ];
-    return `<div class="container route-page directory-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Explore all spaces</strong></div><section class="directory-hero"><span class="section-kicker">The Idilewa map</span><h1>One home.<br /><em>Many ways to belong.</em></h1><p>Start with a language, follow a story, explore culture or build something new.</p>${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}</section>${groups.map((g) => `<section class="directory-group"><div class="directory-heading"><div><span class="section-kicker">A learning layer</span><h2>${g.title}</h2><p>${g.text}</p></div><span class="directory-count">${g.pages.length} spaces</span></div><div class="directory-links">${g.pages.map((page) => `<a href="#/${page}" data-route="${page}" class="directory-link"><span>${icon(page === 'coding' ? 'code' : page.includes('oral') || page.includes('ere') || page === 'voices' ? 'book' : page === 'schools' || page === 'tutor' || page === 'connect_students' || page === 'connect_teachers' ? 'people' : 'sparkles', 17)}</span><strong>${LABELS[page]}</strong>${icon('arrow', 15)}</a>`).join('')}</div></section>`).join('')}<div class="directory-note">${icon('info', 17)} Every named prototype route is connected through this route map and the main navigation.</div></div>`;
+    return `<div class="container route-page directory-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Explore all spaces</strong></div><section class="directory-hero"><span class="section-kicker">The Idilewa map</span><h1>One home.<br /><em>Many ways to belong.</em></h1><p>Start with a language, follow a story, explore culture or build something new.</p>${renderStepper(['Language', 'Level', 'Module', 'Lesson'], 0)}</section>${groups.map((g) => `<section class="directory-group"><div class="directory-heading"><div><span class="section-kicker">A learning layer</span><h2>${g.title}</h2><p>${g.text}</p></div><span class="directory-count">${(g.pages || g.links).length} spaces</span></div><div class="directory-links">${(g.links ? g.links.map((l) => `<a href="${l.href}" class="directory-link"><span>${icon('quote', 17)}</span><strong>${l.label}</strong>${icon('arrow', 15)}</a>`).join('') : g.pages.map((page) => `<a href="#/${page}" data-route="${page}" class="directory-link"><span>${icon(page === 'coding' ? 'code' : page.includes('oral') || page.includes('ere') || page === 'voices' ? 'book' : page === 'schools' || page === 'tutor' || page === 'connect_students' || page === 'connect_teachers' ? 'people' : 'sparkles', 17)}</span><strong>${LABELS[page]}</strong>${icon('arrow', 15)}</a>`).join(''))}</div></section>`).join('')}<div class="directory-note">${icon('info', 17)} Every named prototype route is connected through this route map and the main navigation.</div></div>`;
   }
 
   function renderPricing() {
-    return `<div class="container route-page pricing-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Plans</strong></div><section class="pricing-hero page-depth-reveal"><span class="section-kicker">Free to start · no checkout</span><h1>More language.<br /><em>More belonging.</em></h1><p>All current learning plans are free. No payment details are collected and no subscription is started.</p><div class="pricing-free-note">${icon('check', 16)} Family: $0 USD/month <span aria-hidden="true">·</span> School: $0 USD/month</div></section>${renderStepper(['Explore plans', 'Choose learning paths', 'Review as a family', 'Begin together'], 0)}<div class="pricing-grid"><article class="pricing-card"><span class="pricing-label">Begin here</span><h2>Explorer</h2><p>For learners ready to try a first path.</p><div class="pricing-cost"><strong>Free</strong><small>to get started</small></div><ul><li>${icon('check', 15)} Explore available languages</li><li>${icon('check', 15)} Try sample lessons & stories</li><li>${icon('check', 15)} Follow a personal learning path</li></ul>${routeLink('languages', 'Start exploring ' + icon('arrow', 15), 'button button-outline')}</article><article class="pricing-card pricing-featured"><span class="popular-pill">Made for together</span><span class="pricing-label">For home</span><h2>Family</h2><p>Free access to the current language, culture and story learning previews.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore available family learning paths</li><li>${icon('check', 15)} Try sample stories and activities</li><li>${icon('check', 15)} Keep progress in this browser preview</li></ul>${routeLink('login', `Create a free account ${icon('arrow', 15)}`, 'button button-primary', 'data-mode="signup"')}</article><article class="pricing-card"><span class="pricing-label">For educators</span><h2>School</h2><p>Free preview of classroom learning paths; no school service or student roster is active.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore sample language modules</li><li>${icon('check', 15)} Preview culture and coding activities</li><li>${icon('lock', 15)} Student connections are not available</li></ul>${routeLink('schools', 'Explore schools ' + icon('arrow', 15), 'button button-outline')}</article></div><p class="pricing-footnote">Current plan prices are $0. No Paystack checkout is started for free plans. ${routeLink('payment', 'View payment information ' + icon('arrow', 14), 'text-link')}. If prices change, confirm the new amount and billing terms before enabling payments.</p></div>`;
+    return `<div class="container route-page pricing-page"><div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Plans</strong></div><section class="pricing-hero page-depth-reveal"><span class="section-kicker">Free to start · no checkout</span><h1>More language.<br /><em>More belonging.</em></h1><p>All current learning plans are free. No payment details are collected and no subscription is started.</p><div class="pricing-free-note">${icon('check', 16)} Family: $0 USD/month <span aria-hidden="true">·</span> School: $0 USD/month</div></section>${renderStepper(['Explore plans', 'Choose learning paths', 'Review as a family', 'Begin together'], 0)}<div class="pricing-grid"><article class="pricing-card"><span class="pricing-label">Begin here</span><h2>Explorer</h2><p>For learners ready to try a first path.</p><div class="pricing-cost"><strong>Free</strong><small>to get started</small></div><ul><li>${icon('check', 15)} Explore available languages</li><li>${icon('check', 15)} Try sample lessons & stories</li><li>${icon('check', 15)} Follow a personal learning path</li></ul>${routeLink('languages', 'Start exploring ' + icon('arrow', 15), 'button button-outline')}</article><article class="pricing-card pricing-featured"><span class="popular-pill">Made for together</span><span class="pricing-label">For home</span><h2>Family</h2><p>Free access to the current language, culture and story learning previews.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore available family learning paths</li><li>${icon('check', 15)} Try sample stories and activities</li><li>${icon('check', 15)} Keep progress in this browser preview</li></ul><a class="button button-primary" href="./signin.html">Create a free account ${icon('arrow', 15)}</a></article><article class="pricing-card"><span class="pricing-label">For educators</span><h2>School</h2><p>Free preview of classroom learning paths; no school service or student roster is active.</p><div class="pricing-cost"><strong>$0</strong><small>USD · per month</small></div><ul><li>${icon('check', 15)} Explore sample language modules</li><li>${icon('check', 15)} Preview culture and coding activities</li><li>${icon('lock', 15)} Student connections are not available</li></ul>${routeLink('schools', 'Explore schools ' + icon('arrow', 15), 'button button-outline')}</article></div><p class="pricing-footnote">Current plan prices are $0. No Paystack checkout is started for free plans. ${routeLink('payment', 'View payment information ' + icon('arrow', 14), 'text-link')}. If prices change, confirm the new amount and billing terms before enabling payments.</p></div>`;
   }
 
   const LIBRARY_ITEMS = [
@@ -5481,7 +5553,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         <fieldset class="profile-layer"><legend><span>01</span> About you</legend><div class="profile-field-grid"><label>Display name<input name="name" autocomplete="name" maxlength="60" required value="${esc(profile.name)}" placeholder="What should we call you?" /></label><label>Email<input value="${esc(profile.email)}" readonly placeholder="Sign in to connect your account" /></label></div></fieldset>
         <fieldset class="profile-layer"><legend><span>02</span> Your story</legend><label>Short bio<textarea name="bio" rows="3" maxlength="500" placeholder="Share a little about yourself and what you enjoy learning.">${esc(profile.bio)}</textarea></label><label>Learning goal<textarea name="goal" rows="2" maxlength="240" placeholder="What would you like to be able to do?">${esc(profile.goal)}</textarea></label></fieldset>
         <fieldset class="profile-layer"><legend><span>03</span> Learning preferences</legend><div class="profile-field-grid"><label>Primary language<select name="language">${LANGUAGES.map((language) => `<option value="${language.id}" ${profile.language === language.id ? 'selected' : ''}>${language.name}</option>`).join('')}</select></label><label>Experience level<select name="level">${[['beginner','Beginning'],['intermediate','Growing'],['advanced','Confident']].map(([value,label]) => `<option value="${value}" ${profile.level === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label></div><div class="profile-interest-list"><span>I'm interested in</span>${interests.map(([value,label]) => `<label><input type="checkbox" name="interests" value="${value}" ${profile.interests.includes(value) ? 'checked' : ''} />${label}</label>`).join('')}</div></fieldset>
-        <fieldset class="profile-layer"><legend><span>04</span> Account & privacy</legend><p>${user ? `Signed in as ${esc(user.email || '')}. Your profile details are saved to your Idilewa account.` : 'You are browsing as a guest. Save these details on this device, or sign in to connect them to an account.'}</p><div class="profile-account-actions">${user ? '<button type="button" class="button button-outline" data-action="profile-sign-out">Sign out</button>' : `${routeLink('login', 'Sign in', 'button button-outline', 'data-mode="signin"')}${routeLink('login', 'Create account', 'button button-primary', 'data-mode="signup"')}`}</div></fieldset>
+        <fieldset class="profile-layer"><legend><span>04</span> Account & privacy</legend><p>${user ? `Signed in as ${esc(user.email || '')}. Your profile details are saved to your Idilewa account.` : 'You are browsing as a guest. Save these details on this device, or sign in to connect them to an account.'}</p><div class="profile-account-actions">${user ? '<button type="button" class="button button-outline" data-action="profile-sign-out">Sign out</button>' : `<a class="button button-outline" href="./signin.html">Sign in</a><a class="button button-primary" href="./signin.html">Create account</a>`}</div></fieldset>
         <div class="profile-editor-submit"><small>Profile photo is managed above and stays on this device.</small><button type="submit" class="button button-primary">Save profile ${icon('check', 15)}</button></div>
       </form>
     </section>`;
@@ -5516,7 +5588,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
           <div class="profile-identity-tags"><span>${esc(language.name)}</span><span>${esc(profile.level.charAt(0).toUpperCase() + profile.level.slice(1))}</span></div>
           <p class="profile-identity-goal">${profile.goal ? esc(profile.goal) : 'Your learning goals and interests belong here.'}</p>
           <div class="profile-identity-actions">
-            ${getCurrentUser() ? '<button class="button button-outline" data-action="profile-sign-out">Sign out</button>' : routeLink('login', 'Sign in to sync', 'button button-primary', 'data-mode="signin"')}
+            ${getCurrentUser() ? '<button class="button button-outline" data-action="profile-sign-out">Sign out</button>' : '<a class="button button-primary" href="./signin.html">Sign in to sync</a>'}
           </div>
           <small class="profile-photo-note">Your photo stays on this device.</small>
         </aside>
@@ -5549,18 +5621,30 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   }
 
   function renderContact() {
-    const supportEmail = 'idilewa2026@gmail.com';
+    const topics = [
+      ['learning-support', 'Learning support'],
+      ['school-partnership', 'School partnership'],
+      ['safety-concern', 'Safety & privacy concern'],
+      ['general-question', 'General question'],
+    ];
     return `<div class="container route-page information-page">
       <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Contact</strong></div>
       <section class="page-intro-card">
         <span class="section-kicker">Talk with the Idilewa team</span>
         <h1>We’d love to <em>hear from you.</em></h1>
         <p>Questions about language learning, schools, accessibility or the platform are welcome.</p>
-        <div class="contact-email-card">
-          <div><span class="section-kicker">Email Idilewa</span><a href="mailto:${supportEmail}?subject=Idilewa%20support">${supportEmail}</a></div>
-          <a class="button button-primary" href="mailto:${supportEmail}?subject=Idilewa%20support">${icon('send', 16)} Write to us</a>
-        </div>
-        <p class="contact-privacy-note">${icon('lock', 15)} This opens your email app. Do not include a child’s full name, password, address or other sensitive information.</p>
+        <form class="contact-form" data-form="contact" novalidate>
+          <div class="contact-form-row">
+            <label for="contactName">Your name<input id="contactName" name="name" type="text" maxlength="80" autocomplete="name" required placeholder="e.g. Adaeze O." /></label>
+            <label for="contactEmail">Your email<input id="contactEmail" name="email" type="email" maxlength="160" autocomplete="email" required placeholder="you@example.com" /></label>
+          </div>
+          <label for="contactTopic">What is this about?<select id="contactTopic" name="topic" required>${topics.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label>
+          <label for="contactMessage">Your message<textarea id="contactMessage" name="message" rows="5" maxlength="4000" required placeholder="Tell us how we can help…"></textarea></label>
+          <input type="text" name="company" class="contact-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <p class="contact-form-feedback" data-contact-feedback aria-live="polite"></p>
+          <button class="button button-primary" type="submit">${icon('send', 16)} Send message</button>
+        </form>
+        <p class="contact-privacy-note">${icon('lock', 15)} Your message is sent securely to the Idilewa team from this page. Do not include a child’s full name, password, address or other sensitive information.</p>
       </section>
       <section class="information-card-grid" aria-label="Contact topics">
         <article class="profile-card"><span class="section-kicker">Families & learners</span><h2>Learning support</h2><p>Email us about platform access, learning paths or accessibility. For account safety, never send passwords or one-time codes.</p></article>
@@ -5919,8 +6003,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       ${renderStepper(['Choose a tutor', 'Parent signs consent', 'Child verifies code', 'Connect safely'], 0)}
       ${banner}
       <div class="connection-notice">${icon('info', 17)} <div><strong>Sample directory · not real registered teachers.</strong><span>Profiles, schedules and learner counts are placeholders. No one receives a message or booking from this demo. In a real service, permission must be checked on a secure server.</span></div></div>
-      <section class="teacher-directory-section"><div class="section-heading"><div><span class="section-kicker">Educator profiles</span><h2>Meet a language guide.</h2><p>Compare teaching focus, weekly availability and sample experience.</p></div><label class="teacher-filter-label" for="teacherFilter">Filter by focus<select id="teacherFilter" data-action="filter-teachers"><option value="all" ${state.teacherFilter === 'all' ? 'selected' : ''}>All teaching styles</option><option value="speaking" ${state.teacherFilter === 'speaking' ? 'selected' : ''}>Conversation</option><option value="story" ${state.teacherFilter === 'story' ? 'selected' : ''}>Stories</option><option value="coding" ${state.teacherFilter === 'coding' ? 'selected' : ''}>Coding + language</option></select></label></div>
-        <div class="teacher-profile-grid">${visible.length ? visible.map((teacher) => { const allowed = childVerified && tutorGrantIsActive(teacher.id); const requested = state.teacherRequests.includes(teacher.id); return `<article class="teacher-profile-card"><div class="teacher-profile-photo teacher-profile-initials-photo" role="img" aria-label="Sample educator profile for ${esc(teacher.name)}"><span class="teacher-profile-monogram" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join('').replace(/[^a-z0-9]/gi, ''))}</span><span class="demo-profile-badge">Sample profile</span></div><div class="teacher-profile-body"><div class="teacher-name-row"><div><span class="teacher-language-tag">${esc(teacher.language)} · ${teacher.focus.includes('coding') ? 'Language + code' : 'Language learning'}</span><h3>${esc(teacher.name)}</h3></div><span class="teacher-registered-mark">${icon('check', 13)} Preview</span></div><p class="teacher-focus">${esc(teacher.focus)}</p><div class="teacher-metrics"><div><span>${icon('clock', 15)} Teaching hours</span><strong>${esc(teacher.hoursSummary)}</strong></div><div><span>${icon('people', 15)} Learners supported</span><strong>${teacher.learners} <small>sample</small></strong></div></div><div class="teacher-card-hours"><span>${icon('calendar', 15)} Weekly availability</span><strong>${esc(teacher.hours)}</strong></div><button class="button button-soft teacher-profile-button" type="button" disabled>Unavailable · sample educator</button><button class="text-link teacher-details-link" type="button" data-action="teacher-profile" data-id="${teacher.id}">View sample profile</button></div></article>`; }).join('') : '<div class="teacher-empty">No sample profiles match that focus yet. Try another filter.</div>'}</div>
+      <section class="teacher-directory-section"><div class="section-heading"><div><span class="section-kicker">Educator profiles</span><h2>Meet a language guide.</h2><p>Compare teaching focus, live lesson times and sample experience.</p></div><label class="teacher-filter-label" for="teacherFilter">Filter by focus<select id="teacherFilter" data-action="filter-teachers"><option value="all" ${state.teacherFilter === 'all' ? 'selected' : ''}>All teaching styles</option><option value="speaking" ${state.teacherFilter === 'speaking' ? 'selected' : ''}>Conversation</option><option value="story" ${state.teacherFilter === 'story' ? 'selected' : ''}>Stories</option><option value="coding" ${state.teacherFilter === 'coding' ? 'selected' : ''}>Coding + language</option></select></label></div>
+        <div class="teacher-profile-grid">${visible.length ? visible.map((teacher) => { const allowed = childVerified && tutorGrantIsActive(teacher.id); const requested = state.teacherRequests.includes(teacher.id); return `<article class="teacher-profile-card"><div class="teacher-profile-photo teacher-profile-initials-photo" role="img" aria-label="Sample educator profile for ${esc(teacher.name)}"><span class="teacher-profile-monogram" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join('').replace(/[^a-z0-9]/gi, ''))}</span><span class="demo-profile-badge">Sample profile</span></div><div class="teacher-profile-body"><div class="teacher-name-row"><div><span class="teacher-language-tag">${esc(teacher.language)} · ${teacher.focus.includes('coding') ? 'Language + code' : 'Language learning'}</span><h3>${esc(teacher.name)}</h3></div><span class="teacher-registered-mark">${icon('check', 13)} Preview</span></div><p class="teacher-focus">${esc(teacher.focus)}</p><div class="teacher-metrics"><div><span>${icon('clock', 15)} Live Lessons</span><strong>${esc(teacher.hoursSummary)}</strong></div><div><span>${icon('people', 15)} Learners supported</span><strong>${teacher.learners} <small>sample</small></strong></div></div><div class="teacher-card-hours"><span>${icon('calendar', 15)} Lesson times</span><strong>${esc(teacher.hours)}</strong></div><button class="button button-soft teacher-profile-button" type="button" disabled>Unavailable · sample educator</button><button class="text-link teacher-details-link" type="button" data-action="teacher-profile" data-id="${teacher.id}">View sample profile</button></div></article>`; }).join('') : '<div class="teacher-empty">No sample profiles match that focus yet. Try another filter.</div>'}</div>
       </section>      <div class="connection-child-note">${icon('heart', 17)} No teacher connection or request can be made from this preview.</div></div>`;
   }
 
@@ -5988,8 +6072,18 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const teacher = TEACHER_PROFILES.find((item) => item.id === id);
     if (!teacher) return;
     const requested = state.teacherRequests.includes(teacher.id);
-    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close profile">${icon('close', 19)}</button><div class="teacher-modal-top"><span class="teacher-modal-avatar" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join(''))}</span><div><span class="section-kicker">Sample educator profile</span><h2 id="teacherModalTitle">${esc(teacher.name)}</h2><p>${esc(teacher.language)} · ${esc(teacher.focus)}</p></div></div><div class="teacher-modal-stats"><div><span>Teaching hours</span><strong>${esc(teacher.hours)}</strong></div><div><span>Learners supported</span><strong>${teacher.learners} <small>sample learners</small></strong></div></div><p class="teacher-modal-bio">${esc(teacher.bio)}</p><div class="teacher-modal-safeguard">${icon('shield', 16)} This preview does not contact this educator. A parent or guardian should review and arrange any real session.</div><button class="button ${requested ? 'button-soft' : 'button-primary'} teacher-request-button" data-action="request-teacher-intro" data-id="${teacher.id}" ${requested ? 'aria-pressed="true"' : ''}>${requested ? 'Request saved in this demo' : 'Request a learning introduction'} ${icon(requested ? 'check' : 'arrow', 15)}</button></section></div>`;
+    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close profile">${icon('close', 19)}</button><div class="teacher-modal-top"><span class="teacher-modal-avatar" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join(''))}</span><div><span class="section-kicker">Sample educator profile</span><h2 id="teacherModalTitle">${esc(teacher.name)}</h2><p>${esc(teacher.language)} · ${esc(teacher.focus)}</p></div></div><div class="teacher-modal-stats"><div><span>Live Lessons</span><strong>${esc(teacher.hours)}</strong></div><div><span>Learners supported</span><strong>${teacher.learners} <small>sample learners</small></strong></div></div><p class="teacher-modal-bio">${esc(teacher.bio)}</p><div class="teacher-modal-safeguard">${icon('shield', 16)} This preview does not contact this educator. A parent or guardian should review and arrange any real session.</div><div class="teacher-modal-actions"><button class="button button-primary teacher-message-button" data-action="open-tutor-message" data-id="${teacher.id}">${icon('send', 15)} Write a message</button><button class="button ${requested ? 'button-soft' : 'button-outline'} teacher-request-button" data-action="request-teacher-intro" data-id="${teacher.id}" ${requested ? 'aria-pressed="true"' : ''}>${requested ? 'Request saved in this demo' : 'Request a learning introduction'} ${icon(requested ? 'check' : 'arrow', 15)}</button></div></section></div>`;
     document.querySelector('.teacher-request-button')?.focus();
+  }
+
+  function openTutorMessage(id) {
+    const teacher = TEACHER_PROFILES.find((item) => item.id === id);
+    if (!teacher) return;
+    const user = getCurrentUser();
+    const defaultName = user?.name || '';
+    const defaultEmail = user?.email || '';
+    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card tutor-message-modal" role="dialog" aria-modal="true" aria-labelledby="tutorMessageTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close message box">${icon('close', 19)}</button><div class="teacher-modal-top"><span class="teacher-modal-avatar" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join(''))}</span><div><span class="section-kicker">Write a message</span><h2 id="tutorMessageTitle">Message about ${esc(teacher.name)}</h2><p>${esc(teacher.language)} · ${esc(teacher.focus)}</p></div></div><p class="tutor-message-intro">Write your question about this educator and it is delivered to the Idilewa team from this page. Please do not include a child’s full name, password or other sensitive information.</p><form class="contact-form tutor-message-form" data-form="tutor-message" novalidate><input type="hidden" name="teacher" value="${esc(teacher.name)}" /><div class="contact-form-row"><label for="tutorMessageName">Your name<input id="tutorMessageName" name="name" type="text" maxlength="80" autocomplete="name" required value="${esc(defaultName)}" placeholder="e.g. Adaeze O." /></label><label for="tutorMessageEmail">Your email<input id="tutorMessageEmail" name="email" type="email" maxlength="160" autocomplete="email" required value="${esc(defaultEmail)}" placeholder="you@example.com" /></label></div><label for="tutorMessageBody">Your message<textarea id="tutorMessageBody" name="message" rows="5" maxlength="4000" required placeholder="Ask about live lesson times, focus or next steps…"></textarea></label><input type="text" name="company" class="contact-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" /><p class="contact-form-feedback" data-tutor-feedback aria-live="polite"></p><button class="button button-primary" type="submit">${icon('send', 16)} Send message</button></form></section></div>`;
+    document.getElementById('tutorMessageBody')?.focus();
   }
 
   function openLearnerProfile(id) {
@@ -6694,7 +6788,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   function renderPage(page, params) {
   switch (page) {
-  case 'voice-translation': return renderAIConversation();
+  case 'voice-translation': return renderVoiceToolPage('voice-translation', params);
+  case 'ai-conversation': return renderAIConversation();
   case 'voice-translation-legacy':
       case 'voice-text-to-speech':
       case 'voice-speech-to-text':
@@ -6711,8 +6806,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'curriculum': return renderCurriculum();
       case 'course': return renderCourse(params);
       case 'lesson': return renderLesson(params);
-  case 'coding': return renderCodePlayRoute('coding');
-  case 'coding-studio': return renderCodePlayRoute('coding-studio');
+  case 'coding': return renderCoding();
+  case 'coding-studio': return renderCodingStudio();
+  case 'games': return renderCodePlayRoute();
       case 'ere': return renderStories();
       case 'ere_game': return renderStoryGame(params);
       case 'oral': return renderOral();
@@ -7404,7 +7500,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const pageMarkup = assignUniqueRouteImages(page, renderPage(page, params))
       .replace(/(?:African )?Voice (?:African Language )?Trainer/gi, 'Voice Lessons')
       .replace(/Voice Studio/gi, 'Voice Lessons');
-    if (page === 'coding' || page === 'coding-studio') {
+    if (page === 'coding' || page === 'coding-studio' || page === 'games') {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
     } else if (page === 'login') {
@@ -7714,8 +7810,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'open-ai-helper': openAiHelper(el.dataset.topic || 'general'); break;
       case 'ai-suggestion': {
         const input = document.getElementById('aiHelperQuestion');
-        if (input) input.value = el.dataset.prompt || '';
-        answerAiPrompt(el.dataset.topic || 'general');
+        const prompt = el.dataset.prompt || '';
+        if (input) input.value = prompt;
+        void answerAiPrompt(el.dataset.topic || 'general', prompt);
         break;
       }
       case 'start-consent-request':
@@ -8330,6 +8427,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         state.consent.assignmentAccepted = true; saveState(); render();
         showToast('Approved demo assignment noted. No lesson or message was created.'); break;
       case 'teacher-profile': openTeacherProfile(el.dataset.id); break;
+      case 'open-tutor-message': openTutorMessage(el.dataset.id); break;
       case 'request-teacher-intro': {
         document.getElementById('modal-root').innerHTML = '';
         showToast('Teacher connections are unavailable until real educators and server-side guardian authorization are configured.', 'error');
@@ -8792,8 +8890,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'code-play-template': {
     const cp = ensureCodePlayState(); cp.template = el.dataset.template; saveState(); render(); break;
   }
-  case 'code-play-start': { const cp = ensureCodePlayState(); cp.screen = 'studio'; cp.tab = 'blocks'; saveState(); navigate('coding-studio'); break; }
-  case 'code-play-back': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('coding'); break; }
+  case 'code-play-start': { const cp = ensureCodePlayState(); cp.screen = 'studio'; cp.tab = 'blocks'; saveState(); navigate('games'); break; }
+  case 'code-play-back': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('games'); break; }
   case 'code-play-tab': { const cp = ensureCodePlayState(); cp.tab = el.dataset.tab; saveState(); render(); break; }
   case 'code-play-dual': { const cp = ensureCodePlayState(); cp.dual = el.checked; saveState(); break; }
   case 'code-play-add-block': { const cp = ensureCodePlayState(); cp.blocks = [...(cp.blocks || []), el.dataset.block]; saveState(); render(); break; }
@@ -8802,22 +8900,22 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'code-play-undo': { const cp = ensureCodePlayState(); cp.blocks = cp.blocks.slice(0, -1) || ['event']; saveState(); render(); break; }
   case 'code-play-redo': { const cp = ensureCodePlayState(); cp.blocks = [...cp.blocks, 'move']; saveState(); render(); break; }
   case 'code-play-sprite': { const cp = ensureCodePlayState(); cp.sprites = cp.sprites.includes(el.dataset.sprite) ? cp.sprites.filter((id) => id !== el.dataset.sprite) : [...cp.sprites, el.dataset.sprite]; saveState(); render(); break; }
-  case 'code-play-preview': { const cp = ensureCodePlayState(); if (el.dataset.template) cp.template = el.dataset.template; cp.screen = 'preview'; saveState(); navigate('coding-studio'); break; }
+  case 'code-play-preview': { const cp = ensureCodePlayState(); if (el.dataset.template) cp.template = el.dataset.template; cp.screen = 'preview'; saveState(); navigate('games'); break; }
   case 'code-play-move': { const hero = document.getElementById('code-play-hero'); if (hero) hero.style.transform = `translateX(${el.dataset.direction === 'left' ? '-=' : '+='}40px)`; break; }
   case 'code-play-jump': { const hero = document.getElementById('code-play-hero'); if (hero) { hero.classList.remove('is-jumping'); void hero.offsetWidth; hero.classList.add('is-jumping'); } break; }
   case 'code-play-complete': { const cp = ensureCodePlayState(); cp.screen = 'success'; saveState(); render(); break; }
-  case 'code-play-save': { const cp = ensureCodePlayState(); const template = CODE_PLAY_TEMPLATES.find(([id]) => id === cp.template); cp.savedGames = [...(cp.savedGames || []).filter((game) => game.template !== cp.template), { template: cp.template, title: template?.[1] || 'My Game', blocks: cp.blocks, sprites: cp.sprites, language: cp.language }]; cp.screen = 'library'; saveState(); navigate('coding'); showToast('Game saved to My Games.', 'success'); break; }
-  case 'code-play-library': { const cp = ensureCodePlayState(); cp.screen = 'library'; saveState(); navigate('coding'); break; }
-  case 'code-play-home': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('coding'); break; }
-  case 'code-play-open': { const cp = ensureCodePlayState(); cp.template = el.dataset.template; cp.screen = 'studio'; saveState(); navigate('coding-studio'); break; }
+  case 'code-play-save': { const cp = ensureCodePlayState(); const template = CODE_PLAY_TEMPLATES.find(([id]) => id === cp.template); cp.savedGames = [...(cp.savedGames || []).filter((game) => game.template !== cp.template), { template: cp.template, title: template?.[1] || 'My Game', blocks: cp.blocks, sprites: cp.sprites, language: cp.language }]; cp.screen = 'library'; saveState(); navigate('games'); showToast('Game saved to My Games.', 'success'); break; }
+  case 'code-play-library': { const cp = ensureCodePlayState(); cp.screen = 'library'; saveState(); navigate('games'); break; }
+  case 'code-play-home': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('games'); break; }
+  case 'code-play-open': { const cp = ensureCodePlayState(); cp.template = el.dataset.template; cp.screen = 'studio'; saveState(); navigate('games'); break; }
   case 'code-play-share': { if (navigator.share) void navigator.share({ title: 'My Idilewa Code & Play game', text: 'Play my game on Idilewa!' }); else showToast('Share link ready to copy.', 'success'); break; }
   case 'ai-start': { const s = ensureAIConversationState(); s.screen = 'language'; saveState(); render(); break; }
   case 'ai-language': { const s = ensureAIConversationState(); s.language = el.dataset.language; saveState(); render(); break; }
   case 'ai-topic': { const s = ensureAIConversationState(); s.screen = 'topic'; saveState(); render(); break; }
   case 'ai-topic-select': { const s = ensureAIConversationState(); s.topic = el.dataset.topic; saveState(); render(); break; }
   case 'ai-chat': { const s = ensureAIConversationState(); s.screen = 'chat'; saveState(); render(); break; }
-  case 'ai-back': { const s = ensureAIConversationState(); s.screen = s.screen === 'chat' ? 'topic' : s.screen === 'topic' ? 'language' : 'welcome'; saveState(); render(); break; }
-  case 'ai-send': { const input = document.getElementById('ai-message-input'); const text = input?.value.trim(); if (!text) break; const s = ensureAIConversationState(); s.messages = [...s.messages, { who:'user', native:text, english:'', time:'10:25' }, { who:'ai', native:'Ó dáa! Kí ni ó fẹ́ bá mi sọ̀rọ̀ lónìí?', english:'Great! What would you like to talk about today?', time:'10:25' }]; saveState(); render(); break; }
+  case 'ai-back': { const s = ensureAIConversationState(); s.error = ''; s.pending = false; s.screen = s.screen === 'chat' ? 'topic' : s.screen === 'topic' ? 'language' : 'welcome'; saveState(); render(); break; }
+  case 'ai-send': { const input = document.getElementById('ai-message-input'); const text = input?.value.trim(); if (!text) break; input.value = ''; void sendAiConversationMessage(text); break; }
   case 'ai-mic': { showToast('Microphone ready. Speak your phrase.'); break; }
   case 'ai-listen': { const s = ensureAIConversationState(); const last = [...s.messages].reverse().find((message) => message.native); if (!last) { showToast('Start a conversation before listening.', 'error'); break; } void playPlotweaverSpeech(last.native, trainerLanguageCode(s.language === 'Yorùbá' ? 'yoruba' : s.language === 'Igbo' ? 'igbo' : s.language === 'Hausa' ? 'hausa' : s.language === 'Swahili' ? 'swahili' : 'yoruba')).then(() => showToast('Playing the translated voice.')).catch((error) => showToast(error instanceof Error ? error.message : 'Audio playback is unavailable.', 'error')); break; }
   case 'ai-pause': { if (!activePlotweaverAudio) { showToast('Listen to a phrase before pausing it.', 'error'); break; } activePlotweaverAudio.pause(); showToast('Playback paused.'); break; }
@@ -8843,7 +8941,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'scratch-play-sound': showToast('Playing pop sound.'); break;
   case 'scratch-add-sound': showToast('Sound library ready. Choose or upload a sound.'); break;
   case 'scratch-record-sound': showToast('Microphone recording is ready.'); break;
-  case 'scratch-home': navigate('coding'); break;
+  case 'scratch-home': navigate('games'); break;
   default: break;
   }
   }
@@ -9254,10 +9352,87 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       if (!response || !key) { showToast('Add a short practice response before saving.', 'error'); return; }
       state.lessonResponses[key] = response;
       saveState(); render(); showToast('Practice saved on this device.');
+    } else if (type === 'contact') {
+      const name = String(data.get('name') || '').trim();
+      const email = String(data.get('email') || '').trim();
+      const topic = String(data.get('topic') || 'general-question');
+      const message = String(data.get('message') || '').trim();
+      const feedback = form.querySelector('[data-contact-feedback]');
+      const submitButton = form.querySelector('button[type="submit"]');
+      const previousLabel = submitButton?.innerHTML || '';
+      const setFeedback = (text, tone) => {
+        if (!feedback) return;
+        feedback.textContent = text;
+        feedback.dataset.tone = tone || '';
+      };
+      if (!name || !email || !message) { setFeedback('Please add your name, email and message.', 'error'); showToast('Please complete every field.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFeedback('Enter a valid email address.', 'error'); showToast('Enter a valid email address.', 'error'); return; }
+      if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Sending…'; }
+      setFeedback('Sending your message…', '');
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ name, email, topic, message, company: String(data.get('company') || '') }),
+        });
+        let payload = null;
+        try { payload = await response.json(); } catch (_) { payload = null; }
+        if (!response.ok) throw new Error(payload?.error || 'Your message could not be sent. Please try again.');
+        form.reset();
+        setFeedback(payload?.message || 'Thank you — your message has been sent.', 'success');
+        showToast(payload?.message || 'Your message has been sent.', 'success');
+      } catch (error) {
+        const text = error instanceof Error ? error.message : 'Your message could not be sent. Please try again.';
+        setFeedback(text, 'error');
+        showToast(text, 'error');
+      } finally {
+        if (submitButton?.isConnected) { submitButton.disabled = false; submitButton.innerHTML = previousLabel; }
+      }
+    } else if (type === 'tutor-message') {
+      const name = String(data.get('name') || '').trim();
+      const email = String(data.get('email') || '').trim();
+      const teacher = String(data.get('teacher') || '').trim();
+      const message = String(data.get('message') || '').trim();
+      const feedback = form.querySelector('[data-tutor-feedback]');
+      const submitButton = form.querySelector('button[type="submit"]');
+      const previousLabel = submitButton?.innerHTML || '';
+      const setFeedback = (text, tone) => {
+        if (!feedback) return;
+        feedback.textContent = text;
+        feedback.dataset.tone = tone || '';
+      };
+      if (!name || !email || !message) { setFeedback('Please add your name, email and message.', 'error'); showToast('Please complete every field.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFeedback('Enter a valid email address.', 'error'); showToast('Enter a valid email address.', 'error'); return; }
+      if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Sending…'; }
+      setFeedback('Sending your message…', '');
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ name, email, message, teacher, source: 'tutor', topic: 'tutor-connection', company: String(data.get('company') || '') }),
+        });
+        let payload = null;
+        try { payload = await response.json(); } catch (_) { payload = null; }
+        if (!response.ok) throw new Error(payload?.error || 'Your message could not be sent. Please try again.');
+        setFeedback(payload?.message || 'Thank you — your message has been sent to the Idilewa team.', 'success');
+        showToast('Your message has been sent to the Idilewa team.', 'success');
+        form.reset();
+      } catch (error) {
+        const text = error instanceof Error ? error.message : 'Your message could not be sent. Please try again.';
+        setFeedback(text, 'error');
+        showToast(text, 'error');
+      } finally {
+        if (submitButton?.isConnected) { submitButton.disabled = false; submitButton.innerHTML = previousLabel; }
+      }
+    } else if (type === 'ai-message') {
+      const text = String(data.get('message') || '').trim();
+      if (!text) { showToast('Type a message before sending.', 'error'); return; }
+      form.reset();
+      void sendAiConversationMessage(text);
     } else if (type === 'ai-helper') {
       const question = String(data.get('question') || '').trim();
       if (!question) { showToast('Add a short question to receive a reflection prompt.', 'error'); return; }
-      answerAiPrompt(form.dataset.topic || 'general');
+      void answerAiPrompt(form.dataset.topic || 'general', question);
     } else if (type === 'owe-reflection') {
       const thought = String(data.get('thought') || '').trim();
       if (!state.reflectionFeeling) { showToast('Choose a feeling first, or ask a trusted adult to help you name one.', 'error'); return; }
