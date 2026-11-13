@@ -41,7 +41,39 @@ AI-powered African language-learning SPA (Yorùbá, Igbo, Hausa, Kiswahili and m
   `JUDGE0_URL`/`JUDGE0_AUTH_TOKEN`, `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GUARDIAN_TOKEN_SECRET`.
   Without them, AI speech/translation, code execution, and guardian email flows report real errors rather than faking success.
 
-## Deployment reality (verified 2026-11-13)
+## Deployment reality (re-verified 2026-11-13)
+- `https://www.idilewa.com` serves a bundle titled "Ìdíléwa Language Academy" that is **not built
+  from this repo**. `https://idilewa-com.vercel.app` returns the identical bytes, so the custom
+  domain is attached to a Vercel project whose source is not in `Tpsalm/Idilewa-com` (searched every
+  local and remote branch and the full commit history: no "Language Academy" markup anywhere).
+- This repo **is** wired to Vercel: GitHub Deployments for `Tpsalm/Idilewa-com` are created by
+  `vercel[bot]` (environments `Production`, `Preview`, `Production – idilewa`, `Production – idileewa-com`,
+  …). The repo project's own aliases (`https://idilewa.vercel.app`, `https://idileewa-com.vercel.app`)
+  serve THIS repo's build ("Idilewa — Keep your language close").
+- Therefore pointing `www.idilewa.com` at this repo's project requires the Vercel dashboard
+  (Domains → move `www.idilewa.com` / `idilewa.com` to the repo's project). No `VERCEL_TOKEN` or
+  `.vercel/` link exists in this environment, so it cannot be done from here. It is a config change,
+  not a code change.
+- Prod `/api/contact` and `/api/ai-conversation` return 404 while `/api/auth/welcome` answers 405 (GET):
+  the auth function is deployed to the domain's project, the other two are not.
+
+## Pages added (2026-11-13)
+- `heritage.html` + `src/heritagePage.js` — "Heritage & Stories" library from
+  `Idilewa_Heritage_17_5_Consolidated_18_Editorial_Lessons.html`. 18 editorial lessons, 6 collections,
+  ages 3–5 … 16+. Images extracted to `public/assets/heritage/art-01..51.*`. The module mirrors the
+  page's `localStorage` lesson writes (`idilewa_174_<id>`, `idilewa16sample`) into the Supabase
+  `progress` table (`lesson_type = 'heritage'`) for signed-in learners.
+- `signin.html` + `src/signinPage.js` — "Premium Sign-In v18.1" from `Idilewa_SignIn_Premium_v18_1-3.html`,
+  rewritten to use the real `src/supabaseClient.js` helpers (`signIn`, `signUp`, `sendWelcomeEmail`,
+  `requestPasswordReset`, `normalizeAuthError`). Demo config UI and mock mode removed; unreachable
+  `settingsBtn` handler dropped (it threw and halted the module).
+- Both are Vite build inputs (`vite.config.ts` `routes`) and are linked from the header CTAs, the
+  mobile menu, the footer and the `base` ("Explore all pages") directory.
+- `vite.config.js` was a stale duplicate and was deleted; `package.json` `build` now pins
+  `--config vite.config.ts`.
+- `base` was missing from `ROUTES`, so the whole "Explore all pages" directory was unreachable —
+  fixed by adding it to `ROUTES` and `LABELS`.
+
 - `https://www.idilewa.com` currently serves a DIFFERENT app: a single-page bundle
   (`/assets/app-Ca81aC0V.js`, ~1.2 MB) titled "Ìdíléwa Language Academy" whose markup uses
   `h("play",17)` helper calls (React-style) and strings such as `tutor-signup-feature-icon`,
