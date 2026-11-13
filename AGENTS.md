@@ -40,3 +40,18 @@ AI-powered African language-learning SPA (Yorùbá, Igbo, Hausa, Kiswahili and m
 - Server-side secrets still required for full functionality: `PLOTWEAVER_API_KEY`, `GOOGLE_TRANSLATE_API_KEY`,
   `JUDGE0_URL`/`JUDGE0_AUTH_TOKEN`, `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GUARDIAN_TOKEN_SECRET`.
   Without them, AI speech/translation, code execution, and guardian email flows report real errors rather than faking success.
+
+## Deployment reality (verified 2026-11-13)
+- `https://www.idilewa.com` currently serves a DIFFERENT app: a single-page bundle
+  (`/assets/app-Ca81aC0V.js`, ~1.2 MB) titled "Ìdíléwa Language Academy" whose markup uses
+  `h("play",17)` helper calls (React-style) and strings such as `tutor-signup-feature-icon`,
+  `Live Zoom lessons`, and `family-button`. None of those strings exist anywhere in this repo
+  (checked across all local and remote branches).
+- By contrast, THIS repo's `npm run build` produces `dist/assets/index-*.js` + `index-*.css`
+  and no `modulepreload-polyfill-*`/`supabaseClient-*.js` chunks. The prod HTML references the
+  latter, so the live site is NOT built from this repo's Vite config.
+- Prod `/api/contact` and `/api/ai-conversation` return 404, while `/api/auth/welcome` answers
+  405 (GET) — i.e. the auth function is deployed but contact/AI functions are not.
+- Consequence: fixing the "Live Zoom lessons" label and email-routing on the LIVE site requires
+  the source of that deployed React-style bundle (not this repo). This repo can only ship its own
+  `www.idilewa.com` build once the correct project/domain wiring is confirmed.

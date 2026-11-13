@@ -804,8 +804,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
           <p>Questions about language, culture or learning? We’d love to hear from you.</p>
           ${routeLink('contact', `Talk with our team ${icon('arrow', 15)}`, 'button button-primary footer-contact-button')}
           <div class="footer-email">
-            <span class="footer-kicker">Or email us at</span>
-            <a href="mailto:idilewa2026@gmail.com?subject=Idilewa%20support">idilewa2026@gmail.com</a>
+            <span class="footer-kicker">Prefer to write in-app?</span>
+            ${routeLink('contact', 'Open the message box', 'footer-message-link')}
           </div>
         </section>
         <nav class="footer-directory" aria-label="Footer navigation">
@@ -4785,8 +4785,54 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     </nav>`;
   }
 
-  function ensureAIConversationState() { const s = state.aiConversation || (state.aiConversation = {}); s.screen ||= 'welcome'; s.language ||= 'Yorùbá'; s.topic ||= 'Everyday Conversation'; s.messages ||= []; return s; }
-  function renderAIConversation() { const s = ensureAIConversationState(); const languages = ['Yorùbá','Igbo','Hausa','Swahili','Nigerian Pidgin']; const topics = ['Everyday Conversation','Family & Friends','At School','Market & Shopping','Culture & Traditions','Storytelling']; const messages = s.messages.length ? s.messages : [{ who:'ai', native:'Báwo ni o ṣe wà?', english:'How are you?', time:'10:24' }]; return `<div class="ai-conversation-page"><header class="ai-conversation-top"><img src="${brandLogoUrl}" alt="Idílẹ́wà" /><span>AI Conversation</span><small>Speak · Learn · Translate · Practise</small></header><main class="ai-conversation-main">${s.screen === 'welcome' ? `<section class="ai-conversation-welcome"><span class="ai-conversation-icon">◌</span><h1>Welcome to<br />AI Conversation</h1><p>Speak, Learn and Practise<br />in African Languages.</p><img src="./assets/home-family-learning.jpg" alt="Children learning together" /><button data-action="ai-start">Start Conversation →</button></section>` : s.screen === 'language' ? `<section class="ai-choice-screen"><h1>Choose a Language</h1><div class="ai-choice-list">${languages.map((language,index) => `<button class="${s.language === language ? 'is-selected' : ''}" data-action="ai-language" data-language="${language}"><span>${['✣','◉','◈','◒','◍'][index]}</span><strong>${language}</strong><b>${s.language === language ? '◉' : '○'}</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-topic">Continue →</button></section>` : s.screen === 'topic' ? `<section class="ai-choice-screen"><h1>Choose a Topic</h1><div class="ai-topic-list">${topics.map((topic,index) => `<button data-action="ai-topic-select" data-topic="${topic}"><span>${['▣','♧','⌂','▱','◈','▤'][index]}</span><strong>${topic}</strong><b>›</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-chat">Start Chat →</button></section>` : `<section class="ai-chat-screen"><header><button data-action="ai-back">←</button><div><h1>AI Conversation</h1><small>${s.language} · ${s.topic}</small></div></header><div class="ai-chat-messages">${messages.map((message) => `<article class="ai-message ${message.who === 'user' ? 'is-user' : ''}"><span class="ai-message-avatar">${message.who === 'user' ? '●' : '▣'}</span><div><strong>${esc(message.native)}</strong><small>${esc(message.english)}</small></div><time>${esc(message.time || '10:25')}</time></article>`).join('')}</div><div class="ai-chat-tools"><button data-action="ai-listen">▮ Listen</button><button data-action="ai-pause">Ⅱ Pause</button><button data-action="ai-translate">文 Translate</button><button data-action="ai-replay">↻ Replay</button><button data-action="ai-slow">◌ Slow (0.75x)</button></div><div class="ai-composer"><input id="ai-message-input" placeholder="Type or speak..." aria-label="Type or speak" /><button data-action="ai-mic" aria-label="Use microphone">●</button><button data-action="ai-send" aria-label="Send message">➤</button></div></section>`}</main><nav class="ai-bottom-nav"><button type="button" data-route="index">⌂<small>Home</small></button><button type="button" data-route="voice_lessons">▤<small>Learn</small></button><button type="button" class="is-active" data-route="ai-conversation" aria-current="page">▣<small>AI Chat</small></button><button type="button" data-route="voice-practice">♧<small>Practice</small></button><button type="button" data-route="library">▣<small>Library</small></button></nav></div>`; }
+  function ensureAIConversationState() { const s = state.aiConversation || (state.aiConversation = {}); s.screen ||= 'welcome'; s.language ||= 'Yorùbá'; s.topic ||= 'Everyday Conversation'; s.messages ||= []; if (typeof s.pending !== 'boolean') s.pending = false; if (typeof s.error !== 'string') s.error = ''; return s; }
+  function aiClockTime() { try { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } }
+  function splitAiReply(reply) {
+    const text = String(reply || '').trim();
+    const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    if (lines.length >= 2) return { native: lines[0], english: lines.slice(1).join(' ') };
+    return { native: text, english: '' };
+  }
+  function scrollAiChatToEnd() { const box = document.getElementById('ai-chat-messages'); if (box) box.scrollTop = box.scrollHeight; }
+  async function sendAiConversationMessage(rawText) {
+    const text = String(rawText || '').trim();
+    if (!text) return;
+    const s = ensureAIConversationState();
+    if (s.pending) return;
+    s.error = '';
+    s.messages = [...s.messages, { who: 'user', native: text, english: '', time: aiClockTime() }];
+    s.pending = true;
+    saveState();
+    render();
+    scrollAiChatToEnd();
+    const history = s.messages.slice(0, -1)
+      .filter((message) => (message.who === 'user' || message.who === 'ai') && message.native)
+      .map((message) => ({ role: message.who === 'ai' ? 'model' : 'user', text: message.native }));
+    try {
+      const response = await fetch('/api/ai-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ message: text, language: s.language, topic: s.topic, history }),
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) { payload = null; }
+      if (!response.ok) throw new Error(payload?.error || 'The AI partner could not reply. Please try again.');
+      const reply = typeof payload?.reply === 'string' ? payload.reply.trim() : '';
+      if (!reply) throw new Error('The AI partner returned an empty reply. Try again.');
+      const parsed = splitAiReply(reply);
+      s.messages = [...s.messages, { who: 'ai', native: parsed.native, english: parsed.english, time: aiClockTime() }];
+    } catch (error) {
+      s.error = error instanceof Error ? error.message : 'The AI partner could not reply. Please try again.';
+    } finally {
+      s.pending = false;
+      saveState();
+      render();
+      scrollAiChatToEnd();
+      const input = document.getElementById('ai-message-input');
+      if (input) input.focus();
+    }
+  }
+  function renderAIConversation() { const s = ensureAIConversationState(); const languages = ['Yorùbá','Igbo','Hausa','Swahili','Nigerian Pidgin']; const topics = ['Everyday Conversation','Family & Friends','At School','Market & Shopping','Culture & Traditions','Storytelling']; const messages = s.messages.length ? s.messages : [{ who:'ai', native:'Báwo ni o ṣe wà?', english:'How are you?', time:'10:24' }]; return `<div class="ai-conversation-page"><header class="ai-conversation-top"><img src="${brandLogoUrl}" alt="Idílẹ́wà" /><span>AI Conversation</span><small>Speak · Learn · Translate · Practise</small></header><main class="ai-conversation-main">${s.screen === 'welcome' ? `<section class="ai-conversation-welcome"><span class="ai-conversation-icon">◌</span><h1>Welcome to<br />AI Conversation</h1><p>Speak, Learn and Practise<br />in African Languages.</p><img src="./assets/home-family-learning.jpg" alt="Children learning together" /><button data-action="ai-start">Start Conversation →</button></section>` : s.screen === 'language' ? `<section class="ai-choice-screen"><h1>Choose a Language</h1><div class="ai-choice-list">${languages.map((language,index) => `<button class="${s.language === language ? 'is-selected' : ''}" data-action="ai-language" data-language="${language}"><span>${['✣','◉','◈','◒','◍'][index]}</span><strong>${language}</strong><b>${s.language === language ? '◉' : '○'}</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-topic">Continue →</button></section>` : s.screen === 'topic' ? `<section class="ai-choice-screen"><h1>Choose a Topic</h1><div class="ai-topic-list">${topics.map((topic,index) => `<button data-action="ai-topic-select" data-topic="${topic}"><span>${['▣','♧','⌂','▱','◈','▤'][index]}</span><strong>${topic}</strong><b>›</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-chat">Start Chat →</button></section>` : `<section class="ai-chat-screen"><header><button data-action="ai-back">←</button><div><h1>AI Conversation</h1><small>${s.language} · ${s.topic}</small></div></header><div class="ai-chat-messages" id="ai-chat-messages" aria-live="polite">${messages.map((message) => `<article class="ai-message ${message.who === 'user' ? 'is-user' : ''}"><span class="ai-message-avatar">${message.who === 'user' ? '●' : '▣'}</span><div><strong>${esc(message.native)}</strong><small>${esc(message.english)}</small></div><time>${esc(message.time || '')}</time></article>`).join('')}${s.pending ? '<article class="ai-message is-typing"><span class="ai-message-avatar">▣</span><div><span class="ai-typing-dots" aria-label="Idilewa AI is replying"><i></i><i></i><i></i></span></div></article>' : ''}</div>${s.error ? `<p class="ai-chat-error" role="alert">${icon('info', 15)} ${esc(s.error)}</p>` : ''}<div class="ai-chat-tools"><button data-action="ai-listen">▮ Listen</button><button data-action="ai-pause">Ⅱ Pause</button><button data-action="ai-translate">文 Translate</button><button data-action="ai-replay">↻ Replay</button><button data-action="ai-slow">◌ Slow (0.75x)</button></div><form class="ai-composer" data-form="ai-message"><input id="ai-message-input" name="message" autocomplete="off" maxlength="2000" placeholder="${s.pending ? 'Idilewa AI is replying…' : 'Type or speak…'}" aria-label="Type or speak" ${s.pending ? 'disabled' : ''} /><button type="button" data-action="ai-mic" aria-label="Use microphone">●</button><button type="submit" aria-label="Send message" ${s.pending ? 'disabled' : ''}>➤</button></form></section>`}</main><nav class="ai-bottom-nav"><button type="button" data-route="index">⌂<small>Home</small></button><button type="button" data-route="voice_lessons">▤<small>Learn</small></button><button type="button" class="is-active" data-route="ai-conversation" aria-current="page">▣<small>AI Chat</small></button><button type="button" data-route="voice-practice">♧<small>Practice</small></button><button type="button" data-route="library">▣<small>Library</small></button></nav></div>`; }
 
   function renderVoiceToolPage(page, params = {}) {
     const details = {
@@ -5167,7 +5213,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   }
 
   function aiHelperButton(topic = 'general') {
-    return `<button type="button" class="ai-helper-button" data-action="open-ai-helper" data-topic="${esc(topic)}">${icon('sparkles', 16)} <span>AI learning helper</span><small>preview</small></button>`;
+    return `<button type="button" class="ai-helper-button" data-action="open-ai-helper" data-topic="${esc(topic)}">${icon('sparkles', 16)} <span>AI learning helper</span><small>live</small></button>`;
   }
 
   function aiPromptSuggestions(topic) {
@@ -5191,17 +5237,36 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     return replies[topic] || replies.general;
   }
 
-  function answerAiPrompt(topic) {
+  async function answerAiPrompt(topic, question) {
     const answer = document.getElementById('aiAnswer');
     if (!answer) return;
-    answer.innerHTML = `<span class="section-kicker">A lesson prompt · offline preview</span><p>${esc(aiReply(topic))}</p>`;
+    const prompt = String(question || '').trim() || aiReply(topic);
+    const s = ensureAIConversationState();
+    answer.innerHTML = `<span class="section-kicker">Idilewa AI partner</span><p class="ai-helper-thinking">Thinking…</p>`;
+    try {
+      const response = await fetch('/api/ai-conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ message: prompt, language: s.language, topic: 'Learning helper' }),
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) { payload = null; }
+      if (!response.ok) throw new Error(payload?.error || 'The AI partner could not reply. Please try again.');
+      const reply = typeof payload?.reply === 'string' ? payload.reply.trim() : '';
+      if (!reply) throw new Error('The AI partner returned an empty reply. Try again.');
+      if (!answer.isConnected) return;
+      answer.innerHTML = `<span class="section-kicker">Idilewa AI partner</span><p>${esc(reply).replace(/\n/g, '<br />')}</p>`;
+    } catch (error) {
+      if (!answer.isConnected) return;
+      answer.innerHTML = `<span class="section-kicker">Idilewa AI partner</span><p class="ai-helper-error">${esc(error instanceof Error ? error.message : 'The AI partner could not reply. Please try again.')}</p>`;
+    }
   }
 
   function openAiHelper(topic = 'general') {
     const root = document.getElementById('modal-root');
     const suggestions = aiPromptSuggestions(topic);
     const title = topic === 'oriki' ? 'Think alongside Oríkì.' : topic === 'owe' ? 'Think alongside this Owe.' : topic === 'story' ? 'Think alongside the story.' : 'A gentle learning prompt.';
-    root.innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card ai-helper-modal" role="dialog" aria-modal="true" aria-labelledby="aiHelperTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close helper">${icon('close', 19)}</button><div class="modal-icon">${icon('sparkles', 22)}</div><span class="section-kicker">AI learning helper · local preview</span><h2 id="aiHelperTitle">${title}</h2><p class="ai-helper-disclaimer">This prototype has no AI service connected. It offers fixed, offline reflection prompts only; it does not send or save your question. Please do not type names or personal details.</p><div class="ai-suggestions">${suggestions.map((prompt) => `<button type="button" class="ai-suggestion" data-action="ai-suggestion" data-topic="${esc(topic)}" data-prompt="${esc(prompt)}">${esc(prompt)} ${icon('arrow', 14)}</button>`).join('')}</div><form class="ai-helper-form" data-form="ai-helper" data-topic="${esc(topic)}"><label for="aiHelperQuestion">What would you like to think about?</label><textarea id="aiHelperQuestion" name="question" rows="2" maxlength="240" placeholder="Keep your question general…" required></textarea><button type="submit" class="button button-primary">Show a reflection prompt ${icon('arrow', 14)}</button></form><div class="ai-helper-answer" id="aiAnswer" aria-live="polite"><span class="section-kicker">A safe place to start</span><p>Choose a suggested question to see an offline learning prompt.</p></div></section></div>`;
+    root.innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card ai-helper-modal" role="dialog" aria-modal="true" aria-labelledby="aiHelperTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close helper">${icon('close', 19)}</button><div class="modal-icon">${icon('sparkles', 22)}</div><span class="section-kicker">AI learning helper</span><h2 id="aiHelperTitle">${title}</h2><p class="ai-helper-disclaimer">Powered by the Idilewa AI partner. Ask a short learning question and it replies in your chosen language with an English translation. Please do not type names or personal details.</p><div class="ai-suggestions">${suggestions.map((prompt) => `<button type="button" class="ai-suggestion" data-action="ai-suggestion" data-topic="${esc(topic)}" data-prompt="${esc(prompt)}">${esc(prompt)} ${icon('arrow', 14)}</button>`).join('')}</div><form class="ai-helper-form" data-form="ai-helper" data-topic="${esc(topic)}"><label for="aiHelperQuestion">What would you like to think about?</label><textarea id="aiHelperQuestion" name="question" rows="2" maxlength="240" placeholder="Ask a short learning question…" required></textarea><button type="submit" class="button button-primary">Ask the AI partner ${icon('arrow', 14)}</button></form><div class="ai-helper-answer" id="aiAnswer" aria-live="polite"><span class="section-kicker">A safe place to start</span><p>Choose a suggested question, or type your own, to hear from the Idilewa AI partner.</p></div></section></div>`;
     document.getElementById('aiHelperQuestion')?.focus();
   }
 
@@ -5553,18 +5618,30 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   }
 
   function renderContact() {
-    const supportEmail = 'idilewa2026@gmail.com';
+    const topics = [
+      ['learning-support', 'Learning support'],
+      ['school-partnership', 'School partnership'],
+      ['safety-concern', 'Safety & privacy concern'],
+      ['general-question', 'General question'],
+    ];
     return `<div class="container route-page information-page">
       <div class="breadcrumbs">${routeLink('index', 'Home')}<span>/</span><strong>Contact</strong></div>
       <section class="page-intro-card">
         <span class="section-kicker">Talk with the Idilewa team</span>
         <h1>We’d love to <em>hear from you.</em></h1>
         <p>Questions about language learning, schools, accessibility or the platform are welcome.</p>
-        <div class="contact-email-card">
-          <div><span class="section-kicker">Email Idilewa</span><a href="mailto:${supportEmail}?subject=Idilewa%20support">${supportEmail}</a></div>
-          <a class="button button-primary" href="mailto:${supportEmail}?subject=Idilewa%20support">${icon('send', 16)} Write to us</a>
-        </div>
-        <p class="contact-privacy-note">${icon('lock', 15)} This opens your email app. Do not include a child’s full name, password, address or other sensitive information.</p>
+        <form class="contact-form" data-form="contact" novalidate>
+          <div class="contact-form-row">
+            <label for="contactName">Your name<input id="contactName" name="name" type="text" maxlength="80" autocomplete="name" required placeholder="e.g. Adaeze O." /></label>
+            <label for="contactEmail">Your email<input id="contactEmail" name="email" type="email" maxlength="160" autocomplete="email" required placeholder="you@example.com" /></label>
+          </div>
+          <label for="contactTopic">What is this about?<select id="contactTopic" name="topic" required>${topics.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label>
+          <label for="contactMessage">Your message<textarea id="contactMessage" name="message" rows="5" maxlength="4000" required placeholder="Tell us how we can help…"></textarea></label>
+          <input type="text" name="company" class="contact-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <p class="contact-form-feedback" data-contact-feedback aria-live="polite"></p>
+          <button class="button button-primary" type="submit">${icon('send', 16)} Send message</button>
+        </form>
+        <p class="contact-privacy-note">${icon('lock', 15)} Your message is sent securely to the Idilewa team from this page. Do not include a child’s full name, password, address or other sensitive information.</p>
       </section>
       <section class="information-card-grid" aria-label="Contact topics">
         <article class="profile-card"><span class="section-kicker">Families & learners</span><h2>Learning support</h2><p>Email us about platform access, learning paths or accessibility. For account safety, never send passwords or one-time codes.</p></article>
@@ -5923,8 +6000,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       ${renderStepper(['Choose a tutor', 'Parent signs consent', 'Child verifies code', 'Connect safely'], 0)}
       ${banner}
       <div class="connection-notice">${icon('info', 17)} <div><strong>Sample directory · not real registered teachers.</strong><span>Profiles, schedules and learner counts are placeholders. No one receives a message or booking from this demo. In a real service, permission must be checked on a secure server.</span></div></div>
-      <section class="teacher-directory-section"><div class="section-heading"><div><span class="section-kicker">Educator profiles</span><h2>Meet a language guide.</h2><p>Compare teaching focus, weekly availability and sample experience.</p></div><label class="teacher-filter-label" for="teacherFilter">Filter by focus<select id="teacherFilter" data-action="filter-teachers"><option value="all" ${state.teacherFilter === 'all' ? 'selected' : ''}>All teaching styles</option><option value="speaking" ${state.teacherFilter === 'speaking' ? 'selected' : ''}>Conversation</option><option value="story" ${state.teacherFilter === 'story' ? 'selected' : ''}>Stories</option><option value="coding" ${state.teacherFilter === 'coding' ? 'selected' : ''}>Coding + language</option></select></label></div>
-        <div class="teacher-profile-grid">${visible.length ? visible.map((teacher) => { const allowed = childVerified && tutorGrantIsActive(teacher.id); const requested = state.teacherRequests.includes(teacher.id); return `<article class="teacher-profile-card"><div class="teacher-profile-photo teacher-profile-initials-photo" role="img" aria-label="Sample educator profile for ${esc(teacher.name)}"><span class="teacher-profile-monogram" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join('').replace(/[^a-z0-9]/gi, ''))}</span><span class="demo-profile-badge">Sample profile</span></div><div class="teacher-profile-body"><div class="teacher-name-row"><div><span class="teacher-language-tag">${esc(teacher.language)} · ${teacher.focus.includes('coding') ? 'Language + code' : 'Language learning'}</span><h3>${esc(teacher.name)}</h3></div><span class="teacher-registered-mark">${icon('check', 13)} Preview</span></div><p class="teacher-focus">${esc(teacher.focus)}</p><div class="teacher-metrics"><div><span>${icon('clock', 15)} Teaching hours</span><strong>${esc(teacher.hoursSummary)}</strong></div><div><span>${icon('people', 15)} Learners supported</span><strong>${teacher.learners} <small>sample</small></strong></div></div><div class="teacher-card-hours"><span>${icon('calendar', 15)} Weekly availability</span><strong>${esc(teacher.hours)}</strong></div><button class="button button-soft teacher-profile-button" type="button" disabled>Unavailable · sample educator</button><button class="text-link teacher-details-link" type="button" data-action="teacher-profile" data-id="${teacher.id}">View sample profile</button></div></article>`; }).join('') : '<div class="teacher-empty">No sample profiles match that focus yet. Try another filter.</div>'}</div>
+      <section class="teacher-directory-section"><div class="section-heading"><div><span class="section-kicker">Educator profiles</span><h2>Meet a language guide.</h2><p>Compare teaching focus, live lesson times and sample experience.</p></div><label class="teacher-filter-label" for="teacherFilter">Filter by focus<select id="teacherFilter" data-action="filter-teachers"><option value="all" ${state.teacherFilter === 'all' ? 'selected' : ''}>All teaching styles</option><option value="speaking" ${state.teacherFilter === 'speaking' ? 'selected' : ''}>Conversation</option><option value="story" ${state.teacherFilter === 'story' ? 'selected' : ''}>Stories</option><option value="coding" ${state.teacherFilter === 'coding' ? 'selected' : ''}>Coding + language</option></select></label></div>
+        <div class="teacher-profile-grid">${visible.length ? visible.map((teacher) => { const allowed = childVerified && tutorGrantIsActive(teacher.id); const requested = state.teacherRequests.includes(teacher.id); return `<article class="teacher-profile-card"><div class="teacher-profile-photo teacher-profile-initials-photo" role="img" aria-label="Sample educator profile for ${esc(teacher.name)}"><span class="teacher-profile-monogram" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join('').replace(/[^a-z0-9]/gi, ''))}</span><span class="demo-profile-badge">Sample profile</span></div><div class="teacher-profile-body"><div class="teacher-name-row"><div><span class="teacher-language-tag">${esc(teacher.language)} · ${teacher.focus.includes('coding') ? 'Language + code' : 'Language learning'}</span><h3>${esc(teacher.name)}</h3></div><span class="teacher-registered-mark">${icon('check', 13)} Preview</span></div><p class="teacher-focus">${esc(teacher.focus)}</p><div class="teacher-metrics"><div><span>${icon('clock', 15)} Live Lessons</span><strong>${esc(teacher.hoursSummary)}</strong></div><div><span>${icon('people', 15)} Learners supported</span><strong>${teacher.learners} <small>sample</small></strong></div></div><div class="teacher-card-hours"><span>${icon('calendar', 15)} Lesson times</span><strong>${esc(teacher.hours)}</strong></div><button class="button button-soft teacher-profile-button" type="button" disabled>Unavailable · sample educator</button><button class="text-link teacher-details-link" type="button" data-action="teacher-profile" data-id="${teacher.id}">View sample profile</button></div></article>`; }).join('') : '<div class="teacher-empty">No sample profiles match that focus yet. Try another filter.</div>'}</div>
       </section>      <div class="connection-child-note">${icon('heart', 17)} No teacher connection or request can be made from this preview.</div></div>`;
   }
 
@@ -5992,8 +6069,18 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const teacher = TEACHER_PROFILES.find((item) => item.id === id);
     if (!teacher) return;
     const requested = state.teacherRequests.includes(teacher.id);
-    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close profile">${icon('close', 19)}</button><div class="teacher-modal-top"><span class="teacher-modal-avatar" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join(''))}</span><div><span class="section-kicker">Sample educator profile</span><h2 id="teacherModalTitle">${esc(teacher.name)}</h2><p>${esc(teacher.language)} · ${esc(teacher.focus)}</p></div></div><div class="teacher-modal-stats"><div><span>Teaching hours</span><strong>${esc(teacher.hours)}</strong></div><div><span>Learners supported</span><strong>${teacher.learners} <small>sample learners</small></strong></div></div><p class="teacher-modal-bio">${esc(teacher.bio)}</p><div class="teacher-modal-safeguard">${icon('shield', 16)} This preview does not contact this educator. A parent or guardian should review and arrange any real session.</div><button class="button ${requested ? 'button-soft' : 'button-primary'} teacher-request-button" data-action="request-teacher-intro" data-id="${teacher.id}" ${requested ? 'aria-pressed="true"' : ''}>${requested ? 'Request saved in this demo' : 'Request a learning introduction'} ${icon(requested ? 'check' : 'arrow', 15)}</button></section></div>`;
+    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card teacher-modal" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close profile">${icon('close', 19)}</button><div class="teacher-modal-top"><span class="teacher-modal-avatar" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join(''))}</span><div><span class="section-kicker">Sample educator profile</span><h2 id="teacherModalTitle">${esc(teacher.name)}</h2><p>${esc(teacher.language)} · ${esc(teacher.focus)}</p></div></div><div class="teacher-modal-stats"><div><span>Live Lessons</span><strong>${esc(teacher.hours)}</strong></div><div><span>Learners supported</span><strong>${teacher.learners} <small>sample learners</small></strong></div></div><p class="teacher-modal-bio">${esc(teacher.bio)}</p><div class="teacher-modal-safeguard">${icon('shield', 16)} This preview does not contact this educator. A parent or guardian should review and arrange any real session.</div><div class="teacher-modal-actions"><button class="button button-primary teacher-message-button" data-action="open-tutor-message" data-id="${teacher.id}">${icon('send', 15)} Write a message</button><button class="button ${requested ? 'button-soft' : 'button-outline'} teacher-request-button" data-action="request-teacher-intro" data-id="${teacher.id}" ${requested ? 'aria-pressed="true"' : ''}>${requested ? 'Request saved in this demo' : 'Request a learning introduction'} ${icon(requested ? 'check' : 'arrow', 15)}</button></div></section></div>`;
     document.querySelector('.teacher-request-button')?.focus();
+  }
+
+  function openTutorMessage(id) {
+    const teacher = TEACHER_PROFILES.find((item) => item.id === id);
+    if (!teacher) return;
+    const user = getCurrentUser();
+    const defaultName = user?.name || '';
+    const defaultEmail = user?.email || '';
+    document.getElementById('modal-root').innerHTML = `<div class="modal-backdrop" data-action="close-modal"><section class="modal-card tutor-message-modal" role="dialog" aria-modal="true" aria-labelledby="tutorMessageTitle"><button class="modal-close icon-button" data-action="close-modal" aria-label="Close message box">${icon('close', 19)}</button><div class="teacher-modal-top"><span class="teacher-modal-avatar" aria-hidden="true">${esc(teacher.name.split(' ').map((part) => part[0]).join(''))}</span><div><span class="section-kicker">Write a message</span><h2 id="tutorMessageTitle">Message about ${esc(teacher.name)}</h2><p>${esc(teacher.language)} · ${esc(teacher.focus)}</p></div></div><p class="tutor-message-intro">Write your question about this educator and it is delivered to the Idilewa team from this page. Please do not include a child’s full name, password or other sensitive information.</p><form class="contact-form tutor-message-form" data-form="tutor-message" novalidate><input type="hidden" name="teacher" value="${esc(teacher.name)}" /><div class="contact-form-row"><label for="tutorMessageName">Your name<input id="tutorMessageName" name="name" type="text" maxlength="80" autocomplete="name" required value="${esc(defaultName)}" placeholder="e.g. Adaeze O." /></label><label for="tutorMessageEmail">Your email<input id="tutorMessageEmail" name="email" type="email" maxlength="160" autocomplete="email" required value="${esc(defaultEmail)}" placeholder="you@example.com" /></label></div><label for="tutorMessageBody">Your message<textarea id="tutorMessageBody" name="message" rows="5" maxlength="4000" required placeholder="Ask about live lesson times, focus or next steps…"></textarea></label><input type="text" name="company" class="contact-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" /><p class="contact-form-feedback" data-tutor-feedback aria-live="polite"></p><button class="button button-primary" type="submit">${icon('send', 16)} Send message</button></form></section></div>`;
+    document.getElementById('tutorMessageBody')?.focus();
   }
 
   function openLearnerProfile(id) {
@@ -7720,8 +7807,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'open-ai-helper': openAiHelper(el.dataset.topic || 'general'); break;
       case 'ai-suggestion': {
         const input = document.getElementById('aiHelperQuestion');
-        if (input) input.value = el.dataset.prompt || '';
-        answerAiPrompt(el.dataset.topic || 'general');
+        const prompt = el.dataset.prompt || '';
+        if (input) input.value = prompt;
+        void answerAiPrompt(el.dataset.topic || 'general', prompt);
         break;
       }
       case 'start-consent-request':
@@ -8336,6 +8424,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
         state.consent.assignmentAccepted = true; saveState(); render();
         showToast('Approved demo assignment noted. No lesson or message was created.'); break;
       case 'teacher-profile': openTeacherProfile(el.dataset.id); break;
+      case 'open-tutor-message': openTutorMessage(el.dataset.id); break;
       case 'request-teacher-intro': {
         document.getElementById('modal-root').innerHTML = '';
         showToast('Teacher connections are unavailable until real educators and server-side guardian authorization are configured.', 'error');
@@ -8822,8 +8911,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'ai-topic': { const s = ensureAIConversationState(); s.screen = 'topic'; saveState(); render(); break; }
   case 'ai-topic-select': { const s = ensureAIConversationState(); s.topic = el.dataset.topic; saveState(); render(); break; }
   case 'ai-chat': { const s = ensureAIConversationState(); s.screen = 'chat'; saveState(); render(); break; }
-  case 'ai-back': { const s = ensureAIConversationState(); s.screen = s.screen === 'chat' ? 'topic' : s.screen === 'topic' ? 'language' : 'welcome'; saveState(); render(); break; }
-  case 'ai-send': { const input = document.getElementById('ai-message-input'); const text = input?.value.trim(); if (!text) break; const s = ensureAIConversationState(); s.messages = [...s.messages, { who:'user', native:text, english:'', time:'10:25' }, { who:'ai', native:'Ó dáa! Kí ni ó fẹ́ bá mi sọ̀rọ̀ lónìí?', english:'Great! What would you like to talk about today?', time:'10:25' }]; saveState(); render(); break; }
+  case 'ai-back': { const s = ensureAIConversationState(); s.error = ''; s.pending = false; s.screen = s.screen === 'chat' ? 'topic' : s.screen === 'topic' ? 'language' : 'welcome'; saveState(); render(); break; }
+  case 'ai-send': { const input = document.getElementById('ai-message-input'); const text = input?.value.trim(); if (!text) break; input.value = ''; void sendAiConversationMessage(text); break; }
   case 'ai-mic': { showToast('Microphone ready. Speak your phrase.'); break; }
   case 'ai-listen': { const s = ensureAIConversationState(); const last = [...s.messages].reverse().find((message) => message.native); if (!last) { showToast('Start a conversation before listening.', 'error'); break; } void playPlotweaverSpeech(last.native, trainerLanguageCode(s.language === 'Yorùbá' ? 'yoruba' : s.language === 'Igbo' ? 'igbo' : s.language === 'Hausa' ? 'hausa' : s.language === 'Swahili' ? 'swahili' : 'yoruba')).then(() => showToast('Playing the translated voice.')).catch((error) => showToast(error instanceof Error ? error.message : 'Audio playback is unavailable.', 'error')); break; }
   case 'ai-pause': { if (!activePlotweaverAudio) { showToast('Listen to a phrase before pausing it.', 'error'); break; } activePlotweaverAudio.pause(); showToast('Playback paused.'); break; }
@@ -9260,10 +9349,87 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       if (!response || !key) { showToast('Add a short practice response before saving.', 'error'); return; }
       state.lessonResponses[key] = response;
       saveState(); render(); showToast('Practice saved on this device.');
+    } else if (type === 'contact') {
+      const name = String(data.get('name') || '').trim();
+      const email = String(data.get('email') || '').trim();
+      const topic = String(data.get('topic') || 'general-question');
+      const message = String(data.get('message') || '').trim();
+      const feedback = form.querySelector('[data-contact-feedback]');
+      const submitButton = form.querySelector('button[type="submit"]');
+      const previousLabel = submitButton?.innerHTML || '';
+      const setFeedback = (text, tone) => {
+        if (!feedback) return;
+        feedback.textContent = text;
+        feedback.dataset.tone = tone || '';
+      };
+      if (!name || !email || !message) { setFeedback('Please add your name, email and message.', 'error'); showToast('Please complete every field.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFeedback('Enter a valid email address.', 'error'); showToast('Enter a valid email address.', 'error'); return; }
+      if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Sending…'; }
+      setFeedback('Sending your message…', '');
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ name, email, topic, message, company: String(data.get('company') || '') }),
+        });
+        let payload = null;
+        try { payload = await response.json(); } catch (_) { payload = null; }
+        if (!response.ok) throw new Error(payload?.error || 'Your message could not be sent. Please try again.');
+        form.reset();
+        setFeedback(payload?.message || 'Thank you — your message has been sent.', 'success');
+        showToast(payload?.message || 'Your message has been sent.', 'success');
+      } catch (error) {
+        const text = error instanceof Error ? error.message : 'Your message could not be sent. Please try again.';
+        setFeedback(text, 'error');
+        showToast(text, 'error');
+      } finally {
+        if (submitButton?.isConnected) { submitButton.disabled = false; submitButton.innerHTML = previousLabel; }
+      }
+    } else if (type === 'tutor-message') {
+      const name = String(data.get('name') || '').trim();
+      const email = String(data.get('email') || '').trim();
+      const teacher = String(data.get('teacher') || '').trim();
+      const message = String(data.get('message') || '').trim();
+      const feedback = form.querySelector('[data-tutor-feedback]');
+      const submitButton = form.querySelector('button[type="submit"]');
+      const previousLabel = submitButton?.innerHTML || '';
+      const setFeedback = (text, tone) => {
+        if (!feedback) return;
+        feedback.textContent = text;
+        feedback.dataset.tone = tone || '';
+      };
+      if (!name || !email || !message) { setFeedback('Please add your name, email and message.', 'error'); showToast('Please complete every field.', 'error'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFeedback('Enter a valid email address.', 'error'); showToast('Enter a valid email address.', 'error'); return; }
+      if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Sending…'; }
+      setFeedback('Sending your message…', '');
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ name, email, message, teacher, source: 'tutor', topic: 'tutor-connection', company: String(data.get('company') || '') }),
+        });
+        let payload = null;
+        try { payload = await response.json(); } catch (_) { payload = null; }
+        if (!response.ok) throw new Error(payload?.error || 'Your message could not be sent. Please try again.');
+        setFeedback(payload?.message || 'Thank you — your message has been sent to the Idilewa team.', 'success');
+        showToast('Your message has been sent to the Idilewa team.', 'success');
+        form.reset();
+      } catch (error) {
+        const text = error instanceof Error ? error.message : 'Your message could not be sent. Please try again.';
+        setFeedback(text, 'error');
+        showToast(text, 'error');
+      } finally {
+        if (submitButton?.isConnected) { submitButton.disabled = false; submitButton.innerHTML = previousLabel; }
+      }
+    } else if (type === 'ai-message') {
+      const text = String(data.get('message') || '').trim();
+      if (!text) { showToast('Type a message before sending.', 'error'); return; }
+      form.reset();
+      void sendAiConversationMessage(text);
     } else if (type === 'ai-helper') {
       const question = String(data.get('question') || '').trim();
       if (!question) { showToast('Add a short question to receive a reflection prompt.', 'error'); return; }
-      answerAiPrompt(form.dataset.topic || 'general');
+      void answerAiPrompt(form.dataset.topic || 'general', question);
     } else if (type === 'owe-reflection') {
       const thought = String(data.get('thought') || '').trim();
       if (!state.reflectionFeeling) { showToast('Choose a feeling first, or ask a trusted adult to help you name one.', 'error'); return; }
