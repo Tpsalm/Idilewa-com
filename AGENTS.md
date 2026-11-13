@@ -1,0 +1,42 @@
+# Idilewa.com — repository notes
+
+AI-powered African language-learning SPA (Yorùbá, Igbo, Hausa, Kiswahili and more).
+
+## Stack
+- Vanilla ES modules + Vite. No React/TypeScript.
+- Single-page app: `app.js` (~9k lines) renders every route by string templating into `#main`.
+- Routing: hash/query based (`?route=<page>` or `#/<page>`), handled by `parseLocation()` + `render()`.
+- Auth/data: Supabase (`src/supabaseClient.js`). Serverless functions in `api/` (Vercel).
+- Styles: `styles.css` (large), `code-play.css`.
+
+## Commands
+- `npm test` — Node built-in test runner over `tests/*.test.js` (no framework).
+- `npm run build` — Vite production build.
+- `npm run dev` — Vite dev server.
+
+## Route map (key)
+- `renderPage(page, params)` is the dispatcher (`switch (page)`).
+- `coding` → `renderCoding()` (designed Code landing page).
+- `coding-studio` → `renderCodingStudio()` (block IDE).
+- `games` → `renderCodePlayRoute()` (state-driven Code & Play flow: choose → studio → preview → success → library).
+- `ai-conversation` → `renderAIConversation()` (own route; the AI chat UI).
+- `voice-translation` → `renderVoiceToolPage('voice-translation')` (the real translation tool).
+- `REMOVED_ROUTES` in `app.js` lists routes that redirect to `index`.
+
+## Conventions and gotchas
+- Pages are plain template strings; markup must be escaped with `esc()` for user data.
+- Global delegated listeners: `click` (`[data-route]` then `[data-action]`), `change`, `input`, `submit`, `drop`.
+- `handleAction(action, el)` is a big `switch`; its `default` silently ignores unknown actions, so an
+  unhandled `data-action` produces a dead control with no console error. Audit new `data-action`s against it.
+- Asset paths: images live in `public/assets/` (served at `/assets/...`). `assignUniqueRouteImages()`
+  rewrites `src="./assets/..."` to `/assets/...`. Bundled imports (e.g. `assets/idilewa-brand.svg`)
+  resolve to hashed/inlined URLs — reference those via the imported binding, not a raw path.
+- `coding`, `coding-studio` and `games` render full-screen (own header/footer chrome); other routes
+  get the shared header/footer plus information layers.
+
+## Environment
+- `.env` (gitignored) holds `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (and legacy `SUPABASE_PUBLIC_URL`,
+  `SUPABASE_ANON_KEY`). See `.env.example` for the full server-side list.
+- Server-side secrets still required for full functionality: `PLOTWEAVER_API_KEY`, `GOOGLE_TRANSLATE_API_KEY`,
+  `JUDGE0_URL`/`JUDGE0_AUTH_TOKEN`, `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GUARDIAN_TOKEN_SECRET`.
+  Without them, AI speech/translation, code execution, and guardian email flows report real errors rather than faking success.

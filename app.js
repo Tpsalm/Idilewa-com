@@ -108,7 +108,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     'voice-language', 'voice-grade', 'voice-audio', 'voice-practice',
     'voice-text-to-speech', 'voice-cloning', 'voice-speech-to-text', 'voice-translation',
     'curriculum',
-    'index', 'about', 'coding', 'coding-studio', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
+    'ai-conversation',
+    'index', 'about', 'coding', 'coding-studio', 'games', 'connect_students', 'connect_teachers', 'consent', 'contact', 'privacy', 'course',
   'ere', 'ifa', 'ifa_odu', 'individuals', 'library',
   'kids', 'languages', 'lesson', 'login', 'oral', 'oral_genre', 'oriki', 'owe',
   'owe_add', 'owe_detail', 'owe_story', 'owe_reflection', 'pricing', 'profile', 'schools',
@@ -393,7 +394,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   const NAV_GROUPS = {
     curriculum: 'curriculum',
-    coding: 'code', 'coding-studio': 'code',
+    coding: 'code', 'coding-studio': 'code', games: 'code',
     trainer: 'trainer', voice_lessons: 'trainer',
     languages: 'curriculum', course: 'curriculum', lesson: 'curriculum', kids: 'curriculum', individuals: 'curriculum',
     oral: 'read', oral_genre: 'read', oriki: 'read', owe: 'read', owe_add: 'read',
@@ -408,6 +409,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   LABELS.curriculum = 'Curriculum';
   LABELS.coding = 'Code';
   LABELS['coding-studio'] = 'Start Coding';
+  LABELS.games = 'Code & Play';
+  LABELS['ai-conversation'] = 'AI Conversation';
   Object.assign(LABELS, {
     'voice-language': 'Choose a voice lesson language',
     'voice-grade': 'Choose a voice lesson grade',
@@ -784,7 +787,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const items = [
       { route: 'index', label: 'Home', ico: 'home' },
       { route: 'voice_lessons', label: 'Voice Lessons', ico: 'mic' },
-      { route: 'voice-translation', label: 'AI Conversation', ico: 'sparkles' },
+      { route: 'ai-conversation', label: 'AI Conversation', ico: 'sparkles' },
       { route: 'coding', label: 'Code', ico: 'code' },
       { route: 'profile', label: 'Profile', ico: 'user' }
     ];
@@ -891,7 +894,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
             <div class="hero-visual-stage-inner">
               <div class="hero-photo-wrap family-view-reference">
                 <div class="hero-photo-frame">
-                  <img src="./assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" />
+                  <img src="/assets/home-family-learning.jpg" alt="A family learning African language together with Idilewa" class="hero-photo" />
                 </div>
               </div>
             </div>
@@ -1145,7 +1148,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
             <div class="landing-hero-actions">
               ${routeLink('voice-language', `Start Learning ${icon('arrow', 16)}`, 'button button-primary')}
               ${routeLink('coding', `Code for Kids ${icon('code', 16)}`, 'button button-outline')}
-              ${routeLink('voice-translation', `AI Conversation ${icon('sparkles', 16)}`, 'button button-accent')}
+              ${routeLink('games', `Code &amp; Play ${icon('play', 16)}`, 'button button-ghost')}
+              ${routeLink('ai-conversation', `AI Conversation ${icon('sparkles', 16)}`, 'button button-accent')}
             </div>
             <div class="landing-hero-proof"><span>${icon('globe', 17)}</span><span>Culture, creativity and learning<br />for every generation.</span></div>
           </div>
@@ -1153,7 +1157,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   <div class="hero-visual-stage-inner">
   <div class="hero-photo-wrap family-view-reference">
   <div class="hero-photo-frame">
-  <img src="/assets/idilewa-family-view.png" alt="Idílẹ́wà Living Family View showing a family learning together" class="hero-photo" fetchpriority="high" />
+  <img src="/assets/home-family-learning.jpg" alt="A family learning African language together with Idilewa" class="hero-photo" fetchpriority="high" />
   </div>
   </div>
   </div>
@@ -1184,7 +1188,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
           <section class="landing-story-card">
             <img src="/assets/story-grandmother.jpg" alt="A grandmother sharing a story with children" loading="lazy" />
-            <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore stories ${icon('arrow', 14)}`, 'text-link')}</div>
+            <div><span class="section-kicker">Stories that carry us</span><h2>Learn from the voices around you.</h2><p>Explore stories, sayings and traditions passed from one generation to the next.</p>${routeLink('ere', `Explore Stories ${icon('arrow', 14)}`, 'text-link')}</div>
           </section>
         </main>
 
@@ -4279,7 +4283,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   function ensureScratchState() { const s = state.scratch || (state.scratch = {}); s.category ||= 'motion'; s.tab ||= 'code'; s.blocks ||= []; s.running ||= false; s.sprite ||= 'Sprite1'; s.sprites ||= ['Sprite1']; return s; }
   function renderScratchEditor() { const s = ensureScratchState(); const blocks = SCRATCH_BLOCKS[s.category] || SCRATCH_BLOCKS.motion; const catColor = { motion:'#4c97ff',looks:'#9966ff',sound:'#cf63cf',events:'#ffbf00',control:'#ffab19',sensing:'#5cb1d6',operators:'#59c059',variables:'#ff8c1a',myblocks:'#ff6680' }; return `<div class="scratch-editor-page"><header class="scratch-topbar"><button class="scratch-logo" data-action="scratch-home" aria-label="Idilewa Code home">Idilewa</button><button data-action="scratch-menu">⚙ Settings⌄</button><button data-action="scratch-menu">▣ File⌄</button><button data-action="scratch-menu">✎ Edit⌄</button><span class="scratch-divider"></span><button data-action="scratch-tutorial">☀ Tutorials</button><button data-action="scratch-debug">⚙ Debug</button><span class="scratch-spacer"></span><button class="scratch-join">Join Idilewa</button><button>Sign in</button></header><main class="scratch-workbench"><nav class="scratch-tabs"><button class="${s.tab === 'code' ? 'is-active' : ''}" data-action="scratch-tab" data-tab="code">▤ Code</button><button class="${s.tab === 'costumes' ? 'is-active' : ''}" data-action="scratch-tab" data-tab="backdrops">◒ Backdrops</button><button class="${s.tab === 'sounds' ? 'is-active' : ''}" data-action="scratch-tab" data-tab="sounds">◖ Sounds</button></nav><section class="scratch-editor-body"><aside class="scratch-blocks-panel"><div class="scratch-category-list">${SCRATCH_CATEGORIES.map(([id,label,ico]) => `<button class="scratch-category ${s.category === id ? 'is-active' : ''}" style="--scratch-color:${catColor[id]}" data-action="scratch-category" data-category="${id}">${icon(ico,18)}<span>${label}</span></button>`).join('')}</div><div class="scratch-block-palette">${s.tab === 'code' ? blocks.map((block) => `<button class="scratch-block scratch-palette-block" style="--scratch-color:${catColor[s.category]}" draggable="true" data-action="scratch-add-block" data-block="${esc(block)}">${esc(block)}</button>`).join('') : `${s.tab === 'backdrops' ? `<div class="scratch-asset-editor"><aside class="scratch-asset-list"><button class="scratch-asset-card is-selected" data-action="scratch-select-backdrop"><span class="scratch-backdrop-thumb"></span><strong>backdrop1</strong><small>Stage backdrop</small></button><button class="scratch-add-sprite" data-action="scratch-add-backdrop">+ Add Backdrop</button></aside><div class="scratch-asset-canvas"><div class="scratch-paint-toolbar"><button>↶</button><button>↷</button><button>▦</button><button>Copy</button><button>Delete</button><button>Flip</button></div><div class="scratch-backdrop-canvas"><span>Paint or drag an image here</span></div><button class="scratch-primary-small" data-action="scratch-convert-backdrop">Convert to Bitmap</button></div></div>` : `<div class="scratch-empty-tab"><strong>Sound editor</strong><p>Choose a sound, play it, trim it, reverse it, or create a new recording.</p><div class="scratch-sound-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="scratch-sound-controls"><button data-action="scratch-play-sound">▶ Play</button><button data-action="scratch-add-sound">+ Add Sound</button><button data-action="scratch-record-sound">● Record</button></div></div>`}`}</div></aside><section class="scratch-workspace" aria-label="Code workspace"><div class="scratch-workspace-head"><strong>${s.tab === 'code' ? 'Code' : s.tab === 'costumes' ? 'Costumes' : 'Sounds'}</strong><button class="scratch-green-flag" data-action="scratch-run" aria-label="Run project">⚑</button><button class="scratch-stop" data-action="scratch-stop" aria-label="Stop project">■</button><button data-action="scratch-clear">Clear</button></div><div class="scratch-canvas" data-action="scratch-drop">${s.blocks.length ? s.blocks.map((block,index) => `<div class="scratch-block scratch-work-block" style="--scratch-color:${catColor[s.category]}" draggable="true"><span>${esc(block)}</span><button data-action="scratch-delete-block" data-index="${index}" aria-label="Delete block">×</button></div>`).join('') : '<p class="scratch-workspace-hint">Drag blocks from the palette here, or tap a block to add it.</p>'}</div><div class="scratch-zoom-controls"><button>⌕</button><button>⌕</button><button>=</button></div></section><aside class="scratch-stage-panel"><div class="scratch-stage-toolbar"><button>◧</button><button class="is-active">▣</button><button>⛶</button></div><div class="scratch-stage" id="scratch-stage"><div class="scratch-sprite scratch-avatar" id="scratch-sprite" aria-label="Custom cartoon sprite"><span class="avatar-hair"></span><span class="avatar-face"><i></i><i></i><b></b></span><span class="avatar-body"></span><span class="avatar-arm avatar-arm-left"></span><span class="avatar-arm avatar-arm-right"></span><span class="avatar-leg avatar-leg-left"></span><span class="avatar-leg avatar-leg-right"></span></div><span class="scratch-stage-star">★</span></div><section class="scratch-sprite-panel"><div class="scratch-sprite-fields"><strong>Sprite</strong><input value="${esc(s.sprite)}" aria-label="Sprite name" /><span>↔ x <input value="0" aria-label="Sprite x" /></span><span>↕ y <input value="0" aria-label="Sprite y" /></span></div>${s.sprites.map((spriteName) => `<div class="scratch-sprite-card ${s.sprite === spriteName ? 'is-selected' : ''}" data-action="scratch-select-sprite" data-sprite="${esc(spriteName)}"><span class="scratch-mini-avatar" aria-hidden="true"><i></i><b></b></span><small>${esc(spriteName)}</small>${s.sprites.length > 1 ? `<button data-action="scratch-delete-sprite" data-sprite="${esc(spriteName)}" aria-label="Delete ${esc(spriteName)}">⌫</button>` : ''}</div>`).join('')}<button class="scratch-add-sprite" data-action="scratch-add-sprite">+ Add Sprite</button></section></aside></section></main></div>`; }
   function renderIdilewaStudio() { const s = ensureScratchState(); const blocks = SCRATCH_BLOCKS[s.category] || SCRATCH_BLOCKS.motion; const colors = {motion:'#4c97ff',looks:'#9966ff',sound:'#d65cd6',events:'#ffbf00',control:'#ffab19',sensing:'#5cb1d6',operators:'#59c059',variables:'#ff8c1a',myblocks:'#ff6680'}; return `<div class="idilewa-studio"><header class="studio-purple-header"><strong>Idilewa</strong><button>◉⌄</button><button>▣⌄</button><button>✎⌄</button><span></span><button>☀ Tutorials</button><button>⚙ Debug</button><em>Join Idilewa</em><button>Sign in</button></header><main><section class="studio-hero"><div><small>IDILEWA · CODE &amp; PLAY</small><h1>Choose a Game or Studio!</h1><p>Pick a magical world to customize with Scratch blocks.</p><button class="studio-hero-cta" data-action="scratch-run">▶ Start Building</button></div><div class="studio-hero-art"><span>🚀</span><img src="./assets/code-reference-children.png" alt="African children coding" /></div></section><section class="studio-controls"><button class="studio-flag" data-action="scratch-run">⚑</button><button class="studio-stop" data-action="scratch-stop">■</button><button data-action="scratch-clear">Clear</button><span>Engine Idle · Ready to Create</span><b>Blocks ${s.blocks.length}</b></section><section class="studio-stage"><div class="studio-stage-bar"><span>x: 0　 y: 0　 Dir: 90°</span><b>STEM CANVAS</b></div><div class="studio-stage-canvas"><div class="studio-actor scratch-avatar" id="scratch-sprite"><span class="avatar-hair"></span><span class="avatar-face"><i></i><i></i><b></b></span><span class="avatar-body"></span><span class="avatar-arm avatar-arm-left"></span><span class="avatar-arm avatar-arm-right"></span><span class="avatar-leg avatar-leg-left"></span><span class="avatar-leg avatar-leg-right"></span></div><span class="studio-star">★</span></div></section><section class="studio-canvas"><div class="studio-canvas-title"><h2>Coding Canvas</h2><span>${s.blocks.length} Blocks Stacked</span></div><div class="studio-block-stack" data-action="scratch-drop">${s.blocks.length ? s.blocks.map((block,index) => `<div class="studio-stack-block" style="--block-color:${colors[s.category]}" draggable="true"><span>${esc(block)}</span><button data-action="scratch-delete-block" data-index="${index}">×</button></div>`).join('') : '<p>Drop or snap a Scratch block here</p>'}</div></section><section class="studio-palette"><div class="studio-palette-heading"><h2>Block Palette</h2><small>Tap or drag to add</small></div><div class="studio-palette-tabs">${SCRATCH_CATEGORIES.map(([id,label]) => `<button class="${s.category === id ? 'is-active' : ''}" style="--block-color:${colors[id]}" data-action="scratch-category" data-category="${id}">${label}</button>`).join('')}</div><div class="studio-palette-blocks">${blocks.map((block) => `<button class="studio-palette-block" style="--block-color:${colors[s.category]}" draggable="true" data-action="scratch-add-block" data-block="${esc(block)}">${esc(block)} <b>+</b></button>`).join('')}</div></section><section class="studio-actors"><h2>Stage Actors</h2><div><article><span>🧒🏾</span><strong>My Sprite</strong><small>Custom character</small></article><article><span>⭐</span><strong>Star</strong><small>Collectible</small></article><article><span>🪘</span><strong>Bàtá Drum</strong><small>Sound actor</small></article></div></section></main></div>`; }
-  function renderCodePlayRoute(page) { if (page === 'coding-studio') return renderIdilewaStudio(); return renderCodePlayChoose(); }
+  function renderCodePlayRoute() { const cp = ensureCodePlayState(); if (cp.screen === 'studio') return renderCodePlayStudio(); if (cp.screen === 'preview') return renderCodePlayPreview(); if (cp.screen === 'library') return renderCodePlayLibrary(); if (cp.screen === 'success') return renderCodePlaySuccess(); return renderCodePlayChoose(); }
 
   function renderCoding() {
     const languages = CODE_LANGUAGES;
@@ -4782,7 +4786,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   }
 
   function ensureAIConversationState() { const s = state.aiConversation || (state.aiConversation = {}); s.screen ||= 'welcome'; s.language ||= 'Yorùbá'; s.topic ||= 'Everyday Conversation'; s.messages ||= []; return s; }
-  function renderAIConversation() { const s = ensureAIConversationState(); const languages = ['Yorùbá','Igbo','Hausa','Swahili','Nigerian Pidgin']; const topics = ['Everyday Conversation','Family & Friends','At School','Market & Shopping','Culture & Traditions','Storytelling']; const messages = s.messages.length ? s.messages : [{ who:'ai', native:'Báwo ni o ṣe wà?', english:'How are you?', time:'10:24' }]; return `<div class="ai-conversation-page"><header class="ai-conversation-top"><img src="./assets/idilewa-brand.svg" alt="Idílẹ́wà" /><span>AI Conversation</span><small>Speak · Learn · Translate · Practise</small></header><main class="ai-conversation-main">${s.screen === 'welcome' ? `<section class="ai-conversation-welcome"><span class="ai-conversation-icon">◌</span><h1>Welcome to<br />AI Conversation</h1><p>Speak, Learn and Practise<br />in African Languages.</p><img src="./assets/home-family-learning.jpg" alt="Children learning together" /><button data-action="ai-start">Start Conversation →</button></section>` : s.screen === 'language' ? `<section class="ai-choice-screen"><h1>Choose a Language</h1><div class="ai-choice-list">${languages.map((language,index) => `<button class="${s.language === language ? 'is-selected' : ''}" data-action="ai-language" data-language="${language}"><span>${['✣','◉','◈','◒','◍'][index]}</span><strong>${language}</strong><b>${s.language === language ? '◉' : '○'}</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-topic">Continue →</button></section>` : s.screen === 'topic' ? `<section class="ai-choice-screen"><h1>Choose a Topic</h1><div class="ai-topic-list">${topics.map((topic,index) => `<button data-action="ai-topic-select" data-topic="${topic}"><span>${['▣','♧','⌂','▱','◈','▤'][index]}</span><strong>${topic}</strong><b>›</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-chat">Start Chat →</button></section>` : `<section class="ai-chat-screen"><header><button data-action="ai-back">←</button><div><h1>AI Conversation</h1><small>${s.language} · ${s.topic}</small></div></header><div class="ai-chat-messages">${messages.map((message) => `<article class="ai-message ${message.who === 'user' ? 'is-user' : ''}"><span class="ai-message-avatar">${message.who === 'user' ? '●' : '▣'}</span><div><strong>${esc(message.native)}</strong><small>${esc(message.english)}</small></div><time>${esc(message.time || '10:25')}</time></article>`).join('')}</div><div class="ai-chat-tools"><button data-action="ai-listen">▮ Listen</button><button data-action="ai-pause">Ⅱ Pause</button><button data-action="ai-translate">文 Translate</button><button data-action="ai-replay">↻ Replay</button><button data-action="ai-slow">◌ Slow (0.75x)</button></div><div class="ai-composer"><input id="ai-message-input" placeholder="Type or speak..." aria-label="Type or speak" /><button data-action="ai-mic" aria-label="Use microphone">●</button><button data-action="ai-send" aria-label="Send message">➤</button></div></section>`}</main><nav class="ai-bottom-nav"><button>⌂<small>Home</small></button><button>▤<small>Learn</small></button><button class="is-active">▣<small>AI Chat</small></button><button>♧<small>Practice</small></button><button>▣<small>Library</small></button></nav></div>`; }
+  function renderAIConversation() { const s = ensureAIConversationState(); const languages = ['Yorùbá','Igbo','Hausa','Swahili','Nigerian Pidgin']; const topics = ['Everyday Conversation','Family & Friends','At School','Market & Shopping','Culture & Traditions','Storytelling']; const messages = s.messages.length ? s.messages : [{ who:'ai', native:'Báwo ni o ṣe wà?', english:'How are you?', time:'10:24' }]; return `<div class="ai-conversation-page"><header class="ai-conversation-top"><img src="${brandLogoUrl}" alt="Idílẹ́wà" /><span>AI Conversation</span><small>Speak · Learn · Translate · Practise</small></header><main class="ai-conversation-main">${s.screen === 'welcome' ? `<section class="ai-conversation-welcome"><span class="ai-conversation-icon">◌</span><h1>Welcome to<br />AI Conversation</h1><p>Speak, Learn and Practise<br />in African Languages.</p><img src="./assets/home-family-learning.jpg" alt="Children learning together" /><button data-action="ai-start">Start Conversation →</button></section>` : s.screen === 'language' ? `<section class="ai-choice-screen"><h1>Choose a Language</h1><div class="ai-choice-list">${languages.map((language,index) => `<button class="${s.language === language ? 'is-selected' : ''}" data-action="ai-language" data-language="${language}"><span>${['✣','◉','◈','◒','◍'][index]}</span><strong>${language}</strong><b>${s.language === language ? '◉' : '○'}</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-topic">Continue →</button></section>` : s.screen === 'topic' ? `<section class="ai-choice-screen"><h1>Choose a Topic</h1><div class="ai-topic-list">${topics.map((topic,index) => `<button data-action="ai-topic-select" data-topic="${topic}"><span>${['▣','♧','⌂','▱','◈','▤'][index]}</span><strong>${topic}</strong><b>›</b></button>`).join('')}</div><button class="ai-primary" data-action="ai-chat">Start Chat →</button></section>` : `<section class="ai-chat-screen"><header><button data-action="ai-back">←</button><div><h1>AI Conversation</h1><small>${s.language} · ${s.topic}</small></div></header><div class="ai-chat-messages">${messages.map((message) => `<article class="ai-message ${message.who === 'user' ? 'is-user' : ''}"><span class="ai-message-avatar">${message.who === 'user' ? '●' : '▣'}</span><div><strong>${esc(message.native)}</strong><small>${esc(message.english)}</small></div><time>${esc(message.time || '10:25')}</time></article>`).join('')}</div><div class="ai-chat-tools"><button data-action="ai-listen">▮ Listen</button><button data-action="ai-pause">Ⅱ Pause</button><button data-action="ai-translate">文 Translate</button><button data-action="ai-replay">↻ Replay</button><button data-action="ai-slow">◌ Slow (0.75x)</button></div><div class="ai-composer"><input id="ai-message-input" placeholder="Type or speak..." aria-label="Type or speak" /><button data-action="ai-mic" aria-label="Use microphone">●</button><button data-action="ai-send" aria-label="Send message">➤</button></div></section>`}</main><nav class="ai-bottom-nav"><button type="button" data-route="index">⌂<small>Home</small></button><button type="button" data-route="voice_lessons">▤<small>Learn</small></button><button type="button" class="is-active" data-route="ai-conversation" aria-current="page">▣<small>AI Chat</small></button><button type="button" data-route="voice-practice">♧<small>Practice</small></button><button type="button" data-route="library">▣<small>Library</small></button></nav></div>`; }
 
   function renderVoiceToolPage(page, params = {}) {
     const details = {
@@ -6694,7 +6698,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
 
   function renderPage(page, params) {
   switch (page) {
-  case 'voice-translation': return renderAIConversation();
+  case 'voice-translation': return renderVoiceToolPage('voice-translation', params);
+  case 'ai-conversation': return renderAIConversation();
   case 'voice-translation-legacy':
       case 'voice-text-to-speech':
       case 'voice-speech-to-text':
@@ -6711,8 +6716,9 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
       case 'curriculum': return renderCurriculum();
       case 'course': return renderCourse(params);
       case 'lesson': return renderLesson(params);
-  case 'coding': return renderCodePlayRoute('coding');
-  case 'coding-studio': return renderCodePlayRoute('coding-studio');
+  case 'coding': return renderCoding();
+  case 'coding-studio': return renderCodingStudio();
+  case 'games': return renderCodePlayRoute();
       case 'ere': return renderStories();
       case 'ere_game': return renderStoryGame(params);
       case 'oral': return renderOral();
@@ -7404,7 +7410,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
     const pageMarkup = assignUniqueRouteImages(page, renderPage(page, params))
       .replace(/(?:African )?Voice (?:African Language )?Trainer/gi, 'Voice Lessons')
       .replace(/Voice Studio/gi, 'Voice Lessons');
-    if (page === 'coding' || page === 'coding-studio') {
+    if (page === 'coding' || page === 'coding-studio' || page === 'games') {
       document.body.dataset.page = page;
       document.getElementById('main').innerHTML = `${pageMarkup}${renderFooter(page)}`;
     } else if (page === 'login') {
@@ -8792,8 +8798,8 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'code-play-template': {
     const cp = ensureCodePlayState(); cp.template = el.dataset.template; saveState(); render(); break;
   }
-  case 'code-play-start': { const cp = ensureCodePlayState(); cp.screen = 'studio'; cp.tab = 'blocks'; saveState(); navigate('coding-studio'); break; }
-  case 'code-play-back': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('coding'); break; }
+  case 'code-play-start': { const cp = ensureCodePlayState(); cp.screen = 'studio'; cp.tab = 'blocks'; saveState(); navigate('games'); break; }
+  case 'code-play-back': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('games'); break; }
   case 'code-play-tab': { const cp = ensureCodePlayState(); cp.tab = el.dataset.tab; saveState(); render(); break; }
   case 'code-play-dual': { const cp = ensureCodePlayState(); cp.dual = el.checked; saveState(); break; }
   case 'code-play-add-block': { const cp = ensureCodePlayState(); cp.blocks = [...(cp.blocks || []), el.dataset.block]; saveState(); render(); break; }
@@ -8802,14 +8808,14 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'code-play-undo': { const cp = ensureCodePlayState(); cp.blocks = cp.blocks.slice(0, -1) || ['event']; saveState(); render(); break; }
   case 'code-play-redo': { const cp = ensureCodePlayState(); cp.blocks = [...cp.blocks, 'move']; saveState(); render(); break; }
   case 'code-play-sprite': { const cp = ensureCodePlayState(); cp.sprites = cp.sprites.includes(el.dataset.sprite) ? cp.sprites.filter((id) => id !== el.dataset.sprite) : [...cp.sprites, el.dataset.sprite]; saveState(); render(); break; }
-  case 'code-play-preview': { const cp = ensureCodePlayState(); if (el.dataset.template) cp.template = el.dataset.template; cp.screen = 'preview'; saveState(); navigate('coding-studio'); break; }
+  case 'code-play-preview': { const cp = ensureCodePlayState(); if (el.dataset.template) cp.template = el.dataset.template; cp.screen = 'preview'; saveState(); navigate('games'); break; }
   case 'code-play-move': { const hero = document.getElementById('code-play-hero'); if (hero) hero.style.transform = `translateX(${el.dataset.direction === 'left' ? '-=' : '+='}40px)`; break; }
   case 'code-play-jump': { const hero = document.getElementById('code-play-hero'); if (hero) { hero.classList.remove('is-jumping'); void hero.offsetWidth; hero.classList.add('is-jumping'); } break; }
   case 'code-play-complete': { const cp = ensureCodePlayState(); cp.screen = 'success'; saveState(); render(); break; }
-  case 'code-play-save': { const cp = ensureCodePlayState(); const template = CODE_PLAY_TEMPLATES.find(([id]) => id === cp.template); cp.savedGames = [...(cp.savedGames || []).filter((game) => game.template !== cp.template), { template: cp.template, title: template?.[1] || 'My Game', blocks: cp.blocks, sprites: cp.sprites, language: cp.language }]; cp.screen = 'library'; saveState(); navigate('coding'); showToast('Game saved to My Games.', 'success'); break; }
-  case 'code-play-library': { const cp = ensureCodePlayState(); cp.screen = 'library'; saveState(); navigate('coding'); break; }
-  case 'code-play-home': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('coding'); break; }
-  case 'code-play-open': { const cp = ensureCodePlayState(); cp.template = el.dataset.template; cp.screen = 'studio'; saveState(); navigate('coding-studio'); break; }
+  case 'code-play-save': { const cp = ensureCodePlayState(); const template = CODE_PLAY_TEMPLATES.find(([id]) => id === cp.template); cp.savedGames = [...(cp.savedGames || []).filter((game) => game.template !== cp.template), { template: cp.template, title: template?.[1] || 'My Game', blocks: cp.blocks, sprites: cp.sprites, language: cp.language }]; cp.screen = 'library'; saveState(); navigate('games'); showToast('Game saved to My Games.', 'success'); break; }
+  case 'code-play-library': { const cp = ensureCodePlayState(); cp.screen = 'library'; saveState(); navigate('games'); break; }
+  case 'code-play-home': { const cp = ensureCodePlayState(); cp.screen = 'choose'; saveState(); navigate('games'); break; }
+  case 'code-play-open': { const cp = ensureCodePlayState(); cp.template = el.dataset.template; cp.screen = 'studio'; saveState(); navigate('games'); break; }
   case 'code-play-share': { if (navigator.share) void navigator.share({ title: 'My Idilewa Code & Play game', text: 'Play my game on Idilewa!' }); else showToast('Share link ready to copy.', 'success'); break; }
   case 'ai-start': { const s = ensureAIConversationState(); s.screen = 'language'; saveState(); render(); break; }
   case 'ai-language': { const s = ensureAIConversationState(); s.language = el.dataset.language; saveState(); render(); break; }
@@ -8843,7 +8849,7 @@ import { getKindergartenLessons } from './src/kindergartenLessons.js';
   case 'scratch-play-sound': showToast('Playing pop sound.'); break;
   case 'scratch-add-sound': showToast('Sound library ready. Choose or upload a sound.'); break;
   case 'scratch-record-sound': showToast('Microphone recording is ready.'); break;
-  case 'scratch-home': navigate('coding'); break;
+  case 'scratch-home': navigate('games'); break;
   default: break;
   }
   }
