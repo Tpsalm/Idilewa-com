@@ -87,3 +87,16 @@ AI-powered African language-learning SPA (Yorùbá, Igbo, Hausa, Kiswahili and m
 - Consequence: fixing the "Live Zoom lessons" label and email-routing on the LIVE site requires
   the source of that deployed React-style bundle (not this repo). This repo can only ship its own
   `www.idilewa.com` build once the correct project/domain wiring is confirmed.
+
+## Vercel function limit (root cause of the failed previews, 2026-11-13)
+- The `tapee2` Vercel team is on the **Hobby** plan, which is capped at **12 Vercel Functions per
+  deployment** (https://vercel.com/docs/functions/limitations). A deployment with a 13th function
+  fails with only "Deployment has failed" (no build error) — `npm run build` still passes locally.
+- `main` had exactly 12 functions (`api/**/*.js`) and deployed. The two new serverless endpoints in
+  this branch (`api/contact.js`, `api/ai-conversation.js`) pushed it to 14, which is why every
+  preview for this branch failed. Probes confirmed the boundary: 12 functions → success,
+  14 functions → failure.
+- Fix: the three `api/guardian/{request,verify,approve}.js` handlers were merged into one
+  catch-all `api/guardian/[...path].js` that dispatches on the trailing path segment via
+  `src/server/guardianRoutes.js`. Public URLs and per-route behaviour are unchanged; the
+  deployment is back to 12 functions. Keep the total at or below 12 when adding endpoints.
